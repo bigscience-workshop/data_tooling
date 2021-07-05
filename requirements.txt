@@ -2,3 +2,4 @@ dataset>=1.5.0
 datasets>=1.8.0
 SqlAlchemy>=1.4.20
 indexed_gzip>=1.6.1
+Flask-SQLAlchemy>=2.5.1
