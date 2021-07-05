@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from datasets.utils.typing import PathLike
 from datasets.arrow_dataset import transmit_format# , replayable_table_alteration
-from transformers import PreTrainedModel, PretrainedConfig
+#from transformers import PreTrainedModel, PretrainedConfig
 import copy
 import shutil
 from datasets.fingerprint import (
@@ -694,7 +694,7 @@ class Datastore(Dataset): #, dict
 
         def getitems(self, outputs, column, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items):
             if column is None:
-                items in self.features_map.items()
+                items = list(self.features_map.items())
             else:
                 items = (column, self.features_map[column])
             sql_results = {}
@@ -734,9 +734,10 @@ class Datastore(Dataset): #, dict
 
         format_kwargs = format_kwargs if format_kwargs is not None else {}
         format_columns = format_columns if format_columns is not None else []
-        if format_type in ("custom", None) or isinstance(output_or_keys, dict): 
+        start = end = 0
+        if format_type in ("custom", None) or isinstance(outputs_or_keys, dict): 
             transform = format_kwargs.get('transform')
-            if isinstance(output_or_keys, str):
+            if isinstance(outputs_or_keys, str):
                 keys = slice(0, len(self))
                 outputs = {}
                 contiguous=True
@@ -860,9 +861,11 @@ class Datastore(Dataset): #, dict
                 yield self._format_views(r, contiguous=True)
         return self._format_views(ret, contiguous=True)
         
+
+        
     @transmit_format
     @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "cache_file_name"])
-    def _map_single_old(
+    def _map_single(
         self,
         function: Optional[Callable] = None,
         with_indices: bool = False,
@@ -882,7 +885,7 @@ class Datastore(Dataset): #, dict
         rank: Optional[int] = None,
         offset: int = 0,
         update_data=True,
-    ) -> "Dataset":
+    ) -> "Datastore":
       ret = super()._map_single(function=function,
             with_indices=with_indices,
             input_columns=input_columns,
@@ -926,21 +929,56 @@ class Datastore(Dataset): #, dict
         num_proc: Optional[int] = None,
         suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
         new_fingerprint: Optional[str] = None,
+        parallel_backend_type: Optional[List[str]] = ["dask"]
     ) -> "Datastore":
 
-      ret = super().map(function=function, with_indices=with_indices, input_columns=input_columns,
-                     batched=batched, batch_size=batch_size, drop_last_batch=drop_last_batch, 
-                     remove_columns=remove_columns, keep_in_memory=keep_in_memory, 
-                     load_from_cache_file=load_from_cache_file, cache_file_name=cache_file_name,
-                     writer_batch_size=writer_batch_size, features=features,
-                     disable_nullable=disable_nullable, fn_kwargs=fn_kwargs,
-                     num_proc=num_proc, suffix_template=suffix_template,
-                     new_fingerprint=new_fingerprint)
-      features_map= copy.deepcopy(self.features_map)
-      for column in remove_columns if remove_columns is not None else []:
+        if True:
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+            
+            with parallel_backend(**parallel_backend_type): # 'distributed', scheduler_host='HOST:PORT'):
+                os.environ = prev_env
+                shards = [
+                    self.shard(num_shards=num_proc, index=rank, contiguous=True, keep_in_memory=keep_in_memory)
+                    for rank in range(num_proc)
+                ]
+                kwds_per_shard = [
+                    dict(
+                        self=shards[rank],
+                        function=function,
+                        with_indices=with_indices,
+                        input_columns=input_columns,
+                        batched=batched,
+                        batch_size=batch_size,
+                        drop_last_batch=drop_last_batch,
+                        remove_columns=remove_columns,
+                        keep_in_memory=keep_in_memory,
+                        load_from_cache_file=load_from_cache_file,
+                        cache_file_name=format_cache_file_name(cache_file_name, rank)
+                        if cache_file_name is not None
+                        else None,
+                        writer_batch_size=writer_batch_size,
+                        features=features.copy() if features is not None else None,
+                        disable_nullable=disable_nullable,
+                        fn_kwargs=fn_kwargs,
+                        rank=rank,
+                        offset=sum(len(s) for s in shards[:rank]),
+                        desc=desc,
+                    )
+                    for rank in range(num_proc)
+                ]
+                logger.info("Spawning {} processes".format(num_proc))
+                # TODO: do smart jobs allocaiton based on which node the shard of the data is stored
+                transformed_shards = Parrallel(n_jobs = num_proc, verbose=1)(delayed(self.__class__._map_single)(self, **kwds) for kwds in kwds_per_shard)
+                logger.info("Concatenating {} shards from multiprocessing".format(num_proc))
+                result = concatenate_datasets(transformed_shards)
+                if new_fingerprint is not None:
+                    result._fingerprint = new_fingerprint
+                ret = result
+        features_map= copy.deepcopy(self.features_map)
+        for column in remove_columns if remove_columns is not None else []:
           if column in features_map:
               del features_map[column]
-      return Datastore.from_dataset(ret, features_map=features_map)
+        return Datastore.from_dataset(ret, features_map=features_map)
 
 
     def class_encode_column(self, column: str) -> "Datastore":
@@ -1286,3 +1324,99 @@ class Datastore(Dataset): #, dict
     
 
 
+
+
+def concatenate_datasets(
+    dsets: List[Dataset],
+    info: Optional[Any] = None,
+    split: Optional[Any] = None,
+    axis: int = 0,
+):
+    """
+    Converts a list of :class:`Dataset` with the same schema into a single :class:`Dataset`.
+    Args:
+        dsets (:obj:`List[datasets.Dataset]`): List of Datasets to concatenate.
+        info (:class:`DatasetInfo`, optional): Dataset information, like description, citation, etc.
+        split (:class:`NamedSplit`, optional): Name of the dataset split.
+        axis (``{0, 1}``, default ``0``, meaning over rows):
+            Axis to concatenate over, where ``0`` means over rows (vertically) and ``1`` means over columns
+            (horizontally).
+            .. versionadded:: 1.6.0
+    """
+    if axis == 0 and not all([dset.features.type == dsets[0].features.type for dset in dsets]):
+        raise ValueError("Features must match for all datasets")
+    elif axis == 1 and not all([dset.num_rows == dsets[0].num_rows for dset in dsets]):
+        raise ValueError("Number of rows must match for all datasets")
+
+    # Find common format or reset format
+    format = dsets[0].format
+    if any(dset.format != format for dset in dsets):
+        format = {}
+        logger.info("Some of the datasets have disparate format. Resetting the format of the concatenated dataset.")
+
+    # Concatenate tables
+    table = concat_tables([dset._data for dset in dsets if len(dset._data) > 0], axis=axis)
+    if axis == 1:
+        table = update_metadata_with_features(table, None)
+
+    def apply_offset_to_indices_table(table, offset):
+        if offset == 0:
+            return table
+        else:
+            array = table["indices"]
+            new_array = pc.add(array, pa.scalar(offset, type=pa.uint64()))
+            return InMemoryTable.from_arrays([new_array], names=["indices"])
+
+    # Concatenate indices if they exist
+    if any(dset._indices is not None for dset in dsets):
+
+        # Datasets with no indices tables are replaced with a dataset with an indices table in memory.
+        # Applying an offset to an indices table also brings the table in memory.
+        for i in range(len(dsets)):
+            if dsets[i]._indices is None:
+                dsets[i] = dsets[i].select(range(len(dsets[i])))
+        assert all(dset._indices is not None for dset in dsets), "each dataset should have an indices table"
+
+        # An offset needs to be applied to the indices before concatenating
+        indices_tables = []
+        offset = 0
+        for dset in dsets:
+            indices_tables.append(apply_offset_to_indices_table(dset._indices, offset))
+            offset += len(dset._data)
+
+        # Concatenate indices
+        indices_tables = [t for t in indices_tables if len(t) > 0]
+        if indices_tables:
+            indices_table = concat_tables(indices_tables)
+        else:
+            indices_table = InMemoryTable.from_batches([], schema=pa.schema({"indices": pa.int64()}))
+    else:
+        indices_table = None
+
+    # Concatenate infos
+    if info is None:
+        info = DatasetInfo.from_merge([dset.info for dset in dsets])
+    fingerprint = update_fingerprint(
+        "".join(dset._fingerprint for dset in dsets), concatenate_datasets, {"info": info, "split": split}
+    )
+
+    # Make final concatenated dataset
+    concatenated_dataset = Dataset(
+        table,
+        info=info,
+        split=split,
+        indices_table=indices_table,
+        fingerprint=fingerprint,
+    )
+    concatenated_dataset.set_format(**format)
+    return concatenated_dataset
+
+if __name__ == "__main__":
+    import sys
+    import os
+    from datasets import load_dataset
+    args = sys.argv[1:]
+    if True: # "-test" in args:
+       datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_hi")['train'])
+       print (datastore[0])
+       
