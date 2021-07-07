@@ -578,6 +578,7 @@ class Datastore(Dataset): #, dict
       return self
 
     #mapping a column to an indexed gzip file accesed by line 
+    # todo, change the id key from "id" to something custom. this needs to be stored in the table meta-data.
     def set_igzip_feature_view(self, feature_view, path,  idx_column="id", batch_size=100000, num_proc=4, map_fn=None):
       fobj = self._get_igzip_fobj(path)
       if idx_column not in self.features:
@@ -606,64 +607,53 @@ class Datastore(Dataset): #, dict
             self.features_map[column] = {'type':'sql', 'connection_url': connection_url, 'table_name': table_name, 'column': column}
         return self
     
+    # note that while the id column corresponds to an index into an external storage, accessing an arrow dataset by index
+    # will not be guranteed to get the corresponding id. a[0] will return the first item in the current subset of the dataset. 
+    # but a[0] may return {'id': 10, 'mmap_embed': <array correponding to the 10th location in the mmap file>}
     def _getitem(
         self,
-        key: Union[int, slice, str],
+        key: Union[int, slice, str], # should this be list as well??
         format_type=None,
         format_columns=None,
         output_all_columns=False,
         format_kwargs=None,
     ) -> Union[Dict, List]:
 
-        orig_format_type = format_type
-        orig_key = key
-        column = None
-        if isinstance(key, str):
-          column = key
-        contiguous = None
-        if isinstance(key, str) or (isinstance(key, slice) and key.step is None):
-            contiguous=True
-        if column is not None and column in self.features_map:
-          if format_type in ("torch", "tensorflow", "numpy"):
-            orig_format_type = format_type
-            format_type = "numpy"
-          elif format_type in (None, "custom"):
-            orig_format_type = format_type
-            format_type = None
-          orig_column = column
-          key = "id"
+        # assumine we do error checking re format_columns and output_all_columns at a higher level??
+        format_columns = copy.copy(format_columns)
+        # this is the case where we are not getting any views.
+        if (not hasattr(self, "features_map"))  or (hasattr(self, "features_map") and not self.features_map) or (hasattr(self, "features_map")  and type(key) is str and key not in self.features_map):
+          return super()._getitem(
+              key,
+              format_type=format_type,
+              format_columns=format_columns,
+              output_all_columns=output_all_columns,
+              format_kwargs=format_kwargs)
+        
+        # this is the case where there are more than one columns, some of which might
+        # be an arrow column and at least one view. For the view, we need to also get the "id".  
 
+        # let's prepare the parameters to get just the arrow portion of the dataset
+        orig_key = key
+        if type(key) is str:
+          if not format_columns:
+            format_columns = [key]
+          else:
+            format_columns.append(key)
+          if key in self.features_map:
+            key = "id"
         missing=[]
         if format_columns:
-             for c in copy.copy(format_columns):
-                 if c in self.features_map:
+            for c in copy.copy(format_columns):
+                if c in self.features_map:
                      missing.append(c)
                      format_columns.remove(c)
-                     if "id" not in format_columns:
-                         format_columns.append("id")
+            if "id" not in format_columns:
+                format_columns.append("id")
+            else:
+                missing.append("id")
 
-        if (hasattr(self, "features_map") and not self.features_map) and len(self.features) == 1 and "id" in self.features:
-            # this dataset is empty so we don't want to return just ids that might not relate to any data
-            if format_type in (None, "custom"):
-                return {}
-            elif format_type == "torch":
-                import torch
-                return torch.tensor([])
-            elif format_type == "numpy":
-                return np.array([])
-            elif format_type == "pandas":
-                return pd.DataFrame()
-            elif format_type == "tensorflow":
-                import tensorflow
-                return tensorflow.ragged.constant([])
-            return None
-
-        if hasattr(self, "features_map") and (len(self.features) == 1 and "id" in self.features) and contiguous and (isinstance(key, str)):
-            # we are only getting data from a column that is a view
-            return self._format_views(orig_key, column=column, format_type=format_type, orig_format_type=orig_format_type,
-                                     output_all_columns=output_all_columns, format_kwargs=format_kwargs, contiguous=contiguous)
-
-        #let's get the data that is in the arrow file
+        # let's get the data that is in the arrow data first, including the id
         outputs = super()._getitem(
               key,
               format_type=format_type,
@@ -671,35 +661,34 @@ class Datastore(Dataset): #, dict
               output_all_columns=output_all_columns,
               format_kwargs=format_kwargs)
 
-        # restore format_columns incase it's referenced somewhere else
-        if format_columns and "id" in format_columns:
-            format_columns.remove("id")
+        # this is the case where we are only getting view data, so the only arrow data returned is the 'id'.
+        # so we need the id column identified so we can index into the view data source.
+        if type(outputs) in (np.array, list):
+          outputs = {'id': outputs}
 
+        # do some cleanup.
+        if type(orig_key) is str and format_columns and "id" in format_columns:
+            format_columns.remove("id")
         if format_columns is not None:
             format_columns.extend(missing)
-
-        # now combine views and retrieved arrow data 
-        return self._format_views(outputs, column=column, format_type=format_type, orig_format_type=orig_format_type,
-                                 output_all_columns=output_all_columns, format_kwargs=format_kwargs, contiguous=contiguous)
+        # now get the views and combine views and  arrow data 
+        return self._format_views(outputs, format_columns=format_columns, format_type=format_type, 
+                                 output_all_columns=output_all_columns, format_kwargs=format_kwargs)
         
     def _format_views(self,  
         outputs_or_keys,       
-        column=None,
         format_type=None,
-        orig_format_type=None,
         format_columns=None,
         output_all_columns=False,
-        format_kwargs=None,
-        contiguous=None):
+        format_kwargs=None):
 
-        def getitems(self, outputs, column, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items):
-            if column is None:
+        def getitems(self, outputs, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items):
+            if not format_columns:
                 items = list(self.features_map.items())
             else:
-                items = (column, self.features_map[column])
+                items = [(column, self.features_map[column]) for column in format_columns if column in self.features_map]
             sql_results = {}
             for feature, val in items:
-              if column is not None or (format_columns in (None, []) or feature in format_columns or output_all_columns):
                 if val['type'] == 'mmap':
                     if mmap_by_items:
                         if contiguous:
@@ -730,12 +719,11 @@ class Datastore(Dataset): #, dict
                         for feature in features:
                             outputs[feature] = output.get(feature,[]) + row[feature]
             return outputs
-        # todo, change the id key from "id" to something custom
-
         format_kwargs = format_kwargs if format_kwargs is not None else {}
         format_columns = format_columns if format_columns is not None else []
         start = end = 0
-        if format_type in ("custom", None) or isinstance(outputs_or_keys, dict): 
+        contiguous = False
+        if format_type in ("custom", "torch", "tensorflow", None) and type(outputs_or_keys) is not pd.DataFrame: 
             transform = format_kwargs.get('transform')
             if isinstance(outputs_or_keys, str):
                 keys = slice(0, len(self))
@@ -745,9 +733,12 @@ class Datastore(Dataset): #, dict
                 keys = outputs_or_keys
                 outputs = {}
                 contiguous=True
-            else:
+            elif isinstance(outputs_or_keys, dict):
                 keys = outputs_or_keys["id"]
                 outputs = outputs_or_keys
+            else:
+                keys = outputs_or_keys
+                outputs = {}
             if not contiguous:
                   if isinstance(keys, int):
                         contiguous = False
@@ -760,11 +751,21 @@ class Datastore(Dataset): #, dict
                   else:
                     start = keys[0]
                     end = keys[-1]+1
-            outputs = getitems(self, outputs, column, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=False)
+            outputs = getitems(self, outputs, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=False)
             if transform is not None:
               outputs = transform(outputs)
-            if "id" in outputs: del outputs["id"] # what if the user specifically asked for "id"?
-            return outputs
+            if "id" in outputs and format_columns and "id" not in format_columns: del outputs["id"] 
+            # is this right. will custom ever return a dict type if there is only one column, or do we 
+            # default to returning the only column.
+            if len(outputs) == 1: outputs = list(outputs.values())[0]
+            if format_type == "torch":
+              import torch
+              return torch.tensor(outputs, **format_kwargs)
+            elif format_type == "tensorflow":
+              import tensorflow
+              return tensorflow.ragged.constant(outputs, **format_kwargs)
+            else:
+              return outputs
         elif format_type == "pandas" or isinstance(outputs_or_keys, pd.DataFrame):
             # do we do transforms for this case??
             if isinstance(outputs_or_keys, str):
@@ -788,47 +789,13 @@ class Datastore(Dataset): #, dict
                 raise RuntimeError("got unknown outputs or keys type")
             if outputs is None:
                 outputs = pd.DataFrame()
-            outputs = getitems(self, outputs, column, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=True)
-            if column is not None:
-                outputs = outputs[column]
-            else:
-                if "id" in outputs: outputs.drop("id", axis=1) # what if the user specifically asked for "id"?
+            outputs = getitems(self, outputs,  keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=True)
+            if "id" in outputs and format_columns and "id" not in format_columns: 
+              outputs.drop("id", axis=1) 
+            if len(format_columns) == 1:
+              outputs = outputs[format_columns[0]]
             return outputs
-        elif column is not None and column in self.features_map:
-            # do we do transforms for this case??
-            val = self.features_map[column]
-            if isinstance(outputs, str):
-                  contiguous = True
-                  start = 0 
-                  end = len(self)
-                  keys = range(0, len(self))
-            elif isinstance(outputs, slice):
-                  contiguous = True
-                  start = 0 if outputs.start is None else outputs.start
-                  end = len(self) if outputs.stop is None else outputs.stop
-                  keys = range(0, len(self))
-            elif not contiguous:
-                if isinstance(outputs, int):
-                  contiguous = False
-                  keys = outputs
-                else:
-                  contiguous, start, end = is_contiguous(outputs)
-            else:
-                start= outputs[0]
-                end= outputs[-1]+1
-            if contiguous:
-              x= self.get_view_data(column, val)[start:end]
-            else:
-              x= self.get_view_data(column, val)[keys]
-            if orig_format_type == "torch":
-              import torch
-              return torch.tensor(x, **format_kwargs)
-            elif format_type == "tensorflow":
-              import tensorflow
-              return tensorflow.ragged.constant(x, **format_kwargs)
-            else:
-              return x
-        return outputs
+        raise RuntimeError("got unknown outputs or keys type")
 
     def to_csv(
         self,
@@ -1325,8 +1292,8 @@ class Datastore(Dataset): #, dict
 
 
 
-
-def concatenate_datasets(
+# TODO, convert this function to view sharded datasets across Dask nodes as a single dataset
+def concatenate_datasets_shards(
     dsets: List[Dataset],
     info: Optional[Any] = None,
     split: Optional[Any] = None,
@@ -1411,12 +1378,3 @@ def concatenate_datasets(
     concatenated_dataset.set_format(**format)
     return concatenated_dataset
 
-if __name__ == "__main__":
-    import sys
-    import os
-    from datasets import load_dataset
-    args = sys.argv[1:]
-    if True: # "-test" in args:
-       datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_hi")['train'])
-       print (datastore[0])
-       
