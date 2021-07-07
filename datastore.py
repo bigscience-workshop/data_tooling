@@ -1378,3 +1378,25 @@ def concatenate_datasets_shards(
     concatenated_dataset.set_format(**format)
     return concatenated_dataset
 
+if __name__ == "__main__":
+    import sys
+    import os
+    import numpy as np
+    from datasets import load_dataset
+    args = sys.argv[1:]
+    if "-test" in args:
+       dataset = load_dataset("oscar", "unshuffled_deduplicated_sw")['train']
+       print (dataset)
+       datastore = Datastore.from_dataset(dataset)
+       # put back the "id" column when asking for everything in a row
+       datastore.set_mmap_feature_view('embed', [-1, 512, 512], )
+       datastore.set_mmap_feature_view('token', [-1, 512], dtype=np.int32)
+       assert (datastore['embed'][0].shape) == (512, 512)
+       datastore['embed'][0][0] = 0.0
+       assert np.mean(datastore['embed'][0][0]) == 0
+       datastore['embed'][0][0] = 1.0
+       assert np.mean(datastore['embed'][0][0]) == 1.0
+       assert set(datastore[0].keys()) == set(['id', 'text', 'embed', 'token'])
+       assert len(datastore['text']) == 24803
+       assert len(datastore[0:10]['text']) == 10
+       assert (datastore[0:10]['token'].shape) == (10, 512)
