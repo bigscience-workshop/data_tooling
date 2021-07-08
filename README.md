@@ -5,8 +5,7 @@ How should we store and serve the dataset?
 
 Current consensus is to use [`jsonl`](https://jsonlines.org/).
 
-
-## Metadata guideline
+## Metadata guideline
 
 Trying to keep things as simple as possible, the proposed metadata guideline is simply a flat format in a key/value format where values format could be constrained. The goal is not to be exhaustive on all possible metadata but to be pragmatic to align on the things that are already in the process of being recorded.
 
@@ -18,7 +17,7 @@ For now 3 "objects of interests" are forseen in the project on which metadata co
 - data set
 - data sample (or document)
 
-### Key general format
+### Key general format
 
 Simply text, in small cap and avoiding any punctuation (including spaces to be replaced by underline character '_' if really necessary)  to ease automated parsing.
 
@@ -36,21 +35,21 @@ Some proposed value formats:
 | URL       	| Full length URL including the scheme (eg http/ftp...)  ex: https://en.wikipedia.org/wiki/URL                                                                                                                                           	|
 | text      	| free text encoded in UTF-8
 
-#### Annotation of text content
+#### Annotation of text content
 
 For data sample, it is foreseen that information might be extracted from the original text content such as named entities using position reference to the original content.
 
 TO BE CONTINUED
 
-### Data source metadata format
+### Data source metadata format
 
 TO BE CONTINUED
 
-### Dataset metadata format 
+### Dataset metadata format 
 
 TO BE CONTINUED
 
-### Data sample metadata format 
+### Data sample metadata format 
 
 | Key                   	| Value                                                                                                                                                                                                                                  	|
 |-----------------------	|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
@@ -64,7 +63,7 @@ TO BE CONTINUED
 TO BE CONTINUED
 
 ex:
-
-['89faeee174d2ddbc2b761207efbc8464', 'fra', ['eng', 'deu'], '2021-07-06T19:06:02Z', null, 'je crois il est parti à Stuttgart ou bien à London']
-
+```json
+["89faeee174d2ddbc2b761207efbc8464", "fra", ["eng", "deu"], "2021-07-06T19:06:02Z", null, "je crois il est parti à Stuttgart ou bien à London"]
+```
 
