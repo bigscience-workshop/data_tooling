@@ -1,5 +1,5 @@
 #Copyright July 2021 Ontocord LLC. Licensed under Apache v2 https://www.apache.org/licenses/LICENSE-2.0
-#datastore_utils.py
+#datastore.py
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field, fields
@@ -14,7 +14,6 @@ from datasets import utils, Dataset
 from datasets.splits import NamedSplit
 from datasets.arrow_writer import ArrowWriter, OptimizedTypedSequence
 import os
-import io
 import json
 from pathlib import Path
 from datasets.utils.typing import PathLike
@@ -33,7 +32,6 @@ from datasets.fingerprint import (
 from datasets.dataset_dict import DatasetDict
 from torch import nn
 import pickle
-import threading
 
 import glob, shutil, os, time
 import indexed_gzip as igzip
@@ -48,545 +46,950 @@ import six
 from six.moves.urllib.parse import parse_qs, urlparse
 
 
-def is_contiguous(arr):
-        start = None
-        prev = None
-        contiguous=True
-        for i in arr:
-          if start is None:
-            start = i
-          if prev is None or i == prev+1:
-            prev = i
-            continue
-          contiguous = False
-          break
-        return contiguous, start, i+1
-
-class TableExt(dataset.Table):
+### NOTE: dataset is a different package than datasets. We are using both packages.
 
 
-    def find(self, *_clauses, **kwargs):
-        """Perform a simple search on the table similar to
-        dataset.Table's find, except: optionally gets a result only
-        for specific columns by passing in _columns keyword.
+### We want to have mutliple types of storage that ideally can be
+### transported as a file transfer with an arrow dataset. So if we
+### have <signature>.arrow, we may have fts_<signature>.db (for full
+### text indexing) and db_<signature>.db (sqlite database), and
+### <siganture>.mmap (mmap file reprsenting a tensor), and
+### <singature>.igz (if we wish to store some portion of the text
+### columns in igzip format for compression and legacy purposes.
 
-        # TODO, full text search
+class FeaturesWithViews(Features):
+    def copy(self):
+        ret= FeaturesWithViews(super().copy())
+        if hasattr(self, "features_map"):
+            ret.features_map = copy.deepcopy(self.features_map)
+        return ret
 
-        Simply pass keyword arguments as ``filter``.
-        ::
-
-            results = table.find(country='France')
-            results = table.find(country='France', year=1980)
-
-        Using ``_limit``::
-
-            # just return the first 10 rows
-            results = table.find(country='France', _limit=10)
-
-        You can sort the results by single or multiple columns. Append a minus
-        sign to the column name for descending order::
-
-            # sort results by a column 'year'
-            results = table.find(country='France', order_by='year')
-            # return all rows sorted by multiple columns (descending by year)
-            results = table.find(order_by=['country', '-year'])
-
-        To perform complex queries with advanced filters or to perform
-        aggregation, use :py:meth:`db.query() <dataset.Database.query>`
-        instead.
-        """
+    def __repr__(self):
+        ret =  "{"+"\n".join([f"'{a[0]}': {a[1]}" for a in self.items() if a[0] not in self.features_map])
+        if self.features_map:
+            ret = ret+"\n"+"\n".join(f"'{a[0]}': View({a[1]})" for a in  self.features_map.items())
+        ret +="}"
+        return ret
 
 
-        if not self.exists:
-            return iter([])
-
-        _fts = kwargs.pop('_fts', None)
-        _columns = kwargs.pop('_columns', None)
-        _limit = kwargs.pop('_limit', None)
-        _offset = kwargs.pop('_offset', 0)
-        order_by = kwargs.pop('order_by', None)
-        _streamed = kwargs.pop('_streamed', False)
-        _step = kwargs.pop('_step', QUERY_STEP)
-        if _step is False or _step == 0:
-            _step = None
-
-        order_by = self._args_to_order_by(order_by)
-        args = self._args_to_clause(kwargs, clauses=_clauses)
-
-        if _fts:
-            # we could run against a local sqlite database and join manually using a list of id's
-            res = self.fts_db.executable.execute(f"""SELECT id, rank
-                              FROM {table_name}_idx
-                              WHERE {column} MATCH {fts_q}
-                              ORDER BY rank
-                              LIMIT {_limit}""").fetchall()
-
-        if columns is None:
-            query = self.table.select(whereclause=args,
-                                  limit=_limit,
-                                  offset=_offset)
-        else:
-            query = self.table.select(columns, whereclause=args,
-                                  limit=_limit,
-                                  offset=_offset)
-        if len(order_by):
-            query = query.order_by(*order_by)
-
-        conn = self.db.executable
-        if _streamed:
-            conn = self.db.engine.connect()
-            conn = conn.execution_options(stream_results=True)
-            
-        return ResultIter(conn.execute(query),
-                          row_type=self.db.row_type,
-                          step=_step)
-
-
-class DatabaseExt(dataset.Database):
-    """A DatabaseExt object represents a SQL database with  multiple tables of type TableExt."""
-
-    """Extends the dataset.Database class and adds a
-    flask_sqlalchemy.SQLAlchemy reference. Connects to a
-    flask_sqlalchemy.
+class Datastore(Dataset): #, dict
     """
+    A class that wraps a Huggingface arrow based Dataset to provide some optimized reading and *writing* in various persistance backends. 
+    Currently provides support for columns bound to memmap, igzip file, and sqlalchemy databases.
+    """
+    @property 
+    def features(self):
+        ret = FeaturesWithViews(self._info.features)
+        ret.features_map = {} if not hasattr(self, "features_map") else self.features_map
+        return ret
+        
+    def __repr__(self):
+        return f"Datastore({{\n    features: {list(self.features.keys())},\n    num_rows: {self.num_rows}\n}})"
+        
+    @classmethod
+    def from_dataset(cls, dataset, features_map=None, shared_dir=None):
+        self = cls(
+            arrow_table=dataset._data,
+            indices_table=dataset._indices,
+            info=dataset._info,
+            split=dataset._split,
+            fingerprint=dataset._fingerprint,
+        )
 
-    def __init__(self, url, flask_app=None, schema=None, reflect_metadata=True,
-                 engine_kwargs=None, reflect_views=True,
-                 ensure_schema=True, row_type=dataset.util.row_type):
-        """Configure and connect to the database."""
-        if url is None:
-            url = os.environ.get('DATABASE_URL', 'sqlite://')
-        if engine_kwargs is None:
-            engine_kwargs = {}
-        parsed_url = urlparse(url)
-        if type(flask_app) is Flask:
-            app = flask_app
+        if  hasattr(dataset, "mmap_access_cnt"):
+          self.mmap_access_cnt=dataset.mmap_access_cnt
         else:
-            if flask_app is not None:
-                app = Flask(flask_app)
+          self.mmap_access_cnt=0
+        if  hasattr(dataset, "features_map"):
+          self.features_map=copy.deepcopy(dataset.features_map)
+        if features_map is not None:
+          self.features_map = copy.deepcopy(features_map)
+        if not hasattr(self, "features_map"):
+          self.features_map = {}
+        if  hasattr(dataset, "shared_dir"):
+          self.shared_dir=shared_dir
+        if shared_dir is not None:
+          self.shared_dir = shared_dir
+        if not hasattr(self, "shared_dir"):
+          self.shared_dir = {}
+        return self
+
+                             
+    def _get_mmap(self, mmap_file_path,  dtype, shape):
+      if shape[0] < len(self):
+          shape[0] = len(self)
+      # what happens when the datastore shrinks??
+      if os.path.exists(mmap_file_path):
+        ret= np.memmap(filename=mmap_file_path, mode="r+", dtype=np.dtype(dtype), shape=tuple(shape))
+      else:
+        ret = np.memmap(filename=mmap_file_path, mode="w+", dtype=np.dtype(dtype), shape=tuple(shape))
+      if self.mmap_access_cnt % 100==0: #let's flush intermittently just in case the OS needs to synch.
+        ret.flush()
+        self.mmap_access_cnt=0
+      self.mmap_access_cnt+=1
+      return ret
+
+    # we use class variables because we don't want it serialized in an instance of this dataset
+    igzip_fobj = {}
+    def _get_igzip_fobj(self, file_path):
+        if file_path in igzip_fobj:
+            return igzip_fobj[file_path]
+        igzip_fobj[file_path] = fobj = get_igzip_obj(file_path)
+        return fobj
+
+    # we use class variables because we don't want it serialized in this instance
+    db_table = {}
+    db_connection = {}
+    def _get_db_table(self, table_name, connection_url):
+        if (table_name, connection_url) in db_table:
+            table =  db_table[(table_name, connection_url)]
+        else:
+            if connection_url in db_connection:
+                db =  db_connection[connection_url]
             else:
-                app = None
-        if parsed_url.scheme.lower() in 'sqlite':
-            # ref: https://github.com/pudo/dataset/issues/163
-            if 'poolclass' not in engine_kwargs:
-                engine_kwargs.config['poolclass'] = StaticPool
-        engine_kwargs['SQLALCHEMY_DATABASE_URI'] = url
-        try:
-            if app:
-                app.config['SQLALCHEMY_DATABASE_URI'] = url
-                self.flask_db = SQLAlchemy(app, engine_options=engine_kwargs)
-            else:
-                self.flask_db = SQLAlchemy(engine_options=engine_kwargs)            
-            # how do we work with session
-            self.engine = self.flask_db.engine
-            self.flask_db._engine_lock = self.lock = threading.RLock() # we are going to use a re-entrant lock because that's what dataset uses.
-        except:
-            self.engine = create_engine(url, **engine_kwargs)
-            self.lock = threading.RLock()
-        self.flask_db._engine_lock = self.lock = threading.RLock() # we are going to use a re-entrant lock because that's what dataset uses.
-        self.local = threading.local()
+                db_connection[connection_url] = db = DatabaseExt(connection_url)
+            db_table[(table_name, connection_url)] = table = db[table_name]
+        return table
 
-        if len(parsed_url.query):
-            query = parse_qs(parsed_url.query)
-            if schema is None:
-                schema_qs = query.get('schema', query.get('searchpath', []))
-                if len(schema_qs):
-                    schema = schema_qs.pop()
+    # todo, change the id key from "id" to something custom. this needs to be stored in the table meta-data.
+    @staticmethod
+    def _add_idx(batch, indices, idx,):
+        batch[idx] = indices # will this be shuffled if we are in shuffled mode?
+        return batch
 
-        self.types = dataset.types.Types()
-        self.schema = schema
-        self.url = url
-        self.row_type = row_type
-        self.ensure_schema = ensure_schema
-        self._tables = {}
+    #mapping a columun to a memmap array accessed by row
+    def set_mmap_feature_view(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_column="id", batch_size=100000, num_proc=4, map_fn=None):
+      dataset_path = os.path.dirname(self.cache_files[0]['filename'])
+      if mmap_path is None:
+               mmap_path = os.path.abspath(os.path.join(dataset_path, feature_view+".mmap"))
+      shape = list(shape)
+      shape[0] = len(self)
+      if idx_column not in self.features:
+        self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx': idx_column})
+      if not isinstance(dtype, str):
+          dtype =np.dtype(dtype).name
+      self.features_map[feature_view] = {'type':"mmap", 'path': mmap_path,  'dtype': dtype, 'shape': shape}
+      return self
 
-    # will only work for sqlite. 
-    # diferent databases have different fts. 
-    def create_fts_index_column(self, table_name, column, stemmer="unicode61"): #  porter 
-        # maybe we create a mirror sqlite database called fts_db if the database we are opening is not of sqlite type.
-        # the idea is we want to be able to locally attach fts with our datasets arrow files. 
-        self.db.executeable.execute('CREATE VIRTUAL TABLE {table_name}_idx USING FTS5(idx:INTEGER, {column}:VARCHAR, tokenize="{stemmer}");')
+    #mapping a column to an indexed gzip file accesed by line 
+    def set_igzip_feature_view(self, feature_view, path,  idx_column="id", batch_size=100000, num_proc=4, map_fn=None):
+      fobj = self._get_igzip_fobj(path)
+      if idx_column not in self.features:
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx': idx_column})
+      if len(fobj) > len(self):
+            self.add_item({idx_column: range(learn(self), len(fobj))})
+      self.features_map[feature_view] = {'type':"igzip", 'path': path}
+      return self
 
-    def create_table(self, table_name, primary_id=None, primary_type=None):
-        """Create a new table.
-
-        Either loads a table or creates it if it doesn't exist yet. You can
-        define the name and type of the primary key field, if a new table is to
-        be created. The default is to create an auto-incrementing integer,
-        ``id``. You can also set the primary key to be a string or big integer.
-        The caller will be responsible for the uniqueness of ``primary_id`` if
-        it is defined as a text type.
-
-        Returns a :py:class:`Table <dataset.Table>` instance.
-        ::
-
-            table = db.create_table('population')
-
-            # custom id and type
-            table2 = db.create_table('population2', 'age')
-            table3 = db.create_table('population3',
-                                     primary_id='city',
-                                     primary_type=db.types.text)
-            # custom length of String
-            table4 = db.create_table('population4',
-                                     primary_id='city',
-                                     primary_type=db.types.string(25))
-            # no primary key
-            table5 = db.create_table('population5',
-                                     primary_id=False)
-        """
-        assert not isinstance(primary_type, six.string_types), \
-            'Text-based primary_type support is dropped, use db.types.'
-        try:
-            self.flask_db.create_all() # TODO, don't call this if we already called 
-        except:
-            pass
-        table_name = dataset.util.normalize_table_name(table_name)
-        with self.lock:
-            if table_name not in self._tables:
-                self._tables[table_name] = TableExt(self, table_name,
-                                                 primary_id=primary_id,
-                                                 primary_type=primary_type,
-                                                 auto_create=True)
-            return self._tables.get(table_name)
-
-    def load_table(self, table_name):
-        """Load a table.
-
-        This will fail if the tables does not already exist in the database. If
-        the table exists, its columns will be reflected and are available on
-        the :py:class:`Table <dataset.Table>` object.
-
-        Returns a :py:class:`Table <dataset.Table>` instance.
-        ::
-
-            table = db.load_table('population')
-        """
-        try:
-            self.flask_db.create_all() # TODO, don't call this if we already called. how to sync the ._tables variable with the corresponding variable in 
-        except:
-            pass
-        table_name = dataset.util.normalize_table_name(table_name)
-        with self.lock:
-            if table_name not in self._tables:
-                self._tables[table_name] = TableExt(self, table_name)
-            return self._tables.get(table_name)
-
-
-class IndexGzipFileExt(igzip.IndexedGzipFile):
-    """This class inheriets from `` ingdex_gzip.IndexedGzipFile``. This class allows in addition to the functionality 
-    of IndexedGzipFile, access to a specific line based on the seek point of the line, using the __getitem__ method.
-
-    Additionally, a (conginguous) list or slice can be used, which will be more efficient then doing line by line access. 
+    # mapping columns to a sql database. creates a sqlalchmey/dataset dynamically with idx_column as the primary key. 
+    def set_sql_feature_view(self, table_name, connection_url, columns=None, idx_column="id",  batch_size=100000, num_proc=4, map_fn=None):
+        table = _get_db_table(table_name, connection_url)
+        if table.columns:
+            columns = table.columns
+        elif not columns:
+            raise RuntimeError(f"No column definition for table view {table_name}")
+        if idx_column not in self.features:
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'feature_view': idx_column})
+        if len(table) > len(self):
+            self.add_item({idx_column: range(len(self), len(table))})
+        for col in columns:
+            if col == idx_column:
+                continue
+            if col in self.features:
+                raise RuntimeError(f"Column {col} already in the dataset")
+            self.features_map[column] = {'type':'sql', 'connection_url': connection_url, 'table_name': table_name, 'column': column}
+        return self
     
-    The base IndexedGzipFile class allows for fast random access of a gzip
-    file by using the ``zran`` library to build and maintain an index of seek
-    points into the file.
-    ``IndexedGzipFile`` is an ``io.BufferedReader`` which wraps an
-    :class:`_IndexedGzipFile` instance. By accessing the ``_IndexedGzipFile``
-    instance through an ``io.BufferedReader``, read performance is improved
-    through buffering, and access to the I/O methods is made thread-safe.
-    A :meth:`pread` method is also implemented, as it is not implemented by
-    the ``io.BufferedReader``.
-    """
+    # note that while the id column corresponds to an index into an external storage, accessing an arrow dataset by index
+    # will not be guranteed to get the corresponding id. a[0] will return the first item in the current subset of the dataset. 
+    # but a[0] may return {'id': 10, 'mmap_embed': <array correponding to the 10th location in the mmap file>}
+    def _getitem(
+        self,
+        key: Union[int, slice, str], # should this be list as well??
+        format_type=None,
+        format_columns=None,
+        output_all_columns=False,
+        format_kwargs=None,
+    ) -> Union[Dict, List]:
+
+        # assumine we do error checking re format_columns and output_all_columns at a higher level??
+        format_columns = copy.copy(format_columns)
+        # this is the case where we are not getting any views.
+        if (not hasattr(self, "features_map"))  or (hasattr(self, "features_map") and not self.features_map) or (hasattr(self, "features_map")  and type(key) is str and key not in self.features_map):
+          return super()._getitem(
+              key,
+              format_type=format_type,
+              format_columns=format_columns,
+              output_all_columns=output_all_columns,
+              format_kwargs=format_kwargs)
+        
+        # this is the case where there are more than one columns, some of which might
+        # be an arrow column and at least one view. For the view, we need to also get the "id".  
+
+        # let's prepare the parameters to get just the arrow portion of the dataset
+        orig_key = key
+        if type(key) is str:
+          if not format_columns:
+            format_columns = [key]
+          else:
+            format_columns.append(key)
+          if key in self.features_map:
+            key = "id"
+        missing=[]
+        if format_columns:
+            for c in copy.copy(format_columns):
+                if c in self.features_map:
+                     missing.append(c)
+                     format_columns.remove(c)
+            if "id" not in format_columns:
+                format_columns.append("id")
+            else:
+                missing.append("id")
+
+        # let's get the data that is in the arrow data first, including the id
+        outputs = super()._getitem(
+              key,
+              format_type=format_type,
+              format_columns=format_columns,
+              output_all_columns=output_all_columns,
+              format_kwargs=format_kwargs)
+
+        # this is the case where we are only getting view data, so the only arrow data returned is the 'id'.
+        # so we need the id column identified so we can index into the view data source.
+        if type(outputs) in (np.array, list):
+          outputs = {'id': outputs}
+
+        # do some cleanup.
+        if type(orig_key) is str and format_columns and "id" in format_columns:
+            format_columns.remove("id")
+        if format_columns is not None:
+            format_columns.extend(missing)
+        # now get the views and combine views and  arrow data 
+        return self._format_views(outputs, format_columns=format_columns, format_type=format_type, 
+                                 output_all_columns=output_all_columns, format_kwargs=format_kwargs)
+        
+    def _format_views(self,  
+        outputs_or_keys,       
+        format_type=None,
+        format_columns=None,
+        output_all_columns=False,
+        format_kwargs=None):
+
+        def getitems(self, outputs, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items):
+            if not format_columns:
+                items = list(self.features_map.items())
+            else:
+                items = [(column, self.features_map[column]) for column in format_columns if column in self.features_map]
+            sql_results = {}
+            for feature, val in items:
+                if val['type'] == 'mmap':
+                    if mmap_by_items:
+                        if contiguous:
+                            outputs[feature] = [ self._get_mmap(val['path'], val['dtype'], val['shape']) for i in range(start, end)]
+                        else:
+                            outputs[feature] = [ self._get_mmap(val['path'], val['dtype'], val['shape']) for i in keys]
+                    else:
+                        if contiguous:
+                            outputs[feature] = self._get_mmap(val['path'], val['dtype'], val['shape'])[start:end]
+                        else:
+                            outputs[feature] = self._get_mmap(val['path'], val['dtype'], val['shape'])[keys]                            
+                elif val['type'] == 'igzip':
+                    if contiguous:
+                        outputs[feature] = self._get_igzip_fobj(val['path'])[start:end]
+                    else:
+                        outputs[feature] = self._get_igzip_fobj(val['path'])[keys]
+                elif val['type'] == 'sql':
+                    sql_results[(val['table_name'], val['connection_url'])] = sql_results.get((val['table_name'], val['connection_url']),[])+[feature]
+            for table_connection, features in sql_results:
+                table_name, connection_url = table_connection
+                table= self._get_db_table(table_name, connection_url)
+                if contiguous:
+                    for row in table.find((table.id, 'between', (start, end)), _columns=features):
+                        for feature in features:
+                            outputs[feature] = output.get(feature,[]) + row[feature]
+                else:
+                    for row in table.find((table.id, 'in', keys), _columns=features):
+                        for feature in features:
+                            outputs[feature] = output.get(feature,[]) + row[feature]
+            return outputs
+        format_kwargs = format_kwargs if format_kwargs is not None else {}
+        format_columns = format_columns if format_columns is not None else []
+        start = end = 0
+        contiguous = False
+        if format_type in ("custom", "torch", "tensorflow", None) and type(outputs_or_keys) is not pd.DataFrame: 
+            transform = format_kwargs.get('transform')
+            if isinstance(outputs_or_keys, str):
+                keys = slice(0, len(self))
+                outputs = {}
+                contiguous=True
+            elif isinstance(outputs_or_keys, slice):
+                keys = outputs_or_keys
+                outputs = {}
+                contiguous=True
+            elif isinstance(outputs_or_keys, dict):
+                keys = outputs_or_keys["id"]
+                outputs = outputs_or_keys
+            else:
+                keys = outputs_or_keys
+                outputs = {}
+            if not contiguous:
+                  if isinstance(keys, int):
+                        contiguous = False
+                  else:
+                        contiguous, start, end = is_contiguous(keys)
+            else:
+                  if isinstance(keys, slice):
+                    start = 0 if keys.start is None else keys.start
+                    end = len(self) if keys.stop is None else keys.stop
+                  else:
+                    start = keys[0]
+                    end = keys[-1]+1
+            outputs = getitems(self, outputs, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=False)
+            if transform is not None:
+              outputs = transform(outputs)
+            if "id" in outputs and format_columns and "id" not in format_columns: del outputs["id"] 
+            # is this right. will custom ever return a dict type if there is only one column, or do we 
+            # default to returning the only column.
+            if len(outputs) == 1: outputs = list(outputs.values())[0]
+            if format_type == "torch":
+              import torch
+              return torch.tensor(outputs, **format_kwargs)
+            elif format_type == "tensorflow":
+              import tensorflow
+              return tensorflow.ragged.constant(outputs, **format_kwargs)
+            else:
+              return outputs
+        elif format_type == "pandas" or isinstance(outputs_or_keys, pd.DataFrame):
+            # do we do transforms for this case??
+            if isinstance(outputs_or_keys, str):
+                start = 0 
+                end = len(self) 
+                keys = range(start, stop)
+                outputs = None
+                contiguous=True
+            elif isinstance(outputs_or_keys, slice):
+                start = 0 if outputs_or_keys.start is None else outputs_or_keys.start
+                end = len(self) if outputs_or_keys.stop is None else outputs_or_keys.stop
+                keys = range(outputs_or_keys.start, outputs_or_keys.stop)
+                outputs = None
+                contiguous=True
+            elif isinstance(outputs_or_keys, dict) or isinstance(outputs_or_keys,  pd.DataFrame):
+                outputs = outputs_or_keys
+                outputs = pd.DataFrame(outputs)
+                keys = outputs_or_keys["id"]
+                contiguous, start, end = is_contiguous(keys)
+            else:
+                raise RuntimeError("got unknown outputs or keys type")
+            if outputs is None:
+                outputs = pd.DataFrame()
+            outputs = getitems(self, outputs,  keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=True)
+            if "id" in outputs and format_columns and "id" not in format_columns: 
+              outputs.drop("id", axis=1) 
+            if len(format_columns) == 1:
+              outputs = outputs[format_columns[0]]
+            return outputs
+        raise RuntimeError("got unknown outputs or keys type")
+
+    def to_csv(
+        self,
+        path_or_buf: Union[PathLike, BinaryIO],
+        batch_size: Optional[int] = None,
+        **to_csv_kwargs,
+    ) -> int:
+      pass
+
+    def to_dict(self, batch_size: Optional[int] = None, batched: bool = False) -> Union[dict, Iterator[dict]]:
+        if (not hasattr(self, "features_map") or not self.features_map) and len(self.features) == 1 and "id" in self.features:
+            return {}
+        #TODO - put back direct mmap access method here?
+        ret = super().to_dict(batch_size=batch_size, batched=batched)
+        if isinstance(ret, Iterator):
+            for r in ret:
+                yield self._format_views(r, contiguous=True)
+            return 
+        return self._format_views(ret, contiguous=True)
+
+    def to_pandas(
+        self, batch_size: Optional[int] = None, batched: bool = False
+    ) -> Union[pd.DataFrame, Iterator[pd.DataFrame]]:
+        if (not hasattr(self, "features_map") or not self.features_map) and len(self.features) == 1 and "id" in self.features:
+            return pd.DataFrame()
+        #TODO - put back direct mmap access method here?
+        ret = super().to_pandas(batch_size=batch_size, batched=batched)
+        if isinstance(ret, Iterator):
+            for r in ret:
+                yield self._format_views(r, contiguous=True)
+        return self._format_views(ret, contiguous=True)
+        
+
+        
+    @transmit_format
+    @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "cache_file_name"])
+    def _map_single(
+        self,
+        function: Optional[Callable] = None,
+        with_indices: bool = False,
+        input_columns: Optional[Union[str, List[str]]] = None,
+        batched: bool = False,
+        batch_size: Optional[int] = 1000,
+        drop_last_batch: bool = False,
+        remove_columns: Optional[List[str]] = None,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = None,
+        cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        features: Optional[Features] = None,
+        disable_nullable: bool = False,
+        fn_kwargs: Optional[dict] = None,
+        new_fingerprint: Optional[str] = None,
+        rank: Optional[int] = None,
+        offset: int = 0,
+        update_data=True,
+    ) -> "Datastore":
+      ret = super()._map_single(function=function,
+            with_indices=with_indices,
+            input_columns=input_columns,
+            batched=batched,
+            batch_size=batch_size,
+            drop_last_batch=drop_last_batch,
+            remove_columns=remove_columns,
+            keep_in_memory=keep_in_memory,
+            load_from_cache_file=load_from_cache_file,
+            cache_file_name=cache_file_name,
+            writer_batch_size=writer_batch_size,
+            features=features,
+            disable_nullable=disable_nullable,
+            fn_kwargs=fn_kwargs,
+            new_fingerprint=new_fingerprint,
+            rank=rank,
+            offset=offset,
+            update_data=update_data,)
+      features_map= copy.deepcopy(self.features_map)
+      for column in remove_columns if remove_columns is not None else []:
+          if column in features_map:
+              del features_map[column]
+      return Datastore.from_dataset(ret, features_map=features_map)
+
+    def map(
+        self,
+        function: Optional[Callable] = None,
+        with_indices: bool = False,
+        input_columns: Optional[Union[str, List[str]]] = None,
+        batched: bool = False,
+        batch_size: Optional[int] = 1000,
+        drop_last_batch: bool = False,
+        remove_columns: Optional[List[str]] = None,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = True,
+        cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        features: Optional[Features] = None,
+        disable_nullable: bool = False,
+        fn_kwargs: Optional[dict] = None,
+        num_proc: Optional[int] = None,
+        suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
+        new_fingerprint: Optional[str] = None,
+        parallel_backend_type: Optional[List[str]] = ["dask"]
+    ) -> "Datastore":
+
+        if True:
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+            
+            with parallel_backend(**parallel_backend_type): # 'distributed', scheduler_host='HOST:PORT'):
+                os.environ = prev_env
+                shards = [
+                    self.shard(num_shards=num_proc, index=rank, contiguous=True, keep_in_memory=keep_in_memory)
+                    for rank in range(num_proc)
+                ]
+                kwds_per_shard = [
+                    dict(
+                        self=shards[rank],
+                        function=function,
+                        with_indices=with_indices,
+                        input_columns=input_columns,
+                        batched=batched,
+                        batch_size=batch_size,
+                        drop_last_batch=drop_last_batch,
+                        remove_columns=remove_columns,
+                        keep_in_memory=keep_in_memory,
+                        load_from_cache_file=load_from_cache_file,
+                        cache_file_name=format_cache_file_name(cache_file_name, rank)
+                        if cache_file_name is not None
+                        else None,
+                        writer_batch_size=writer_batch_size,
+                        features=features.copy() if features is not None else None,
+                        disable_nullable=disable_nullable,
+                        fn_kwargs=fn_kwargs,
+                        rank=rank,
+                        offset=sum(len(s) for s in shards[:rank]),
+                        desc=desc,
+                    )
+                    for rank in range(num_proc)
+                ]
+                logger.info("Spawning {} processes".format(num_proc))
+                # TODO: do smart jobs allocaiton based on which node the shard of the data is stored
+                transformed_shards = Parrallel(n_jobs = num_proc, verbose=1)(delayed(self.__class__._map_single)(self, **kwds) for kwds in kwds_per_shard)
+                logger.info("Concatenating {} shards from multiprocessing".format(num_proc))
+                result = concatenate_datasets(transformed_shards)
+                if new_fingerprint is not None:
+                    result._fingerprint = new_fingerprint
+                ret = result
+        features_map= copy.deepcopy(self.features_map)
+        for column in remove_columns if remove_columns is not None else []:
+          if column in features_map:
+              del features_map[column]
+        return Datastore.from_dataset(ret, features_map=features_map)
 
 
-    def __init__(self, *args, **kwargs):
-        """Create an ``LineIndexGzipFile``. The file may be specified either
-        with an open file handle (``fileobj``), or with a ``filename``. If the
-        former, the file must have been opened in ``'rb'`` mode.
-        .. note:: The ``auto_build`` behaviour only takes place on calls to
-                  :meth:`seek`.
-        :arg filename:         File name or open file handle.
-        :arg fileobj:          Open file handle.
-        :arg mode:             Opening mode. Must be either ``'r'`` or ``'rb``.
-        :arg auto_build:       If ``True`` (the default), the index is
-                               automatically built on calls to :meth:`seek`.
-        :arg skip_crc_check:   Defaults to ``False``. If ``True``, CRC/size
-                               validation of the uncompressed data is not
-                               performed.
-        :arg spacing:          Number of bytes between index seek points.
-        :arg window_size:      Number of bytes of uncompressed data stored with
-                               each seek point.
-        :arg readbuf_size:     Size of buffer in bytes for storing compressed
-                               data read in from the file.
-        :arg readall_buf_size: Size of buffer in bytes used by :meth:`read`
-                               when reading until EOF.
-        :arg drop_handles:     Has no effect if an open ``fid`` is specified,
-                               rather than a ``filename``.  If ``True`` (the
-                               default), a handle to the file is opened and
-                               closed on every access. Otherwise the file is
-                               opened at ``__cinit__``, and kept open until
-                               this ``_IndexedGzipFile`` is destroyed.
-        :arg index_file:       Pre-generated index for this ``gz`` file -
-                               if provided, passed through to
-                               :meth:`import_index`.
-        :arg buffer_size:      Optional, must be passed as a keyword argument.
-                               Passed through to
-                               ``io.BufferedReader.__init__``. If not provided,
-                               a default value of 1048576 is used.
-        :arg line2seekpoint:      Optional, must be passed as a keyword argument.
-                               If not passed, this will automatically be created.    
-        :arg file_size:      Optional, must be passed as a keyword argument.
-                               If not passed, this will automatically be created.                             
-        """
-        self.line2seekpoint        = kwargs.pop('line2seekpoint', None)
-        self.file_size        = kwargs.pop('file_size', None)
-        super().__init__(*args, **kwargs)
-        if self.file_size is None:
-          try:
-            pos = self.tell()
-            self.seek(0, os.SEEK_END)
-            self.file_size = self.tell() 
-            self.seek(pos, 0)
-          except:
-            self.build_full_index()
-            pos = self.tell()
-            self.seek(0, os.SEEK_END)
-            self.file_size =  self.tell() 
-            self.seek(pos, 0)
+    def class_encode_column(self, column: str) -> "Datastore":
+        if column in self.features_map:
+            raise NotImplementedError()
+        ret = super().class_encode_column(column)
+        return Datastore.from_dataset(ret, features_map=self.features_map)
+    
+    @fingerprint_transform(inplace=False)
+    def flatten(self, new_fingerprint, max_depth=16) -> "Datastore":
+        ret = super().flatten(new_fingerprint, max_depth)
+        return Datastore.from_dataset(ret, features_map=self.features_map)
 
-        if self.line2seekpoint is None:
-          self.line2seekpoint=[]
-          with self._IndexedGzipFile__file_lock:
-            pos = self.tell()
-            self.seek(0, 0)
-            self.line2seekpoint.append(0)
-            while True:
-              line = self.readline().decode()
-              #print(line)
-              if not line:
-                break
-              self.line2seekpoint.append(self.tell())
+    def cast(
+        self,
+        features: Features,
+        batch_size: Optional[int] = 10_000,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = True,
+        cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 10_000,
+        num_proc: Optional[int] = None,
+    ) -> "Datastore":
+        for feature in self.features_map:
+            if feature not in features:
+                continue
+            if  self.features[feature] != features[feature]:
+                raise NotImplementedError()
+        ret = super().cast(
+          features =features,
+          batch_size = batch_size ,
+          keep_in_memory = keep_in_memory,
+          load_from_cache_file = load_from_cache_file,
+          cache_file_name = cache_file_name,
+          writer_batch_size = writer_batch_size,
+          num_proc = num_proc)
+        return Datastore.from_dataset(ret, features_map=self.features_map)
 
-            self.seek(pos, 0)
-          
+    @fingerprint_transform(inplace=False)
+    def remove_columns(self, column_names: Union[str, List[str]], new_fingerprint) -> "Datastore":
+        ret = super().remove_columns(column_names=column_names, new_fingerprint=new_fingerprint)
+        features_map= copy.deepcopy(self.features_map)
+        for column in [column_names] if instance(column_names, str) else column_names:
+            if column in features_map:
+                del features_map[column]
+        return Datastore.from_dataset(ret, features_map=features_map)
+
+    @fingerprint_transform(inplace=False)
+    def rename_column(self, original_column_name: str, new_column_name: str, new_fingerprint) -> "Datastore":
+        ret = super().rename_column(original_column_name=original_column_name, new_column_name=new_column_name, new_fingerprint=new_fingerprint)
+        features_map= copy.deepcopy(self.features_map)
+        if original_column_name in features_map:
+            val = features_map[original_column_name]
+            del features_map[original_column_name]
+            features_map[new_column_name] = val
+        return Datastore.from_dataset(ret, features_map=features_map)
+
+
+    @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "cache_file_name"])
+    def filter(
+        self,
+        function: Optional[Callable] = None,
+        with_indices=False,
+        input_columns: Optional[Union[str, List[str]]] = None,
+        batch_size: Optional[int] = 1000,
+        remove_columns: Optional[List[str]] = None,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = True,
+        cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        fn_kwargs: Optional[dict] = None,
+        num_proc: Optional[int] = None,
+        suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
+        new_fingerprint: Optional[str] = None,
+    ) -> "Datastore":
+        ret = super().filter(
+            function=function,
+            with_indices=with_indices,
+            input_columns=input_columns,
+            batch_size=batch_size,
+            remove_columns=remove_columns,
+            keep_in_memory=keep_in_memory,
+            load_from_cache_file=load_from_cache_file,
+            cache_file_name=cache_file_name,
+            writer_batch_size=writer_batch_size,
+            fn_kwargs=fn_kwargs,
+            num_proc=num_proc,
+            suffix_template=suffix_template,
+            new_fingerprint=new_fingerprint)
+        features_map= copy.deepcopy(self.features_map)
+        for column in remove_columns if remove_columns is not None else []:
+            if column in features_map:
+                del features_map[column]
+        return Datastore.from_dataset(ret, features_map=features_map)
+
+    #replayable_table_alteration
+    @fingerprint_transform(inplace=False, ignore_kwargs=["cache_file_name"])
+    def flatten_indices(
+        self,
+        keep_in_memory: bool = False,
+        cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        features: Optional[Features] = None,
+        disable_nullable: bool = True,
+        new_fingerprint: Optional[str] = None,
+    ) -> "Datastore":
+        ret = super().flatten_indices(
+            keep_in_memory=keep_in_memory,
+            cache_file_name=cache_file_name,
+            writer_batch_size=writer_batch_size,
+            features=features,
+            disable_nullable=disable_nullable,
+            new_fingerprint=new_fingerprint,
+            )
+        return Datastore.from_dataset(ret, features_map=self.features_map)
+
+    
+    @transmit_format
+    @fingerprint_transform(inplace=False, ignore_kwargs=["indices_cache_file_name"])
+    def select_new(
+        self,
+        indices: Iterable,
+        keep_in_memory: bool = False,
+        indices_cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        new_fingerprint: Optional[str] = None,
+    ) -> "Datastore":
+        ret = super().select(
+            indices=indices,
+            keep_in_memory=keep_in_memory,
+            indices_cache_file_name=indices_cache_file_name,
+            writer_batch_size=writer_batch_size,
+            new_fingerprint=new_fingerprint,
+            ) 
+        return Datastore.from_dataset(ret, features_map=self.features_map)
+
+    @transmit_format
+    @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "indices_cache_file_name"])
+    def sort(
+        self,
+        column: str,
+        reverse: bool = False,
+        kind: str = None,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = True,
+        indices_cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        new_fingerprint: Optional[str] = None,
+    ) -> "Datastore":
+        if column in self.features_map:
+            raise NotImplementedError()
+        ret = super().sort(
+            column=column,
+            reverse=reverse,
+            kind=kind,
+            keep_in_memory=keep_in_memory,
+            load_from_cache_file=load_from_cache_file,
+            indices_cache_file_name=indices_cache_file_name,
+            writer_batch_size=writer_batch_size,
+            new_fingerprint=new_fingerprint,
+        )
+        return Datastore.from_dataset(ret, features_map=self.features_map)
+
+
+
+    @transmit_format
+    @fingerprint_transform(
+        inplace=False, randomized_function=True, ignore_kwargs=["load_from_cache_file", "indices_cache_file_name"]
+    )
+    def shuffle(
+        self,
+        seed: Optional[int] = None,
+        generator: Optional[np.random.Generator] = None,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = True,
+        indices_cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        new_fingerprint: Optional[str] = None,
+    ) -> "Datastore":
+        ret = super().shuffle(
+            seed=seed,
+            generator=generator,
+            keep_in_memory=keep_in_memory,
+            load_from_cache_file=load_from_cache_file,
+            indices_cache_file_name=indices_cache_file_name,
+            writer_batch_size=writer_batch_size,
+            new_fingerprint=new_fingerprint,
+            )
+        return Datastore.from_dataset(ret, features_map=self.features_map)
+  
+    @transmit_format
+    @fingerprint_transform(
+        inplace=False,
+        randomized_function=True,
+        fingerprint_names=["train_new_fingerprint", "test_new_fingerprint"],
+        ignore_kwargs=["load_from_cache_file", "train_indices_cache_file_name", "test_indices_cache_file_name"],
+    )
+    def train_test_split(
+        self,
+        test_size: Union[float, int, None] = None,
+        train_size: Union[float, int, None] = None,
+        shuffle: bool = True,
+        seed: Optional[int] = None,
+        generator: Optional[np.random.Generator] = None,
+        keep_in_memory: bool = False,
+        load_from_cache_file: bool = True,
+        train_indices_cache_file_name: Optional[str] = None,
+        test_indices_cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+        train_new_fingerprint: Optional[str] = None,
+        test_new_fingerprint: Optional[str] = None,
+    ) -> "DatastoreDict":
+        ret = super.train_test_split(
+            test_size=test_size,
+            train_size=train_size,
+            shuffle=shuffle,
+            seed=seed,
+            generator=generator,
+            keep_in_memory=keep_in_memory,
+            load_from_cache_file=load_from_cache_file,
+            train_indices_cache_file_name=train_indices_cache_file_name,
+            test_indices_cache_file_name=test_indices_cache_file_name,
+            writer_batch_size=writer_batch_size,
+            train_new_fingerprint=train_new_fingerprint,
+            test_new_fingerprint=test_new_fingerprint,
+        )
+        for key in list(ret.keys()):
+            ret[key] = Datastore.from_dataset(ret, features_map=self.features_map)
+        return ret
+
+    # shard doesn't seem to work properly because of pickling problems? Maybe it's because it's being run in Colab with autoload??
+    def shard_new(
+        self,
+        num_shards: int,
+        index: int,
+        contiguous: bool = False,
+        keep_in_memory: bool = False,
+        indices_cache_file_name: Optional[str] = None,
+        writer_batch_size: Optional[int] = 1000,
+    ) -> "Datastore":
+        ret = super().shard(num_shards=num_shards,
+          index=index,
+          contiguous=contiguous,
+          keep_in_memory=keep_in_memory,
+          indices_cache_file_name=indices_cache_file_name,
+          writer_batch_size=writer_batch_size)
+        return ret # Datastore.from_dataset(ret, features_map=self.features_map)
+
+
+    # TODO: Fiix load_from_idsk and save_to_disk to work with current version of datasets
 
     @staticmethod
-    def unpickle(state):
-      """Create a new ``IndexedGzipFile`` from a pickled state.
-      :arg state: State of a pickled object, as returned by the
-                  ``IndexedGzipFile.__reduce__`` method.
-      :returns:   A new ``IndexedGzipFile`` object.
-      """
+    def load_from_disk(dataset_path: str, fs=None, shared_dir=None) -> "Datastore":
+      # TODO, move from shared drive to cached drive
+        ret = Dataset.load_from_disk(dataset_path=dataset_path, fs=fs)
+        dataset_path = os.path.dirname(ret._data_files[0]["filename"])
+        with open(
+            Path(dataset_path, "state.json").as_posix(), "r", encoding="utf-8"
+        ) as state_file:
+            state = json.load(state_file)
+        ret.features_map =  state.get("features_map")
+        for key, values in list(ret.features_map.items()):
+            mmap_path = os.path.abspath(os.path.join(dataset_path, values[0]))
+            ret.features_map[key][0] =  mmap_path
+        return Datastore.from_dataset(ret)
+        #todo, do periodic sync with the shared drive, and lazy loading of shareds from shared drive
 
-      tell  = state.pop('tell')
-      index = state.pop('index')
-      state['filename'] = os.path.join(os.getcwd(), os.path.basename(state['filename']))
-      gzobj = IndexGzipFileExt(**state)
-
-      if index is not None:
-          gzobj.import_index(fileobj=io.BytesIO(index))
-
-      gzobj.seek(tell)
-
-      return gzobj
-
-    def __reduce__(self):
-        """Used to pickle an ``LineIndexGzipFile``.
-        Returns a tuple containing:
-          - a reference to the ``unpickle`` function
-          - a tuple containing a "state" object, which can be passed
-            to ``unpickle``.
+    def save_to_disk(self, dataset_path: str, move_files=True):
         """
+        Save the datastore along with all mmaps and uris in a directory
 
-        fobj = self._IndexedGzipFile__igz_fobj
-
-        if (not fobj.drop_handles) or (not fobj.own_file):
-            raise pickle.PicklingError(
-                'Cannot pickle IndexedGzipFile that has been created '
-                'with an open file object, or that has been created '
-                'with drop_handles=False')
-
-        # export and serialise the index if
-        # any index points have been created.
-        # The index data is serialised as a
-        # bytes object.
-        if fobj.npoints == 0:
-            index = None
-
-        else:
-            index = io.BytesIO()
-            self.export_index(fileobj=index)
-            index = index.getvalue()
-
-        state = {
-            'filename'         : fobj.filename,
-            'auto_build'       : fobj.auto_build,
-            'spacing'          : fobj.spacing,
-            'window_size'      : fobj.window_size,
-            'readbuf_size'     : fobj.readbuf_size,
-            'readall_buf_size' : fobj.readall_buf_size,
-            'buffer_size'      : self._IndexedGzipFile__buffer_size,
-            'line2seekpoint'   : self.line2seekpoint,
-            'file_size'   : self.file_size,
-            'tell'             : self.tell(),
-            'index'            : index}
-
-        return (IndexGzipFileExt.unpickle, (state, ))
+        Args:
+            dataset_path (``str``): path of the dataset directory where the dataset will be saved to
+        """
+        assert (
+            not self.list_indexes()
+        ), "please remove all the indexes using `dataset.drop_index` before saving a dataset"
+        orig_self = self
+        if not move_files:
+            self = pickle.loads(pickle.dumps(self))
+        os.makedirs(dataset_path, exist_ok=True)
+        orig_dataset_path = os.path.dirname(self._data_files[0]["filename"])
+        # Write indices if needed
+        if self._indices is not None:
+            if not self._indices_data_files:
+                cache_file_name = os.path.join(dataset_path, "indices.arrow")
+                writer = ArrowWriter(path=cache_file_name)
+                writer.write_table(self._indices)
+                writer.finalize()
+                self._indices_data_files = [{"filename": cache_file_name}]
+        # Write dataset if needed
+        if not self._data_files or any(len(h["transforms"]) > 0 for h in self._inplace_history):
+            cache_file_name = os.path.join(dataset_path, "dataset.arrow")
+            writer = ArrowWriter(path=cache_file_name)
+            writer.write_table(self._data)
+            writer.finalize()
+            self._data_files = [{"filename": cache_file_name}]
+            self._inplace_history = [{"transforms": []}]
+        # Copy all files into the dataset directory
+        for data_file in self._data_files + self._indices_data_files :
+            # Copy file to destination directory
+            src = data_file["filename"]
+            filename = Path(src).name
+            dest = os.path.join(dataset_path, filename)
+            if src != dest:
+                shutil.move(src, dest)
+            # Change path to relative path from inside the destination directory
+            data_file["filename"] = filename
+        for key, value in list(self.features_map.items()):
+            # Copy file to destination directory
+            src = value[0]
+            filename = Path(src).name
+            dest = os.path.join(dataset_path, filename)
+            # if the src is not under the 
+            if src != dest and os.path.exists(src):
+                if filename.startswith(orig_dataset_path):
+                  shutil.move(src, dest)
+                else:
+                  shutil.copy(src, dest)
+            # Change path to relative path from inside the destination directory
+            self.features_map[key] = [filename]  + value[1:]
+        if not move_files:
+          return orig_self
+        # Get state
+        state = self.__getstate__()
+        dataset_info = json.loads(state.pop("_info"))
+        assert state.get("_data") is None, "arrow table needs to be memory mapped"
+        assert state.get("_indices") is None, "arrow table needs to be memory mapped"
+        assert all(
+            len(h["transforms"]) == 0 for h in state.get("_inplace_history", [])
+        ), "in-place history needs to be empty"
+        # Serialize state
+        with open(os.path.join(dataset_path, "state.json"), "w", encoding="utf-8") as state_file:
+            json.dump(state, state_file, indent=2, sort_keys=True)
+        with open(os.path.join(dataset_path, "dataset_info.json"), "w", encoding="utf-8") as dataset_info_file:
+            json.dump(dataset_info, dataset_info_file, indent=2, sort_keys=True)
+#        logger.info("Dataset saved in {}".format(dataset_path))
+        for key, values in list(self.features_map.items()):
+            mmap_path = os.path.abspath(os.path.join(dataset_path, values[0]))
+            self.features_map[key][0] =  mmap_path
+        return self
 
     
-    def __iter__(self):
-        len_self = len(self)
-        for start in range(0, len_self, 1000):
-          end = min(len_self, start+1000)
-          start = self.line2seekpoint[start]
-          if end >= len_self:
-            end = self.file_size
-          else:
-            end= self.line2seekpoint[end+1]-1
-          ret = []
-          with self._IndexedGzipFile__file_lock:
-            pos = self.tell()
-            self.seek(start, 0)
-            ret= self.read(end-start).decode().split('\n')
-            self.seek(pos, 0)
-          for line in ret:
-            yield line
 
-    def __len__(self):
-        return len(self.line2seekpoint)
 
-    def __getitem__(self, keys):
-        start, end = 0, 0
-        if isinstance(keys, int):
-          contiguous = False
-        elif isinstance(keys, slice):
-          contiguous = True
-          start = 0 if keys.start is None else keys.start
-          end = len(self) if keys.stop is None else keys.stop
+
+# TODO, convert this function to view sharded datasets across Dask nodes as a single dataset
+def concatenate_datasets_shards(
+    dsets: List[Dataset],
+    info: Optional[Any] = None,
+    split: Optional[Any] = None,
+    axis: int = 0,
+):
+    """
+    Converts a list of :class:`Dataset` with the same schema into a single :class:`Dataset`.
+    Args:
+        dsets (:obj:`List[datasets.Dataset]`): List of Datasets to concatenate.
+        info (:class:`DatasetInfo`, optional): Dataset information, like description, citation, etc.
+        split (:class:`NamedSplit`, optional): Name of the dataset split.
+        axis (``{0, 1}``, default ``0``, meaning over rows):
+            Axis to concatenate over, where ``0`` means over rows (vertically) and ``1`` means over columns
+            (horizontally).
+            .. versionadded:: 1.6.0
+    """
+    if axis == 0 and not all([dset.features.type == dsets[0].features.type for dset in dsets]):
+        raise ValueError("Features must match for all datasets")
+    elif axis == 1 and not all([dset.num_rows == dsets[0].num_rows for dset in dsets]):
+        raise ValueError("Number of rows must match for all datasets")
+
+    # Find common format or reset format
+    format = dsets[0].format
+    if any(dset.format != format for dset in dsets):
+        format = {}
+        logger.info("Some of the datasets have disparate format. Resetting the format of the concatenated dataset.")
+
+    # Concatenate tables
+    table = concat_tables([dset._data for dset in dsets if len(dset._data) > 0], axis=axis)
+    if axis == 1:
+        table = update_metadata_with_features(table, None)
+
+    def apply_offset_to_indices_table(table, offset):
+        if offset == 0:
+            return table
         else:
-          contiguous, start, end = is_contiguous(keys)
+            array = table["indices"]
+            new_array = pc.add(array, pa.scalar(offset, type=pa.uint64()))
+            return InMemoryTable.from_arrays([new_array], names=["indices"])
 
-        if contiguous:
-          if start >= len(self.line2seekpoint) or end >= len(self.line2seekpoint):
-            raise RuntimError(f"indexes {start}..{end} out of range")
-          start = self.line2seekpoint[start]
-          end= self.line2seekpoint[end+1]-1
-          with self._IndexedGzipFile__file_lock:
-            pos = self.tell()
-            self.seek(start, 0)
-            ret= self.read(end-start).decode().split('\n')
-            self.seek(pos, 0)
-            return ret
-        elif isinstance(keys, int):
-          if keys >= len(self.line2seekpoint):
-            raise RuntimError(f"index {keys} out of range")
-          start = self.line2seekpoint[keys]
-          with self._IndexedGzipFile__file_lock:
-            pos = self.tell()
-            self.seek(start, 0)
-            ret= self.readline().decode()
-            self.seek(pos, 0)
-            return ret
+    # Concatenate indices if they exist
+    if any(dset._indices is not None for dset in dsets):
+
+        # Datasets with no indices tables are replaced with a dataset with an indices table in memory.
+        # Applying an offset to an indices table also brings the table in memory.
+        for i in range(len(dsets)):
+            if dsets[i]._indices is None:
+                dsets[i] = dsets[i].select(range(len(dsets[i])))
+        assert all(dset._indices is not None for dset in dsets), "each dataset should have an indices table"
+
+        # An offset needs to be applied to the indices before concatenating
+        indices_tables = []
+        offset = 0
+        for dset in dsets:
+            indices_tables.append(apply_offset_to_indices_table(dset._indices, offset))
+            offset += len(dset._data)
+
+        # Concatenate indices
+        indices_tables = [t for t in indices_tables if len(t) > 0]
+        if indices_tables:
+            indices_table = concat_tables(indices_tables)
         else:
-          return [self[idx] for idx in keys]
-
-
-# This is used for loading files from gdrive from colab. Files could be in flight while we try to retreive them.
-def wait_until_files_loaded(flist, ordered=False, max_tries=120): # wait 2 hrs max
-  ret_str =False
-  if isinstance(flist, str):
-    ret_str= True
-    flist = [[flist, 0]]
-  else:
-    flist = [[f, 0]for f in flist]
-  for j in range(len(flist)*max_tries):
-    num_done = 0
-    for i, val in enumerate(flist):
-      if val is None:
-        num_done += 1
-        continue
-      (f, incr) = val
-      if incr > max_tries:
-        raise RuntimeError("Timed out while trying to wait for file " + str(f))
-      size1 = os.stat(f).st_size
-      time.sleep(min(600, 1 + incr))
-      incr += 1
-      if os.stat(f).st_size == size1:
-        flist[i] = None
-        num_done += 1
-        if ret_str: 
-          return f
-        else:
-          yield f
-      else:
-        flist[i]=[f,incr]
-    if num_done == len(flist):
-      return
-  raise RuntimeError("Something went really wrong")
-
-# just a wrapper to load igzip and regular .txt/.csv/.tsv files
-def get_file_read_obj(f, mode="rb"):
-  wait_until_files_loaded(f)
-  if f.endswith(".gz"):
-    if not os.path.exists(f.replace(".gz",".igz")):
-        fobj = IndexGzipFileExt(f)
-        fobj.build_full_index()
-        with open(f.replace(".gz",".igz"), "wb") as file:
-          pickle.dump(fobj, file, pickle.HIGHEST_PROTOCOL)
+            indices_table = InMemoryTable.from_batches([], schema=pa.schema({"indices": pa.int64()}))
     else:
-      cwd = os.getcwd()
-      dir = os.path.abspath(os.path.dirname(f))
-      f = os.path.basename(f)
-      if dir:
-        os.chdir(dir)
-      with open(f.replace(".gz",".igz"), "rb") as file:
-        fobj = pickle.load(file)
-      os.chdir(cwd)
-    return fobj
-  else:
-    return open(f, mode)
+        indices_table = None
 
+    # Concatenate infos
+    if info is None:
+        info = DatasetInfo.from_merge([dset.info for dset in dsets])
+    fingerprint = update_fingerprint(
+        "".join(dset._fingerprint for dset in dsets), concatenate_datasets, {"info": info, "split": split}
+    )
 
-
-# getting file size, working with igzip files and regular txt files
-def get_file_size(fobj):
-  if not isinstance(fobj, IndexGzipFileExt):
-    return os.stat(f).st_size
-  else:  
-    try:
-      fobj.seek(0, os.SEEK_END)
-      file_size = fobj.tell() 
-      fobj.seek(0, 0)
-      return file_size
-    except:
-      fobj = get_file_read_obj(fobj.filename)
-      fobj.seek(0, os.SEEK_END)
-      file_size = fobj.tell() 
-      fobj.seek(0, 0)
-      return file_size
-
-# break up a file into shards.
-def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
-      f = get_file_read_obj(input_file_path)
-      file_size= get_file_size(f)       
-      file_segs = []
-      if num_segs is not None:
-          file_seg_len = int(file_size/num_segs)
-
-      file_pos = 0
-      while file_pos < file_size:
-            if file_size - file_pos <= file_seg_len:
-                file_segs.append((file_pos, file_size - file_pos))
-                break
-            f.seek(file_pos+file_seg_len, 0)
-            seg_len = file_seg_len
-            line = f.readline()
-            if not line:
-                file_segs.append((file_pos, file_size - file_pos))
-                break
-            seg_len += len(line)
-            if file_size-(file_pos+seg_len) < file_seg_len:
-                file_segs.append((file_pos, file_size - file_pos))
-                break
-
-            file_segs.append((file_pos, seg_len))
-            file_pos = f.tell()
-      f.close()
-      line = None
-      return file_segs
+    # Make final concatenated dataset
+    concatenated_dataset = Dataset(
+        table,
+        info=info,
+        split=split,
+        indices_table=indices_table,
+        fingerprint=fingerprint,
+    )
+    concatenated_dataset.set_format(**format)
+    return concatenated_dataset
 
 if __name__ == "__main__":
-  %cd /content/
-  vi1 = get_file_read_obj("tmp/vi1.txt.gz")
+    import sys
+    import os
+    import numpy as np
+    from datasets import load_dataset
+    args = sys.argv[1:]
+    if "-test" in args:
+       dataset = load_dataset("oscar", "unshuffled_deduplicated_sw")['train']
+       print (dataset)
+       datastore = Datastore.from_dataset(dataset)
+       # put back the "id" column when asking for everything in a row
+       datastore.set_mmap_feature_view('embed', [-1, 512, 512], )
+       datastore.set_mmap_feature_view('token', [-1, 512], dtype=np.int32)
+       assert (datastore['embed'][0].shape) == (512, 512)
+       datastore['embed'][0][0] = 0.0
+       assert np.mean(datastore['embed'][0][0]) == 0
+       datastore['embed'][0][0] = 1.0
+       assert np.mean(datastore['embed'][0][0]) == 1.0
+       assert set(datastore[0].keys()) == set(['id', 'text', 'embed', 'token'])
+       assert len(datastore['text']) == 24803
+       assert len(datastore[0:10]['text']) == 10
+       assert (datastore[0:10]['token'].shape) == (10, 512)
