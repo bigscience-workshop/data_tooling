@@ -40,13 +40,24 @@ import indexed_gzip as igzip
 #import zstandard, io
 #from gzip_stream import GZIPCompressedStream
 import  fsspec.compression
+from sqlalchemy import create_engine
+from sqlalchemy.sql import text
+from sqlalchemy.schema import MetaData
+from sqlalchemy.pool import StaticPool
+from sqlalchemy.util import safe_reraise
+from sqlalchemy.engine.reflection import Inspector
+from dataset.types import Types
 
-from flask_sqlalchemy import SQLAlchemy
-from flask import Flask
+#from flask_sqlalchemy import SQLAlchemy
+#from flask import Flask
+#TODO: consider adding flask + gevent + oauth2 support built in model-view-controllers and permissions for Datastores of various types.
+#this will allow regional partners to permit searching and serving their own dataset and control access to them.
+
 import dataset
+from dataset.util import normalize_table_name
+from dataset.util import DatasetException, ResultIter, QUERY_STEP
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
-
 
 def is_contiguous(arr):
         start = None
@@ -63,7 +74,6 @@ def is_contiguous(arr):
         return contiguous, start, i+1
 
 class TableExt(dataset.Table):
-
 
     def find(self, *_clauses, **kwargs):
         """Perform a simple search on the table similar to
@@ -96,11 +106,11 @@ class TableExt(dataset.Table):
         instead.
         """
 
-
         if not self.exists:
             return iter([])
 
         _fts = kwargs.pop('_fts', None)
+        _fts_q = kwargs.pop('_fts_q', None)
         _columns = kwargs.pop('_columns', None)
         _limit = kwargs.pop('_limit', None)
         _offset = kwargs.pop('_offset', 0)
@@ -110,23 +120,29 @@ class TableExt(dataset.Table):
         if _step is False or _step == 0:
             _step = None
 
-        order_by = self._args_to_order_by(order_by)
-        args = self._args_to_clause(kwargs, clauses=_clauses)
-
+        fts_results = []
+        
         if _fts:
-            # we could run against a local sqlite database and join manually using a list of id's
-            res = self.fts_db.executable.execute(f"""SELECT id, rank
-                              FROM {table_name}_idx
-                              WHERE {column} MATCH {fts_q}
+            fts_q = " AND ".join([f"{column} MATCH {q}" for column, q in _fts_q])
+            # we could running against a seperate sqlite database and join manually using a list of id's
+            # TODO: if we are doing fts against the same db then we want to combine in the were clause.  
+            fts_results = self.fts_db.executable.execute(f"""SELECT id, rank
+                              FROM {self.table_name}_idx
+                              WHERE {fts_q}
                               ORDER BY rank
                               LIMIT {_limit}""").fetchall()
+            order_by = self._args_to_order_by(order_by) #TODO, if the order_by is empty, we will order by rank.
+            args = self._args_to_clause(kwargs, clauses=_clauses) #todo, add in the where clause.  WHERE id in (...)
+        else:
+            order_by = self._args_to_order_by(order_by)
+            args = self._args_to_clause(kwargs, clauses=_clauses)
 
-        if columns is None:
+        if _columns is None:
             query = self.table.select(whereclause=args,
                                   limit=_limit,
                                   offset=_offset)
         else:
-            query = self.table.select(columns, whereclause=args,
+            query = self.table.select(_columns, whereclause=args,
                                   limit=_limit,
                                   offset=_offset)
         if len(order_by):
@@ -142,63 +158,41 @@ class TableExt(dataset.Table):
                           step=_step)
 
 
+    def insert(self, row, ensure=None, types=None):
+        """Add a ``row`` dict by inserting it into the table.
+
+        If ``ensure`` is set, any of the keys of the row are not
+        table columns, they will be created automatically.
+
+        During column creation, ``types`` will be checked for a key
+        matching the name of a column to be created, and the given
+        SQLAlchemy column type will be used. Otherwise, the type is
+        guessed from the row value, defaulting to a simple unicode
+        field.
+        ::
+
+            data = dict(title='I am a banana!')
+            table.insert(data)
+
+        Returns the inserted row's primary key.
+        """
+        # we shold probably check the count of the row, but this would require a round trip
+        # to the db on each insert, so we'll make the assumption of lazy creation
+        if (not self.exists or not self.has_column(self._primary_id)) and  self._primary_type in (Types.integer, Types.bigint):
+          row[self._primary_id] = 0
+        row = self._sync_columns(row, ensure, types=types)
+        res = self.db.executable.execute(self.table.insert(row))
+        if len(res.inserted_primary_key) > 0:
+            return res.inserted_primary_key[0]
+        return True
+        
 class DatabaseExt(dataset.Database):
     """A DatabaseExt object represents a SQL database with  multiple tables of type TableExt."""
 
-    """Extends the dataset.Database class and adds a
-    flask_sqlalchemy.SQLAlchemy reference. Connects to a
-    flask_sqlalchemy.
-    """
-
-    def __init__(self, url, flask_app=None, schema=None, reflect_metadata=True,
-                 engine_kwargs=None, reflect_views=True,
-                 ensure_schema=True, row_type=dataset.util.row_type):
+    def __init__(self, *args, **kwargs ):
         """Configure and connect to the database."""
-        if url is None:
-            url = os.environ.get('DATABASE_URL', 'sqlite://')
-        if engine_kwargs is None:
-            engine_kwargs = {}
-        parsed_url = urlparse(url)
-        if type(flask_app) is Flask:
-            app = flask_app
-        else:
-            if flask_app is not None:
-                app = Flask(flask_app)
-            else:
-                app = None
-        if parsed_url.scheme.lower() in 'sqlite':
-            # ref: https://github.com/pudo/dataset/issues/163
-            if 'poolclass' not in engine_kwargs:
-                engine_kwargs.config['poolclass'] = StaticPool
-        engine_kwargs['SQLALCHEMY_DATABASE_URI'] = url
-        try:
-            if app:
-                app.config['SQLALCHEMY_DATABASE_URI'] = url
-                self.flask_db = SQLAlchemy(app, engine_options=engine_kwargs)
-            else:
-                self.flask_db = SQLAlchemy(engine_options=engine_kwargs)            
-            # how do we work with session
-            self.engine = self.flask_db.engine
-            self.flask_db._engine_lock = self.lock = threading.RLock() # we are going to use a re-entrant lock because that's what dataset uses.
-        except:
-            self.engine = create_engine(url, **engine_kwargs)
-            self.lock = threading.RLock()
-        self.flask_db._engine_lock = self.lock = threading.RLock() # we are going to use a re-entrant lock because that's what dataset uses.
-        self.local = threading.local()
+        super().__init__(*args, **kwargs)
 
-        if len(parsed_url.query):
-            query = parse_qs(parsed_url.query)
-            if schema is None:
-                schema_qs = query.get('schema', query.get('searchpath', []))
-                if len(schema_qs):
-                    schema = schema_qs.pop()
-
-        self.types = dataset.types.Types()
-        self.schema = schema
-        self.url = url
-        self.row_type = row_type
-        self.ensure_schema = ensure_schema
-        self._tables = {}
 
     # will only work for sqlite. 
     # diferent databases have different fts. 
@@ -207,7 +201,9 @@ class DatabaseExt(dataset.Database):
         # the idea is we want to be able to locally attach fts with our datasets arrow files. 
         self.db.executeable.execute('CREATE VIRTUAL TABLE {table_name}_idx USING FTS5(idx:INTEGER, {column}:VARCHAR, tokenize="{stemmer}");')
 
-    def create_table(self, table_name, primary_id=None, primary_type=None):
+    def create_table(
+        self, table_name, primary_id=None, primary_type=None, primary_increment=None
+    ):
         """Create a new table.
 
         Either loads a table or creates it if it doesn't exist yet. You can
@@ -215,7 +211,8 @@ class DatabaseExt(dataset.Database):
         be created. The default is to create an auto-incrementing integer,
         ``id``. You can also set the primary key to be a string or big integer.
         The caller will be responsible for the uniqueness of ``primary_id`` if
-        it is defined as a text type.
+        it is defined as a text type. You can disable auto-increment behaviour
+        for numeric primary keys by setting `primary_increment` to `False`.
 
         Returns a :py:class:`Table <dataset.Table>` instance.
         ::
@@ -235,19 +232,20 @@ class DatabaseExt(dataset.Database):
             table5 = db.create_table('population5',
                                      primary_id=False)
         """
-        assert not isinstance(primary_type, six.string_types), \
-            'Text-based primary_type support is dropped, use db.types.'
-        try:
-            self.flask_db.create_all() # TODO, don't call this if we already called 
-        except:
-            pass
-        table_name = dataset.util.normalize_table_name(table_name)
+        assert not isinstance(
+            primary_type, str
+        ), "Text-based primary_type support is dropped, use db.types."
+        table_name = normalize_table_name(table_name)
         with self.lock:
             if table_name not in self._tables:
-                self._tables[table_name] = TableExt(self, table_name,
-                                                 primary_id=primary_id,
-                                                 primary_type=primary_type,
-                                                 auto_create=True)
+                self._tables[table_name] = TableExt(
+                    self,
+                    table_name,
+                    primary_id=primary_id,
+                    primary_type=primary_type,
+                    primary_increment=primary_increment,
+                    auto_create=True,
+                )
             return self._tables.get(table_name)
 
     def load_table(self, table_name):
@@ -262,15 +260,12 @@ class DatabaseExt(dataset.Database):
 
             table = db.load_table('population')
         """
-        try:
-            self.flask_db.create_all() # TODO, don't call this if we already called. how to sync the ._tables variable with the corresponding variable in 
-        except:
-            pass
-        table_name = dataset.util.normalize_table_name(table_name)
+        table_name = normalize_table_name(table_name)
         with self.lock:
             if table_name not in self._tables:
                 self._tables[table_name] = TableExt(self, table_name)
             return self._tables.get(table_name)
+
 
 
 class IndexGzipFileExt(igzip.IndexedGzipFile):
@@ -425,7 +420,10 @@ class IndexGzipFileExt(igzip.IndexedGzipFile):
 
         return (IndexGzipFileExt.unpickle, (state, ))
 
-    
+    @property
+    def filename(self):
+      return self._IndexedGzipFile__igz_fobj.filename
+
     def __iter__(self):
         len_self = len(self)
         for start in range(0, len_self, 1000):
@@ -543,19 +541,10 @@ def get_file_read_obj(f, mode="rb"):
 # getting file size, working with igzip files and regular txt files
 def get_file_size(fobj):
   if not isinstance(fobj, IndexGzipFileExt):
-    return os.stat(f).st_size
+    return os.stat(fobj).st_size
   else:  
-    try:
-      fobj.seek(0, os.SEEK_END)
-      file_size = fobj.tell() 
-      fobj.seek(0, 0)
-      return file_size
-    except:
-      fobj = get_file_read_obj(fobj.filename)
-      fobj.seek(0, os.SEEK_END)
-      file_size = fobj.tell() 
-      fobj.seek(0, 0)
-      return file_size
+    return fobj.file_size
+
 
 # break up a file into shards.
 def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
@@ -587,3 +576,27 @@ def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
       line = None
       return file_segs
 
+if __name__ == "__main__":
+    import sys
+    import os
+    import numpy as np
+    from datasets import load_dataset
+    args = sys.argv[1:]
+    if "-test_igzip" in args:
+      if not os.path.exists("wikitext-2"):
+        !wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip
+        !unzip wikitext-2-v1.zip
+        !gzip wikitext-2/wiki.train.tokens
+      vi1 = get_file_read_obj("wikitext-2/wiki.train.tokens.gz")
+      assert len(vi1[[0, 5, 1000]]) == 3
+    if "-test_sql" in args:
+      db = DatabaseExt("sqlite://")
+      table = db['user']
+      assert table.exists == False
+      assert table.has_column('id') == False
+      assert table.insert(dict(name='John Doe', age=37)) == 0
+      assert table.exists == True
+      assert table.has_column('id') == True
+      assert table.insert(dict(name='Jane Doe', age=20)) == 1
+      jane  = table.find_one(name='Jane Doe')
+      assert jane['id'] == 1
