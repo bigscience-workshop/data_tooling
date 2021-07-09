@@ -40,8 +40,8 @@ import indexed_gzip as igzip
 #from gzip_stream import GZIPCompressedStream
 import  fsspec.compression
 
-from flask_sqlalchemy import SQLAlchemy
-from flask import Flask
+#from flask_sqlalchemy import SQLAlchemy
+#from flask import Flask
 import dataset
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
@@ -225,11 +225,15 @@ class Datastore(Dataset): #, dict
 
     @staticmethod
     def _move_to_sql_col(batch, table_name, connection_url, src_feature, dst_feature_view, idx_feature):
-         db = DatabaseExt(connection_url)
-         table = db[table_name]
-         batch = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-         table.insert_many(batch)
-        
+          db = DatabaseExt(connection_url)
+          with db:
+            table = db[table_name]
+            batch = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
+            try:
+              table.insert_many(batch)
+            except:
+              table.upsert_many(batch, [idx_feature])
+
     def move_to_sql(self, src_feature, dst_feature_view, table_name=None, connection_url=None,  idx_feature="id",  batch_size=100000, num_proc=4):
       if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
@@ -244,8 +248,10 @@ class Datastore(Dataset): #, dict
           max_rng = min(len_self, rng+batch_size)
           batch = self._getitem(slice(rng, max_rng), format_columns=[idx_feature, src_feature])
           batch = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-          #table.upsert_many(batch2, [idx_feature])
-          table.insert_many(batch)
+          try:
+            table.insert_many(batch)
+          except:
+            table.upsert_many(batch, [idx_feature])
           batch2 = batch = None
       else:
         self.map(Datastore._move_to_sql_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'table_name':table_name, 'connection_url':connection_url, 'src_feature': src_feature, 'dst_feature_view': dst_feature_view, 'idx_feature':idx_feature})
@@ -279,9 +285,8 @@ class Datastore(Dataset): #, dict
           ids = dict([(a,1) for a in self[idx_feature]])
         missing_ids = []
         for id in table.find(_columns=idx_feature):
-          print (id)
-          if id not in ids:
-            missing_ids.append(id)
+          if id[idx_feature] not in ids:
+            missing_ids.append(id[idx_feature])
         if missing_ids:
             self = self.add_batch({idx_feature: missing_ids})
         for col in feature_view:
@@ -1194,6 +1199,6 @@ if __name__ == "__main__":
     if "-test_sql" in args:
        datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_sw")['train'])
        datastore= datastore.add_sql('text2')
-       datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_hi")['train'])
+       datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_yo")['train'])
        datastore= datastore.move_to_sql('text','text2')
       
