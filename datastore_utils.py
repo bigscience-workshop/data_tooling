@@ -22,6 +22,8 @@ from datasets.arrow_dataset import transmit_format# , replayable_table_alteratio
 #from transformers import PreTrainedModel, PretrainedConfig
 import copy
 import shutil
+import sqlalchemy 
+
 from datasets.fingerprint import (
     fingerprint_transform,
     generate_fingerprint,
@@ -142,9 +144,10 @@ class TableExt(dataset.Table):
                                   limit=_limit,
                                   offset=_offset)
         else:
-            query = self.table.select(_columns, whereclause=args,
+
+            query = self.table.select(whereclause=args,
                                   limit=_limit,
-                                  offset=_offset)
+                                  offset=_offset).with_only_columns([sqlalchemy.column(col) for col in _columns])
         if len(order_by):
             query = query.order_by(*order_by)
 
@@ -185,7 +188,30 @@ class TableExt(dataset.Table):
         if len(res.inserted_primary_key) > 0:
             return res.inserted_primary_key[0]
         return True
+
+
+    def insert_many(self, rows, chunk_size=1000, ensure=None, types=None):
+        """Add many rows at a time.
+
+        This is significantly faster than adding them one by one. Per default
+        the rows are processed in chunks of 1000 per commit, unless you specify
+        a different ``chunk_size``.
+
+        See :py:meth:`insert() <dataset.Table.insert>` for details on
+        the other parameters.
+        ::
+
+            rows = [dict(name='Dolly')] * 10000
+            table.insert_many(rows)
+        """
+        row = copy.copy(rows[0])
+        rows[0] = row
+        if (not self.exists or not self.has_column(self._primary_id)) and  self._primary_type in (Types.integer, Types.bigint) and self._primary_id not in row:
+          row[self._primary_id] = 0
+
+        super().insert_many(rows, chunk_size=chunk_size, ensure=ensure, types=types)
         
+
 class DatabaseExt(dataset.Database):
     """A DatabaseExt object represents a SQL database with  multiple tables of type TableExt."""
 
@@ -600,3 +626,9 @@ if __name__ == "__main__":
       assert table.insert(dict(name='Jane Doe', age=20)) == 1
       jane  = table.find_one(name='Jane Doe')
       assert jane['id'] == 1
+
+      db = DatabaseExt("sqlite://")
+      table = db['user']
+      rows = [dict(name='Dolly')] * 10
+      table.insert_many(rows)
+      assert list(table.find(id={'in':range(0, 2)}))[-1]['id'] == 1
