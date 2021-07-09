@@ -121,7 +121,7 @@ class TableExt(dataset.Table):
         _step = kwargs.pop('_step', QUERY_STEP)
         if _step is False or _step == 0:
             _step = None
-
+        if type(_columns) is str: _columns = [_columns]
         fts_results = []
         
         if _fts:
@@ -144,13 +144,13 @@ class TableExt(dataset.Table):
                                   limit=_limit,
                                   offset=_offset)
         else:
-
             query = self.table.select(whereclause=args,
                                   limit=_limit,
-                                  offset=_offset).with_only_columns([sqlalchemy.column(col) for col in _columns])
+                                  offset=_offset).with_only_columns([self.table.c[col] for col in _columns])
+
         if len(order_by):
             query = query.order_by(*order_by)
-
+        
         conn = self.db.executable
         if _streamed:
             conn = self.db.engine.connect()
