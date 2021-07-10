@@ -56,7 +56,7 @@ except:
 ### We want to have mutliple types of storage that ideally can be
 ### transported as a file transfer with an arrow dataset. So if we
 ### have <signature>.arrow, we may have fts_<signature>.db (for full
-### text indexing) and db_<signature>.db (sqlite database), and
+### text indexing sqlite database) and <signature>.db (sqlite database), and
 ### <siganture>.mmap (mmap file reprsenting a tensor), and
 ### <singature>.igz (if we wish to store some portion of the text
 ### columns in igzip format for compression and legacy purposes.
@@ -173,7 +173,7 @@ class Datastore(Dataset): #, dict
         ret[batch[idx_feature]] = batch[dst_feature_view]
 
         
-    def move_to_mmap(self, src_feature, dst_feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_feature="id", batch_size=100000, num_proc=4):
+    def move_to_mmap(self, src_feature, dst_feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_feature="id", batch_size=1000, num_proc=4):
       self.add_mmap(feature_view=dst_feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
       if shape[0] < len(self):
         shape[0] = len(self)
@@ -182,7 +182,7 @@ class Datastore(Dataset): #, dict
       return self.remove_columns(src_feature)
 
     #mapping a feature/columun to a memmap array accessed by row
-    def add_mmap(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_feature="id", batch_size=100000, num_proc=4):
+    def add_mmap(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_feature="id", batch_size=1000, num_proc=4):
       if not hasattr(self, 'features_map'): self.features_map = {}
       dataset_path = os.path.dirname(self.cache_files[0]['filename'])
       if mmap_path is None:
@@ -206,7 +206,7 @@ class Datastore(Dataset): #, dict
       return self
 
     #mapping a feature/columun to an indexed gzip file accesed by line 
-    def add_igzip(self, feature_view, path,  idx_feature="id", batch_size=100000, num_proc=4):
+    def add_igzip(self, feature_view, path,  idx_feature="id", batch_size=1000, num_proc=4):
       if not hasattr(self, 'features_map'): self.features_map = {}
       fobj = self._get_igzip_fobj(path)
       if idx_feature not in self.features:
@@ -234,7 +234,7 @@ class Datastore(Dataset): #, dict
             except:
               table.upsert_many(batch, [idx_feature])
 
-    def move_to_sql(self, src_feature, dst_feature_view, table_name=None, connection_url=None,  idx_feature="id",  batch_size=100000, num_proc=4):
+    def move_to_sql(self, src_feature, dst_feature_view, table_name=None, connection_url=None,  idx_feature="id",  batch_size=1000, num_proc=4):
       if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
@@ -258,7 +258,9 @@ class Datastore(Dataset): #, dict
       return self.remove_columns(src_feature)
 
     # mapping one or more columns/features to a sql database. creates a sqlalchmey/dataset dynamically with idx_feature as the primary key. 
-    def add_sql(self, feature_view=None, table_name=None, connection_url=None,  idx_feature="id",  batch_size=100000, num_proc=4):
+    # remember to strip passwords from any connection_url. passwords should be passed as vargs and added to the conneciton url dynamically
+    # passwords should not be perisisted.
+    def add_sql(self, feature_view=None, table_name=None, connection_url=None,  idx_feature="id",  batch_size=1000, num_proc=4):
         if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
@@ -295,7 +297,7 @@ class Datastore(Dataset): #, dict
             self.features_map[col] = {'type':'sql', 'connection_url': connection_url, 'table_name': table_name}
         return self
     
-    # note that while the id feature corresponds to an index into an external storage, accessing an arrow dataset by index
+    # note that while the id feature corresponds to an index into an external storage, accessing an arrow dataset by datataset[index]
     # will not be guranteed to get the corresponding id. a[0] will return the first item in the current subset of the dataset. 
     # but a[0] may return {'id': 10, 'mmap_embed': <array correponding to the 10th location in the mmap file>}
     def _getitem(
@@ -341,7 +343,7 @@ class Datastore(Dataset): #, dict
             else:
                 missing.append("id")
 
-        # let's get the data that is in the arrow data first, including the id
+        # let's get the data that is in the arrow portion first, including the id
         outputs = super()._getitem(
               key,
               format_type=format_type,
@@ -359,7 +361,7 @@ class Datastore(Dataset): #, dict
             format_columns.remove("id")
         if format_columns is not None:
             format_columns.extend(missing)
-        # now get the views and combine views and  arrow data 
+        # now get the views and combine views and  arrow portion 
         return self._format_views(outputs, format_columns=format_columns, format_type=format_type, 
                                  output_all_columns=output_all_columns, format_kwargs=format_kwargs)
         
@@ -420,7 +422,7 @@ class Datastore(Dataset): #, dict
         if format_type in ("custom", "torch", "tensorflow", None) and type(outputs_or_keys) is not pd.DataFrame: 
             transform = format_kwargs.get('transform')
             if isinstance(outputs_or_keys, str):
-                keys = slice(0, len(self))
+                keys = outputs_or_keys
                 outputs = {}
                 contiguous=True
             elif isinstance(outputs_or_keys, slice):
@@ -465,13 +467,13 @@ class Datastore(Dataset): #, dict
             if isinstance(outputs_or_keys, str):
                 start = 0 
                 end = len(self) 
-                keys = range(start, stop)
+                keys = outputs_or_keys
                 outputs = None
                 contiguous=True
             elif isinstance(outputs_or_keys, slice):
                 start = 0 if outputs_or_keys.start is None else outputs_or_keys.start
                 end = len(self) if outputs_or_keys.stop is None else outputs_or_keys.stop
-                keys = range(outputs_or_keys.start, outputs_or_keys.stop)
+                keys = outputs_or_keys
                 outputs = None
                 contiguous=True
             elif isinstance(outputs_or_keys, dict) or isinstance(outputs_or_keys,  pd.DataFrame):
@@ -497,7 +499,7 @@ class Datastore(Dataset): #, dict
         batch_size: Optional[int] = None,
         **to_csv_kwargs,
     ) -> int:
-      pass
+      pass #TODO
 
     def to_dict(self, batch_size: Optional[int] = None, batched: bool = False) -> Union[dict, Iterator[dict]]:
         if (not hasattr(self, "features_map") or not self.features_map) and len(self.features) == 1 and "id" in self.features:
