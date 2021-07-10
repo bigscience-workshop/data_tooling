@@ -52,7 +52,7 @@ from dataset.types import Types
 
 #from flask_sqlalchemy import SQLAlchemy
 #from flask import Flask
-#TODO: consider adding flask + gevent + oauth2 support built in model-view-controllers and permissions for Datastores of various types.
+#TODO: consider adding flask + gevent + oauth2 support for built in model-view-controllers and permissions for Datastores of various types.
 #this will allow regional partners to permit searching and serving their own dataset and control access to them.
 
 import dataset
@@ -61,6 +61,7 @@ from dataset.util import DatasetException, ResultIter, QUERY_STEP
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
 
+# if an array is contiguous, return True, and the start and end+1 range usable in ranges
 def is_contiguous(arr):
         start = None
         prev = None
@@ -74,6 +75,97 @@ def is_contiguous(arr):
           contiguous = False
           break
         return contiguous, start, i+1
+
+# This is used for seeing if files from gdrive from colab have finished loading. Files could be in flight while we try to retreive them.
+def wait_until_files_loaded(flist, max_tries=120): # wait 2 hrs max
+  ret_str =False
+  if isinstance(flist, str):
+    ret_str= True
+    flist = [[flist, 0]]
+  else:
+    flist = [[f, 0]for f in flist]
+  for j in range(len(flist)*max_tries):
+    num_done = 0
+    for i, val in enumerate(flist):
+      if val is None:
+        num_done += 1
+        continue
+      (f, incr) = val
+      if incr > max_tries:
+        raise RuntimeError("Timed out while trying to wait for file " + str(f))
+      size1 = os.stat(f).st_size
+      time.sleep(min(600, 1 + incr))
+      incr += 1
+      if os.stat(f).st_size == size1:
+        flist[i] = None
+        num_done += 1
+        yield f
+      else:
+        flist[i]=[f,incr]
+    if num_done == len(flist):
+      return
+  raise RuntimeError("Something went really wrong")
+
+# just a wrapper to load igzip and regular .txt/.csv/.tsv files
+def get_file_read_obj(f, mode="rb"):
+  next(wait_until_files_loaded(f))
+  if f.endswith(".gz"):
+    if not os.path.exists(f.replace(".gz",".igz")):
+        fobj = IndexGzipFileExt(f)
+        fobj.build_full_index()
+        with open(f.replace(".gz",".igz"), "wb") as file:
+          pickle.dump(fobj, file, pickle.HIGHEST_PROTOCOL)
+    else:
+      cwd = os.getcwd()
+      dir = os.path.abspath(os.path.dirname(f))
+      f = os.path.basename(f)
+      if dir:
+        os.chdir(dir)
+      with open(f.replace(".gz",".igz"), "rb") as file:
+        fobj = pickle.load(file)
+      os.chdir(cwd)
+    return fobj
+  else:
+    return open(f, mode)
+
+
+# getting file size, working with igzip files and regular txt files
+def get_file_size(fobj):
+  if not isinstance(fobj, IndexGzipFileExt):
+    return os.stat(fobj).st_size
+  else:  
+    return fobj.file_size
+
+
+# break up a file into shards, ending each shard on a line break
+def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
+      f = get_file_read_obj(input_file_path)
+      file_size= get_file_size(f)       
+      file_segs = []
+      if num_segs is not None:
+          file_seg_len = int(file_size/num_segs)
+
+      file_pos = 0
+      while file_pos < file_size:
+            if file_size - file_pos <= file_seg_len:
+                file_segs.append((file_pos, file_size - file_pos))
+                break
+            f.seek(file_pos+file_seg_len, 0)
+            seg_len = file_seg_len
+            line = f.readline()
+            if not line:
+                file_segs.append((file_pos, file_size - file_pos))
+                break
+            seg_len += len(line)
+            if file_size-(file_pos+seg_len) < file_seg_len:
+                file_segs.append((file_pos, file_size - file_pos))
+                break
+
+            file_segs.append((file_pos, seg_len))
+            file_pos = f.tell()
+      f.close()
+      line = None
+      return file_segs
 
 class TableExt(dataset.Table):
 
@@ -126,8 +218,8 @@ class TableExt(dataset.Table):
         
         if _fts:
             fts_q = " AND ".join([f"{column} MATCH {q}" for column, q in _fts_q])
-            # we could running against a seperate sqlite database and join manually using a list of id's
-            # TODO: if we are doing fts against the same db then we want to combine in the were clause.  
+            # we could run a seperate sqlite database for fts and join manually using a list of id's
+            # TODO: if we are doing fts against the same db then we want to combine in one query.  
             fts_results = self.fts_db.executable.execute(f"""SELECT id, rank
                               FROM {self.table_name}_idx
                               WHERE {fts_q}
@@ -179,15 +271,12 @@ class TableExt(dataset.Table):
 
         Returns the inserted row's primary key.
         """
+        # either sqlalachemy or the underlying sqlite database starts auto-numbering at 1. we want to auto-number starting at 0
         # we shold probably check the count of the row, but this would require a round trip
         # to the db on each insert, so we'll make the assumption of lazy creation
         if (not self.exists or not self.has_column(self._primary_id)) and  self._primary_type in (Types.integer, Types.bigint):
           row[self._primary_id] = 0
-        row = self._sync_columns(row, ensure, types=types)
-        res = self.db.executable.execute(self.table.insert(row))
-        if len(res.inserted_primary_key) > 0:
-            return res.inserted_primary_key[0]
-        return True
+        return super().insert(row,  ensure=ensure, types=types)
 
 
     def insert_many(self, rows, chunk_size=1000, ensure=None, types=None):
@@ -220,6 +309,7 @@ class DatabaseExt(dataset.Database):
         super().__init__(*args, **kwargs)
 
 
+    # TODO: not currenlty working
     # will only work for sqlite. 
     # diferent databases have different fts. 
     def create_fts_index_column(self, table_name, column, stemmer="unicode61"): #  porter 
@@ -451,21 +541,10 @@ class IndexGzipFileExt(igzip.IndexedGzipFile):
       return self._IndexedGzipFile__igz_fobj.filename
 
     def __iter__(self):
-        len_self = len(self)
-        for start in range(0, len_self, 1000):
+      len_self = len(self)
+      for start in range(0, len_self, 1000):
           end = min(len_self, start+1000)
-          start = self.line2seekpoint[start]
-          if end >= len_self:
-            end = self.file_size
-          else:
-            end= self.line2seekpoint[end+1]-1
-          ret = []
-          with self._IndexedGzipFile__file_lock:
-            pos = self.tell()
-            self.seek(start, 0)
-            ret= self.read(end-start).decode().split('\n')
-            self.seek(pos, 0)
-          for line in ret:
+          for line in self[start:end]:
             yield line
 
     def __len__(self):
@@ -481,12 +560,14 @@ class IndexGzipFileExt(igzip.IndexedGzipFile):
           end = len(self) if keys.stop is None else keys.stop
         else:
           contiguous, start, end = is_contiguous(keys)
-
         if contiguous:
-          if start >= len(self.line2seekpoint) or end >= len(self.line2seekpoint):
+          if start >= len(self) or end > len(self):
             raise RuntimError(f"indexes {start}..{end} out of range")
           start = self.line2seekpoint[start]
-          end= self.line2seekpoint[end+1]-1
+          if end == len(self):
+            end = self.file_size
+          else:
+            end= self.line2seekpoint[end+1]-1
           with self._IndexedGzipFile__file_lock:
             pos = self.tell()
             self.seek(start, 0)
@@ -494,7 +575,7 @@ class IndexGzipFileExt(igzip.IndexedGzipFile):
             self.seek(pos, 0)
             return ret
         elif isinstance(keys, int):
-          if keys >= len(self.line2seekpoint):
+          if keys >= len(self):
             raise RuntimError(f"index {keys} out of range")
           start = self.line2seekpoint[keys]
           with self._IndexedGzipFile__file_lock:
@@ -507,100 +588,6 @@ class IndexGzipFileExt(igzip.IndexedGzipFile):
           return [self[idx] for idx in keys]
 
 
-# This is used for loading files from gdrive from colab. Files could be in flight while we try to retreive them.
-def wait_until_files_loaded(flist, ordered=False, max_tries=120): # wait 2 hrs max
-  ret_str =False
-  if isinstance(flist, str):
-    ret_str= True
-    flist = [[flist, 0]]
-  else:
-    flist = [[f, 0]for f in flist]
-  for j in range(len(flist)*max_tries):
-    num_done = 0
-    for i, val in enumerate(flist):
-      if val is None:
-        num_done += 1
-        continue
-      (f, incr) = val
-      if incr > max_tries:
-        raise RuntimeError("Timed out while trying to wait for file " + str(f))
-      size1 = os.stat(f).st_size
-      time.sleep(min(600, 1 + incr))
-      incr += 1
-      if os.stat(f).st_size == size1:
-        flist[i] = None
-        num_done += 1
-        if ret_str: 
-          return f
-        else:
-          yield f
-      else:
-        flist[i]=[f,incr]
-    if num_done == len(flist):
-      return
-  raise RuntimeError("Something went really wrong")
-
-# just a wrapper to load igzip and regular .txt/.csv/.tsv files
-def get_file_read_obj(f, mode="rb"):
-  wait_until_files_loaded(f)
-  if f.endswith(".gz"):
-    if not os.path.exists(f.replace(".gz",".igz")):
-        fobj = IndexGzipFileExt(f)
-        fobj.build_full_index()
-        with open(f.replace(".gz",".igz"), "wb") as file:
-          pickle.dump(fobj, file, pickle.HIGHEST_PROTOCOL)
-    else:
-      cwd = os.getcwd()
-      dir = os.path.abspath(os.path.dirname(f))
-      f = os.path.basename(f)
-      if dir:
-        os.chdir(dir)
-      with open(f.replace(".gz",".igz"), "rb") as file:
-        fobj = pickle.load(file)
-      os.chdir(cwd)
-    return fobj
-  else:
-    return open(f, mode)
-
-
-
-# getting file size, working with igzip files and regular txt files
-def get_file_size(fobj):
-  if not isinstance(fobj, IndexGzipFileExt):
-    return os.stat(fobj).st_size
-  else:  
-    return fobj.file_size
-
-
-# break up a file into shards.
-def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
-      f = get_file_read_obj(input_file_path)
-      file_size= get_file_size(f)       
-      file_segs = []
-      if num_segs is not None:
-          file_seg_len = int(file_size/num_segs)
-
-      file_pos = 0
-      while file_pos < file_size:
-            if file_size - file_pos <= file_seg_len:
-                file_segs.append((file_pos, file_size - file_pos))
-                break
-            f.seek(file_pos+file_seg_len, 0)
-            seg_len = file_seg_len
-            line = f.readline()
-            if not line:
-                file_segs.append((file_pos, file_size - file_pos))
-                break
-            seg_len += len(line)
-            if file_size-(file_pos+seg_len) < file_seg_len:
-                file_segs.append((file_pos, file_size - file_pos))
-                break
-
-            file_segs.append((file_pos, seg_len))
-            file_pos = f.tell()
-      f.close()
-      line = None
-      return file_segs
 
 if __name__ == "__main__":
     import sys
@@ -615,6 +602,7 @@ if __name__ == "__main__":
         !gzip wikitext-2/wiki.train.tokens
       vi1 = get_file_read_obj("wikitext-2/wiki.train.tokens.gz")
       assert len(vi1[[0, 5, 1000]]) == 3
+      assert len(vi1[0:]) == len(vi1)
     if "-test_sql" in args:
       db = DatabaseExt("sqlite://")
       table = db['user']
