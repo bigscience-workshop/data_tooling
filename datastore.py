@@ -1,5 +1,5 @@
 #Copyright July 2021 Ontocord LLC. Licensed under Apache v2 https://www.apache.org/licenses/LICENSE-2.0
-#datastore.py
+#%%writefile data-tooling/datastore.py
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field, fields
@@ -51,10 +51,8 @@ except:
   pass
 
 ### NOTE: dataset is a different package than datasets. We are using both packages.
-
-
 ### We want to have mutliple types of storage that ideally can be
-### transported as a file transfer with an arrow dataset. So if we
+### transported as a file transfer with an arrow dataset (perhaps a tar file?). So if we
 ### have <signature>.arrow, we may have fts_<signature>.db (for full
 ### text indexing sqlite database) and <signature>.db (sqlite database), and
 ### <siganture>.mmap (mmap file reprsenting a tensor), and
@@ -62,7 +60,7 @@ except:
 ### columns in igzip format for compression and legacy purposes.
 
 
-### A note about naming: datasets uses the terms for features and columns interchangably.
+### A note about naming: datasets uses the terms features and columns interchangably.
 
 def np_mmap(mmap_path, dtype, shape):
   if os.path.exists(mmap_path):
@@ -90,14 +88,11 @@ class Datastore(Dataset): #, dict
     A class that wraps a Huggingface arrow based Dataset to provide some optimized reading and *writing* in various persistance backends. 
     Currently provides support for features bound to memmap, igzip file, and sqlalchemy databases.
     """
-    @property 
-    def features(self):
-        ret = FeaturesWithViews(self._info.features)
-        ret.features_map = {} if not hasattr(self, "features_map") else self.features_map
-        return ret
         
     def __repr__(self):
-        return f"Datastore({{\n    features: {self.features},\n    num_rows: {self.num_rows}\n}})"
+        ret = FeaturesWithViews(self._info.features)
+        ret.features_map = {} if not hasattr(self, "features_map") else self.features_map
+        return f"Datastore({{\n    features: {ret},\n    num_rows: {self.num_rows}\n}})"
         
     @classmethod
     def from_dataset(cls, dataset, features_map=None, shared_dir=None):
@@ -127,7 +122,7 @@ class Datastore(Dataset): #, dict
           self.shared_dir = {}
         return self
 
-                             
+
     def _get_mmap(self, mmap_path,  dtype, shape):
       if shape[0] < len(self):
           shape[0] = len(self)
@@ -139,7 +134,7 @@ class Datastore(Dataset): #, dict
       self.mmap_access_cnt+=1
       return ret
 
-    # we use class variables because we don't want it serialized in an instance of this dataset
+    # we use class variables because we don't want it serialized in an instance of this dataset. this might take up too much memory, so we might use an LRU cache instead.
     igzip_fobj = {}
     def _get_igzip_fobj(self, file_path):
         if file_path in Datastore.igzip_fobj:
@@ -147,7 +142,7 @@ class Datastore(Dataset): #, dict
         Datastore.igzip_fobj[file_path] = fobj = get_file_read_obj(file_path)
         return fobj
 
-    # we use class variables because we don't want it serialized in this instance
+    # we use class variables because we don't want it serialized in this instance. this might take up too much memory, so we might use an LRU cache instead.
     db_table = {}
     db_connection = {}
     def _get_db_table(self, table_name, connection_url):
@@ -172,26 +167,60 @@ class Datastore(Dataset): #, dict
         ret = np_mmap(mmap_path, dtype, shape)
         ret[batch[idx_feature]] = batch[dst_feature_view]
 
-        
-    def move_to_mmap(self, src_feature, dst_feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_feature="id", batch_size=1000, num_proc=4):
-      self.add_mmap(feature_view=dst_feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+    @classmethod
+    def from_mmap(cls,  feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=100, idx_feature="id", batch_size=1000, num_proc=4):
+      return cls.from_dict({}).add_mmap(feature_view=feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, dtype_str_len=dtype_str_len, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+
+    def move_to_mmap(self, src_feature, dst_feature_view=None, shape=None, mmap_path=None, dtype='float32', dtype_str_len=100, idx_feature="id", batch_size=1000, num_proc=4):
+      if dst_feature_view is None:
+        self = self.rename_column(src_feature, "__tmp__"+src_feature)
+        dst_feature_view = src_feature
+        src_feature = "__tmp__"+src_feature
+      if shape is None:
+        item = self[0][src_feature]
+        if type(item) == np.ndarray:
+          shape = item.shape
+          dtype = item.dtype
+        elif type(item) == 'str':
+          dtype = 'unicode'
+          shape = [-1, max(len(item), dtype_str_len)]
+        elif type(item) == 'int':
+          dtype = 'int32'
+          shape = [-1, 1]
+        elif type(item) == 'float':
+          dtype = 'float32'
+          shape = [-1, 1]
+        else:
+          raise RuntimeError(f"could not infer shape and dtype for example {item}")
       if shape[0] < len(self):
         shape[0] = len(self)
+      self.add_mmap(feature_view=dst_feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
       val = self.features_map[dst_feature_view]
       self.map(Datastore._move_to_mmap_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'src_feature':src_feature, 'idx_feature':idx_feature, 'mmap_path': val['mmap_path'], 'dtype': val['dtype'], 'shape':shape})
       return self.remove_columns(src_feature)
 
     #mapping a feature/columun to a memmap array accessed by row
-    def add_mmap(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=1000, idx_feature="id", batch_size=1000, num_proc=4):
+    def add_mmap(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=100, idx_feature="id", batch_size=1000, num_proc=4):
       if not hasattr(self, 'features_map'): self.features_map = {}
-      dataset_path = os.path.dirname(self.cache_files[0]['filename'])
+      if not self.cache_files:
+        dataset_path = get_temporary_cache_files_directory()
+      else:  
+        dataset_path = os.path.dirname(self.cache_files[0]['filename'])
       if mmap_path is None:
-               mmap_path = os.path.abspath(os.path.join(dataset_path, feature_view+".mmap"))
+          mmap_path = os.path.abspath(os.path.join(dataset_path, feature_view+".mmap"))
       shape = list(shape)
       shape[0] = max(shape[0], len(self))
       if idx_feature not in self.features:
-        self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx_feature': idx_feature})
-        ids = dict([(a,1) for a in range(len(self))])
+        if len(self) == 0 and shape[0] > 0:
+            new_self = Datastore.from_dict({idx_feature: range(shape[0])})
+            new_self.features_map = self.features_map
+            self = new_self
+            ids = dict([(a,1) for a in range(len(self))])
+            self.id_idx_identical = True
+        else:
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx_feature': idx_feature})
+            ids = dict([(a,1) for a in range(len(self))])
+            self.id_idx_identical = True
       else:
         ids = dict([(a,1) for a in self[idx_feature]])
       missing_ids = []
@@ -200,26 +229,51 @@ class Datastore(Dataset): #, dict
             missing_ids.append(id)
       if missing_ids:
             self = self.add_batch({idx_feature: missing_ids})
+            if not hasattr(self, 'id_idx_identical'):  self.id_idx_identical = True
+            if self.id_idx_identical:
+              contiguous, start, end = is_contiguous(missing_ids)
+              self.id_idx_identical = start ==len(self) and contiguous
+            else:
+              self.id_idx_identical = False
       if not isinstance(dtype, str):
           dtype =np.dtype(dtype).name
       self.features_map[feature_view] = {'type':"mmap", 'path': mmap_path,  'dtype': dtype, 'shape': shape}
       return self
 
-    #mapping a feature/columun to an indexed gzip file accesed by line 
+
+    @classmethod
+    def from_igzip(cls, feature_view, path,  idx_feature="id", batch_size=1000, num_proc=4):
+      return cls.from_dict({}).add_igzip(feature_view=feature_view, path=path,  idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+
+    #mapping a feature/columun to an indexed gzip file accessed by line 
     def add_igzip(self, feature_view, path,  idx_feature="id", batch_size=1000, num_proc=4):
       if not hasattr(self, 'features_map'): self.features_map = {}
       fobj = self._get_igzip_fobj(path)
       if idx_feature not in self.features:
-        self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx_feature': idx_feature})
-        ids = dict([(a,1) for a in range(len(self))])
+          if len(self) == 0:
+            new_self = Datastore.from_dict({idx_feature: range(len(fobj))})
+            new_self.features_map = self.features_map
+            self = new_self
+            ids = dict([(a,1) for a in range(len(self))])
+            self.id_idx_identical = True
+          else:
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx_feature': idx_feature})
+            ids = dict([(a,1) for a in range(len(self))])
+            self.id_idx_identical = True
       else:
-        ids = dict([(a,1) for a in self[idx_feature]])
-      missing_ids = []
+          ids = dict([(a,1) for a in self[idx_feature]])
+      missing_ids=[]
       for id in range(len(fobj)):
-          if id not in ids:
-            missing_ids.append(id)
+            if id not in ids:
+              missing_ids.append(id)
       if missing_ids:
-            self = self.add_batch({idx_feature: missing_ids})
+              self = self.add_batch({idx_feature: missing_ids})
+              if not hasattr(self, 'id_idx_identical'):  self.id_idx_identical = True
+              if self.id_idx_identical:
+                contiguous, start, end = is_contiguous(missing_ids)
+                self.id_idx_identical = start ==len(self) and contiguous
+              else:
+                self.id_idx_identical = False
       self.features_map[feature_view] = {'type':"igzip", 'path': path}
       return self
 
@@ -228,39 +282,52 @@ class Datastore(Dataset): #, dict
           db = DatabaseExt(connection_url)
           with db:
             table = db[table_name]
-            batch = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
+            batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
             try:
-              table.insert_many(batch)
+              table.insert_many(batch2)
             except:
-              table.upsert_many(batch, [idx_feature])
+              batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
+              table.update_many(batch2, [idx_feature])
+            batch2 = batch = None
 
-    def move_to_sql(self, src_feature, dst_feature_view, table_name=None, connection_url=None,  idx_feature="id",  batch_size=1000, num_proc=4):
+    def move_to_sql(self, src_feature, dst_feature_view=None, table_name=None, connection_url=None,  idx_feature="id",  batch_size=1000, num_proc=4):
       if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
-      self.add_sql(feature_view=dst_feature_view, table_name=table_name, connection_url=connection_url, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+      if dst_feature_view is None:
+        self = self.rename_column(src_feature, "__tmp__"+src_feature)
+        dst_feature_view = src_feature
+        src_feature = "__tmp__"+src_feature
+      value = self[0][src_feature]
       if not connection_url:
           connection_url="sqlite:///"+self.cache_files[0]['filename'].replace(".arrow", ".db")
-      if connection_url=="sqlite://":
-        table = Datastore._get_db_table(self, table_name, connection_url)
+      table = Datastore._get_db_table(self, table_name, connection_url)
+      if type(value) is str: #we don't want to save as json type just in case
+        value="**"
+      dtype = table.db.types.guess(value)
+      self.add_sql(feature_view=[(dst_feature_view, dtype)], table_name=table_name, connection_url=connection_url, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+      if connection_url=="sqlite://": # I don't think we can pass in-memory sqlite table in multi-processing mode, so just do i in single-thread, single-process
         len_self = len(self)
-        for rng in range(0, len_self, batch_size):
-          max_rng = min(len_self, rng+batch_size)
-          batch = self._getitem(slice(rng, max_rng), format_columns=[idx_feature, src_feature])
-          batch = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-          try:
-            table.insert_many(batch)
-          except:
-            table.upsert_many(batch, [idx_feature])
-          batch2 = batch = None
+        with Datastore.db_connection[connection_url]:
+          for rng in range(0, len_self, batch_size):
+            max_rng = min(len_self, rng+batch_size)
+            batch = self._getitem(slice(rng, max_rng), format_columns=[idx_feature, src_feature])
+            batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
+            try:
+              table.insert_many(batch2)
+            except:
+              batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
+              table.update_many(batch2, [idx_feature])
+            batch2 = batch = None
       else:
         self.map(Datastore._move_to_sql_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'table_name':table_name, 'connection_url':connection_url, 'src_feature': src_feature, 'dst_feature_view': dst_feature_view, 'idx_feature':idx_feature})
       return self.remove_columns(src_feature)
 
     # mapping one or more columns/features to a sql database. creates a sqlalchmey/dataset dynamically with idx_feature as the primary key. 
-    # remember to strip passwords from any connection_url. passwords should be passed as vargs and added to the conneciton url dynamically
+    # TODO: remember to strip passwords from any connection_url. passwords should be passed as vargs and added to the conneciton url dynamically
     # passwords should not be perisisted.
-    def add_sql(self, feature_view=None, table_name=None, connection_url=None,  idx_feature="id",  batch_size=1000, num_proc=4):
+    # NOTE: this dataset will not automatically change if the database changes. call this method again to sync the size and schema
+    def add_sql(self, feature_view=None, table_name=None, connection_url=None, dtype="str", idx_feature="id",  batch_size=1000, num_proc=4):
         if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
@@ -268,38 +335,113 @@ class Datastore(Dataset): #, dict
         if not connection_url:
           connection_url="sqlite:///"+self.cache_files[0]['filename'].replace(".arrow", ".db")
         if type(feature_view) is str:
-          feature_view = [feature_view]
+          feature_view = [(feature_view, dtype)]
         if not hasattr(self, 'features_map'): self.features_map = {}
         table = self._get_db_table(table_name, connection_url)
         if not feature_view and table.columns:
             feature_view = table.columns
         elif not feature_view:
             raise RuntimeError(f"No feature_view(s) and no column definition for table view {table_name}")
-        for col in feature_view:
-            if col == idx_feature:
-                continue
-            if col in self.features:
-                raise RuntimeError(f"Feature {col} already in the dataset")
+        table_ids = table.find(_columns=idx_feature)
         if idx_feature not in self.features:
-          self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'id': idx_feature})
-          ids = dict([(a,1) for a in range(len(self))])
+          if len(self) == 0 and table_ids:
+            new_self = Datastore.from_dict({idx_feature: range(max([id[idx_feature] for id in table_ids]))})
+            new_self.features_map = self.features_map
+            self = new_self
+            ids = dict([(a,1) for a in range(len(self))])
+            self.id_idx_identical = True
+          else:
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'id': idx_feature})
+            ids = dict([(a,1) for a in range(len(self))])
+            self.id_idx_identical = True
         else:
           ids = dict([(a,1) for a in self[idx_feature]])
         missing_ids = []
-        for id in table.find(_columns=idx_feature):
+        for id in table_ids:
           if id[idx_feature] not in ids:
             missing_ids.append(id[idx_feature])
         if missing_ids:
             self = self.add_batch({idx_feature: missing_ids})
+            if not hasattr(self, 'id_idx_identical'):  self.id_idx_identical = True
+            if self.id_idx_identical:
+              contiguous, start, end = is_contiguous(missing_ids)
+              self.id_idx_identical = start ==len(self) and contiguous
+            else:
+              self.id_idx_identical = False
         for col in feature_view:
+            if type(col) is tuple:
+              col, dtype = col
+            else:
+              dtype=None
             if col == idx_feature:
                 continue
+            if col not in table.columns:
+              if type(dtype) is str:
+                if 'int' in dtype:
+                  value = 0
+                elif 'float' in dtype:
+                  value = 0.0
+                else:
+                  value = '**'
+                dtype = table.db.types.guess(value)
+              if dtype is not None:
+                table.create_column(col, dtype)
             self.features_map[col] = {'type':'sql', 'connection_url': connection_url, 'table_name': table_name}
         return self
     
-    # note that while the id feature corresponds to an index into an external storage, accessing an arrow dataset by datataset[index]
+
+    #filter_sql uses a sql query on columns that are mapped to sql. 
+    #could be faster than doing a normal "filter"
+    #the parameters are the same as the "find" method from dataset.Table.
+    #example: dataset.filter_sql(lang='ru') will return those items in the dataset that has the language 'ru'.
+    #NOTE: fts not yet working.
+    def filter_sql(self, **kwargs):
+      if not hasattr(self, 'features_map'): self.features_map = {}
+      _fts_q = kwargs.pop('_fts_q', None)
+      _limit = kwargs.pop('_limit', None)
+      _offset = kwargs.pop('_offset', 0)
+      order_by = kwargs.pop('order_by', None)
+      _streamed = kwargs.pop('_streamed', False)
+      _step = kwargs.pop('_step', QUERY_STEP)
+      format_type = kwargs.pop('format_type', None)
+      format_kwargs = kwargs.pop('format_kwargs', None)
+      if not kwargs:
+          raise RuntimeError("no query provided")
+      found_table = None
+      for key, item in kwargs.item():
+        found = False
+        for feature_view, val in self.features_map.items():
+          if val['type']=='sql':
+            table = self._get_db_table(val['table_name'], val['connection_url'])
+            if key in table.columns:
+              if found_table and table != found_table:
+                raise RuntimeError("filtering from multiple sql tables not supported")
+              found_table = table
+              found = True
+              break
+        if not found:
+          raise RuntimeError(f"found query on a column {key} that is not a sql column")
+      kwargs['_fts_q'] = _fts_q
+      kwargs['_columns'] = ['id']
+      kwargs['_limit'] = _limit
+      kwargs['_offset'] = _offset
+      kwargs['order_by'] = order_by
+      kwargs['_streamed'] = _streamed
+      kwargs['_step'] = _step
+      ids = dict([(val['id'],1) for val in found_table.find(*[], **kwargs)])
+      if hasattr(self, 'id_idx_identical') and self.id_idx_identical:
+        ret = self.select(ids)
+        ret.id_idx_identical=False
+        return ret
+      else:
+        return self.filter(lambda example: example['id'] in ids)
+
+
+    # note that while the id feature corresponds to an item into an external storage, accessing an arrow dataset by datataset[index]
     # will not be guranteed to get the corresponding id. a[0] will return the first item in the current subset of the dataset. 
-    # but a[0] may return {'id': 10, 'mmap_embed': <array correponding to the 10th location in the mmap file>}
+    # but a[0] does not necessarily return {'id':0, ...}
+    # instead, a[0] may return {'id': 10, 'mmap_embed': <array correponding to the 10th location in the mmap file>}. 
+    # To get dataset items by 'id', use either filter or filter_sql.
     def _getitem(
         self,
         key: Union[int, slice, str], # should this be list as well??
@@ -608,9 +750,10 @@ class Datastore(Dataset): #, dict
           if column in features_map:
               del features_map[column]
       if self.features_map and "id" not in self.features:
-        raise RuntimeError(f"Datstore returned from map must have an {id} column to link to views.")
+        raise RuntimeError(f"Datstore returned from map must have an id column to link to views.")
       return Datastore.from_dataset(ret, features_map=features_map)
 
+    #WIP
     def map_tmp(
         self,
         function: Optional[Callable] = None,
@@ -681,6 +824,14 @@ class Datastore(Dataset): #, dict
               del features_map[column]
         return Datastore.from_dataset(ret, features_map=features_map)
 
+    @transmit_format
+    @fingerprint_transform(inplace=False)
+    def add_column(self, name: str, column: Union[list, np.array], new_fingerprint: str):
+        if not hasattr(self, 'features_map'): self.features_map = {}
+        if name in self.features_map:
+            raise RuntimeError(f"column {name} is alredy a view")
+        ret = super().add_column(name=name, column=column, new_fingerprint=new_fingerprint)
+        return Datastore.from_dataset(ret, features_map=self.features_map)
 
     def class_encode_column(self, column: str) -> "Datastore":
         if not hasattr(self, 'features_map'): self.features_map = {}
@@ -1174,18 +1325,40 @@ if __name__ == "__main__":
     import os
     import numpy as np
     from datasets import load_dataset
+    import fsspec, requests, aiohttp
+    def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
+      _BASE_DATA_URL_FORMAT_STR = ("https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/")
+      _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
+      base_data_url = _BASE_DATA_URL_FORMAT_STR.format(
+                shuffled=shuffled, language=language, deduplicated=deduplicated
+            )
+      checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(language=language)
+      with fsspec.open(checksum_url, encoding="utf-8") as f:
+        data_filenames = [line.decode().split("\t")[0] for line in f if line]
+        return [base_data_url + data_filename for data_filename in data_filenames]
+
+    def download_urls(urls):
+      for url in urls:
+        if not os.path.exists(url.split("/")[-1]):
+          os.system(f"wget {url}")
+        data = Datastore.from_dict({}).add_igzip("text", url.split("/")[-1])
+        print (data[-1])
+      
     args = sys.argv[1:]
     if "-test_igzip" in args:
       if not os.path.exists("wikitext-2"):
-        os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
-        os.system('unzip wikitext-2-v1.zip')
-        os.system('gzip wikitext-2/wiki.train.tokens')
+        !wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip
+        !unzip wikitext-2-v1.zip
+        !gzip wikitext-2/wiki.train.tokens
+      datastore = Datastore.from_igzip("txt", "wikitext-2/wiki.train.tokens.gz")
       datastore = Datastore.from_dict({'id':range(10000), 'len':[5]*10000})
       datastore = datastore.add_igzip("txt", "wikitext-2/wiki.train.tokens.gz")
       print (datastore)
       print (datastore[0])
       print (datastore[10100])
     if "-test_memmap" in args:
+       datastore = Datastore.from_mmap('embed', [1000, 512, 512], )
+       print (datastore)
        datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_sw")['train'])
        datastore = datastore.add_mmap('embed', [-1, 512, 512], )
        datastore = datastore.add_mmap('token', [-1, 512], dtype=np.int32)
@@ -1198,6 +1371,7 @@ if __name__ == "__main__":
        assert len(datastore['text']) == 24803
        assert len(datastore[0:10]['text']) == 10
        assert (datastore[0:10]['token'].shape) == (10, 512)
+       print (datastore)
     if "-test_sql" in args:
        datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_sw")['train'])
        datastore= datastore.add_sql('text2')
