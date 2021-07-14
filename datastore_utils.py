@@ -1,5 +1,6 @@
+#%%writefile data-tooling/datastore_utils.py
 #Copyright July 2021 Ontocord LLC. Licensed under Apache v2 https://www.apache.org/licenses/LICENSE-2.0
-#datastore_utils.py
+
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field, fields
@@ -61,7 +62,8 @@ from dataset.util import DatasetException, ResultIter, QUERY_STEP
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
 
-# if an array is contiguous, return True, and the start and end+1 range usable in ranges
+
+# if an array is contiguous, return True, and the start and end+1 range usable in 'range(start, end)'
 def is_contiguous(arr):
         start = None
         prev = None
@@ -168,6 +170,7 @@ def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
       return file_segs
 
 class TableExt(dataset.Table):
+    """ Extends dataset.Table's functionality to work with Datastore(s) and to add full-text-search (FTS) """
 
     def find(self, *_clauses, **kwargs):
         """Perform a simple search on the table similar to
@@ -203,7 +206,6 @@ class TableExt(dataset.Table):
         if not self.exists:
             return iter([])
 
-        _fts = kwargs.pop('_fts', None)
         _fts_q = kwargs.pop('_fts_q', None)
         _columns = kwargs.pop('_columns', None)
         _limit = kwargs.pop('_limit', None)
@@ -216,7 +218,7 @@ class TableExt(dataset.Table):
         if type(_columns) is str: _columns = [_columns]
         fts_results = []
         
-        if _fts:
+        if _fts_q:
             fts_q = " AND ".join([f"{column} MATCH {q}" for column, q in _fts_q])
             # we could run a seperate sqlite database for fts and join manually using a list of id's
             # TODO: if we are doing fts against the same db then we want to combine in one query.  
@@ -224,7 +226,7 @@ class TableExt(dataset.Table):
                               FROM {self.table_name}_idx
                               WHERE {fts_q}
                               ORDER BY rank
-                              LIMIT {_limit}""").fetchall()
+                              LIMIT {_limit}""").fetchall() # TODO: use parameters
             order_by = self._args_to_order_by(order_by) #TODO, if the order_by is empty, we will order by rank.
             args = self._args_to_clause(kwargs, clauses=_clauses) #todo, add in the where clause.  WHERE id in (...)
         else:
@@ -278,7 +280,6 @@ class TableExt(dataset.Table):
           row[self._primary_id] = 0
         return super().insert(row,  ensure=ensure, types=types)
 
-
     def insert_many(self, rows, chunk_size=1000, ensure=None, types=None):
         """Add many rows at a time.
 
@@ -297,12 +298,13 @@ class TableExt(dataset.Table):
         rows[0] = row
         if (not self.exists or not self.has_column(self._primary_id)) and  self._primary_type in (Types.integer, Types.bigint) and self._primary_id not in row:
           row[self._primary_id] = 0
+        return super().insert_many(rows, chunk_size=chunk_size, ensure=ensure, types=types)
 
-        super().insert_many(rows, chunk_size=chunk_size, ensure=ensure, types=types)
-        
+
+  # TODO - do update with re-try
 
 class DatabaseExt(dataset.Database):
-    """A DatabaseExt object represents a SQL database with  multiple tables of type TableExt."""
+    """A DatabaseExt textends dataset.Database and represents a SQL database with multiple tables of type TableExt."""
 
     def __init__(self, *args, **kwargs ):
         """Configure and connect to the database."""
@@ -315,7 +317,7 @@ class DatabaseExt(dataset.Database):
     def create_fts_index_column(self, table_name, column, stemmer="unicode61"): #  porter 
         # maybe we create a mirror sqlite database called fts_db if the database we are opening is not of sqlite type.
         # the idea is we want to be able to locally attach fts with our datasets arrow files. 
-        self.db.executeable.execute('CREATE VIRTUAL TABLE {table_name}_idx USING FTS5(idx:INTEGER, {column}:VARCHAR, tokenize="{stemmer}");')
+        self.db.executeable.execute(f'CREATE VIRTUAL TABLE {table_name}_idx USING FTS5(id:INTEGER, {column}:VARCHAR, tokenize="{stemmer}");')
 
     def create_table(
         self, table_name, primary_id=None, primary_type=None, primary_increment=None
