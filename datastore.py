@@ -82,18 +82,100 @@ class FeaturesWithViews(Features):
         ret +="\n}"
         return ret
 
+class MetadataMixin:
 
-class Datastore(Dataset): #, dict
+    @classmethod
+    def rowid_key_name():
+        raise NotImplementedError()
+
+    @classmethod
+    def extract_rowid(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def section_key_name():
+        raise NotImplementedError()
+
+    @classmethod
+    def extract_section_labels(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def url_key_name():
+        raise NotImplementedError()
+        
+    @classmethod
+    def extract_url(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def outlinks_key_name():
+        raise NotImplementedError()
+                
+    @classmethod
+    def extract_outlinks(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def publication_date_key_name():
+        raise NotImplementedError()
+                
+    @classmethod
+    def extract_publication_date(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def lastupdate_date_key_name():
+        raise NotImplementedError()
+                
+    @classmethod
+    def extract_lastupdate_date(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def uuid_hash_key_name():
+        raise NotImplementedError()
+                
+    @classmethod
+    def create_uuid_hash(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def main_langid_key_name(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def extract_main_langid(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def other_langid_key_name(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def extract_other_langid(batch):
+        raise NotImplementedError()
+
+    @classmethod
+    def pii_multiple_key_names():
+      raise NotImplementedError()
+
+    @classmethod
+    def detect_and_process_pii(batch):
+        raise NotImplementedError()
+
+class Datastore(Dataset): 
     """
     A class that wraps a Huggingface arrow based Dataset to provide some optimized reading and *writing* in various persistance backends. 
-    Currently provides support for features bound to memmap, igzip file, and sqlalchemy databases.
+    Currently provides support for features bound to memmap, indexed gzip (igzip) file, and sqlalchemy databases.
     """
         
     def __repr__(self):
         ret = FeaturesWithViews(self._info.features)
         ret.features_map = {} if not hasattr(self, "features_map") else self.features_map
         return f"Datastore({{\n    features: {ret},\n    num_rows: {self.num_rows}\n}})"
-        
+    
+
     @classmethod
     def from_dataset(cls, dataset, features_map=None, shared_dir=None):
         self = cls(
@@ -114,20 +196,14 @@ class Datastore(Dataset): #, dict
           self.features_map = copy.deepcopy(features_map)
         if not hasattr(self, "features_map"):
           self.features_map = {}
-        if  hasattr(dataset, "shared_dir"):
-          self.shared_dir=shared_dir
-        if shared_dir is not None:
-          self.shared_dir = shared_dir
-        if not hasattr(self, "shared_dir"):
-          self.shared_dir = {}
         return self
 
 
     def _get_mmap(self, mmap_path,  dtype, shape):
-      if shape[0] < len(self):
-          shape[0] = len(self)
+      shape[0] = max(shape[0], len(self))
       # what happens when the datastore shrinks??
       ret = np_mmap(mmap_path, dtype, shape)
+      if  not hasattr(self, "mmap_access_cnt"): self.mmap_access_cnt=0
       if self.mmap_access_cnt % 100==0: #let's flush intermittently just in case the OS needs to synch.
         ret.flush()
         self.mmap_access_cnt=0
@@ -156,22 +232,21 @@ class Datastore(Dataset): #, dict
             Datastore.db_table[(table_name, connection_url)] = table = db[table_name]
         return table
 
-    # todo, change the id key from "id" to something custom. this needs to be stored in the table meta-data.
     @staticmethod
-    def _add_idx(batch, indices, idx_feature,):
-        batch[idx_feature] = indices # will this be shuffled if we are in shuffled mode?
+    def _add_idx(batch, indices, id_feature,):
+        batch[id_feature] = indices # will this be shuffled if we are in shuffled mode?
         return batch
 
     @staticmethod
-    def _move_to_mmap_col(batch, src_feature, idx_feature, mmap_path, dtype, shape):
+    def _move_to_mmap_col(batch, src_feature, id_feature, mmap_path, dtype, shape):
         ret = np_mmap(mmap_path, dtype, shape)
-        ret[batch[idx_feature]] = batch[dst_feature_view]
+        ret[batch[id_feature]] = batch[dst_feature_view]
 
     @classmethod
-    def from_mmap(cls,  feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=100, idx_feature="id", batch_size=1000, num_proc=4):
-      return cls.from_dict({}).add_mmap(feature_view=feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, dtype_str_len=dtype_str_len, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+    def from_mmap(cls,  feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=100, id_feature="id", batch_size=1000, num_proc=4):
+      return cls.from_dict({}).add_mmap(feature_view=feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, dtype_str_len=dtype_str_len, id_feature=id_feature, batch_size=batch_size, num_proc=num_proc)
 
-    def move_to_mmap(self, src_feature, dst_feature_view=None, shape=None, mmap_path=None, dtype='float32', dtype_str_len=100, idx_feature="id", batch_size=1000, num_proc=4):
+    def move_to_mmap(self, src_feature, dst_feature_view=None, shape=None, mmap_path=None, dtype='float32', dtype_str_len=100, id_feature="id", batch_size=1000, num_proc=4):
       if dst_feature_view is None:
         self = self.rename_column(src_feature, "__tmp__"+src_feature)
         dst_feature_view = src_feature
@@ -194,14 +269,18 @@ class Datastore(Dataset): #, dict
           raise RuntimeError(f"could not infer shape and dtype for example {item}")
       if shape[0] < len(self):
         shape[0] = len(self)
-      self.add_mmap(feature_view=dst_feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+      self.add_mmap(feature_view=dst_feature_view, shape=shape, mmap_path=mmap_path, dtype=dtype, id_feature=id_feature, batch_size=batch_size, num_proc=num_proc)
       val = self.features_map[dst_feature_view]
-      self.map(Datastore._move_to_mmap_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'src_feature':src_feature, 'idx_feature':idx_feature, 'mmap_path': val['mmap_path'], 'dtype': val['dtype'], 'shape':shape})
+      self.map(Datastore._move_to_mmap_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'src_feature':src_feature, 'id_feature':id_feature, 'mmap_path': val['mmap_path'], 'dtype': val['dtype'], 'shape':shape})
       return self.remove_columns(src_feature)
 
     #mapping a feature/columun to a memmap array accessed by row
-    def add_mmap(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=100, idx_feature="id", batch_size=1000, num_proc=4):
+    def add_mmap(self, feature_view, shape, mmap_path=None, dtype='float32', dtype_str_len=100, id_feature="id", batch_size=1000, num_proc=4):
       if not hasattr(self, 'features_map'): self.features_map = {}
+      if hasattr(self, 'id_feature') and self.id_feature != id_feature:
+        raise RuntimeError(f"attempting to reset the index to {id_feature}")
+      else:
+        self.id_feature = id_feature
       if not self.cache_files:
         dataset_path = get_temporary_cache_files_directory()
       else:  
@@ -210,25 +289,25 @@ class Datastore(Dataset): #, dict
           mmap_path = os.path.abspath(os.path.join(dataset_path, feature_view+".mmap"))
       shape = list(shape)
       shape[0] = max(shape[0], len(self))
-      if idx_feature not in self.features:
+      if id_feature not in self.features:
         if len(self) == 0 and shape[0] > 0:
-            new_self = Datastore.from_dict({idx_feature: range(shape[0])})
+            new_self = Datastore.from_dict({id_feature: range(shape[0])})
             new_self.features_map = self.features_map
             self = new_self
             ids = dict([(a,1) for a in range(len(self))])
             self.id_idx_identical = True
         else:
-            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx_feature': idx_feature})
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'id_feature': id_feature})
             ids = dict([(a,1) for a in range(len(self))])
             self.id_idx_identical = True
       else:
-        ids = dict([(a,1) for a in self[idx_feature]])
+        ids = dict([(a,1) for a in self[id_feature]])
       missing_ids = []
       for id in range(shape[0]):
           if id not in ids:
             missing_ids.append(id)
       if missing_ids:
-            self = self.add_batch({idx_feature: missing_ids})
+            self = self.add_batch({id_feature: missing_ids})
             if not hasattr(self, 'id_idx_identical'):  self.id_idx_identical = True
             if self.id_idx_identical:
               contiguous, start, end = is_contiguous(missing_ids)
@@ -242,32 +321,36 @@ class Datastore(Dataset): #, dict
 
 
     @classmethod
-    def from_igzip(cls, feature_view, path,  idx_feature="id", batch_size=1000, num_proc=4):
-      return cls.from_dict({}).add_igzip(feature_view=feature_view, path=path,  idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
+    def from_igzip(cls, feature_view, path,  id_feature="id", batch_size=1000, num_proc=4):
+      return cls.from_dict({}).add_igzip(feature_view=feature_view, path=path,  id_feature=id_feature, batch_size=batch_size, num_proc=num_proc)
 
     #mapping a feature/columun to an indexed gzip file accessed by line 
-    def add_igzip(self, feature_view, path,  idx_feature="id", batch_size=1000, num_proc=4):
+    def add_igzip(self, feature_view, path,  id_feature="id", batch_size=1000, num_proc=4):
       if not hasattr(self, 'features_map'): self.features_map = {}
+      if hasattr(self, 'id_feature') and self.id_feature != id_feature:
+        raise RuntimeError(f"attempting to reset the index to {id_feature}")
+      else:
+        self.id_feature = id_feature
       fobj = self._get_igzip_fobj(path)
-      if idx_feature not in self.features:
+      if id_feature not in self.features:
           if len(self) == 0:
-            new_self = Datastore.from_dict({idx_feature: range(len(fobj))})
+            new_self = Datastore.from_dict({id_feature: range(len(fobj))})
             new_self.features_map = self.features_map
             self = new_self
             ids = dict([(a,1) for a in range(len(self))])
             self.id_idx_identical = True
           else:
-            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'idx_feature': idx_feature})
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'id_feature': id_feature})
             ids = dict([(a,1) for a in range(len(self))])
             self.id_idx_identical = True
       else:
-          ids = dict([(a,1) for a in self[idx_feature]])
+          ids = dict([(a,1) for a in self[id_feature]])
       missing_ids=[]
       for id in range(len(fobj)):
             if id not in ids:
               missing_ids.append(id)
       if missing_ids:
-              self = self.add_batch({idx_feature: missing_ids})
+              self = self.add_batch({id_feature: missing_ids})
               if not hasattr(self, 'id_idx_identical'):  self.id_idx_identical = True
               if self.id_idx_identical:
                 contiguous, start, end = is_contiguous(missing_ids)
@@ -277,57 +360,40 @@ class Datastore(Dataset): #, dict
       self.features_map[feature_view] = {'type':"igzip", 'path': path}
       return self
 
-    @staticmethod
-    def _move_to_sql_col(batch, table_name, connection_url, src_feature, dst_feature_view, idx_feature):
-          db = DatabaseExt(connection_url)
-          with db:
-            table = db[table_name]
-            batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-            try:
-              table.insert_many(batch2)
-            except:
-              batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-              table.update_many(batch2, [idx_feature])
-            batch2 = batch = None
-
-    def move_to_sql(self, src_feature, dst_feature_view=None, table_name=None, connection_url=None,  idx_feature="id",  batch_size=1000, num_proc=4):
+    def move_to_sql(self, src_feature_to_dst_feature_map, table_name=None, connection_url=None,  id_feature="id",  batch_size=1000, num_proc=4):
       if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
+      if not connection_url:
+          connection_url="sqlite:///"+self.cache_files[0]['filename'].replace(".arrow", ".db")
+      table = Datastore._get_db_table(self, table_name, connection_url)
+
       if dst_feature_view is None:
         self = self.rename_column(src_feature, "__tmp__"+src_feature)
         dst_feature_view = src_feature
         src_feature = "__tmp__"+src_feature
       value = self[0][src_feature]
-      if not connection_url:
-          connection_url="sqlite:///"+self.cache_files[0]['filename'].replace(".arrow", ".db")
-      table = Datastore._get_db_table(self, table_name, connection_url)
       if type(value) is str: #we don't want to save as json type just in case
         value="**"
+
       dtype = table.db.types.guess(value)
-      self.add_sql(feature_view=[(dst_feature_view, dtype)], table_name=table_name, connection_url=connection_url, idx_feature=idx_feature, batch_size=batch_size, num_proc=num_proc)
-      if connection_url=="sqlite://": # I don't think we can pass in-memory sqlite table in multi-processing mode, so just do i in single-thread, single-process
+      self.add_sql(feature_view=[(dst_feature_view, dtype)], table_name=table_name, connection_url=connection_url, id_feature=id_feature, batch_size=batch_size, num_proc=num_proc)
+      if connection_url=="sqlite://": # I don't think we can pass in-memory sqlite table in multi-processing mode, so just do it in single-thread, single-process
         len_self = len(self)
         with Datastore.db_connection[connection_url]:
           for rng in range(0, len_self, batch_size):
             max_rng = min(len_self, rng+batch_size)
-            batch = self._getitem(slice(rng, max_rng), format_columns=[idx_feature, src_feature])
-            batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-            try:
-              table.insert_many(batch2)
-            except:
-              batch2 = [{dst_feature_view: a, idx_feature: b} for a, b in zip(batch[src_feature], batch[idx_feature])]
-              table.update_many(batch2, [idx_feature])
-            batch2 = batch = None
+            batch = self._getitem(slice(rng, max_rng), format_columns=[id_feature, src_feature])
+            Datastore.upsert_sql_from_batch(batch, self.features_map, id_feature, src_feature_to_dst_feature_map,)
       else:
-        self.map(Datastore._move_to_sql_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'table_name':table_name, 'connection_url':connection_url, 'src_feature': src_feature, 'dst_feature_view': dst_feature_view, 'idx_feature':idx_feature})
+        self.map(Datastore.upsert_sql_from_batch, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'features_map':features_map, 'src_feature_to_dst_feature_map': src_feature_to_dst_feature_map, 'id_feature':id_feature})
       return self.remove_columns(src_feature)
 
-    # mapping one or more columns/features to a sql database. creates a sqlalchmey/dataset dynamically with idx_feature as the primary key. 
+    # mapping one or more columns/features to a sql database. creates a sqlalchmey/dataset dynamically with id_feature as the primary key. 
     # TODO: remember to strip passwords from any connection_url. passwords should be passed as vargs and added to the conneciton url dynamically
     # passwords should not be perisisted.
     # NOTE: this dataset will not automatically change if the database changes. call this method again to sync the size and schema
-    def add_sql(self, feature_view=None, table_name=None, connection_url=None, dtype="str", idx_feature="id",  batch_size=1000, num_proc=4):
+    def add_sql(self, feature_view=None, table_name=None, connection_url=None, dtype="str", id_feature="id",  batch_size=1000, num_proc=4):
         if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
@@ -337,31 +403,35 @@ class Datastore(Dataset): #, dict
         if type(feature_view) is str:
           feature_view = [(feature_view, dtype)]
         if not hasattr(self, 'features_map'): self.features_map = {}
+        if hasattr(self, 'id_feature') and self.id_feature != id_feature:
+          raise RuntimeError(f"attempting to reset the index to {id_feature}")
+        else:
+          self.id_feature = id_feature
         table = self._get_db_table(table_name, connection_url)
         if not feature_view and table.columns:
             feature_view = table.columns
         elif not feature_view:
             raise RuntimeError(f"No feature_view(s) and no column definition for table view {table_name}")
-        table_ids = table.find(_columns=idx_feature)
-        if idx_feature not in self.features:
+        table_ids = table.find(_columns=id_feature)
+        if id_feature not in self.features:
           if len(self) == 0 and table_ids:
-            new_self = Datastore.from_dict({idx_feature: range(max([id[idx_feature] for id in table_ids]))})
+            new_self = Datastore.from_dict({id_feature: range(max([id[id_feature] for id in table_ids]))})
             new_self.features_map = self.features_map
             self = new_self
             ids = dict([(a,1) for a in range(len(self))])
             self.id_idx_identical = True
           else:
-            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'id': idx_feature})
+            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'id': id_feature})
             ids = dict([(a,1) for a in range(len(self))])
             self.id_idx_identical = True
         else:
-          ids = dict([(a,1) for a in self[idx_feature]])
+          ids = dict([(a,1) for a in self[id_feature]])
         missing_ids = []
         for id in table_ids:
-          if id[idx_feature] not in ids:
-            missing_ids.append(id[idx_feature])
+          if id[id_feature] not in ids:
+            missing_ids.append(id[id_feature])
         if missing_ids:
-            self = self.add_batch({idx_feature: missing_ids})
+            self = self.add_batch({id_feature: missing_ids})
             if not hasattr(self, 'id_idx_identical'):  self.id_idx_identical = True
             if self.id_idx_identical:
               contiguous, start, end = is_contiguous(missing_ids)
@@ -373,7 +443,7 @@ class Datastore(Dataset): #, dict
               col, dtype = col
             else:
               dtype=None
-            if col == idx_feature:
+            if col == id_feature:
                 continue
             if col not in table.columns:
               if type(dtype) is str:
@@ -422,7 +492,7 @@ class Datastore(Dataset): #, dict
         if not found:
           raise RuntimeError(f"found query on a column {key} that is not a sql column")
       kwargs['_fts_q'] = _fts_q
-      kwargs['_columns'] = ['id']
+      kwargs['_columns'] = [self.id_feature]
       kwargs['_limit'] = _limit
       kwargs['_offset'] = _offset
       kwargs['order_by'] = order_by
@@ -473,17 +543,17 @@ class Datastore(Dataset): #, dict
           else:
             format_columns.append(key)
           if key in self.features_map:
-            key = "id"
+            key = self.id_feature
         missing=[]
         if format_columns:
             for c in copy.copy(format_columns):
                 if c in self.features_map:
                      missing.append(c)
                      format_columns.remove(c)
-            if "id" not in format_columns:
-                format_columns.append("id")
+            if self.id_feature not in format_columns:
+                format_columns.append(self.id_feature)
             else:
-                missing.append("id")
+                missing.append(self.id_feature)
 
         # let's get the data that is in the arrow portion first, including the id
         outputs = super()._getitem(
@@ -499,8 +569,8 @@ class Datastore(Dataset): #, dict
           outputs = {'id': outputs}
 
         # do some cleanup.
-        if type(orig_key) is str and format_columns and "id" in format_columns:
-            format_columns.remove("id")
+        if type(orig_key) is str and format_columns and self.id_feature in format_columns:
+            format_columns.remove(self.id_feature)
         if format_columns is not None:
             format_columns.extend(missing)
         # now get the views and combine views and  arrow portion 
@@ -522,16 +592,17 @@ class Datastore(Dataset): #, dict
             sql_results = {}
             for feature, val in items:
                 if val['type'] == 'mmap':
+                    mmap_array = self._get_mmap(val['path'], val['dtype'], val['shape'])
                     if mmap_by_items:
                         if contiguous:
-                            outputs[feature] = [ self._get_mmap(val['path'], val['dtype'], val['shape']) for i in range(start, end)]
+                            outputs[feature] = [mmap_array[i]  for i in range(start, end)]
                         else:
-                            outputs[feature] = [ self._get_mmap(val['path'], val['dtype'], val['shape']) for i in keys]
+                            outputs[feature] = [mmap_array[i] for i in keys]
                     else:
                         if contiguous:
-                            outputs[feature] = self._get_mmap(val['path'], val['dtype'], val['shape'])[start:end]
+                            outputs[feature] = mmap_array[start:end]
                         else:
-                            outputs[feature] = self._get_mmap(val['path'], val['dtype'], val['shape'])[keys]                            
+                            outputs[feature] = mmap_array[keys]                            
                 elif val['type'] == 'igzip':
                     if contiguous:
                         outputs[feature] = self._get_igzip_fobj(val['path'])[start:end]
@@ -572,7 +643,7 @@ class Datastore(Dataset): #, dict
                 outputs = {}
                 contiguous=True
             elif isinstance(outputs_or_keys, dict):
-                keys = outputs_or_keys["id"]
+                keys = outputs_or_keys[self.id_feature]
                 outputs = outputs_or_keys
             else:
                 keys = outputs_or_keys
@@ -592,7 +663,7 @@ class Datastore(Dataset): #, dict
             outputs = getitems(self, outputs, keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=False)
             if transform is not None:
               outputs = transform(outputs)
-            if "id" in outputs and format_columns and "id" not in format_columns: del outputs["id"] 
+            if self.id_feature in outputs and format_columns and self.id_feature not in format_columns: del outputs[self.id_feature] 
             # is this right. will custom ever return a dict type if there is only one column, or do we 
             # default to returning the only column.
             if len(outputs) == 1: outputs = list(outputs.values())[0]
@@ -621,101 +692,95 @@ class Datastore(Dataset): #, dict
             elif isinstance(outputs_or_keys, dict) or isinstance(outputs_or_keys,  pd.DataFrame):
                 outputs = outputs_or_keys
                 outputs = pd.DataFrame(outputs)
-                keys = outputs_or_keys["id"]
+                keys = outputs_or_keys[self.id_feature]
                 contiguous, start, end = is_contiguous(keys)
             else:
                 raise RuntimeError("got unknown outputs or keys type")
             if outputs is None:
                 outputs = pd.DataFrame()
             outputs = getitems(self, outputs,  keys, contiguous, start, end, format_columns, output_all_columns, mmap_by_items=True)
-            if "id" in outputs and format_columns and "id" not in format_columns: 
-              outputs.drop("id", axis=1) 
+            if self.id_feature in outputs and format_columns and self.id_feature not in format_columns: 
+              outputs.drop(self.id_feature, axis=1) 
             if len(format_columns) == 1:
               outputs = outputs[format_columns[0]]
             return outputs
         raise RuntimeError("got unknown outputs or keys type")
 
-    def to_csv(
-        self,
-        path_or_buf: Union[PathLike, BinaryIO],
-        batch_size: Optional[int] = None,
-        **to_csv_kwargs,
-    ) -> int:
-      pass #TODO
+    @staticmethod
+    def upsert_sql_from_batch(batch, features_map, id_feature, src_feature_to_dst_feature_map):
+      sql_results={}
+      for feature in batch.keys():
+        if features_map.get(feature):
+          val = features_map[feature]:
+          if val['type'] == 'sql':
+            sql_results[(val['table_name'], val['connection_url'])] = sql_results.get((val['table_name'], val['connection_url']),[])+[feature]
+      for key, features in sql_results.items():
+        table_name, connection_url = key
+        db = DatabaseExt(connection_url)
+        with db:
+            table = db[table_name]
+            batch2 = [{dst_feature_view: a, id_feature: b} for a, b in zip(batch[src_feature], batch[id_feature])]
+            try:
+              table.insert_many(batch2)
+            except:
+              batch2 = [{dst_feature_view: a, id_feature: b} for a, b in zip(batch[src_feature], batch[id_feature])]
+              table.update_many(batch2, [id_feature])
+            batch2 = None
 
-    def to_dict(self, batch_size: Optional[int] = None, batched: bool = False) -> Union[dict, Iterator[dict]]:
-        if (not hasattr(self, "features_map") or not self.features_map) and len(self.features) == 1 and "id" in self.features:
-            return {}
-        #TODO - put back direct mmap access method here?
-        ret = super().to_dict(batch_size=batch_size, batched=batched)
-        if isinstance(ret, Iterator):
-            for r in ret:
-                yield self._format_views(r, contiguous=True)
-            return 
-        return self._format_views(ret, contiguous=True)
+    @staticmethod
+    def map_fn_with_indices_handle_views(batch, indices, map_fn, fn_kwargs, handle_views, features_map, id_feature, remove_columns):
+      ret = map_fn(batch, indices, **fn_kwargs)
+      if ret is not None:
+        if remove_columns:
+          for key in remove_columns:
+            del ret[key]
+        if features_map and id_feature not in ret:
+          raise RuntimeError(f"Datstore returned from map must have an {id_feature} column to link to views.")
+        for key, val in features_map.items():
+          if handle_views == 2:
+            if val['type'] == 'mmap':
+                mmap_array = np_mmap(val['path'], val['dtype'], val['shape'])
+                mmap_array[batch[id_feature]] = batch[feature]                     
+            elif val['type'] == 'igzip':
+                raise RuntimeError("cannot update an igzip file")
+          elif handle_views == 1:
+            if key in ret:
+              del ret[key]
+        Datastore.upsert_sql_from_batch(ret, features_map, id_feature, None)
+      return ret
 
-    def to_pandas(
-        self, batch_size: Optional[int] = None, batched: bool = False
-    ) -> Union[pd.DataFrame, Iterator[pd.DataFrame]]:
-        if (not hasattr(self, "features_map") or not self.features_map) and len(self.features) == 1 and "id" in self.features:
-            return pd.DataFrame()
-        #TODO - put back direct mmap access method here?
-        ret = super().to_pandas(batch_size=batch_size, batched=batched)
-        if isinstance(ret, Iterator):
-            for r in ret:
-                yield self._format_views(r, contiguous=True)
-        return self._format_views(ret, contiguous=True)
-        
+    @staticmethod
+    def map_fn_with_handle_views(batch, map_fn, fn_kwargs, handle_views, features_map, id_feature, remove_columns):
+      ret = map_fn(batch, **fn_kwargs)
+      if ret is not None:
+        if remove_columns:
+          for key in remove_columns:
+            del ret[key]
+        if features_map and id_feature not in ret:
+          raise RuntimeError(f"Datstore returned from map must have an {id_feature} column to link to views.")
+        for key in features_map:
+          if handle_views == 2:
+            if val['type'] == 'mmap':
+                mmap_array = np_mmap(val['path'], val['dtype'], val['shape'])
+                mmap_array[batch[id_feature]] = batch[feature]                     
+            elif val['type'] == 'igzip':
+                raise RuntimeError("cannot update an igzip file")
+          elif handle_views == 1:
+            if key in ret:
+              del ret[key]
+        Datastore.upsert_sql_from_batch(ret, features_map, id_feature, None)
+      return ret
 
-        
-    @transmit_format
-    @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "cache_file_name"])
-    def _map_single_old(
-        self,
-        function: Optional[Callable] = None,
-        with_indices: bool = False,
-        input_columns: Optional[Union[str, List[str]]] = None,
-        batched: bool = False,
-        batch_size: Optional[int] = 1000,
-        drop_last_batch: bool = False,
-        remove_columns: Optional[List[str]] = None,
-        keep_in_memory: bool = False,
-        load_from_cache_file: bool = None,
-        cache_file_name: Optional[str] = None,
-        writer_batch_size: Optional[int] = 1000,
-        features: Optional[Features] = None,
-        disable_nullable: bool = False,
-        fn_kwargs: Optional[dict] = None,
-        new_fingerprint: Optional[str] = None,
-        rank: Optional[int] = None,
-        offset: int = 0,
-        desc: Optional[str] = None,
-    ) -> "Datastore":
-      if not hasattr(self, 'features_map'): self.features_map = {}
-      ret = super()._map_single(function=function,
-            with_indices=with_indices,
-            input_columns=input_columns,
-            batched=batched,
-            batch_size=batch_size,
-            drop_last_batch=drop_last_batch,
-            remove_columns=remove_columns,
-            keep_in_memory=keep_in_memory,
-            load_from_cache_file=load_from_cache_file,
-            cache_file_name=cache_file_name,
-            writer_batch_size=writer_batch_size,
-            features=features,
-            disable_nullable=disable_nullable,
-            fn_kwargs=fn_kwargs,
-            new_fingerprint=new_fingerprint,
-            rank=rank,
-            offset=offset,
-            desc=desc,)
-      features_map= copy.deepcopy(self.features_map)
-      for column in remove_columns if remove_columns is not None else []:
-          if column in features_map:
-              del features_map[column]
-      return Datastore.from_dataset(ret, features_map=features_map)
 
+    PERSIST_IN_ARROW = 0
+    STATIC_VIEWS = 1
+    UPDATE_VIEWS = 2
+
+    #parameter handle_views tells us how to handle views_data. 
+    #PERSIST_IN_ARROW - all data returned will be persisted to arrow storage and not views. this will detach all views.
+    #STATIC_VIEWS - keep the views attached to external storage without change. *deafult*
+    #UPDATE_VIEWS - update views based on what is returned by the map function. this will create a side-effect.
+    #WARNING for caching a result of map with a side-effect will create unexpected results.
     def map(
         self,
         function: Optional[Callable] = None,
@@ -735,8 +800,20 @@ class Datastore(Dataset): #, dict
         num_proc: Optional[int] = None,
         suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
         new_fingerprint: Optional[str] = None,
+        handle_views=Datastore.STATIC_VIEWS, 
     ) -> "Datastore":
       if not hasattr(self, 'features_map'): self.features_map = {}
+      features_map= copy.deepcopy(self.features_map)
+      for column in remove_columns if remove_columns is not None else []:
+          if column in features_map:
+              del features_map[column]
+      if handle_views > 0:
+        fn_kwargs = {'fn_kwargs': fn_kwargs, 'features_map': features_map, 'map_fn': function, 'handle_views': handle_views, 'id_feature': self.id_feature, 'remove_columns': remove_columns}
+        if with_indices:
+          function = Datastore.map_fn_with_indices_handle_views
+        else:
+          function = Datastore.map_fn_with_handle_views
+
       ret = super().map(function=function, with_indices=with_indices, input_columns=input_columns,
                      batched=batched, batch_size=batch_size, drop_last_batch=drop_last_batch, 
                      remove_columns=remove_columns, keep_in_memory=keep_in_memory, 
@@ -745,84 +822,10 @@ class Datastore(Dataset): #, dict
                      disable_nullable=disable_nullable, fn_kwargs=fn_kwargs,
                      num_proc=num_proc, suffix_template=suffix_template,
                      new_fingerprint=new_fingerprint)
-      features_map= copy.deepcopy(self.features_map)
-      for column in remove_columns if remove_columns is not None else []:
-          if column in features_map:
-              del features_map[column]
-      if self.features_map and "id" not in self.features:
-        raise RuntimeError(f"Datstore returned from map must have an id column to link to views.")
-      return Datastore.from_dataset(ret, features_map=features_map)
 
-    #WIP
-    def map_tmp(
-        self,
-        function: Optional[Callable] = None,
-        with_indices: bool = False,
-        input_columns: Optional[Union[str, List[str]]] = None,
-        batched: bool = False,
-        batch_size: Optional[int] = 1000,
-        drop_last_batch: bool = False,
-        remove_columns: Optional[List[str]] = None,
-        keep_in_memory: bool = False,
-        load_from_cache_file: bool = True,
-        cache_file_name: Optional[str] = None,
-        writer_batch_size: Optional[int] = 1000,
-        features: Optional[Features] = None,
-        disable_nullable: bool = False,
-        fn_kwargs: Optional[dict] = None,
-        num_proc: Optional[int] = None,
-        suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
-        new_fingerprint: Optional[str] = None,
-        parallel_backend_type: Optional[List[str]] = ["dask"]
-    ) -> "Datastore":
-
-        if True:
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-            
-            with parallel_backend(**parallel_backend_type): # 'distributed', scheduler_host='HOST:PORT'):
-                os.environ = prev_env
-                shards = [
-                    self.shard(num_shards=num_proc, index=rank, contiguous=True, keep_in_memory=keep_in_memory)
-                    for rank in range(num_proc)
-                ]
-                kwds_per_shard = [
-                    dict(
-                        self=shards[rank],
-                        function=function,
-                        with_indices=with_indices,
-                        input_columns=input_columns,
-                        batched=batched,
-                        batch_size=batch_size,
-                        drop_last_batch=drop_last_batch,
-                        remove_columns=remove_columns,
-                        keep_in_memory=keep_in_memory,
-                        load_from_cache_file=load_from_cache_file,
-                        cache_file_name=format_cache_file_name(cache_file_name, rank)
-                        if cache_file_name is not None
-                        else None,
-                        writer_batch_size=writer_batch_size,
-                        features=features.copy() if features is not None else None,
-                        disable_nullable=disable_nullable,
-                        fn_kwargs=fn_kwargs,
-                        rank=rank,
-                        offset=sum(len(s) for s in shards[:rank]),
-                        desc=desc,
-                    )
-                    for rank in range(num_proc)
-                ]
-                logger.info("Spawning {} processes".format(num_proc))
-                # TODO: do smart jobs allocaiton based on which node the shard of the data is stored
-                transformed_shards = Parrallel(n_jobs = num_proc, verbose=1)(delayed(self.__class__._map_single)(self, **kwds) for kwds in kwds_per_shard)
-                logger.info("Concatenating {} shards from multiprocessing".format(num_proc))
-                result = concatenate_datasets(transformed_shards)
-                if new_fingerprint is not None:
-                    result._fingerprint = new_fingerprint
-                ret = result
-        features_map= copy.deepcopy(self.features_map)
-        for column in remove_columns if remove_columns is not None else []:
-          if column in features_map:
-              del features_map[column]
-        return Datastore.from_dataset(ret, features_map=features_map)
+      if ret._fingerprint == self._fingerprint:
+        return self
+      return Datastore.from_dataset(ret, features_map={} if not keep_views else features_map)
 
     @transmit_format
     @fingerprint_transform(inplace=False)
@@ -860,8 +863,7 @@ class Datastore(Dataset): #, dict
         for feature in self.features_map:
             if feature not in features:
                 continue
-            if  self.features[feature] != features[feature]:
-                raise NotImplementedError()
+            raise RuntimeError(f"cannot cast a view {feature}")
         ret = super().cast(
           features =features,
           batch_size = batch_size ,
@@ -875,25 +877,48 @@ class Datastore(Dataset): #, dict
     @fingerprint_transform(inplace=False)
     def remove_columns(self, column_names: Union[str, List[str]], new_fingerprint) -> "Datastore":
         if not hasattr(self, 'features_map'): self.features_map = {}
-        ret = super().remove_columns(column_names=column_names, new_fingerprint=new_fingerprint)
         features_map= copy.deepcopy(self.features_map)
-        for column in [column_names] if type(column_names) is str else column_names:
+        if type(column_names) is str: column_names = [column_names] 
+        for column in copy.copy(column_names):
             if column in features_map:
                 del features_map[column]
+                column_names.remove(column)
+        if not column_names:
+            return Datastore.from_dataset(self, features_map=features_map)
+        ret = super().remove_columns(column_names=column_names, new_fingerprint=new_fingerprint)
         return Datastore.from_dataset(ret, features_map=features_map)
 
     @fingerprint_transform(inplace=False)
     def rename_column(self, original_column_name: str, new_column_name: str, new_fingerprint) -> "Datastore":
         if not hasattr(self, 'features_map'): self.features_map = {}
-        ret = super().rename_column(original_column_name=original_column_name, new_column_name=new_column_name, new_fingerprint=new_fingerprint)
         features_map= copy.deepcopy(self.features_map)
         if original_column_name in features_map:
             val = features_map[original_column_name]
             del features_map[original_column_name]
             features_map[new_column_name] = val
+            return Datastore.from_dataset(self, features_map=features_map)
+        ret = super().rename_column(original_column_name=original_column_name, new_column_name=new_column_name, new_fingerprint=new_fingerprint)
+        return Datastore.from_dataset(self, features_map=features_map)
+        
+    @fingerprint_transform(inplace=False)
+    def rename_columns(self, column_mapping: Dict[str, str], new_fingerprint)  -> "Datastore":
+        if not hasattr(self, 'features_map'): self.features_map = {}
+        features_map= copy.deepcopy(self.features_map)
+        for original_column_name, new_column_name in list(column_mapping.items()):
+            val = features_map[original_column_name]
+            del features_map[original_column_name]
+            features_map[new_column_name] = val
+            del column_mapping[original_column_name]
+        if not column_mapping:
+          return Datastore.from_dataset(self, features_map=features_map) 
+        ret = super().rename_column(column_mapping=column_mapping, new_fingerprint=new_fingerprint)
         return Datastore.from_dataset(ret, features_map=features_map)
 
-
+    def prepare_for_task(self, task: Union[str, TaskTemplate]) -> "Dataset":
+        if not hasattr(self, 'features_map'): self.features_map = {}
+        ret = super().prepare_for_task(task)
+        return Datastore.from_dataset(ret, features_map=features_map)
+    @transmit_format
     @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "cache_file_name"])
     def filter(
         self,
@@ -957,7 +982,7 @@ class Datastore(Dataset): #, dict
     
     @transmit_format
     @fingerprint_transform(inplace=False, ignore_kwargs=["indices_cache_file_name"])
-    def select_new(
+    def select(
         self,
         indices: Iterable,
         keep_in_memory: bool = False,
@@ -965,6 +990,7 @@ class Datastore(Dataset): #, dict
         writer_batch_size: Optional[int] = 1000,
         new_fingerprint: Optional[str] = None,
     ) -> "Datastore":
+        if not hasattr(self, 'features_map'): self.features_map = {}
         ret = super().select(
             indices=indices,
             keep_in_memory=keep_in_memory,
@@ -972,8 +998,9 @@ class Datastore(Dataset): #, dict
             writer_batch_size=writer_batch_size,
             new_fingerprint=new_fingerprint,
             ) 
-        if not hasattr(self, 'features_map'): self.features_map = {}
+
         return Datastore.from_dataset(ret, features_map=self.features_map)
+
 
     @transmit_format
     @fingerprint_transform(inplace=False, ignore_kwargs=["load_from_cache_file", "indices_cache_file_name"])
@@ -1052,7 +1079,7 @@ class Datastore(Dataset): #, dict
         writer_batch_size: Optional[int] = 1000,
         train_new_fingerprint: Optional[str] = None,
         test_new_fingerprint: Optional[str] = None,
-    ) -> "DatastoreDict":
+    ) -> "DatasetDict":
         if not hasattr(self, 'features_map'): self.features_map = {}
         ret = super.train_test_split(
             test_size=test_size,
@@ -1072,120 +1099,7 @@ class Datastore(Dataset): #, dict
             ret[key] = Datastore.from_dataset(ret, features_map=self.features_map)
         return ret
 
-    # shard doesn't seem to work properly because of pickling problems? Maybe it's because it's being run in Colab with autoload??
-    def shard_new(
-        self,
-        num_shards: int,
-        index: int,
-        contiguous: bool = False,
-        keep_in_memory: bool = False,
-        indices_cache_file_name: Optional[str] = None,
-        writer_batch_size: Optional[int] = 1000,
-    ) -> "Datastore":
-        if not hasattr(self, 'features_map'): self.features_map = {}
-        ret = super().shard(num_shards=num_shards,
-          index=index,
-          contiguous=contiguous,
-          keep_in_memory=keep_in_memory,
-          indices_cache_file_name=indices_cache_file_name,
-          writer_batch_size=writer_batch_size)
-        return ret # Datastore.from_dataset(ret, features_map=self.features_map)
 
-
-    # TODO: Fiix load_from_idsk and save_to_disk to work with current version of datasets
-
-    @staticmethod
-    def load_from_disk(dataset_path: str, fs=None, shared_dir=None) -> "Datastore":
-      # TODO, move from shared drive to cached drive
-        ret = Dataset.load_from_disk(dataset_path=dataset_path, fs=fs)
-        dataset_path = os.path.dirname(ret._data_files[0]["filename"])
-        with open(
-            Path(dataset_path, "state.json").as_posix(), "r", encoding="utf-8"
-        ) as state_file:
-            state = json.load(state_file)
-        ret.features_map =  state.get("features_map")
-        for key, values in list(ret.features_map.items()):
-            mmap_path = os.path.abspath(os.path.join(dataset_path, values[0]))
-            ret.features_map[key][0] =  mmap_path
-        return Datastore.from_dataset(ret)
-        #todo, do periodic sync with the shared drive, and lazy loading of shareds from shared drive
-
-    def save_to_disk(self, dataset_path: str, move_files=True):
-        """
-        Save the datastore along with all mmaps and uris in a directory
-
-        Args:
-            dataset_path (``str``): path of the dataset directory where the dataset will be saved to
-        """
-        assert (
-            not self.list_indexes()
-        ), "please remove all the indexes using `dataset.drop_index` before saving a dataset"
-        orig_self = self
-        if not move_files:
-            self = pickle.loads(pickle.dumps(self))
-        os.makedirs(dataset_path, exist_ok=True)
-        orig_dataset_path = os.path.dirname(self._data_files[0]["filename"])
-        # Write indices if needed
-        if self._indices is not None:
-            if not self._indices_data_files:
-                cache_file_name = os.path.join(dataset_path, "indices.arrow")
-                writer = ArrowWriter(path=cache_file_name)
-                writer.write_table(self._indices)
-                writer.finalize()
-                self._indices_data_files = [{"filename": cache_file_name}]
-        # Write dataset if needed
-        if not self._data_files or any(len(h["transforms"]) > 0 for h in self._inplace_history):
-            cache_file_name = os.path.join(dataset_path, "dataset.arrow")
-            writer = ArrowWriter(path=cache_file_name)
-            writer.write_table(self._data)
-            writer.finalize()
-            self._data_files = [{"filename": cache_file_name}]
-            self._inplace_history = [{"transforms": []}]
-        # Copy all files into the dataset directory
-        for data_file in self._data_files + self._indices_data_files :
-            # Copy file to destination directory
-            src = data_file["filename"]
-            filename = Path(src).name
-            dest = os.path.join(dataset_path, filename)
-            if src != dest:
-                shutil.move(src, dest)
-            # Change path to relative path from inside the destination directory
-            data_file["filename"] = filename
-        for key, value in list(self.features_map.items()):
-            # Copy file to destination directory
-            src = value[0]
-            filename = Path(src).name
-            dest = os.path.join(dataset_path, filename)
-            # if the src is not under the 
-            if src != dest and os.path.exists(src):
-                if filename.startswith(orig_dataset_path):
-                  shutil.move(src, dest)
-                else:
-                  shutil.copy(src, dest)
-            # Change path to relative path from inside the destination directory
-            self.features_map[key] = [filename]  + value[1:]
-        if not move_files:
-          return orig_self
-        # Get state
-        state = self.__getstate__()
-        dataset_info = json.loads(state.pop("_info"))
-        assert state.get("_data") is None, "arrow table needs to be memory mapped"
-        assert state.get("_indices") is None, "arrow table needs to be memory mapped"
-        assert all(
-            len(h["transforms"]) == 0 for h in state.get("_inplace_history", [])
-        ), "in-place history needs to be empty"
-        # Serialize state
-        with open(os.path.join(dataset_path, "state.json"), "w", encoding="utf-8") as state_file:
-            json.dump(state, state_file, indent=2, sort_keys=True)
-        with open(os.path.join(dataset_path, "dataset_info.json"), "w", encoding="utf-8") as dataset_info_file:
-            json.dump(dataset_info, dataset_info_file, indent=2, sort_keys=True)
-#        logger.info("Dataset saved in {}".format(dataset_path))
-        for key, values in list(self.features_map.items()):
-            mmap_path = os.path.abspath(os.path.join(dataset_path, values[0]))
-            self.features_map[key][0] =  mmap_path
-        return self
-
-    
     @transmit_format
     @fingerprint_transform(inplace=False)
     def add_item(self, item: dict, new_fingerprint: str):
@@ -1193,7 +1107,7 @@ class Datastore(Dataset): #, dict
         ret = super().add_item(item=item,
           new_fingerprint=new_fingerprint)
         return Datastore.from_dataset(ret, features_map=self.features_map)
-    
+
     @transmit_format
     @fingerprint_transform(inplace=False)
     def add_batch(self, batch: dict, new_fingerprint: str):
@@ -1233,92 +1147,306 @@ class Datastore(Dataset): #, dict
         )
         return Datastore.from_dataset(ret, features_map=self.features_map)
 
+    def align_labels_with_mapping(self, label2id: Dict, label_column: str) -> "Datastore":
+        if not hasattr(self, 'features_map'): self.features_map = {}
+        ret = super().align_labels_with_mapping(label2id=label2id,
+            label_column=label_column)
+        return Datastore.from_dataset(ret, features_map=self.features_map)
+        
+    @staticmethod
+    def from_csv(
+        path_or_paths: Union[PathLike, List[PathLike]],
+        split: Optional[NamedSplit] = None,
+        features: Optional[Features] = None,
+        cache_dir: str = None,
+        keep_in_memory: bool = False,
+        **kwargs,
+    ):
+        """Create Datastore from CSV file(s).
+        Args:
+            path_or_paths (path-like or list of path-like): Path(s) of the CSV file(s).
+            split (:class:`NamedSplit`, optional): Split name to be assigned to the dataset.
+            features (:class:`Features`, optional): Dataset features.
+            cache_dir (:obj:`str`, optional, default ``"~/.cache/huggingface/datasets"``): Directory to cache data.
+            keep_in_memory (:obj:`bool`, default ``False``): Whether to copy the data in-memory.
+            **kwargs: Keyword arguments to be passed to :meth:`pandas.read_csv`.
+        Returns:
+            :class:`Datastore`
+        """
+        # Dynamic import to avoid circular dependency
+        from .io.csv import CsvDatasetReader
 
-# TODO, convert this function to view sharded datasets across Dask nodes as a single dataset
-def concatenate_datasets_shards(
-    dsets: List[Dataset],
-    info: Optional[Any] = None,
-    split: Optional[Any] = None,
-    axis: int = 0,
-):
-    """
-    Converts a list of :class:`Dataset` with the same schema into a single :class:`Dataset`.
-    Args:
-        dsets (:obj:`List[datasets.Dataset]`): List of Datasets to concatenate.
-        info (:class:`DatasetInfo`, optional): Dataset information, like description, citation, etc.
-        split (:class:`NamedSplit`, optional): Name of the dataset split.
-        axis (``{0, 1}``, default ``0``, meaning over rows):
-            Axis to concatenate over, where ``0`` means over rows (vertically) and ``1`` means over columns
-            (horizontally).
-            .. versionadded:: 1.6.0
-    """
-    if axis == 0 and not all([dset.features.type == dsets[0].features.type for dset in dsets]):
-        raise ValueError("Features must match for all datasets")
-    elif axis == 1 and not all([dset.num_rows == dsets[0].num_rows for dset in dsets]):
-        raise ValueError("Number of rows must match for all datasets")
+        return Datastore.from_dataset(CsvDatasetReader(
+            path_or_paths, split=split, features=features, cache_dir=cache_dir, keep_in_memory=keep_in_memory, **kwargs
+        ).read())
 
-    # Find common format or reset format
-    format = dsets[0].format
-    if any(dset.format != format for dset in dsets):
-        format = {}
-        logger.info("Some of the datasets have disparate format. Resetting the format of the concatenated dataset.")
+    @staticmethod
+    def from_json(
+        path_or_paths: Union[PathLike, List[PathLike]],
+        split: Optional[NamedSplit] = None,
+        features: Optional[Features] = None,
+        cache_dir: str = None,
+        keep_in_memory: bool = False,
+        field: Optional[str] = None,
+        **kwargs,
+    ):
+        """Create Datastore from JSON or JSON Lines file(s).
+        Args:
+            path_or_paths (path-like or list of path-like): Path(s) of the JSON or JSON Lines file(s).
+            split (:class:`NamedSplit`, optional): Split name to be assigned to the dataset.
+            features (:class:`Features`, optional): Dataset features.
+            cache_dir (:obj:`str`, optional, default ``"~/.cache/huggingface/datasets"``): Directory to cache data.
+            keep_in_memory (:obj:`bool`, default ``False``): Whether to copy the data in-memory.
+            field (:obj:`str`, optional): Field name of the JSON file where the dataset is contained in.
+            **kwargs: Keyword arguments to be passed to :class:`JsonConfig`.
+        Returns:
+            :class:`Datastore`
+        """
+        # Dynamic import to avoid circular dependency
+        from .io.json import JsonDatasetReader
 
-    # Concatenate tables
-    table = concat_tables([dset._data for dset in dsets if len(dset._data) > 0], axis=axis)
-    if axis == 1:
-        table = update_metadata_with_features(table, None)
+        return Datastore.from_dataset(JsonDatasetReader(
+            path_or_paths,
+            split=split,
+            features=features,
+            cache_dir=cache_dir,
+            keep_in_memory=keep_in_memory,
+            field=field,
+            **kwargs,
+        ).read())
 
-    def apply_offset_to_indices_table(table, offset):
-        if offset == 0:
-            return table
+    @staticmethod
+    def from_parquet(
+        path_or_paths: Union[PathLike, List[PathLike]],
+        split: Optional[NamedSplit] = None,
+        features: Optional[Features] = None,
+        cache_dir: str = None,
+        keep_in_memory: bool = False,
+        columns: Optional[List[str]] = None,
+        **kwargs,
+    ):
+        """Create Datastore from Parquet file(s).
+        Args:
+            path_or_paths (path-like or list of path-like): Path(s) of the Parquet file(s).
+            split (:class:`NamedSplit`, optional): Split name to be assigned to the dataset.
+            features (:class:`Features`, optional): Dataset features.
+            cache_dir (:obj:`str`, optional, default ``"~/.cache/huggingface/datasets"``): Directory to cache data.
+            keep_in_memory (:obj:`bool`, default ``False``): Whether to copy the data in-memory.
+            columns (:obj:`List[str]`, optional): If not None, only these columns will be read from the file.
+                A column name may be a prefix of a nested field, e.g. 'a' will select
+                'a.b', 'a.c', and 'a.d.e'.
+            **kwargs: Keyword arguments to be passed to :class:`ParquetConfig`.
+        Returns:
+            :class:`Datastore`
+        """
+        # Dynamic import to avoid circular dependency
+        from .io.parquet import ParquetDatasetReader
+
+        return Datastore.from_dataset(ParquetDatasetReader(
+            path_or_paths,
+            split=split,
+            features=features,
+            cache_dir=cache_dir,
+            keep_in_memory=keep_in_memory,
+            columns=columns,
+            **kwargs,
+        ).read())
+
+    @staticmethod
+    def from_text(
+        path_or_paths: Union[PathLike, List[PathLike]],
+        split: Optional[NamedSplit] = None,
+        features: Optional[Features] = None,
+        cache_dir: str = None,
+        keep_in_memory: bool = False,
+        **kwargs,
+    ):
+        """Create Datastore from text file(s).
+        Args:
+            path_or_paths (path-like or list of path-like): Path(s) of the text file(s).
+            split (:class:`NamedSplit`, optional): Split name to be assigned to the dataset.
+            features (:class:`Features`, optional): Dataset features.
+            cache_dir (:obj:`str`, optional, default ``"~/.cache/huggingface/datasets"``): Directory to cache data.
+            keep_in_memory (:obj:`bool`, default ``False``): Whether to copy the data in-memory.
+            **kwargs: Keyword arguments to be passed to :class:`TextConfig`.
+        Returns:
+            :class:`Datastore`
+        """
+        # Dynamic import to avoid circular dependency
+        from .io.text import TextDatasetReader
+
+        return Datastore.from_dataset(TextDatasetReader(
+            path_or_paths, split=split, features=features, cache_dir=cache_dir, keep_in_memory=keep_in_memory, **kwargs
+        ).read())
+
+
+    def save_to_disk(self, dataset_path: str, fs=None, move_files=True):
+      # move_files means delete the old files as we create the new files.
+        """
+        Saves a dataset to a dataset directory, or in a filesystem using either :class:`~filesystems.S3FileSystem` or
+        any implementation of ``fsspec.spec.AbstractFileSystem``.
+        Note regarding sliced datasets:
+        If you sliced the dataset in some way (using shard, train_test_split or select for example), then an indices mapping
+        is added to avoid having to rewrite a new arrow Table (save time + disk/memory usage).
+        It maps the indices used by __getitem__ to the right rows if the arrow Table.
+        By default save_to_disk does save the full dataset table + the mapping.
+        If you want to only save the shard of the dataset instead of the original arrow file and the indices,
+        then you have to call :func:`datasets.Dataset.flatten_indices` before saving.
+        This will create a new arrow table by using the right rows of the original table.
+        Args:
+            dataset_path (:obj:`str`): Path (e.g. `dataset/train`) or remote URI (e.g. `s3://my-bucket/dataset/train`)
+                of the dataset directory where the dataset will be saved to.
+            fs (:class:`~filesystems.S3FileSystem`, ``fsspec.spec.AbstractFileSystem``, optional, defaults ``None``):
+                Instance of the remote filesystem used to download the files from.
+        """
+        assert (
+            not self.list_indexes()
+        ), "please remove all the indexes using `dataset.drop_index` before saving a dataset"
+
+        if is_remote_filesystem(fs):
+            dataset_path = extract_path_from_uri(dataset_path)
         else:
-            array = table["indices"]
-            new_array = pc.add(array, pa.scalar(offset, type=pa.uint64()))
-            return InMemoryTable.from_arrays([new_array], names=["indices"])
+            fs = fsspec.filesystem("file")
+            cache_files_paths = [Path(cache_filename["filename"]) for cache_filename in self.cache_files]
+            # Check that the dataset doesn't overwrite iself. It can cause a permission error on Windows and a segfault on linux.
+            if Path(dataset_path, config.DATASET_ARROW_FILENAME) in cache_files_paths:
+                raise PermissionError(
+                    f"Tried to overwrite {Path(dataset_path, config.DATASET_ARROW_FILENAME)} but a dataset can't overwrite itself."
+                )
+            if Path(dataset_path, config.DATASET_INDICES_FILENAME) in cache_files_paths:
+                raise PermissionError(
+                    f"Tried to overwrite {Path(dataset_path, config.DATASET_INDICES_FILENAME)} but a dataset can't overwrite itself."
+                )
 
-    # Concatenate indices if they exist
-    if any(dset._indices is not None for dset in dsets):
+        # Get json serializable state
+        state = {
+            key: self.__dict__[key]
+            for key in [
+                "_fingerprint",
+                "_format_columns",
+                "_format_kwargs",
+                "_format_type",
+                "_indexes",
+                "_output_all_columns",
+                "features_map",
+                "id_idx_identical"
+                "id_feature"
+            ]
+        }
 
-        # Datasets with no indices tables are replaced with a dataset with an indices table in memory.
-        # Applying an offset to an indices table also brings the table in memory.
-        for i in range(len(dsets)):
-            if dsets[i]._indices is None:
-                dsets[i] = dsets[i].select(range(len(dsets[i])))
-        assert all(dset._indices is not None for dset in dsets), "each dataset should have an indices table"
+        split = self.__dict__["_split"]
+        state["_split"] = str(split) if split is not None else split
 
-        # An offset needs to be applied to the indices before concatenating
-        indices_tables = []
-        offset = 0
-        for dset in dsets:
-            indices_tables.append(apply_offset_to_indices_table(dset._indices, offset))
-            offset += len(dset._data)
+        state["_data_files"] = [{"filename": config.DATASET_ARROW_FILENAME}]
+        state["_indices_data_files"] = (
+            [{"filename": config.DATASET_INDICES_FILENAME}] if self._indices is not None else None
+        )
+        for k in state["_format_kwargs"].keys():
+            try:
+                json.dumps(state["_format_kwargs"][k])
+            except TypeError as e:
+                raise TypeError(str(e) + f"\nThe format kwargs must be JSON serializable, but key '{k}' isn't.")
 
-        # Concatenate indices
-        indices_tables = [t for t in indices_tables if len(t) > 0]
-        if indices_tables:
-            indices_table = concat_tables(indices_tables)
+        # Get json serializable dataset info
+        dataset_info = asdict(self._info)
+
+        # Save dataset + indices + state + info
+        fs.makedirs(dataset_path, exist_ok=True)
+        with fs.open(Path(dataset_path, config.DATASET_ARROW_FILENAME).as_posix(), "wb") as dataset_file:
+            with ArrowWriter(stream=dataset_file) as writer:
+                writer.write_table(self._data)
+                writer.finalize()
+        if move_files:
+          for data_file in self._data_files:
+            os.unlink(data_file)
+          for cache_filename in self.cache_files:
+            os.unlink(cache_filename)
+        if self._indices is not None:
+            with fs.open(Path(dataset_path, config.DATASET_INDICES_FILENAME).as_posix(), "wb") as indices_file:
+                with ArrowWriter(stream=indices_file) as writer:
+                    writer.write_table(self._indices)
+                    writer.finalize()
+        if move_files:
+          for indices_data_file in self._indices_data_files:
+            os.unlink(indices_data_file)
+        with fs.open(
+            Path(dataset_path, config.DATASET_STATE_JSON_FILENAME).as_posix(), "w", encoding="utf-8"
+        ) as state_file:
+            json.dump(state, state_file, indent=2, sort_keys=True)
+        with fs.open(
+            Path(dataset_path, config.DATASET_INFO_FILENAME).as_posix(), "w", encoding="utf-8"
+        ) as dataset_info_file:
+            # Sort only the first level of keys, or we might shuffle fields of nested features if we use sort_keys=True
+            sorted_keys_dataset_info = {key: dataset_info[key] for key in sorted(dataset_info)}
+            json.dump(sorted_keys_dataset_info, dataset_info_file, indent=2)
+        logger.info("Dataset saved in {}".format(dataset_path))
+        for key, value in list(self.features_map.items()):
+            # Copy or move file to destination directory
+            if 'connection_url' in value:
+              if "sqlite:///" in value['connection_url']:
+                src = value['connection_url'].replace("sqlite:///", "")
+              else:
+                continue
+            else:
+              src = value['path']
+            filename = Path(src).name
+            dest = os.path.join(dataset_path, filename)
+            # if the src is not under the 
+            if src != dest and os.path.exists(src):
+                if move_files:
+                  shutil.move(src, dest)
+                else:
+                  shutil.copy(src, dest)
+                if value['type'] == 'igzip':
+                  src = src.replace(".gz", ".igz")
+                  dest = dest.replace(".gz", ".igz")
+                  if move_files:
+                    shutil.move(src, dest)
+                  else:
+                    shutil.copy(src, dest)
+        if move_files:
+          return Datastore.load_from_disk(dataset_path, fs=fs,)
         else:
-            indices_table = InMemoryTable.from_batches([], schema=pa.schema({"indices": pa.int64()}))
-    else:
-        indices_table = None
+          return self
 
-    # Concatenate infos
-    if info is None:
-        info = DatasetInfo.from_merge([dset.info for dset in dsets])
-    fingerprint = update_fingerprint(
-        "".join(dset._fingerprint for dset in dsets), concatenate_datasets, {"info": info, "split": split}
-    )
 
-    # Make final concatenated dataset
-    concatenated_dataset = Dataset(
-        table,
-        info=info,
-        split=split,
-        indices_table=indices_table,
-        fingerprint=fingerprint,
-    )
-    concatenated_dataset.set_format(**format)
-    return concatenated_dataset
+    #todo, do periodic sync with the shared drive, and lazy loading of shards from shared drive
+    @staticmethod
+    def load_from_disk(dataset_path: str, fs=None, keep_in_memory: Optional[bool] = None) -> "Datastore":
+      # TODO, move from shared drive to cached drive
+        ret = Dataset.load_from_disk(dataset_path=dataset_path, fs=fs, keep_in_memory=keep_in_memory)
+        with open(
+            Path(dataset_path, config.DATASET_STATE_JSON_FILENAME).as_posix(), "r", encoding="utf-8"
+        ) as state_file:
+            state = json.load(state_file)
+        ret.features_map =  state.get("features_map")
+        ret.id_idx_identical =  state.get("id_idx_identical")
+        fs = fsspec.filesystem("file") if fs is None else fs
+        for key, values in list(ret.features_map.items()):
+            if 'connection_url' in value:
+              if "sqlite:///" in value['connection_url']:
+                src = value['connection_url'].replace("sqlite:///", "")
+              else:
+                continue
+            else:
+              src = value['path']
+            if is_remote_filesystem(fs):
+                data_path = os.path.join(dataset_path, src)
+                src_dataset_path = fs.path.join(extract_path_from_uri(data_path), 
+                tmp_dir = tempfile.TemporaryDirectory()
+                data_path = Path(tmp_dir.name, src_dataset_path)
+                fs.download(src_dataset_path, data_path.as_posix(), recursive=True)
+                if value['type'] == 'igzip':
+                  src_dataset_path2 = src_dataset_path2.replace(".gz", ".igz")
+                  data_path2 = Path(tmp_dir.name, src_dataset_path2)
+                  fs.download(src_dataset_path2, data_path2.as_posix(), recursive=True)
+            else:
+                data_path = os.path.abspath(os.path.join(dataset_path, src))
+            if 'connection_url' in value:
+              ret.features_map[key]['connection_url'] =  "sqlite:///"+data_path
+            else:
+              ret.features_map[key]['path'] =  data_path
+        return Datastore.from_dataset(ret)
 
 if __name__ == "__main__":
     import sys
