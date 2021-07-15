@@ -622,3 +622,4 @@ if __name__ == "__main__":
       rows = [dict(name='Dolly')] * 10
       table.insert_many(rows)
       assert list(table.find(id={'in':range(0, 2)}))[-1]['id'] == 1
+    
