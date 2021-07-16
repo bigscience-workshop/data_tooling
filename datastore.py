@@ -1584,7 +1584,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if "-test_igzip" in args:
       if not os.path.exists("wikitext-2"):
-        os.sysem('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
+        os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
         os.system('unzip wikitext-2-v1.zip')
         os.system('gzip wikitext-2/wiki.train.tokens')
       datastore = Datastore.from_igzip("txt", "wikitext-2/wiki.train.tokens.gz")
@@ -1617,7 +1617,7 @@ if __name__ == "__main__":
         datastore= datastore.move_to_sql('text')
     if "-test_load_save" in args:
         if not os.path.exists("wikitext-2"):
-          os.sysem('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
+          os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
           os.system('unzip wikitext-2-v1.zip')
           os.system('gzip wikitext-2/wiki.train.tokens')
         data = load_dataset("oscar", "unshuffled_deduplicated_yo")['train']
