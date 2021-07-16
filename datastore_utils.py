@@ -53,6 +53,7 @@ from dataset.types import Types
 
 #from flask_sqlalchemy import SQLAlchemy
 #from flask import Flask
+
 #TODO: consider adding flask + gevent + oauth2 support for built in model-view-controllers and permissions for Datastores of various types.
 #this will allow regional partners to permit searching and serving their own dataset and control access to them.
 
@@ -62,6 +63,11 @@ from dataset.util import DatasetException, ResultIter, QUERY_STEP
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
 
+import IPython
+#import ipysheets
+import pandas as pd
+def display_results(batch):
+    IPython.display(pd.DataFrame(batch))
 
 # if an array is contiguous, return True, and the start and end+1 range usable in 'range(start, end)'
 def is_contiguous(arr):
@@ -599,9 +605,9 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if "-test_igzip" in args:
       if not os.path.exists("wikitext-2"):
-        !wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip
-        !unzip wikitext-2-v1.zip
-        !gzip wikitext-2/wiki.train.tokens
+        os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
+        os.system('unzip wikitext-2-v1.zip')
+        os.system('gzip wikitext-2/wiki.train.tokens')
       vi1 = get_file_read_obj("wikitext-2/wiki.train.tokens.gz")
       assert len(vi1[[0, 5, 1000]]) == 3
       assert len(vi1[0:]) == len(vi1)
@@ -622,4 +628,3 @@ if __name__ == "__main__":
       rows = [dict(name='Dolly')] * 10
       table.insert_many(rows)
       assert list(table.find(id={'in':range(0, 2)}))[-1]['id'] == 1
-    
