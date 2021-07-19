@@ -105,16 +105,20 @@ def preexec(): # Don't forward signals.
 #TODO: streamlit does tracking. For privacy and security concern, we need to turn this off.
 # this class provides Dask and Streamlit through ngrok.
 # for example:
-# DistributedContext.start(start_dask=True, shared_scheduler_file="<my scheduler file>", start_streamlit=True, streamlit_app_file="<my app file>.py")
-# st = DistributedContext()
-# if you do not provide a custom <my app file>.py file, an app file will automatically be created, and you can write logs to the app like so:
 #
-# st.write("test")
-# or
-# with st:
-#   print ("test")
+# DistributedContext.start(shared_scheduler_file="<my scheduler file>", token=getpass("token:"), clear_streamlit_app=True)
+# st = DistributedContext()
+#
+# if you do not provide a custom <my app file>.py file, an app file will automatically be created, and the file name stored in DistributedContext.streamlit_app_file
 
 class DistributedContext:
+  ngrok = None
+  dask_node_id = None
+  dask_nodes = {}
+  dask_client = None
+  dask_scheduler_file = None
+  streamlit_app_file = None
+  streamlit_process = None
 
   def __init__(self, st=None):
 
@@ -152,9 +156,9 @@ class DistributedContext:
       with open(DistributedContext.streamlit_app_file, "a+") as f:
         if isinstance(item, tuple):
           for an_item in item: 
-                f.write(f"st.{command}(\"\"\""+str(an_item)+"\"\"\")\n")
+                f.write(f"st.write(\"\"\""+str(an_item)+"\"\"\")\n")
         else:
-              f.write(f"st.{command}(\"\"\""+str(item)+"\"\"\")\n")
+              f.write(f"st.write(\"\"\""+str(item)+"\"\"\")\n")
         f.flush()
 
   def print(self, *args, **kw):
@@ -183,13 +187,6 @@ class DistributedContext:
     global print
     print = self._print
 
-  ngrok = None
-  dask_node_id = None
-  dask_nodes = {}
-  dask_client = None
-  dask_scheduler_file = None
-  streamlit_app_file = None
-  streamlit_process = None
 
   @staticmethod
   def reload_dask_nodes(shared_scheduler_file, time_out=43200):
