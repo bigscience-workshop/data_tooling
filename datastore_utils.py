@@ -51,12 +51,6 @@ from sqlalchemy.util import safe_reraise
 from sqlalchemy.engine.reflection import Inspector
 from dataset.types import Types
 
-#from flask_sqlalchemy import SQLAlchemy
-#from flask import Flask
-
-#TODO: consider adding flask + gevent + oauth2 support for built in model-view-controllers and permissions for Datastores of various types.
-#this will allow regional partners to permit searching and serving their own dataset and control access to them.
-
 import dataset
 from dataset.util import normalize_table_name
 from dataset.util import DatasetException, ResultIter, QUERY_STEP
@@ -68,6 +62,7 @@ import IPython
 import pandas as pd
 def display_results(batch):
     IPython.display(pd.DataFrame(batch))
+
 
 # if an array is contiguous, return True, and the start and end+1 range usable in 'range(start, end)'
 def is_contiguous(arr):
@@ -112,7 +107,7 @@ def wait_until_files_loaded(flist, max_tries=120): # wait 2 hrs max
         flist[i]=[f,incr]
     if num_done == len(flist):
       return
-  raise RuntimeError("Something went really wrong")
+  return
 
 # just a wrapper to load igzip and regular .txt/.csv/.tsv files
 def get_file_read_obj(f, mode="rb"):
