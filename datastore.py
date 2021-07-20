@@ -1,5 +1,5 @@
-#Copyright July 2021 Ontocord LLC. Licensed under Apache v2 https://www.apache.org/licenses/LICENSE-2.0
 #%%writefile data-tooling/datastore.py
+#Copyright July 2021 Ontocord LLC. Licensed under Apache v2 https://www.apache.org/licenses/LICENSE-2.0
 from dataclasses import asdict
 from collections.abc import Iterable
 from dataclasses import dataclass, field, fields
@@ -49,10 +49,134 @@ import  fsspec.compression
 import dataset
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
+
+
+from collections.abc import Iterable
+from dataclasses import dataclass, field, fields
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple, Union
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+from datasets.info import DatasetInfo
+from datasets.features import PandasArrayExtensionArray, PandasArrayExtensionDtype, Features, Value, cast_to_python_objects, pandas_types_mapper
+from datasets import utils, Dataset
+from datasets.splits import NamedSplit
+from datasets.arrow_writer import ArrowWriter, OptimizedTypedSequence
+import os
+import io
+import json
+from pathlib import Path
+from datasets.utils.typing import PathLike
+from datasets.arrow_dataset import transmit_format# , replayable_table_alteration
+#from transformers import PreTrainedModel, PretrainedConfig
+import copy
+import shutil
+import sqlalchemy 
+
+from datasets.fingerprint import (
+    fingerprint_transform,
+    generate_fingerprint,
+    generate_random_fingerprint,
+    get_temporary_cache_files_directory,
+    is_caching_enabled,
+    update_fingerprint,
+)
+from datasets.dataset_dict import DatasetDict
+from torch import nn
+import pickle
+import threading
+
+import glob, shutil, os, time
+import indexed_gzip as igzip
+#import zstandard, io
+#from gzip_stream import GZIPCompressedStream
+import  fsspec.compression
+from sqlalchemy import create_engine
+from sqlalchemy.sql import text
+from sqlalchemy.schema import MetaData
+from sqlalchemy.pool import StaticPool
+from sqlalchemy.util import safe_reraise
+from sqlalchemy.engine.reflection import Inspector
+from dataset.types import Types
+
+import dataset
+from dataset.util import normalize_table_name
+from dataset.util import DatasetException, ResultIter, QUERY_STEP
+import six
+from six.moves.urllib.parse import parse_qs, urlparse
+
+import IPython
+#import ipysheets
+import pandas as pd
+def display_results(batch):
+    IPython.display(pd.DataFrame(batch))
+
+
+
+from getpass import getpass
+import atexit, os, subprocess
+import json
+import os
+import platform
+import shutil
+import subprocess
+import tempfile
+import time
+import zipfile
+from pathlib import Path
+import threading
+import requests
+import atexit
+import uuid
+import multiprocessing
+from smart_open import open
+import urllib
+from datetime import datetime
+from dask.distributed import Client
 try:
   from datastore_utils import *
 except:
   pass
+
+import indexed_gzip as igzip
+import os, multiprocessing, time, subprocess
+import random
+import socket
+import glob
+import copy
+import itertools
+from datetime import datetime, timedelta
+import os
+import signal
+import atexit
+import json
+import warnings
+
+
+#from flask import Flask;
+import pandas as pd;
+from pandas import DataFrame, read_csv
+#from flask import Flask
+import atexit
+import json
+import os
+import platform
+import shutil
+import subprocess
+import tempfile
+import time
+import zipfile
+from pathlib import Path
+from threading import Timer, Thread
+from multiprocessing import Process
+import subprocess
+import requests
+import os
+import multiprocessing
+from filelock import UnixFileLock, FileLock
+
+
 
 ### NOTE: dataset is a different package than datasets. We are using both packages.
 ### We want to have mutliple types of storage that ideally can be
@@ -65,6 +189,882 @@ except:
 
 
 ### A note about naming: datasets uses the terms features and columns interchangably.
+
+
+class DummyLock:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    
+# FileLock does not really work for gdrive. So we create a SharedFileLock instead, which is not guranteed to lock a file.
+# This is because if two nodes are trying to write to the same file, gdrive will create a file(1).txt as the other file being written too.
+# Not thread or multiprocessing safe either.
+class SharedFileLock(UnixFileLock):
+    def __init__(self, lock_file, timeout = -1, locks=None):
+        super().__init__(lock_file, timeout)
+        self.locks=locks
+        self.locked=False
+
+    def __enter__(self):
+        if self.locks is not None and self._lock_file not in self.locks:
+            self.locks[self._lock_file] = 1
+            self.acquire()
+            self.locked=True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.locked: 
+          self.release()
+          if self.locks is not None and self._lock_file in self.locks:
+              del self.locks[self._lock_file]
+          self.locked=False
+        return None
+
+def preexec(): # Don't forward signals.
+        os.setpgrp()
+
+#code to do distributed context over dask with an optional streamlit app attached. made to work through ngrok. 
+# ngrok code is based on https://github.com/gstaff/flask-ngrok which is licensed under Apache v2
+
+#TODO: make to work withough ngrok.
+#TODO: streamlit does tracking. For privacy and security concern, we need to turn this off.
+# this class provides Dask and Streamlit through ngrok.
+# for example:
+#
+# DistributedContext.start(shared_scheduler_file="<my scheduler file>", token=getpass("token:"), clear_streamlit_app=True)
+# st = DistributedContext()
+#
+# if you do not provide a custom <my app file>.py file, an app file will automatically be created, and the file name stored in DistributedContext.streamlit_app_file
+
+class DistributedContext:
+  ngrok = None
+  dask_node_id = None
+  dask_nodes = {}
+  dask_client = None
+  dask_scheduler_file = None
+  streamlit_app_file = None
+  streamlit_process = None
+
+  def __init__(self, st=None):
+
+    self._print = print
+    self._isnotebook = DistributedContext.isnotebook()
+    if st is not None:
+      self.st = st
+    elif self._isnotebook:
+      try:
+        import streamlit as st
+        if st._is_running_with_streamlit:
+          self.st = st
+        else:
+          self.st = None
+      except:
+        raise RuntimeError("streamlit not found. Install with pip install streamlit")
+    else:
+      self.st = None
+
+
+  @staticmethod
+  def isnotebook():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell is not None and "Interactive" not in shell:
+          return True
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter
+    
+  @staticmethod
+  def log_to_app(args):
+    with FileLock(DistributedContext.streamlit_app_file+".lock"):
+      with open(DistributedContext.streamlit_app_file, "a+") as f:
+        if isinstance(item, tuple):
+          for an_item in item: 
+                f.write(f"st.write(\"\"\""+str(an_item)+"\"\"\")\n")
+        else:
+              f.write(f"st.write(\"\"\""+str(item)+"\"\"\")\n")
+        f.flush()
+
+  def print(self, *args, **kw):
+    if DistributedContext.dask_client: 
+      DistributedContext.dask_client.submit(DistributedContext.log_to_app, args, worker="worker_0-0", pure=False).result()
+    self._print(*args, **kw)
+
+  def print_streamlit(self, *args, **kw):
+    self.st.write(*args)
+
+  #monkey patch print
+  def __enter__(self):
+    global print
+    if self.st is None:
+      if print not in (self.print_streamlit, self.print):  
+        if print != self._print:
+          self._print = print
+        print = self.print
+    else:
+      if print not in (self.print_streamlit, self.print):  
+        if print != self._print:
+          self._print = print
+        print = self.print_streamlit
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    global print
+    print = self._print
+
+
+  @staticmethod
+  def reload_dask_nodes(shared_scheduler_file, time_out=43200):
+    with SharedFileLock(shared_scheduler_file+".lock"):
+      file = shared_scheduler_file.split(".")
+      files = glob.glob(".".join(file[:len(file)-1])+"*."+file[-1])
+      has_timeout = False
+      dask_nodes={}
+      for a_file in wait_until_files_loaded(files):
+        with open(a_file, "r") as f:
+          for line in f.read().split("\n"):
+            if not line.strip():
+              continue
+            node_id, address, last_heartbeat = line.split("\t")
+            node_id = int(node_id)
+            last_heartbeat = datetime.fromtimestamp(float(last_heartbeat))
+            if datetime.timestamp(datetime.now()) - datetime.timestamp(last_heartbeat) > time_out: 
+              print (f"node {node_id} has timed out. removing from scheduler")
+              has_timeout = True
+            else:
+              dask_nodes[node_id] = (address, last_heartbeat)
+      DistributedContext.dask_nodes = dask_nodes
+      if has_timeout:
+        with open(shared_scheduler_file, "w") as f: 
+          for key, val in DistributedContext.dask_nodes.items():
+            f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
+      if DistributedContext.dask_node_id == 0 and len(files) > 1:
+        # let's do a sanity check to see if there are more than one shared_scheduler_file
+        # this might happen because locking is perfect over shared drives. 
+        # if there are duplicates, we will merge the files
+
+        for a_file in wait_until_files_loaded(files):
+          if os.path.exists(a_file):
+            os.unlink(a_file) 
+        with open(shared_scheduler_file, "w") as f: 
+          for key, val in DistributedContext.dask_nodes.items():
+            f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
+
+  @staticmethod
+  def start(shared_scheduler_file=None, token=None, streamlit_port=8501,  streamlit_app_file=None, hostname=None, import_code="", header_html="", num_procs=4, clear_streamlit_app=False):
+    DistributedContext.stop()
+    if token:
+      DistributedContext.write_authtoken(token)
+    if shared_scheduler_file is None:
+      shared_scheduler_file = DistributedContext.dask_scheduler_file
+    if shared_scheduler_file is None:
+      raise RuntimeError("must provide a shared_scheduler_file to start dask")
+    generic_streamlit_app = False
+    if streamlit_app_file is None:
+      generic_streamlit_app = True
+      streamlit_app_file= str(Path(tempfile.gettempdir(), "app.py"))
+    DistributedContext.streamlit_app_file = streamlit_app_file
+    if shared_scheduler_file is None:
+      shared_scheduler_file = DistributedContext.dask_scheduler_file
+    if DistributedContext.dask_scheduler_file is not None and shared_scheduler_file != DistributedContext.dask_scheduler_file:
+      raise RuntimeError(f"dask_scheduler_file already set. expected {DistributedContext.dask_scheduler_file}")
+    DistributedContext.dask_scheduler_file = shared_scheduler_file
+    if shared_scheduler_file is None:
+        raise RuntimeError("no shared_scheduler_file provided")
+    DistributedContext.reload_dask_nodes(shared_scheduler_file)
+    if 0 in DistributedContext.dask_nodes:
+        print("warning: dask scheduler already started. restarting.")
+    DistributedContext.dask_node_id = 0
+    DistributedContext.dask_client = Client(n_workers=num_procs, name="worker_0")
+    dask_port = int(str(DistributedContext.dask_client).split("tcp://")[1].strip().split()[0].strip("' ").split(":")[-1].strip())
+    addresses = DistributedContext._run_ngrok(streamlit_port, tcp_port=dask_port, hostname=hostname, region="us")
+    DistributedContext.dask_nodes[DistributedContext.dask_node_id] = ([a for a in addresses if a.startswith("tcp:")][0], datetime.timestamp(datetime.now()))
+    print ("dask schduler running on", DistributedContext.dask_nodes[DistributedContext.dask_node_id][0])
+    with SharedFileLock(shared_scheduler_file+".lock"):
+        with open(shared_scheduler_file, "w") as f: 
+          for key, val in DistributedContext.dask_nodes.items():
+            f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
+    webaddr = [a for a in addresses if a.startswith("https:")][0]
+    if generic_streamlit_app and (not os.path.exists(streamlit_app_file) or clear_streamlit_app):
+      DistributedContext.create_streamlit_app(streamlit_app_file, import_code=import_code, header_html=header_html)
+    DistributedContext.streamlit_process = subprocess.Popen(('streamlit', 'run', streamlit_app_file), preexec_fn = preexec)
+    atexit.register(DistributedContext.streamlit_process.terminate)
+    print (f"streamlit server running on {webaddr}")
+    #time.sleep(5)
+    DistributedContext.reload_dask_nodes(shared_scheduler_file)
+    return DistributedContext.dask_client 
+
+  @staticmethod
+  def launch_dask_node(shared_scheduler_file, num_procs=4, time_out=43200): # timeout in 12 hours
+    if shared_scheduler_file is None:
+      shared_scheduler_file = DistributedContext.dask_scheduler_file
+    if DistributedContext.dask_scheduler_file is not None and shared_scheduler_file != DistributedContext.dask_scheduler_file:
+      raise RuntimeError(f"dask_scheduler_file already set. expected None or {DistributedContext.dask_scheduler_file}")
+    DistributedContext.dask_scheduler_file = shared_scheduler_file
+    if DistributedContext.dask_node_id is not None and DistributedContext.dask_client is not None:
+      return DistributedContext.dask_client
+    DistributedContext.reload_dask_nodes(shared_scheduler_file, time_out=time_out)
+    if 0 not in DistributedContext.dask_nodes:
+        raise RuntimeError("no scheduler started. try: st = DistributedContext().start(start_dask=True, shared_scheduler_file=<shared scheduler file>.tsv) ")
+    if DistributedContext.dask_node_id == 0:
+          DistributedContext.dask_client = Client(DistributedContext.dask_nodes[0][0])
+          return DistributedContext.dask_client, DistributedContext.dask_node_id
+    else:
+          address = DistributedContext.dask_nodes[0][0]
+          DistributedContext.dask_node_id = len(DistributedContext.dask_nodes)
+          # todo, pipe stderr and check if there are errors.
+          dask = subprocess.Popen(["dask-worker", address, '--name', f"worker_{DistributedContext.dask_node_id}", "--nprocs", num_proces, "--nthreads", "1", "--no-dashboard"], preexec_fn = preexec) 
+          atexit.register(dask.terminate)
+          #!dask-worker $address --name $dask_node_id --nprocs $num_procs --nthreads 1  --no-dashboard 
+          # if there is an error in connecting to the scheduler, then the scheduler has probably died and we need to create a new scheduler with this node.
+          DistributedContext.dask_nodes[DistributedContext.dask_node_id] = (DistributedContext.dask_node_id, datetime.timestamp(datetime.now()))
+          with SharedFileLock(shared_scheduler_file+".lock"):
+            with open(shared_scheduler_file, "w") as f: 
+              for key, val in DistributedContext.dask_nodes.items():
+                f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
+          DistributedContext.reload_dask_nodes(shared_scheduler_file, time_out=time_out)
+          DistributedContext.dask_client = Client(DistributedContext.dask_nodes[0][0])
+          return DistributedContext.dask_client, DistributedContext.dask_node_id
+
+  @staticmethod
+  def stop():
+    if DistributedContext.ngrok is not None:
+      DistributedContext.ngrok.terminate()
+    DistributedContext.ngrok = None
+    if DistributedContext.streamlit_process is not None:
+      DistributedContext.streamlit_process.terminate()
+    DistributedContext.streamlit_process = None
+    if DistributedContext.dask_client is not None:  
+      DistributedContext.dask_client.shutdown()
+    DistributedContext.dask_client = None
+    DistributedContext.dask_node_id = None
+    DistributedContext.dask_nodes = {}
+    DistributedContext.dask_client = None
+    DistributedContext.dask_scheduler_file = None
+    
+  @staticmethod
+  def create_streamlit_app(file, import_code="", header_html=""):
+      with FileLock(file+".lock"):
+        with open(file, "w+") as f:
+          f.write("""
+import os
+import pandas as pd
+import numpy as np
+import streamlit as st
+import streamlit.components.v1 as components
+"""+import_code+"""
+hide_menu_style = \"\"\"
+              <style>
+              #MainMenu {visibility: hidden;}
+              </style>
+\"\"\"
+def create_header():
+      global hide_menu_style
+      st.write (hide_menu_style)
+create_header()
+### begin app code 
+  """)
+          f.flush()
+
+
+  @staticmethod
+  def write_authtoken(token):
+    if not os.path.exists("/root/.ngrok2/"):
+      os.mkdir("/root/.ngrok2")
+    with open("/root/.ngrok2/ngrok.yml", "w") as f:
+      f.write("authtoken: "+token+"\n")
+
+  #todo - tls
+  @staticmethod
+  def _run_ngrok(port, tcp_port=None, hostname=None, region="us"):
+    command = DistributedContext._get_command()
+    ngrok_path = str(Path(tempfile.gettempdir(), "ngrok"))
+    DistributedContext._download_ngrok(ngrok_path)
+    executable = str(Path(ngrok_path, command))
+    os.chmod(executable, 0o777)
+    if not os.path.exists("/root/.ngrok2/"):
+      os.mkdir("/root/.ngrok2")
+    with open("/root/.ngrok2/app.yml", "w") as f:
+      f.write(f"region: {region}\n")
+      f.write(f"tunnels:\n")
+      f.write(f" website:\n")
+      f.write(f"  addr: {port}\n")
+      if hostname is not None:
+        f.write(f"  hostname: {hostname}\n")
+      f.write(f"  proto: http\n")
+      if tcp_port is not None:
+        f.write(f" tcp_port:\n")
+        f.write(f"  addr: {tcp_port}\n")
+        f.write(f"  proto: tcp\n")
+      
+    if not os.path.exists("/root/.ngrok2/ngrok.yml"):
+      ngrok = DistributedContext.ngrok = subprocess.Popen([executable, 'start', '-config', '/root/.ngrok2/app.yml', 'tcp_port', 'website'], preexec_fn = preexec)
+    else:
+      ngrok = DistributedContext.ngrok = subprocess.Popen([executable, 'start', '-config', '/root/.ngrok2/ngrok.yml', '-config', '/root/.ngrok2/app.yml', 'tcp_port', 'website'], preexec_fn = preexec)
+    atexit.register(ngrok.terminate)
+    localhost_url = "http://localhost:4040/api/tunnels"  # Url with tunnel details
+    tunnel_urls = []
+    for i in range(10):
+      time.sleep(5)
+      try:
+        tunnel_url = requests.get(localhost_url).text  # Get the tunnel information
+        j = json.loads(tunnel_url)
+        for a_tunnel in  j['tunnels']:
+          tunnel_url = a_tunnel['public_url'] #.replace("http", "https")
+          tunnel_urls.append(tunnel_url)
+        if tunnel_urls:
+          break
+      except:
+        pass
+    return tunnel_urls
+
+
+  @staticmethod
+  def _get_command():
+      system = platform.system()
+      if system == "Darwin":
+          command = "ngrok"
+      elif system == "Windows":
+          command = "ngrok.exe"
+      elif system == "Linux":
+          command = "ngrok"
+      else:
+          raise Exception("{system} is not supported".format(system=system))
+      return command
+
+  @staticmethod
+  def _download_ngrok(ngrok_path):
+      if Path(ngrok_path).exists():
+          return
+      system = platform.system()
+      if system == "Darwin":
+          url = "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-darwin-amd64.zip"
+      elif system == "Windows":
+          url = "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip"
+      elif system == "Linux":
+          url = "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
+      else:
+          raise Exception(f"{system} is not supported")
+      download_path = DistributedContext._download_file(url)
+      with zipfile.ZipFile(download_path, "r") as zip_ref:
+          zip_ref.extractall(ngrok_path)
+
+  @staticmethod
+  def _download_file(url):
+      local_filename = url.split('/')[-1]
+      r = requests.get(url, stream=True)
+      download_path = str(Path(tempfile.gettempdir(), local_filename))
+      with open(download_path, 'wb') as f:
+          shutil.copyfileobj(r.raw, f)
+      return download_path
+
+# some utils
+
+# if an array is contiguous, return True, and the start and end+1 range usable in 'range(start, end)'
+def is_contiguous(arr):
+        start = None
+        prev = None
+        contiguous=True
+        for i in arr:
+          if start is None:
+            start = i
+          if prev is None or i == prev+1:
+            prev = i
+            continue
+          contiguous = False
+          break
+        return contiguous, start, i+1
+
+# This is used for seeing if files from gdrive from colab have finished loading. Files could be in flight while we try to retreive them.
+def wait_until_files_loaded(flist, max_tries=120): # wait 2 hrs max
+  ret_str =False
+  if isinstance(flist, str):
+    ret_str= True
+    flist = [[flist, 0]]
+  else:
+    flist = [[f, 0]for f in flist]
+  for j in range(len(flist)*max_tries):
+    num_done = 0
+    for i, val in enumerate(flist):
+      if val is None:
+        num_done += 1
+        continue
+      (f, incr) = val
+      if incr > max_tries:
+        raise RuntimeError("Timed out while trying to wait for file " + str(f))
+      size1 = os.stat(f).st_size
+      time.sleep(min(600, 1 + incr))
+      incr += 1
+      if os.stat(f).st_size == size1:
+        flist[i] = None
+        num_done += 1
+        yield f
+      else:
+        flist[i]=[f,incr]
+    if num_done == len(flist):
+      return
+  return
+
+# just a wrapper to load igzip and regular .txt/.csv/.tsv files
+def get_file_read_obj(f, mode="rb"):
+  next(wait_until_files_loaded(f))
+  if f.endswith(".gz"):
+    if not os.path.exists(f.replace(".gz",".igz")):
+        fobj = IndexGzipFileExt(f)
+        fobj.build_full_index()
+        with open(f.replace(".gz",".igz"), "wb") as file:
+          pickle.dump(fobj, file, pickle.HIGHEST_PROTOCOL)
+    else:
+      cwd = os.getcwd()
+      dir = os.path.abspath(os.path.dirname(f))
+      f = os.path.basename(f)
+      if dir:
+        os.chdir(dir)
+      with open(f.replace(".gz",".igz"), "rb") as file:
+        fobj = pickle.load(file)
+      os.chdir(cwd)
+    return fobj
+  else:
+    return open(f, mode)
+
+
+# getting file size, working with igzip files and regular txt files
+def get_file_size(fobj):
+  if not isinstance(fobj, IndexGzipFileExt):
+    return os.stat(fobj).st_size
+  else:  
+    return fobj.file_size
+
+
+# break up a file into shards, ending each shard on a line break
+def get_file_segs_lines(input_file_path, file_seg_len=1000000, num_segs=None):
+      f = get_file_read_obj(input_file_path)
+      file_size= get_file_size(f)       
+      file_segs = []
+      if num_segs is not None:
+          file_seg_len = int(file_size/num_segs)
+
+      file_pos = 0
+      while file_pos < file_size:
+            if file_size - file_pos <= file_seg_len:
+                file_segs.append((file_pos, file_size - file_pos))
+                break
+            f.seek(file_pos+file_seg_len, 0)
+            seg_len = file_seg_len
+            line = f.readline()
+            if not line:
+                file_segs.append((file_pos, file_size - file_pos))
+                break
+            seg_len += len(line)
+            if file_size-(file_pos+seg_len) < file_seg_len:
+                file_segs.append((file_pos, file_size - file_pos))
+                break
+
+            file_segs.append((file_pos, seg_len))
+            file_pos = f.tell()
+      f.close()
+      line = None
+      return file_segs
+
+class TableExt(dataset.Table):
+    """ Extends dataset.Table's functionality to work with Datastore(s) and to add full-text-search (FTS) """
+
+    def find(self, *_clauses, **kwargs):
+        """Perform a simple search on the table similar to
+        dataset.Table's find, except: optionally gets a result only
+        for specific columns by passing in _columns keyword.
+        # TODO, full text search
+        Simply pass keyword arguments as ``filter``.
+        ::
+            results = table.find(country='France')
+            results = table.find(country='France', year=1980)
+        Using ``_limit``::
+            # just return the first 10 rows
+            results = table.find(country='France', _limit=10)
+        You can sort the results by single or multiple columns. Append a minus
+        sign to the column name for descending order::
+            # sort results by a column 'year'
+            results = table.find(country='France', order_by='year')
+            # return all rows sorted by multiple columns (descending by year)
+            results = table.find(order_by=['country', '-year'])
+        To perform complex queries with advanced filters or to perform
+        aggregation, use :py:meth:`db.query() <dataset.Database.query>`
+        instead.
+        """
+
+        if not self.exists:
+            return iter([])
+
+        _fts_q = kwargs.pop('_fts_q', None)
+        _columns = kwargs.pop('_columns', None)
+        _limit = kwargs.pop('_limit', None)
+        _offset = kwargs.pop('_offset', 0)
+        order_by = kwargs.pop('order_by', None)
+        _streamed = kwargs.pop('_streamed', False)
+        _step = kwargs.pop('_step', QUERY_STEP)
+        if _step is False or _step == 0:
+            _step = None
+        if type(_columns) is str: _columns = [_columns]
+        fts_results = []
+        
+        if _fts_q:
+            fts_q = " AND ".join([f"{column} MATCH {q}" for column, q in _fts_q])
+            # we could run a seperate sqlite database for fts and join manually using a list of id's
+            # TODO: if we are doing fts against the same db then we want to combine in one query.  
+            fts_results = self.fts_db.executable.execute(f"""SELECT id, rank
+                              FROM {self.table_name}_idx
+                              WHERE {fts_q}
+                              ORDER BY rank
+                              LIMIT {_limit}""").fetchall() # TODO: use parameters
+            order_by = self._args_to_order_by(order_by) #TODO, if the order_by is empty, we will order by rank.
+            args = self._args_to_clause(kwargs, clauses=_clauses) #todo, add in the where clause.  WHERE id in (...)
+        else:
+            order_by = self._args_to_order_by(order_by)
+            args = self._args_to_clause(kwargs, clauses=_clauses)
+
+        if _columns is None:
+            query = self.table.select(whereclause=args,
+                                  limit=_limit,
+                                  offset=_offset)
+        else:
+            query = self.table.select(whereclause=args,
+                                  limit=_limit,
+                                  offset=_offset).with_only_columns([self.table.c[col] for col in _columns])
+
+        if len(order_by):
+            query = query.order_by(*order_by)
+        
+        conn = self.db.executable
+        if _streamed:
+            conn = self.db.engine.connect()
+            conn = conn.execution_options(stream_results=True)
+            
+        return ResultIter(conn.execute(query),
+                          row_type=self.db.row_type,
+                          step=_step)
+
+
+    def insert(self, row, ensure=None, types=None):
+        """Add a ``row`` dict by inserting it into the table.
+        If ``ensure`` is set, any of the keys of the row are not
+        table columns, they will be created automatically.
+        During column creation, ``types`` will be checked for a key
+        matching the name of a column to be created, and the given
+        SQLAlchemy column type will be used. Otherwise, the type is
+        guessed from the row value, defaulting to a simple unicode
+        field.
+        ::
+            data = dict(title='I am a banana!')
+            table.insert(data)
+        Returns the inserted row's primary key.
+        """
+        # either sqlalachemy or the underlying sqlite database starts auto-numbering at 1. we want to auto-number starting at 0
+        # we shold probably check the count of the row, but this would require a round trip
+        # to the db on each insert, so we'll make the assumption of lazy creation
+        if (not self.exists or not self.has_column(self._primary_id)) and  self._primary_type in (Types.integer, Types.bigint):
+          row[self._primary_id] = 0
+        return super().insert(row,  ensure=ensure, types=types)
+
+    def insert_many(self, rows, chunk_size=1000, ensure=None, types=None):
+        """Add many rows at a time.
+        This is significantly faster than adding them one by one. Per default
+        the rows are processed in chunks of 1000 per commit, unless you specify
+        a different ``chunk_size``.
+        See :py:meth:`insert() <dataset.Table.insert>` for details on
+        the other parameters.
+        ::
+            rows = [dict(name='Dolly')] * 10000
+            table.insert_many(rows)
+        """
+        row = copy.copy(rows[0])
+        rows[0] = row
+        if (not self.exists or not self.has_column(self._primary_id)) and  self._primary_type in (Types.integer, Types.bigint) and self._primary_id not in row:
+          row[self._primary_id] = 0
+        return super().insert_many(rows, chunk_size=chunk_size, ensure=ensure, types=types)
+
+
+  # TODO - do update with re-try
+
+class DatabaseExt(dataset.Database):
+    """A DatabaseExt textends dataset.Database and represents a SQL database with multiple tables of type TableExt."""
+
+    def __init__(self, *args, **kwargs ):
+        """Configure and connect to the database."""
+        super().__init__(*args, **kwargs)
+
+
+    # TODO: not currenlty working
+    # will only work for sqlite. 
+    # diferent databases have different fts. 
+    def create_fts_index_column(self, table_name, column, stemmer="unicode61"): #  porter 
+        # maybe we create a mirror sqlite database called fts_db if the database we are opening is not of sqlite type.
+        # the idea is we want to be able to locally attach fts with our datasets arrow files. 
+        self.db.executeable.execute(f'CREATE VIRTUAL TABLE {table_name}_idx USING FTS5(id:INTEGER, {column}:VARCHAR, tokenize="{stemmer}");')
+
+    def create_table(
+        self, table_name, primary_id=None, primary_type=None, primary_increment=None
+    ):
+        """Create a new table.
+        Either loads a table or creates it if it doesn't exist yet. You can
+        define the name and type of the primary key field, if a new table is to
+        be created. The default is to create an auto-incrementing integer,
+        ``id``. You can also set the primary key to be a string or big integer.
+        The caller will be responsible for the uniqueness of ``primary_id`` if
+        it is defined as a text type. You can disable auto-increment behaviour
+        for numeric primary keys by setting `primary_increment` to `False`.
+        Returns a :py:class:`Table <dataset.Table>` instance.
+        ::
+            table = db.create_table('population')
+            # custom id and type
+            table2 = db.create_table('population2', 'age')
+            table3 = db.create_table('population3',
+                                     primary_id='city',
+                                     primary_type=db.types.text)
+            # custom length of String
+            table4 = db.create_table('population4',
+                                     primary_id='city',
+                                     primary_type=db.types.string(25))
+            # no primary key
+            table5 = db.create_table('population5',
+                                     primary_id=False)
+        """
+        assert not isinstance(
+            primary_type, str
+        ), "Text-based primary_type support is dropped, use db.types."
+        table_name = normalize_table_name(table_name)
+        with self.lock:
+            if table_name not in self._tables:
+                self._tables[table_name] = TableExt(
+                    self,
+                    table_name,
+                    primary_id=primary_id,
+                    primary_type=primary_type,
+                    primary_increment=primary_increment,
+                    auto_create=True,
+                )
+            return self._tables.get(table_name)
+
+    def load_table(self, table_name):
+        """Load a table.
+        This will fail if the tables does not already exist in the database. If
+        the table exists, its columns will be reflected and are available on
+        the :py:class:`Table <dataset.Table>` object.
+        Returns a :py:class:`Table <dataset.Table>` instance.
+        ::
+            table = db.load_table('population')
+        """
+        table_name = normalize_table_name(table_name)
+        with self.lock:
+            if table_name not in self._tables:
+                self._tables[table_name] = TableExt(self, table_name)
+            return self._tables.get(table_name)
+
+
+
+class IndexGzipFileExt(igzip.IndexedGzipFile):
+    """This class inheriets from `` ingdex_gzip.IndexedGzipFile``. This class allows in addition to the functionality 
+    of IndexedGzipFile, access to a specific line based on the seek point of the line, using the __getitem__ method.
+    Additionally, a (conginguous) list or slice can be used, which will be more efficient then doing line by line access. 
+    
+    The base IndexedGzipFile class allows for fast random access of a gzip
+    file by using the ``zran`` library to build and maintain an index of seek
+    points into the file.
+    ``IndexedGzipFile`` is an ``io.BufferedReader`` which wraps an
+    :class:`_IndexedGzipFile` instance. By accessing the ``_IndexedGzipFile``
+    instance through an ``io.BufferedReader``, read performance is improved
+    through buffering, and access to the I/O methods is made thread-safe.
+    A :meth:`pread` method is also implemented, as it is not implemented by
+    the ``io.BufferedReader``.
+    """
+
+
+    def __init__(self, *args, **kwargs):
+        """Create an ``LineIndexGzipFile``. The file may be specified either
+        with an open file handle (``fileobj``), or with a ``filename``. If the
+        former, the file must have been opened in ``'rb'`` mode.
+        .. note:: The ``auto_build`` behaviour only takes place on calls to
+                  :meth:`seek`.
+        :arg filename:         File name or open file handle.
+        :arg fileobj:          Open file handle.
+        :arg mode:             Opening mode. Must be either ``'r'`` or ``'rb``.
+        :arg auto_build:       If ``True`` (the default), the index is
+                               automatically built on calls to :meth:`seek`.
+        :arg skip_crc_check:   Defaults to ``False``. If ``True``, CRC/size
+                               validation of the uncompressed data is not
+                               performed.
+        :arg spacing:          Number of bytes between index seek points.
+        :arg window_size:      Number of bytes of uncompressed data stored with
+                               each seek point.
+        :arg readbuf_size:     Size of buffer in bytes for storing compressed
+                               data read in from the file.
+        :arg readall_buf_size: Size of buffer in bytes used by :meth:`read`
+                               when reading until EOF.
+        :arg drop_handles:     Has no effect if an open ``fid`` is specified,
+                               rather than a ``filename``.  If ``True`` (the
+                               default), a handle to the file is opened and
+                               closed on every access. Otherwise the file is
+                               opened at ``__cinit__``, and kept open until
+                               this ``_IndexedGzipFile`` is destroyed.
+        :arg index_file:       Pre-generated index for this ``gz`` file -
+                               if provided, passed through to
+                               :meth:`import_index`.
+        :arg buffer_size:      Optional, must be passed as a keyword argument.
+                               Passed through to
+                               ``io.BufferedReader.__init__``. If not provided,
+                               a default value of 1048576 is used.
+        :arg line2seekpoint:      Optional, must be passed as a keyword argument.
+                               If not passed, this will automatically be created.    
+        :arg file_size:      Optional, must be passed as a keyword argument.
+                               If not passed, this will automatically be created.                             
+        """
+        self.line2seekpoint        = kwargs.pop('line2seekpoint', None)
+        self.file_size        = kwargs.pop('file_size', None)
+        super().__init__(*args, **kwargs)
+        if self.file_size is None:
+          try:
+            pos = self.tell()
+            self.seek(0, os.SEEK_END)
+            self.file_size = self.tell() 
+            self.seek(pos, 0)
+          except:
+            self.build_full_index()
+            pos = self.tell()
+            self.seek(0, os.SEEK_END)
+            self.file_size =  self.tell() 
+            self.seek(pos, 0)
+
+        if self.line2seekpoint is None:
+          self.line2seekpoint=[]
+          with self._IndexedGzipFile__file_lock:
+            pos = self.tell()
+            self.seek(0, 0)
+            self.line2seekpoint.append(0)
+            while True:
+              line = self.readline().decode()
+              #print(line)
+              if not line:
+                break
+              self.line2seekpoint.append(self.tell())
+
+            self.seek(pos, 0)
+          
+
+    @staticmethod
+    def unpickle(state):
+      """Create a new ``IndexedGzipFile`` from a pickled state.
+      :arg state: State of a pickled object, as returned by the
+                  ``IndexedGzipFile.__reduce__`` method.
+      :returns:   A new ``IndexedGzipFile`` object.
+      """
+
+      tell  = state.pop('tell')
+      index = state.pop('index')
+      state['filename'] = os.path.join(os.getcwd(), os.path.basename(state['filename']))
+      gzobj = IndexGzipFileExt(**state)
+
+      if index is not None:
+          gzobj.import_index(fileobj=io.BytesIO(index))
+
+      gzobj.seek(tell)
+
+      return gzobj
+
+    def __reduce__(self):
+        """Used to pickle an ``LineIndexGzipFile``.
+        Returns a tuple containing:
+          - a reference to the ``unpickle`` function
+          - a tuple containing a "state" object, which can be passed
+            to ``unpickle``.
+        """
+
+        fobj = self._IndexedGzipFile__igz_fobj
+
+        if (not fobj.drop_handles) or (not fobj.own_file):
+            raise pickle.PicklingError(
+                'Cannot pickle IndexedGzipFile that has been created '
+                'with an open file object, or that has been created '
+                'with drop_handles=False')
+
+        # export and serialise the index if
+        # any index points have been created.
+        # The index data is serialised as a
+        # bytes object.
+        if fobj.npoints == 0:
+            index = None
+
+        else:
+            index = io.BytesIO()
+            self.export_index(fileobj=index)
+            index = index.getvalue()
+
+        state = {
+            'filename'         : fobj.filename,
+            'auto_build'       : fobj.auto_build,
+            'spacing'          : fobj.spacing,
+            'window_size'      : fobj.window_size,
+            'readbuf_size'     : fobj.readbuf_size,
+            'readall_buf_size' : fobj.readall_buf_size,
+            'buffer_size'      : self._IndexedGzipFile__buffer_size,
+            'line2seekpoint'   : self.line2seekpoint,
+            'file_size'   : self.file_size,
+            'tell'             : self.tell(),
+            'index'            : index}
+
+        return (IndexGzipFileExt.unpickle, (state, ))
+
+    @property
+    def filename(self):
+      return self._IndexedGzipFile__igz_fobj.filename
+
+    def __iter__(self):
+      len_self = len(self)
+      for start in range(0, len_self, 1000):
+          end = min(len_self, start+1000)
+          for line in self[start:end]:
+            yield line
+
+    def __len__(self):
+        return len(self.line2seekpoint)
+
+    def __getitem__(self, keys):
+        start, end = 0, 0
+        if isinstance(keys, int):
+          contiguous = False
+        elif isinstance(keys, slice):
+          contiguous = True
+          start = 0 if keys.start is None else keys.start
+          end = len(self) if keys.stop is None else keys.stop
+        else:
+          contiguous, start, end = is_contiguous(keys)
+        if contiguous:
+          if start >= len(self) or end > len(self):
+            raise RuntimError(f"indexes {start}..{end} out of range")
+          start = self.line2seekpoint[start]
+          if end == len(self):
+            end = self.file_size
+          else:
+            end= self.line2seekpoint[end+1]-1
+          with self._IndexedGzipFile__file_lock:
+            pos = self.tell()
+            self.seek(start, 0)
+            ret= self.read(end-start).decode().split('\n')
+            self.seek(pos, 0)
+            return ret
+        elif isinstance(keys, int):
+          if keys >= len(self):
+            raise RuntimError(f"index {keys} out of range")
+          start = self.line2seekpoint[keys]
+          with self._IndexedGzipFile__file_lock:
+            pos = self.tell()
+            self.seek(start, 0)
+            ret= self.readline().decode()
+            self.seek(pos, 0)
+            return ret
+        else:
+          return [self[idx] for idx in keys]
 
 
 """
@@ -1563,6 +2563,7 @@ if __name__ == "__main__":
     import numpy as np
     from datasets import load_dataset
     import fsspec, requests, aiohttp
+    # some test code to manage oscar downloading
     def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
       _BASE_DATA_URL_FORMAT_STR = ("https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/")
       _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
@@ -1582,6 +2583,35 @@ if __name__ == "__main__":
         print (data[-1])
       
     args = sys.argv[1:]
+    if "-launch_dask_node" == args[0]:
+      scheduler_file = args[1]
+      DistributedContext.launch_dask_node(scheduler_file)
+        
+    if "-test_igzip_basic" in args:
+      if not os.path.exists("wikitext-2"):
+        os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
+        os.system('unzip wikitext-2-v1.zip')
+        os.system('gzip wikitext-2/wiki.train.tokens')
+      vi1 = get_file_read_obj("wikitext-2/wiki.train.tokens.gz")
+      assert len(vi1[[0, 5, 1000]]) == 3
+      assert len(vi1[0:]) == len(vi1)
+    if "-test_sql_basic" in args:
+      db = DatabaseExt("sqlite://")
+      table = db['user']
+      assert table.exists == False
+      assert table.has_column('id') == False
+      assert table.insert(dict(name='John Doe', age=37)) == 0
+      assert table.exists == True
+      assert table.has_column('id') == True
+      assert table.insert(dict(name='Jane Doe', age=20)) == 1
+      jane  = table.find_one(name='Jane Doe')
+      assert jane['id'] == 1
+
+      db = DatabaseExt("sqlite://")
+      table = db['user']
+      rows = [dict(name='Dolly')] * 10
+      table.insert_many(rows)
+      assert list(table.find(id={'in':range(0, 2)}))[-1]['id'] == 1
     if "-test_igzip" in args:
       if not os.path.exists("wikitext-2"):
         os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
