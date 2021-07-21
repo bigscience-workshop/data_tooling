@@ -11,3 +11,5 @@ presidio_anonymizer>=2.2.21
 Faker>=8.10.1
 streamlit>=0.84.2
 indexed_gzip>=1.6.1
+aiohttp
+requests
