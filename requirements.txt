@@ -10,3 +10,4 @@ presidio_analyzer>=2.2.21
 presidio_anonymizer>=2.2.21 
 Faker>=8.10.1
 streamlit>=0.84.2
+indexed-gzip>=1.6.1
