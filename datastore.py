@@ -600,7 +600,7 @@ create_header()
 ### A note about naming: dataset and datasets are not the same libraries.
 
 def multi_iter_result_proxy(rps, step=None, batch_fn=None, row_type=row_type):
-    """Iterate over the ResultProxy."""
+    """Iterate over the ResultProxyExt."""
     for rp in rps:
       if step is None:
         chunk = rp.fetchall()
@@ -619,8 +619,9 @@ def multi_iter_result_proxy(rps, step=None, batch_fn=None, row_type=row_type):
 
 
 class ResultIterExt(object):
-    """SQLAlchemy ResultProxies are not iterable to get a
-    list of dictionaries. This is to wrap them."""
+    """Similar to dataset.ResultIter except the result_proxy are
+    actually results that are lazy executed.
+    """
 
     def __init__(self, result_proxy, step=None, row_type=row_type, batch_fn=None):
         self.row_type = row_type
@@ -654,10 +655,8 @@ class ResultIterExt(object):
            rp.close()
 
 
-
 class TableExt(dataset.Table):
-    """ Extends dataset.Table's functionality to work with Datastore(s) and to add full-text-search (FTS) """
-
+    """ Extends dataset.Table's functionality to work with Datastore(s) and to add sqlite full-text-search (FTS) """
 
     def __init__(
         self,
@@ -673,12 +672,15 @@ class TableExt(dataset.Table):
       self.has_fts_trigger = False
 
     def find(self, *_clauses, **kwargs):
-        """Perform a search on the table similar to dataset.Table's
-        find, except: optionally gets a result only for specific
-        columns by passing in _columns keyword. And optionally perform
-        FTS on a Sqlite3 table.
-        
-        
+        """Perform a search on the table similar to dataset.Tabl.find,
+        except: optionally gets a result only for specific columns by
+        passing in _columns keyword. And optionally perform
+        full-text-search (BM25) on a Sqlite3 table.
+
+        :arg _fts_query:
+        :arg _fts_step:
+        :arg _columns:
+
         Simply pass keyword arguments as ``filter``.
         ::
             results = table.find(country='France')
@@ -696,7 +698,6 @@ class TableExt(dataset.Table):
         aggregation, use :py:meth:`db.query() <dataset.Database.query>`
         instead.
         """
-
 
         if not self.exists:
             return iter([])
@@ -723,10 +724,15 @@ class TableExt(dataset.Table):
             if column in self.external_fts_columns:
               db, fts_table_name = self.external_fts_columns[column]
             else:
+              # if the table being searched is an fts_idx (ends with
+              # _fts_idx), assume there are other tables for each of
+              # the columns being search in the format of
+              # <name>_colummn_fts_idx
               if self.name.endswith(f"_fts_idx"):
-                if not self.name.endswith(f"_{column}_fts_idx"):
-                   raise RuntimeError(f"table  {self.name} does not match expected table name for column {column}")
-                db, table_name = self.db, self.name
+                if self.name.endswith(f"_{column}_fts_idx"):
+                  db, fts_table_name = self.db, self.name
+                else:
+                  db, fts_table_name = self.db, "_".join(self.name.replace("_fts_idx", "").split("_")[:-1])+f"_{column}_fts_idx"
                 return_id2rank_only = True
               else:
                 db, fts_table_name = self.db, f"{self.name}_{column}_fts_idx"
@@ -755,11 +761,15 @@ class TableExt(dataset.Table):
                 return []
             for a in fts_results:
               id2rank[a[1]] = min(a[0], id2rank.get(a[1], 1000))
-        #we do an optimization here by just returning the id, if there are no queries and the return _columns = ['id']
-        if id2rank and ((_columns and len(_columns) and self._primary_id in _columns) or return_id2rank_only):
+
+        #we do an optimization here by just returning the id and/or rank, if there are no queries except for the id and/or rank
+        if id2rank and ((_columns and ((self._primary_id,) == tuple(columns)) or ((self._primary_id, 'rank') == tuple( _columns))) or return_id2rank_only):
           ret = list(id2rank.items())
           ret.sort(key=lambda a: a[0])
-          return [a[1] for a in ret]
+          if _columns and len(_columns) == 1:
+            return [a[1] for a in ret]
+          else:
+            return [{self._primary_id: a[1], 'rank': a[0]} for a in ret]
         if return_id2rank_only:
           return []
         order_by = self._args_to_order_by(order_by)
@@ -773,7 +783,9 @@ class TableExt(dataset.Table):
         batch_fn = None
         results = []
         row_type_fn = self.db.row_type
-        if fts_results:
+        if id2rank:
+          fts_results = list(id2rank.items())
+          ret.sort(key=lambda a: a[0])          
           len_fts_results = len(fts_results)
           for rng in range(0, len_fts_results, _fts_step):
             max_rng = min(len_fts_results, rng+_fts_step)
@@ -788,9 +800,9 @@ class TableExt(dataset.Table):
                 query = self.table.select(whereclause=args,
                                       limit=_limit,
                                       offset=_offset).with_only_columns([self.table.c[col] for col in _columns])
-            results.append(conn.execute(query))
             if len(order_by):
                 query = query.order_by(*order_by)
+            results.append(conn.execute(query))
           if len(order_by):
             def row_type_fn(row):
               row =  convert_row(self.db.row_type, row)
