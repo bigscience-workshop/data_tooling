@@ -759,7 +759,7 @@ class TableExt(dataset.Table):
         if id2rank and ((_columns and len(_columns) and self._primary_id in _columns) or return_id2rank_only):
           ret = list(id2rank.items())
           ret.sort(key=lambda a: a[0])
-          return ret
+          return [a[1] for a in ret]
         if return_id2rank_only:
           return []
         order_by = self._args_to_order_by(order_by)
