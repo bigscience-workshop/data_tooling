@@ -8,9 +8,9 @@ fast writing and distributed storage and processing.
 * Run the python script
 
 ```
-cd datastore
+cd data_tooling
 pip install -r requirements.txt
-python tests/test.py
+python datastore/tests/test.py
 ```
 
 ## TODO list
