@@ -17,6 +17,8 @@
 # mechanism, which could include disk, remove file system (ffspec and
 # s3filesystem or sqllalchemy database.
 
+from functools import lru_cache
+
 class PersistedRowShards(object):
   
   def __init__(self, shard_defs, fs=None, cache_dir=None):
@@ -61,18 +63,6 @@ class PersistedRowShards(object):
           pickle.dump(fobj, f2, pickle.HIGHEST_PROTOCOL)
     return f
 
-"""
-    if False:
-      cwd = os.getcwd()
-      dir = os.path.abspath(os.path.dirname(f))
-      f = os.path.basename(f)
-      if dir:
-        os.chdir(dir)
-      with open(f.replace(".gz",".igz"), "rb") as f2:
-        fobj = pickle.load(f2)
-      os.chdir(cwd)
-      return fobj
-"""
 
   @lru_cache(100)
   def shards(self, idx):
@@ -87,3 +77,15 @@ class PersistedRowShards(object):
   def delete_cache_files(self):
     pass
 
+"""
+    if False:
+      cwd = os.getcwd()
+      dir = os.path.abspath(os.path.dirname(f))
+      f = os.path.basename(f)
+      if dir:
+        os.chdir(dir)
+      with open(f.replace(".gz",".igz"), "rb") as f2:
+        fobj = pickle.load(f2)
+      os.chdir(cwd)
+      return fobj
+"""
