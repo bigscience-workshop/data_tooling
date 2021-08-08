@@ -1,108 +1,3 @@
-#Copyright 2021, Ontocord, LLC
-#
-#Licensed under the Apache License, Version 2.0 (the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-#Unless required by applicable law or agreed to in writing, software
-#distributed under the License is distributed on an "AS IS" BASIS,
-#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#See the License for the specific language governing permissions and
-#limitations under the License.
-
-""" A distributed datastore based on Huggingface's datasets and Dask"""
-
-
-from dataclasses import asdict
-from collections.abc import Iterable
-from collections import OrderedDict
-from dataclasses import dataclass, field, fields
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple, Union
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-from datasets.info import DatasetInfo
-from datasets.features import PandasArrayExtensionArray, PandasArrayExtensionDtype, Features, Value, cast_to_python_objects, pandas_types_mapper
-from datasets import utils, Dataset
-from datasets.splits import NamedSplit
-from datasets.arrow_writer import ArrowWriter, OptimizedTypedSequence
-import os
-import json
-from pathlib import Path
-from pathlib import PurePath
-from datasets.utils.typing import PathLike
-from datasets.arrow_dataset import map_function, transmit_format# , replayable_table_alteration
-
-import copy
-import shutil
-from datasets.fingerprint import (
-	fingerprint_transform,
-	generate_fingerprint,
-	generate_random_fingerprint,
-	get_temporary_cache_files_directory,
-	is_caching_enabled,
-	update_fingerprint,
-	)
-
-from datasets.search import BaseIndex, BatchedSearchResults, SearchResults
-from datasets.tasks import TaskTemplate
-from datasets.table import InMemoryTable,  concat_tables
-from datasets.dataset_dict import DatasetDict
-from datasets import config
-from datasets.filesystems import extract_path_from_uri, is_remote_filesystem
-from datasets.utils import logging, map_nested
-        
-from torch import nn
-import pickle
-import glob, shutil, os, time
-import indexed_gzip as igzip
-import zipfile
-import  fsspec.compression
-
-import dataset
-import six
-from six.moves.urllib.parse import parse_qs, urlparse
-import threading
-
-from sqlalchemy.exc import ResourceClosedError
-from sqlalchemy import create_engine
-from sqlalchemy.sql import text
-from sqlalchemy.schema import MetaData
-from sqlalchemy.pool import StaticPool
-from sqlalchemy.util import safe_reraise
-from sqlalchemy.engine.reflection import Inspector
-from dataset.types import Types
-from dataset.util import DatasetException, ResultIter, QUERY_STEP, row_type, normalize_table_name, convert_row
-
-import dask
-import dask.array as da
-from dask.distributed import Client
-
-from getpass import getpass
-import atexit, os, subprocess
-import requests
-import atexit
-import uuid
-import multiprocessing
-from smart_open import open
-import urllib
-
-
-import random
-import socket
-import copy
-import itertools
-from datetime import datetime, timedelta
-import signal
-import atexit
-import warnings
-
-from pandas import DataFrame, read_csv
-import platform
-import subprocess
 import tempfile
 from threading import Timer, Thread
 from multiprocessing import Process
@@ -119,7 +14,8 @@ import snorkel
 from functools import partial
 from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
-from .utils.persisted_row_shards import PersistedRowShards
+
+from datastore.utils.persisted_row_shards import *
 
 ######################################################################################
 # Indexed Gzip files broken up into shards. Optimized for accessing
