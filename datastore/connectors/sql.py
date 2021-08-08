@@ -120,6 +120,7 @@ from functools import partial
 from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
 
+from datastore.utils.persisted_row_shards import *
 
   
 ######################################################################################
@@ -259,7 +260,7 @@ class TableSharded(dataset.Table, PersistedRowShards):
         if url.startswith("sqlite:///"):
           new_path = "sqlite:///"+self.cache_shard_file(idx, url.replace("sqlite:///", ""))
           shard_def = copy.deepcopy(shard_def)
-          shard_def['database_kwargs']['url' = url
+          shard_def['database_kwargs']['url'] = url
       elif shard_def['database_args']:
         url = shard_def['database_args']
         if url.startswith("sqlite:///"):
@@ -673,7 +674,7 @@ class TableSharded(dataset.Table, PersistedRowShards):
         if not len(columns):
             return iter([])
         _filter['_columns'] = columns
-        _filter('_distinct'] = True
+        _filter['_distinct'] = True
         return self.filter(*clauses, **_filter)
 
     def apply_to_shards(self, rows, fn, fn_kwargs):
@@ -704,19 +705,19 @@ class TableSharded(dataset.Table, PersistedRowShards):
             ret = shard.find(*copy.deepcopy(_clauses), **kwargs_shard)
           else:
             ret.extend(shard.find(*copy.deepcopy(_clauses), **kwargs_shard))
-        return ret
-      else:
-        ret = []
-        for shard in self.shards:
-          if not ret:
-            ret = shard.find(*copy.deepcopy(_clauses), **copy.deepcopy(kwargs))
-          else:
-            ret.extend(shard.find(*copy.deepcopy(_clauses), **copy.deepcopy(kwargs)))
-        return ret
+          return ret
+        else:
+          ret = []
+          for shard in self.shards:
+            if not ret:
+              ret = shard.find(*copy.deepcopy(_clauses), **copy.deepcopy(kwargs))
+            else:
+              ret.extend(shard.find(*copy.deepcopy(_clauses), **copy.deepcopy(kwargs)))
+          return ret
 
 
     def update(self, row, keys, ensure=None, types=None, return_count=False):
-        if self.shards:
+      if self.shards:
           self._sync_all_shards()
       row = self._sync_columns(row, ensure, types=types)
       if [_ for column in row.keys() if column in self.external_fts_columns]:
@@ -748,8 +749,8 @@ class TableSharded(dataset.Table, PersistedRowShards):
       if self.external_fts_columns:
         old = list(self.find(*clauses, **filters))
         if old:
-        for key in old[0].keys():
-          self.update_fts(column=key, old_data = old, mode='delete')
+          for key in old[0].keys():
+            self.update_fts(column=key, old_data = old, mode='delete')
       return super().delete(*clauses, **filters)
 
 
