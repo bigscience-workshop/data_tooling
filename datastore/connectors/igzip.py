@@ -119,7 +119,8 @@ import snorkel
 from functools import partial
 from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
-from .utils.persisted_row_shards import PersistedRowShards
+
+from datastore.utils.persisted_row_shards import *
 
 ######################################################################################
 # Indexed Gzip files broken up into shards. Optimized for accessing

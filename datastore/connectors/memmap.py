@@ -1,4 +1,4 @@
-
+import numpy as np
 ######################################################################################
 # MemmapSharded
 class MemmapSharded(np.memmap):
