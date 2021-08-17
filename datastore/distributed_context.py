@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-""" A distributed datastore based on Huggingface's datasets and Dask"""
+""" An interface to a distributed Dask for distributed processing on a cluster with a shared filesystem"""
 
 
 from dataclasses import asdict
@@ -35,7 +35,7 @@ from pathlib import Path
 from pathlib import PurePath
 from datasets.utils.typing import PathLike
 from datasets.arrow_dataset import map_function, transmit_format# , replayable_table_alteration
-
+import argparse
 import copy
 import shutil
 from datasets.fingerprint import (
@@ -79,7 +79,7 @@ from dataset.util import DatasetException, ResultIter, QUERY_STEP, row_type, nor
 
 import dask
 import dask.array as da
-from dask.distributed import Client
+from dask.distributed import Client, Scheduler
 
 from getpass import getpass
 import atexit, os, subprocess
@@ -121,6 +121,12 @@ from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
 
 
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir)))
+from datastore.utils.utils import *
+from getpass import getpass
+
 #####################################################################################################
 # The hook for the distributed context over Dask with an optional streamlit app attached.  
 # some of the ngrok code is based on https://github.com/gstaff/flask-ngrok which is licensed under Apache v2
@@ -133,7 +139,7 @@ from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_tripl
 # TODO: streamlit does tracking. For privacy and security concern, we need to turn this off.
 #
 # Example:
-#     distributed_context = DistributedContext()(dask_scheduler_file="<my scheduler file>", token=getpass("token:"), clear_streamlit_app=True)
+#     distributed_context = DistributedContext(dask_scheduler_file="<my scheduler file>", token=getpass("token:"), clear_streamlit_app=True)
 # if you do not provide a custom <my app file>.py file, an app file will automatically be created, and the file name stored in DistributedContext.streamlit_app_file
 
 class DistributedContext:
@@ -147,7 +153,8 @@ class DistributedContext:
   dask_scheduler_file = None
   streamlit_app_file = None
   streamlit_process = None
-
+  dask_process = None
+  
   def __init__(self, st=None, dask_scheduler_file=None, ngrok_token=None, streamlit_port=8501,  streamlit_app_file=None, hostname=None, import_code="", header_html="", num_procs=4, clear_streamlit_app=False, use_ngrok=True, flask_app=None, fs=None, time_out=43200,):
     global print
     self._print = print
@@ -233,7 +240,7 @@ class DistributedContext:
         files = glob.glob(".".join(file[:len(file)-1])+"*."+file[-1])
       has_timeout = False
       dask_nodes=DistributedContext.dask_nodes
-      for a_file in wait_until_files_loaded(files, fs):
+      for a_file in wait_until_files_loaded(files, fs=fs):
         with open(a_file, "r") as f:
           for line in f.read().split("\n"):
             if not line.strip():
@@ -271,6 +278,29 @@ class DistributedContext:
           for key, val in DistributedContext.dask_nodes.items():
             f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
 
+  @staticmethod
+  def launch_dask_scheduler(num_procs, hostname, ):
+    DistributedContext.dask_node_id = 0
+    DistributedContext.dask_client = Client(n_workers=num_procs, name=f"worker_{DistributedContext.dask_node_id}")
+    dask_port = int(str(DistributedContext.dask_client).split("tcp://")[1].strip().split()[0].strip("' ").split(":")[-1].strip())
+    addresses = DistributedContext._run_ngrok(streamlit_port, tcp_port=dask_port, hostname=hostname, region="us")
+    DistributedContext.dask_nodes[DistributedContext.dask_node_id] = ([a for a in addresses if a.startswith("tcp:")][0], datetime.timestamp(datetime.now()))
+    print ("dask schduler running on", DistributedContext.dask_nodes[DistributedContext.dask_node_id][0])
+    with SharedFileLock(dask_scheduler_file+".lock"):
+      with open(dask_scheduler_file, "w") as f: 
+        for key, val in DistributedContext.dask_nodes.items():
+          f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
+    webaddr = [a for a in addresses if a.startswith("https:")][0]
+    if generic_streamlit_app and (not os.path.exists(streamlit_app_file) or clear_streamlit_app):
+      DistributedContext.create_streamlit_app(streamlit_app_file, import_code=import_code, header_html=header_html)
+    dir, filename = os.path.split(streamlit_app_file)
+    cwd = os.getcwd()
+    os.chdir(dir)
+    DistributedContext.streamlit_process = subprocess.Popen(('streamlit', 'run', streamlit_app_file), preexec_fn = preexec)
+    os.chdir(cwd)
+    atexit.register(DistributedContext.streamlit_process.terminate)
+    print (f"streamlit server running on {webaddr}")
+
   # todo, launch flask instead of streamlit, run in no_grok mode.
   @staticmethod
   def start(dask_scheduler_file=None, ngrok_token=None, streamlit_port=8501,  streamlit_app_file=None, hostname=None, import_code="", header_html="", num_procs=4, clear_streamlit_app=False, use_ngrok=True, flask_app=None, fs=None, time_out=43200,):
@@ -293,48 +323,29 @@ class DistributedContext:
       generic_streamlit_app = True
       streamlit_app_file= str(Path(tempfile.gettempdir(), "app.py"))
     DistributedContext.streamlit_app_file = streamlit_app_file
-
-    with SharedFileLock(dask_scheduler_file+".lock", fs=fs):
+    try:
       if not DistributedContext.dask_nodes or 0 not in DistributedContext.dask_nodes:
-        try:
-          DistributedContext.dask_node_id = 0
-          DistributedContext.dask_process = subprocess.Popen(["dask-scheduler", address, '--name', f"worker_{DistributedContext.dask_node_id}", "--nprocs", num_proces, "--nthreads", "1", "--no-dashboard"], text=True, capture_output=True, stderr=subprocess.STDOUT, preexec_fn = preexec) 
-          atexit.register(DistributedContext.dask_process.terminate)
-          time.sleep(5)
-          dask_port = int(DistributedContext.dask_process.stdout.split(":")[-1].split()[0].strip())
-          DistributedContext.dask_client = Client(dask_port)
-          addresses = DistributedContext._run_ngrok(streamlit_port, tcp_port=dask_port, hostname=hostname, region="us")
-          DistributedContext.dask_nodes[DistributedContext.dask_node_id] = ([a for a in addresses if a.startswith("tcp:")][0], datetime.timestamp(datetime.now()))
-          print ("dask schduler running on", DistributedContext.dask_nodes[DistributedContext.dask_node_id][0])
-        except e:
-          DistributedContext.stop()
-          raise e
+        DistributedContext.dask_node_id = 0
+        DistributedContext.dask_process = multiprocessing.Process(target=DistributedContext.launch_dask_scheduler, args=(num_procs, f"worker_{DistributedContext.dask_node_id}")) 
+        atexit.register(DistributedContext.dask_process.terminate)
+        time.sleep(5)
+        DistributedContext.reload_dask_nodes(dask_scheduler_file, time_out=time_out)
       else:
-        try:
-          address = DistributedContext.dask_nodes[0][0]
-          DistributedContext.dask_node_id = max(list(DistributedContext.dask_nodes.keys()))
-          # there is an error in connecting to the scheduler, then the scheduler has probably died and we need to create a new scheduler with this node.
-          DistributedContext.dask_client = Client(DistributedContext.dask_nodes[0][0])
-          DistributedContext.dask_process = subprocess.Popen(["dask-worker", address, '--name', f"worker_{DistributedContext.dask_node_id}", "--nprocs", num_proces, "--nthreads", "1", "--no-dashboard"], text=True, capture_output=True, stderr=subprocess.STDOUT, preexec_fn = preexec) 
-          atexit.register(DistributedContext.dask_process.terminate)
-          DistributedContext.dask_nodes[DistributedContext.dask_node_id] = (DistributedContext.dask_node_id, datetime.timestamp(datetime.now()))
-          DistributedContext.reload_dask_nodes(dask_scheduler_file, time_out=time_out)
-        except e:
-          DistributedContext.stop()
-          raise e
-      with open(dask_scheduler_file, "w") as f: 
-        for key, val in DistributedContext.dask_nodes.items():
-          f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
-    webaddr = [a for a in addresses if a.startswith("https:")][0]
-    if generic_streamlit_app and (not os.path.exists(streamlit_app_file) or clear_streamlit_app):
-      DistributedContext.create_streamlit_app(streamlit_app_file, import_code=import_code, header_html=header_html)
-    dir, filename = os.path.split(streamlit_app_file)
-    cwd = os.getcwd()
-    os.chdir(dir)
-    DistributedContext.streamlit_process = subprocess.Popen(('streamlit', 'run', streamlit_app_file), preexec_fn = preexec)
-    os.chdir(cwd)
-    atexit.register(DistributedContext.streamlit_process.terminate)
-    print (f"streamlit server running on {webaddr}")
+        address = DistributedContext.dask_nodes[0][0]
+        DistributedContext.dask_node_id = max(list(DistributedContext.dask_nodes.keys()))
+        # there is an error in connecting to the scheduler, then the scheduler has probably died and we need to create a new scheduler with this node.
+        DistributedContext.dask_client = Client(DistributedContext.dask_nodes[0][0])
+        DistributedContext.dask_process = subprocess.Popen(["dask-worker", address, '--name', f"worker_{DistributedContext.dask_node_id}", "--nprocs", str(num_procs), "--nthreads", "1", "--no-dashboard"], text=True,  stderr=subprocess.STDOUT, preexec_fn = preexec) 
+        atexit.register(DistributedContext.dask_process.terminate)  
+        DistributedContext.dask_nodes[DistributedContext.dask_node_id] = (DistributedContext.dask_node_id, datetime.timestamp(datetime.now()))
+        DistributedContext.reload_dask_nodes(dask_scheduler_file, time_out=time_out)
+        with SharedFileLock(dask_scheduler_file+".lock"):
+          with open(dask_scheduler_file, "w") as f: 
+            for key, val in DistributedContext.dask_nodes.items():
+              f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
+    except:
+      DistributedContext.stop()
+      raise
     DistributedContext.reload_dask_nodes(dask_scheduler_file, time_out=time_out)
     return DistributedContext.dask_client 
 
@@ -344,10 +355,14 @@ class DistributedContext:
       DistributedContext.ngrok.terminate()
     DistributedContext.ngrok = None
     if DistributedContext.streamlit_process is not None:
-      DistributedContext.streamlit_process.terminate()
+      if DistributedContext.streamlit_process.is_alive():
+        DistributedContext.streamlit_process.terminate()
+      DistributedContext.streamlit_process=None
     DistributedContext.streamlit_process = None
     if DistributedContext.dask_process is not None:
-      DistributedContext.dask_process.terminate()
+      if DistributedContext.dask_process.is_alive():
+        DistributedContext.dask_process.terminate()
+      DistributedContext.dask_process=None
     DistributedContext.dask_process = None
     if DistributedContext.dask_client is not None:  
       DistributedContext.dask_client.shutdown()
@@ -498,3 +513,14 @@ create_header()
           shutil.copyfileobj(r.raw, f)
       return download_path
 
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  group = parser.add_argument_group(title='input')
+  group.add_argument('--dask_scheduler_file', type=str, default="/content/drive/Shareddrives/BigScience/schedule.tsv",
+                       help='Path to dask scheduler file')
+  group.add_argument('--ngrok_token_environ_var', type=str, default="NGROK_TOKEN",
+                       help='Environmental variable containing ngrok token')
+  group.add_argument('--clear_streamlit_app', action='store_true',
+                       help='Clear the streamlit app.py file.')
+  args = parser.parse_args()
+  distributed_context = DistributedContext(dask_scheduler_file=args.dask_scheduler_file, ngrok_token=os.environ[args.ngrok_token_environ_var], clear_streamlit_app=args.clear_streamlit_app)
