@@ -16,6 +16,9 @@
 # Sharding abstract classes. Shard by rows. Persists to some storage
 # mechanism, which could include disk, remove file system (ffspec and
 # s3filesystem or sqllalchemy database.
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir, os.path.pardir)))
 
 from functools import lru_cache
 
