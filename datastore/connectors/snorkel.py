@@ -1,3 +1,10 @@
+from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
+from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
+from dask.distributed import Client, Scheduler
+import numpy as np
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir, os.path.pardir)))
 
 #################################################################################################################################
 # Code for Snorkel label function appliers which for Datastores. 
@@ -15,7 +22,7 @@ class DatastoreLFApplier(BaseLFApplier):
     def apply(
         self,
         df: "Datastore",
-        scheduler: Scheduler = "processes",
+        scheduler:  "processes",
         fault_tolerant: bool = False,
     ) -> np.ndarray:
         """Label Datastore of data points with LFs.
