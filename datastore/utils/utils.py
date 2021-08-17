@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-""" A distributed datastore based on Huggingface's datasets and Dask"""
+""" Common utilities for datastorage"""
 
 
 from dataclasses import asdict
@@ -121,6 +121,9 @@ from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
 
 Scheduler = Union[str, Client]
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir, os.path.pardir)))
 
 
 logger = logging.get_logger(__name__)
@@ -161,6 +164,7 @@ def wait_until_files_loaded(flist, max_tries=120, fs=None): # wait 2 hrs max
     flist = [[flist, 0]]
   else:
     flist = [[f, 0]for f in flist]
+  print (flist, max_tries)
   for j in range(len(flist)*max_tries):
     num_done = 0
     for i, val in enumerate(flist):
