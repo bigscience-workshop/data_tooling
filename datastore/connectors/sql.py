@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-""" A distributed datastore based on Huggingface's datasets and Dask"""
+""" Utilities to access dataset/SqlAlchemy's sql utilities"""
 
 
 from dataclasses import asdict
@@ -119,6 +119,9 @@ import snorkel
 from functools import partial
 from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir, os.path.pardir)))
 
 from datastore.utils.persisted_row_shards import *
 
