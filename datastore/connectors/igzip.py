@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-""" A distributed datastore based on Huggingface's datasets and Dask"""
+""" Utilities for accessing a gzip file indexed by its lines."""
 
 
 from dataclasses import asdict
@@ -120,7 +120,13 @@ from functools import partial
 from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
 from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
 
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir, os.path.pardir)))
+
 from datastore.utils.persisted_row_shards import *
+
+#from ..datastore.utils.persisted_row_shards import PersistedRowShards 
 
 ######################################################################################
 # Indexed Gzip files broken up into shards. Optimized for accessing
