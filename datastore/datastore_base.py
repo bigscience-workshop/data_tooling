@@ -116,16 +116,18 @@ except:
 
 import snorkel
 from functools import partial
-from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
-from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
 
-from utils.persisted_row_shards import *
-from utils.utils import *
-from connectors.sql import *
-from connectors.memmap import *
-from connectors.igzip import *
-from connectors.snorkel import *
-from distributed_context import *
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir)))
+
+from datastore.utils.persisted_row_shards import *
+from datastore.utils.utils import *
+from datastore.connectors.sql import *
+from datastore.connectors.memmap import *
+from datastore.connectors.igzip import *
+from datastore.connectors.snorkel import *
+from datastore.distributed_context import *
 
 ######################################################################################
 # Extensions to Huggingface's datasets to create a datastore that
