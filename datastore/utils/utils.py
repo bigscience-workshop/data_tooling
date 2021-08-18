@@ -164,7 +164,6 @@ def wait_until_files_loaded(flist, max_tries=120, fs=None): # wait 2 hrs max
     flist = [[flist, 0]]
   else:
     flist = [[f, 0]for f in flist]
-  print (flist, max_tries)
   for j in range(len(flist)*max_tries):
     num_done = 0
     for i, val in enumerate(flist):
