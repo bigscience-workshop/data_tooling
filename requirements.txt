@@ -13,3 +13,7 @@ indexed_gzip>=1.6.1
 aiohttp
 requests
 modin[dask]
+snorkel
+aiohttp
+fsspec
+
