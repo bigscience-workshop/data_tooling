@@ -259,7 +259,11 @@ class DistributedContext:
             else:
               dask_nodes[node_id] = (address, last_heartbeat) # what about the case where a node removes itself?
       if has_timeout:
-        with fs.open(dask_scheduler_file, "w") as f: 
+        if fs is os:
+          _open = open
+        else:
+          _open = fs.open 
+        with open(dask_scheduler_file, "w") as f: 
           for key, val in DistributedContext.dask_nodes.items():
             f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
       if fs is not os:
@@ -279,9 +283,9 @@ class DistributedContext:
             f.write(str(key)+"\t"+str(val[0])+"\t"+str(val[1])+"\n")
 
   @staticmethod
-  def launch_dask_scheduler(num_procs, hostname, ):
+  def launch_server(num_procs, name, hostname, streamlit_port, import_code, header_html, clear_streamlit_app):
     DistributedContext.dask_node_id = 0
-    DistributedContext.dask_client = Client(n_workers=num_procs, name=f"worker_{DistributedContext.dask_node_id}")
+    DistributedContext.dask_client = Client(n_workers=num_procs, name=name)
     dask_port = int(str(DistributedContext.dask_client).split("tcp://")[1].strip().split()[0].strip("' ").split(":")[-1].strip())
     addresses = DistributedContext._run_ngrok(streamlit_port, tcp_port=dask_port, hostname=hostname, region="us")
     DistributedContext.dask_nodes[DistributedContext.dask_node_id] = ([a for a in addresses if a.startswith("tcp:")][0], datetime.timestamp(datetime.now()))
@@ -296,10 +300,11 @@ class DistributedContext:
     dir, filename = os.path.split(streamlit_app_file)
     cwd = os.getcwd()
     os.chdir(dir)
-    DistributedContext.streamlit_process = subprocess.Popen(('streamlit', 'run', streamlit_app_file), preexec_fn = preexec)
+    streamlit_process = subprocess.Popen(('streamlit', 'run', streamlit_app_file), preexec_fn = preexec)
     os.chdir(cwd)
-    atexit.register(DistributedContext.streamlit_process.terminate)
+    atexit.register(lambda:  streamlit_process is not None and streamlit_process.is_alive() and streamlit_process.terminate())
     print (f"streamlit server running on {webaddr}")
+    #DistributedContext.streamlit_process.join()
 
   # todo, launch flask instead of streamlit, run in no_grok mode.
   @staticmethod
@@ -326,8 +331,9 @@ class DistributedContext:
     try:
       if not DistributedContext.dask_nodes or 0 not in DistributedContext.dask_nodes:
         DistributedContext.dask_node_id = 0
-        DistributedContext.dask_process = multiprocessing.Process(target=DistributedContext.launch_dask_scheduler, args=(num_procs, f"worker_{DistributedContext.dask_node_id}")) 
-        atexit.register(DistributedContext.dask_process.terminate)
+        DistributedContext.dask_process = multiprocessing.Process(target=DistributedContext.launch_server, args=(num_procs, f"worker_{DistributedContext.dask_node_id}", hostname, streamlit_port, import_code, header_html, clear_streamlit_app)) 
+        DistributedContext.dask_process.start()
+        atexit.register(lambda:  DistributedContext.dask_process.terminate is not None and DistributedContext.dask_process.is_alive() and DistributedContext.dask_process.terminate())
         time.sleep(5)
         DistributedContext.reload_dask_nodes(dask_scheduler_file, time_out=time_out)
       else:
@@ -357,11 +363,13 @@ class DistributedContext:
     if DistributedContext.streamlit_process is not None:
       if DistributedContext.streamlit_process.is_alive():
         DistributedContext.streamlit_process.terminate()
+        DistributedContext.streamlit_process.join()
       DistributedContext.streamlit_process=None
     DistributedContext.streamlit_process = None
     if DistributedContext.dask_process is not None:
       if DistributedContext.dask_process.is_alive():
         DistributedContext.dask_process.terminate()
+        DistributedContext.dask_process.join()
       DistributedContext.dask_process=None
     DistributedContext.dask_process = None
     if DistributedContext.dask_client is not None:  
@@ -516,7 +524,7 @@ create_header()
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   group = parser.add_argument_group(title='input')
-  group.add_argument('--dask_scheduler_file', type=str, default="/content/drive/Shareddrives/BigScience/schedule.tsv",
+  group.add_argument('--dask_scheduler_file', type=str, default="/content/drive/Shareddrives/BigScience/dask_scheduler.txt",
                        help='Path to dask scheduler file')
   group.add_argument('--ngrok_token_environ_var', type=str, default="NGROK_TOKEN",
                        help='Environmental variable containing ngrok token')
