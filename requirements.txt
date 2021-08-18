@@ -12,3 +12,4 @@ streamlit>=0.82.0
 indexed_gzip>=1.6.1
 aiohttp
 requests
+modin[dask]
