@@ -993,9 +993,9 @@ class Datastore(Dataset):
         batch_idx_files = list(wait_until_files_loaded(batch_idx_files))
         batch_idx_files.sort()
         if sort:
-          MapReduceNode.sort_merge(batch_idx_files, output_igzip_file, lock=False)
+          Datastore.sort_merge(batch_idx_files, output_igzip_file, lock=False)
         else:
-          MapReduceNode.cat(batch_idx_files, output_igzip_file, lock=False)
+          Datastore.cat(batch_idx_files, output_igzip_file, lock=False)
         next(wait_until_files_loaded(output_igzip_file))
         for f in batch_idx_files:
           os.unlink(f)
