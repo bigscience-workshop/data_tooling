@@ -1,5 +1,11 @@
 # data-tooling
-How should we store and serve the dataset?
+- How should we store and serve the dataset?
+- How do we manage personally identificable information and bias in data?
+- How do we store and serve meta-data in datasets?
+- How do we address contestation, including handling trained models?
+- How do we prove legal compliance?
+- How do we prevent dissemination of the data beyond approved uses?
+- How do we keep trusted data secure?
 
 ## Format to distribute data samples
 
