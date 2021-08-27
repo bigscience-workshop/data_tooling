@@ -3,7 +3,7 @@
 - How do we manage personally identificable information and bias in data?
 - How do we store and serve meta-data in datasets?
 - How do we address contestation of data?
-- How do we prove legal compliance?
+- How do we prove legal compliance in the use of datasets?
 - How do we prevent dissemination of the data beyond approved uses?
 - How do we keep trusted data secure?
 
