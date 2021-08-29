@@ -17,3 +17,6 @@ snorkel
 fsspec
 sentencepiece
 nltk
+spacy==2.1.0 
+neuralcoref 
+scikit-learn
