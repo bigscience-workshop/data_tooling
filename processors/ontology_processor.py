@@ -42,11 +42,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 from data_tooling.processors.processor import Processor
 
 
-###
-#create a larger vocabulary for mt5 based on conceptnet and numberbatch. 
-#create smaller embeddings size and factorization for the larger vocabulary to keep the modified mt5 model size reasonable
-#store a large portion of the embeddings on disk via memmap so we can do out-of-core training and inference on the modified mt5
-#incrementally increase the vocabulary and embeddings size by finding n-grams and fasttext training
 
 class OntologyProcessor(Processor):
 
@@ -566,4 +561,12 @@ class OntologyProcessor(Processor):
       os.system("cp {lang}_stopword.tsv {shared_dir}")
       
     return top_stopword, ngram, compound_start   
+  
+###
+# Future TODO:
+#create a larger vocabulary for mt5 based on conceptnet and numberbatch. 
+#create smaller embeddings size and factorization for the larger vocabulary to keep the modified mt5 model size reasonable
+#store a large portion of the embeddings on disk via memmap so we can do out-of-core training and inference on the modified mt5
+#incrementally increase the vocabulary and embeddings size by finding n-grams and fasttext training
+  
   
