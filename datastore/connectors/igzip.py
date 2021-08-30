@@ -122,9 +122,9 @@ from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_tripl
 
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir, os.path.pardir)))
+                                             os.path.pardir, os.path.pardir, os.path.pardir)))
 
-from datastore.utils.persisted_row_shards import *
+from data_tooling.datastore.utils.persisted_row_shards import *
 
 #from ..datastore.utils.persisted_row_shards import PersistedRowShards 
 

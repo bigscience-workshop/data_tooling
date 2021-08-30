@@ -4,7 +4,7 @@ from dask.distributed import Client, Scheduler
 import numpy as np
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir, os.path.pardir)))
+                                             os.path.pardir, os.path.pardir, os.path.pardir)))
 
 #################################################################################################################################
 # Code for Snorkel label function appliers which for Datastores. 

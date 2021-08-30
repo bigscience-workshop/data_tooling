@@ -1,11 +1,17 @@
+import sys
+import os
+import numpy as np
+from datasets import load_dataset
+import fsspec, requests, aiohttp
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             os.path.pardir, os.path.pardir, os.path.pardir)))
+                                      
+from data_tooling.datastore.datastore_base import *
+from data_tooling.datastore.distributed_context import *
 
 if __name__ == "__main__":
-    import sys
-    import os
-    import numpy as np
-    from datasets import load_dataset
-    import fsspec, requests, aiohttp
-    # some test code to manage oscar downloading
+
     args = sys.argv[1:]
     if not args:
       exit()
