@@ -1,3 +1,18 @@
+# coding=utf-8
+# Copyright, 2021 Ontocord, LLC, All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import copy
 from time import time
 import numpy as np
@@ -193,33 +208,19 @@ class PIIProcessor (Processor):
   }
 
   #adapted from https://github.com/christabor/faker_extras/blob/master/faker_extras/human.py, licensed under MIT License
-  religion_list2 = [
-            'Atheism',
-            'Christianity',
-            'Islam',
-            'Hinduism',
-            'Buddhism',
-            'Sikhism',
-            'Judaism',
-            'Bahaism',
-            'Confucianism',
-            'Jainism',
-            'Shintoism',
-        ]
-
-  religion_list = [
-            'Atheist',
-            'Christian',
-            'Muslim',
-            'Hindu',
-            'Buddhist',
-            'Sikh',
-            'Jew',
-            "Bahá'í",
-            'Confucianists',
-            'Jain',
-            'Shintoists',
-        ]
+  person2religion = {
+            'Atheist': 'Atheism',
+            'Christian': 'Christianity',
+            'Muslim': 'Islam',
+            'Hindu': 'Hinduism',
+            'Buddhist': 'Buddhism',
+            'Sikh': 'Sikhism',
+            'Jew': 'Judaism',
+            "Bahá'í": 'Bahaism',
+            'Confucianists': 'Confucianism',
+            'Jain': 'Jainism',
+            'Shintoists': 'Shintoism',
+  }
 
 
   nrp_list2 = []
@@ -320,7 +321,7 @@ class PIIProcessor (Processor):
     self.titles_en = dict ([(word, "TITLE") for word in self.title2pronoun.keys()])
     self.pronoun_en = dict ([(word, "PRONOUN") for word in self.pronoun.keys()])
     self.gender_en = dict ([(word, "GENDER") for word in self.gender2pronoun.keys()])
-    self.religion_en = dict ([(word, "RELIGION") for word in self.religion_list])
+    self.religion_en = dict ([(word, "RELIGION") for word in self.person2religion.keys()])
     #jobs can be proxies for gender or race, so we may want to swap jobs
     self.job_en = dict ([(word.split(",")[0].strip() , "JOB") for word in job.Provider.jobs])
     #TODO: disease and union membership
@@ -347,7 +348,7 @@ class PIIProcessor (Processor):
         return choice(list(self.gender2pronoun.keys()))
 
   def religion(self):
-        return choice(self.religion_list)
+        return choice(list(self.per2onregligion.keys()))
   
   def nrp(self):
         return choice(self.nrp_list2)
@@ -364,7 +365,7 @@ class PIIProcessor (Processor):
 
   def add_PII_context_data_en(self, span, swap_fn, span2ref, ref2span, PII_context, pronoun, args=None):
     """
-    Modifies the PII_context by adding associations of old detected PII/NER values to a target value/id. 
+    Modifies the PII_context by adding associations of old detected PII/NER labels to a mention/span. 
     :arg span: the old NER/II value in english that was detected.
     :arg label: the label detected
     :arg swap_fn: a function to apply to get a new value. we do the swapping in english and depend on the back-trans to get the word in target_lang.
@@ -528,10 +529,11 @@ class PIIProcessor (Processor):
   @staticmethod
   def get_aligned_text(sent1, sent2, target_lang):
     """
-    given two sentences, find blocks of text that match and that don't match.
+    Given two sentences, find blocks of text that match and that don't match.
     return the blocks, and a matching score.
 
     Used to extract NER from original language sentence.
+    TODO: prefer matching based on "[id] aaaa *" patterns
     """
     if target_lang in ("ja", "ko", "zh"):
       # splitting on spaces doesn't always work because some languages aren't space separated
@@ -607,18 +609,21 @@ class PIIProcessor (Processor):
       (blocks2, score) =  self.get_aligned_text(text, anonymized_text0, self.target_lang)
       #since we know what slots we are replacing, 
       #we can align with the original sentence in the original language, 
-      #and then extract the original NER value. 
+      #and then extract the original NER value, or a translated version of the new value. 
       for (s1, s2, matched) in blocks2:    
           if "[" in s2 and "]" in s2:
-            s3 = s2.split("[")[1].split("]")[0]
-            s4 = s3.strip()
-            if not s4 or s4[0] not in "0123456789":  continue
-            key = ("["+s3+"]").replace(" ", "")
+            _id, orig_value = s2.split("[")[1].split("]")
+            _id = _id.strip()
+            orig_value = orig_value.strip(" *")
+            key = f"[{_id}] {orig_value} *"
+            ner_label = target_to_label.get(key, [None, orig_value])[1]
+            if not _id or _id[0] not in "0123456789": continue
             if key not in target_to_label_ret:
+              # we might be able to also capture the english translated value.
               if encrypt_value:
-                target_to_label_ret[key]  = {f'encrypted_text_{self.target_lang}': self.encrypt(s1, self.salt), 'label': target_to_label[key][1]}
+                target_to_label_ret[key]  = {f'encrypted_text_{self.target_lang}': self.encrypt(s1, self.salt), 'ner_label': ner_label}
               else:
-                target_to_label_ret[key]  = {f'text_{self.target_lang}': s1,  'label': target_to_label[key][1]}
+                target_to_label_ret[key]  = {f'text_{self.target_lang}': s1,  'ner_label': ner_label}
           #elif len(s2) <= 3: # this should actualy be if s2 is a pronoun or title
           #  print ('swapping short text', s1, s2)
           #  templated_text = templated_text + " "+s2
