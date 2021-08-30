@@ -123,8 +123,8 @@ from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_tripl
 
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir)))
-from datastore.utils.utils import *
+                                             os.path.pardir, os.path.pardir)))
+from data_tooling.datastore.utils.utils import *
 from getpass import getpass
 
 #####################################################################################################

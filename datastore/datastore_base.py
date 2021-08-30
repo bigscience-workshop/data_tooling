@@ -119,15 +119,15 @@ from functools import partial
 
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir)))
+                                             os.path.pardir, os.path.pardir)))
 
-from datastore.utils.persisted_row_shards import *
-from datastore.utils.utils import *
-from datastore.connectors.sql import *
-from datastore.connectors.memmap import *
-from datastore.connectors.igzip import *
-from datastore.connectors.snorkel import *
-from datastore.distributed_context import *
+from data_tooling.datastore.utils.persisted_row_shards import *
+from data_tooling.datastore.utils.utils import *
+from data_tooling.datastore.connectors.sql import *
+from data_tooling.datastore.connectors.memmap import *
+from data_tooling.datastore.connectors.igzip import *
+from data_tooling.datastore.connectors.snorkel import *
+from data_tooling.datastore.distributed_context import *
 
 ######################################################################################
 # Extensions to Huggingface's datasets to create a datastore that
