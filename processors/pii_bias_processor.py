@@ -87,7 +87,7 @@ class PIIProcessor (Processor):
       JOB
       POLITICAL_PARTY #TODO
       UNION_MEMBERSHIP #TODO
-      DISEASE #TODO
+      DISEASE
       DOMAIN_NAME
       EMAIL_ADDRESS
       IP_ADDRESS
@@ -129,6 +129,9 @@ class PIIProcessor (Processor):
   zip_code_regex         = re.compile(r'\b\d{5}(?:[-\s]\d{4})?\b')
   po_box_regex           = re.compile(r'P\.? ?O\.? Box \d+', re.IGNORECASE)
   ssn_regex              = re.compile('(?!000|666|333)0*(?:[0-6][0-9][0-9]|[0-7][0-6][0-9]|[0-7][0-7][0-2])[- ](?!00)[0-9]{2}[- ](?!0000)[0-9]{4}')
+  # from https://gist.github.com/jakebathman/c18cc117caaf9bb28e7f60e002fb174d - but this could be totally wrong!
+  # see also https://stackoverflow.com/questions/5590862/icd9-regex-pattern
+  icd_code_regex         = re.compile(r'([V\d]\d{2}(\.?\d{0,2})?|E\d{3}(\.?\d)?|\d{2}(\.?\d{0,2})?)|([A-TV-Z][0-9][A-Z0-9](\.?[A-Z0-9]{0,4})?)', re.IGNORECASE)
 
   # we do regex in this order in order to not capture ner inside domain names and email addresses.
   default_ner_regexes = OrderedDict([
@@ -143,7 +146,7 @@ class PIIProcessor (Processor):
     ("CRYPTO"          , btc_address_regex),
     ("STREET_ADDRESS"  , [street_address_regex, zip_code_regex, po_box_regex]),
     ("US_SSN"          , ssn_regex),
-
+    ("ICD_CODE"        , icd_code_regex)
   ])
 
   pronoun = {
@@ -186,6 +189,8 @@ class PIIProcessor (Processor):
       "they": ["Mr.", "Ms."]
   }
 
+  #choose a smaller list, because the bigger list of genders, such as the one from Facebook, does not work with with back translations.
+  #TODO: get gender terms in target_lang. See https://github.com/christabor/faker_extras/blob/master/faker_extras/human.py
   gender2pronoun = {
             'Nonbinary': "they",
             'Man': "he",
@@ -198,7 +203,43 @@ class PIIProcessor (Processor):
             'Gay Man': "he",
             'Gay Woman': "he",
             'Transgender Man': "he",
-            'Transgender Woman': "she"
+            'Transgender Woman': "she",
+
+            'Young Nonbinary': "they",
+            'Young Man': "he",
+            'Young Woman': "she",
+            'Young Boy': "he",
+            'Young Girl': "she",
+            'Young Female' : "she",
+            'Young Male' : "she",
+            'Young Lesbian': "she",
+            'Young Gay Man': "he",
+            'Young Gay Woman': "he",
+            'Young Transgender Man': "he",
+            'Young Transgender Woman': "she",
+
+            'Adult Nonbinary': "they",
+            'Adult Man': "he",
+            'Adult Woman': "she",
+            'Adult Female' : "she",
+            'Adult Male' : "she",
+            'Adult Lesbian': "she",
+            'Adult Gay Man': "he",
+            'Adult Gay Woman': "he",
+            'Adult Transgender Man': "he",
+            'Adult Transgender Woman': "she",
+
+            'Older Nonbinary': "they",
+            'Older Man': "he",
+            'Older Woman': "she",
+            'Older Female' : "she",
+            'Older Male' : "she",
+            'Older Lesbian': "she",
+            'Older Gay Man': "he",
+            'Older Gay Woman': "he",
+            'Older Transgender Man': "he",
+            'Older Transgender Woman': "she",
+                        
         }
         
   pronoun2gender = {
@@ -222,11 +263,13 @@ class PIIProcessor (Processor):
             'Shintoists': 'Shintoism',
   }
 
+  # for race proxies, we could also include physical descriptions, such as skin color and hair style. social economic status? debt level and income level? TODO.
+  # see https://engineering.cmu.edu/news-events/news/2018/12/11-datta-proxies.html
 
-  nrp_list2 = []
+  race_list = []
 
   #adapted from https://github.com/christabor/faker_extras/blob/master/faker_extras/human.py, licensed under MIT License
-  nrp_list = [
+  race_list0 = [
             'Aboriginal',
             'Australian',
             'South Pacific',
@@ -270,7 +313,7 @@ class PIIProcessor (Processor):
             'Latina',
             'Latino',
             'Mestiza',
-            'Mixed',
+            #'Mixed',
             'Mexican',
             'Middle Eastern',
             'Native American',
@@ -289,9 +332,72 @@ class PIIProcessor (Processor):
             'Northern European',
         ]
 
+  #from https://www.cdc.gov/diseasesconditions/az/z.html
+  disease_list = [
+            'ADHD',
+            'Arthritis',
+            'Asthma',
+            'Autism',
+            'Avian Influenza',
+            'Birth Defects',
+            'Cancer',
+            'Chlamydia',
+            'Chronic Fatigue Syndrome',
+            'Chronic Obstructive Pulmonary Disease',
+            'COPD',
+            'COVID-19',
+            'Diabetes',
+            'Ebola',
+            'Ebola Virus Disease',
+            'Epilepsy',
+            'Fetal Alcohol Spectrum Disorder',
+            'Flu',
+            'Influenza',
+            'Genital Herpes',
+            'Herpes Simplex Virus',
+            'Giardiasis',
+            'Gonorrhea',
+            #'Healthy Water # not sure if this is a disease or health condition
+            'Heart Disease',
+            'Hepatitis',
+            'HIV/AIDS',
+            'Human papillomavirus',
+            'HPV',
+            'Kidney Disease',
+            'Chronic Kidney Disease',
+            'Meningitis',
+            'Methicillin-resistant Staphylococcus aureus',
+            'MRSA',
+            'Microcephaly',
+            'Middle East Respiratory Syndrome',
+            'MERS',
+            'Overweight',
+            'Obesity',
+            'Parasites',
+            'Scabies',
+            'Salmonella',
+            'Sexually Transmitted Diseases',
+            'Stroke',
+            'Traumatic Brain Injury',
+            'TBI',
+            'Trichomonas Infection',
+            'Trichomoniasis',
+            'Tuberculosis',
+            'TB',
+            'Zika Virus',
+        ]
 
   def __init__(self, target_lang='fr', ner_regexes=None, ontology=None, salt=""):
-    super().__init__(target_lang, ner_regexes, ontology)
+    super().__init__(ner_regexes, ontology)
+    self.target_lang = target_lang
+    try:
+      self.stopwords_target_lang = {} if target_lang not in self.langs else set(stopwords.words(self.langs[target_lang].lower()))
+    except:
+      try:
+        nltk.corpus.stopwords.words(self.langs[target_lang].lower())
+        self.stopwords_target_lang = {} if target_lang not in self.langs else set(stopwords.words(self.langs[target_lang].lower()))
+      except:
+        self.stopwords_target_lang = {} 
     self.salt = salt
     if PIIProcessor.faker_en is None:
       PIIProcessor.faker_en = Faker(self.faker_map['en'])
@@ -314,15 +420,17 @@ class PIIProcessor (Processor):
     self.faker_target_lang.add_provider(bank)
     self.faker_target_lang.add_provider(credit_card)
     self.faker_target_lang.add_provider(ssn)
-    if PIIProcessor.nrp_list2 == []:
-      list2 = list(set(self.nrp_list+person.Provider.language_names+list(self.backtrans.langs.values())))
+    if PIIProcessor.race_list == []:
+      list2 = list(set(self.race_list0+person.Provider.language_names+list(self.backtrans.langs.values())))
       list2.remove('Interlingua')
-      PIIProcessor.nrp_list2 = list(set(list2))
+      PIIProcessor.race_list = list(set(list2))
+    self.titles_en = dict ([(word, "RACE") for word in self.race_list])
     self.titles_en = dict ([(word, "TITLE") for word in self.title2pronoun.keys()])
     self.pronoun_en = dict ([(word, "PRONOUN") for word in self.pronoun.keys()])
     self.gender_en = dict ([(word, "GENDER") for word in self.gender2pronoun.keys()])
     self.religion_en = dict ([(word, "RELIGION") for word in self.person2religion.keys()])
-    #jobs can be proxies for gender or race, so we may want to swap jobs
+    self.disease_en = dict ([(word, "DISEASE") for word in self.disease_list])
+    #jobs can be proxies for gender or race, so we may want to swap jobs. See https://github.com/uclanlp/corefBias for potential enhancements.
     self.job_en = dict ([(word.split(",")[0].strip() , "JOB") for word in job.Provider.jobs])
     #TODO: disease and union membership
     self.pronoun_swap = {'he': 'she', 'He': 'She', 'his': 'her', 'His': 'Her', \
@@ -331,15 +439,17 @@ class PIIProcessor (Processor):
     self.add_ontology(self.titles_en)
     self.add_ontology(self.pronoun_en)            
     self.add_ontology(self.gender_en)   
-    self.add_ontology(self.religion_en)   
+    self.add_ontology(self.religion_en)  
+    self.add_ontology(self.disease_en)    
     self.add_ontology(self.job_en)    
     #self.add_ontology(self.nrp_recognizer) 
     self.default_recognizer = dict([("PRONOUN", None), ("TITLE", None), ("GENDER", None), ("PERSON", None), \
                            ("CREDIT_CARD", None), ("CRYPTO", None), ("IP_ADDRESS", None), ("LOC", None), \
                            ("US_SSN", self.faker_en.ssn), ("TIME", None), ("GPE", self.faker_en.country()), \
                            ("DATE", self.faker_en.date), ("STREET_ADDRESS", None), ("ORG", None), \
-                           ("DOMAIN_NAME", None), ("JOB", self.faker_en.job), ("NORP", self.nrp), \
-                           ("RELIGION", self.religion), ("PHONE_NUMBER", None), ("EMAIL_ADDRESS", None)])
+                           ("DOMAIN_NAME", None), ("JOB", self.faker_en.job), ("NORP", self.nrp), ("RACE", self.nrp), \
+                           ("DISEASE", self.disease), ("RELIGION", self.religion), ("PHONE_NUMBER", None), ("EMAIL_ADDRESS", None)])
+    
     if ner_regexes is None:
       ner_regexes = PIIProcessor.default_ner_regexes
     self.ner_regexes = ner_regexes
@@ -349,7 +459,10 @@ class PIIProcessor (Processor):
 
   def religion(self):
         return choice(list(self.per2onregligion.keys()))
-  
+
+  def disease(self):
+        return choice(self.disease_list)
+
   def nrp(self):
         return choice(self.nrp_list2)
 
@@ -563,12 +676,14 @@ class PIIProcessor (Processor):
     #score = float(matchLen+1)/float(nonMatchLen+1)
     return (blocks2, score)
 
-  def process(self, text, docId=0, lang=None, encrypt_value=False, return_original_text=False):
+  def process(self, text="", batch=None, docId=0, lang=None, encrypt_value=False, return_original_text=False):
     """
     The main PII processor.
     """
+    if batch is None:
+      batch = [text]
     if encrypt_value and return_original_text:
-      print ("warning: returning original text, while encrypting a person's info will expose the person's info.")
+      print ("warning: returning original text, while encrypting a person's info will still expose the person's info.")
     if lang is None:
       lang = self.target_lang
     if self.target_lang in ("ja", "ko", "zh"):
@@ -578,62 +693,61 @@ class PIIProcessor (Processor):
     if lang not in (self.target_lang, 'en'):
       raise RuntimeError(f"can only process text in the target language {self.target_lang} or convert from English to the target language.")
     # we do translation to english because the tools we use work in english mostly. we translate back to target language at the end.  
-    if lang == 'en':
-      text_to_anonymize_en = text
-    else:
-      text_to_anonymize_en = self.backtrans.translate(text, fr=lang, to='en')
-    analyzer_results = self.analyze_with_ner_coref_en(document=text_to_anonymize_en, docId=docId)
-    PII_context = {}
-    print (analyzer_results)
-    pii_text_analyzed_en = self.apply_PII_en(analyzer_results, already_replaced={}, PII_context=PII_context) 
-    print (pii_text_analyzed_en)
-    if self.target_lang=='en':
-      templated_text = pii_text_analyzed_en
-    else:
-      templated_text =  self.backtrans.translate(pii_text_analyzed_en, fr='en', to=self.target_lang)
-    if lang == 'en':
-      anonymized_text = self.apply_PII_target_lang(templated_text, PII_context)
-      target_to_label_ret = {}
-      for key, target in PII_context.items():
-        if encrypt_value:
-          target_to_label_ret[target]  = {'ecnrypted_text_en': self.encrypt(key[0], self.salt), 'label': key[1]}
+    ret = []
+    for text in batch:
+      if lang == 'en':
+        text_to_anonymize_en = text
+      else:
+        text_to_anonymize_en = self.backtrans.translate(text, fr=lang, to='en')
+      analyzer_results = self.analyze_with_ner_coref_en(document=text_to_anonymize_en, docId=docId)
+      PII_context = {}
+      print (analyzer_results)
+      pii_text_analyzed_en = self.apply_PII_en(analyzer_results, already_replaced={}, PII_context=PII_context) 
+      print (pii_text_analyzed_en)
+      if self.target_lang=='en':
+        templated_text = pii_text_analyzed_en
+      else:
+        templated_text =  self.backtrans.translate(pii_text_analyzed_en, fr='en', to=self.target_lang)
+      if lang == 'en':
+        anonymized_text = self.apply_PII_target_lang(templated_text, PII_context)
+        target_to_label_ret = {}
+        for key, target in PII_context.items():
+          if encrypt_value:
+            target_to_label_ret[target]  = {'ecnrypted_text_en': self.encrypt(key[0], self.salt), 'label': key[1]}
+          else:
+            target_to_label_ret[target]  = {'text_en': key[0],  'label': key[1]}
+        if return_original_text:
+          ret.append({"text": text, f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret})
         else:
-          target_to_label_ret[target]  = {'text_en': key[0],  'label': key[1]}
-      if return_original_text:
-        return {"text": text, f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret}
+          ret.append({f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret})
       else:
-        return {f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret}
-    else:
-      target_to_label = dict([(b, a) for a, b in PII_context.items()])
-      target_to_label_ret={}
-      (blocks2, score) =  self.get_aligned_text(text, anonymized_text0, self.target_lang)
-      #since we know what slots we are replacing, 
-      #we can align with the original sentence in the original language, 
-      #and then extract the original NER value, or a translated version of the new value. 
-      for (s1, s2, matched) in blocks2:    
-          if "[" in s2 and "]" in s2:
-            _id, orig_value = s2.split("[")[1].split("]")
-            _id = _id.strip()
-            orig_value = orig_value.strip(" *")
-            key = f"[{_id}] {orig_value} *"
-            ner_label = target_to_label.get(key, [None, orig_value])[1]
-            if not _id or _id[0] not in "0123456789": continue
-            if key not in target_to_label_ret:
-              # we might be able to also capture the english translated value.
-              if encrypt_value:
-                target_to_label_ret[key]  = {f'encrypted_text_{self.target_lang}': self.encrypt(s1, self.salt), 'ner_label': ner_label}
-              else:
-                target_to_label_ret[key]  = {f'text_{self.target_lang}': s1,  'ner_label': ner_label}
-          #elif len(s2) <= 3: # this should actualy be if s2 is a pronoun or title
-          #  print ('swapping short text', s1, s2)
-          #  templated_text = templated_text + " "+s2
+        target_to_label = dict([(b, a) for a, b in PII_context.items()])
+        target_to_label_ret={}
+        (blocks2, score) =  self.get_aligned_text(text, anonymized_text0, self.target_lang)
+        #since we know what slots we are replacing, 
+        #we can align with the original sentence in the original language, 
+        #and then extract the original NER value, or a translated version of the new value. 
+        for (s1, s2, matched) in blocks2:    
+            if "[" in s2 and "]" in s2:
+              _id, orig_value = s2.split("[")[1].split("]")
+              _id = _id.strip()
+              orig_value = orig_value.strip(" *")
+              key = f"[{_id}] {orig_value} *"
+              ner_label = target_to_label.get(key, [None, orig_value])[1]
+              if not _id or _id[0] not in "0123456789": continue
+              if key not in target_to_label_ret:
+                # we might be able to also capture the english translated value.
+                if encrypt_value:
+                  target_to_label_ret[key]  = {f'encrypted_text_{self.target_lang}': self.encrypt(s1, self.salt), 'ner_label': ner_label}
+                else:
+                  target_to_label_ret[key]  = {f'text_{self.target_lang}': s1,  'ner_label': ner_label}
+            #elif len(s2) <= 3: # this should actualy be a check if s2 is a pronoun or title that has been swapped?
+            #  print ('swapping short text', s1, s2)
 
-      # what do do with temp_text
-
-      templated_text = templated_text.strip()
-      anonymized_text = self.apply_PII_target_lang(templated_text, PII_context)
-      if return_original_text:
-        return {"text": text, f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret}
-      else:
-        return {f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text, "pii": target_to_label_ret}
-    
+        templated_text = templated_text.strip()
+        anonymized_text = self.apply_PII_target_lang(templated_text, PII_context)
+        if return_original_text:
+          ret.append({"text": text, f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret})
+        else:
+          ret.append({f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text, "pii": target_to_label_ret})
+    return ret

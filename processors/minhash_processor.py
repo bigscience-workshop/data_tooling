@@ -35,16 +35,20 @@ from data_tooling.processors.processor import Processor
 
 class MinHashProcessor (Processor):
   """
-  A minhash processor that creates a minhash fingerprint based on potentially stemmed words. 
+  A minhash processor that creates a minhash fingerprint for each example based on potentially stemmed words. 
   
-  Can be used for deduplication and search and contested text.
+  Can be used for search (and removal) of contested text.
+
+  Could also be used for deduplication.
 
   """
-  def __init__(self, args, word_ngram=5, hashbytes=4):
+  def __init__(self, args, seeds=None, word_ngram=5, hashbytes=4):
       # set seed and get an array of seeds of 100 integers
-      np.random.seed(args.seed)
-      seeds = np.random.randint(0, 1e6, size=args.num_seeds)
+      if seeds is None:
+        np.random.seed(args.seed)
+        seeds = np.random.randint(0, 1e6, size=args.num_seeds)
       # initialize minhash and lsh cache
+      self.seeds = seeds
       self.hasher = minhash.MinHasher(seeds=seeds, word_ngram=word_ngram, hashbytes=hashbytes)
       self.lshcache = cache.Cache(num_bands=args.num_bands, hasher=hasher)
 
@@ -123,13 +127,13 @@ class MinHashProcessor (Processor):
       pool = multiprocessing.Pool(num_bins)
       compute_jaccard_partial = partial(compute_jaccard, hasher=self.hasher, doc_row_ids=doc_row_ids, num_bins=num_bins, \
           start_time_local=start_time)
-      compute_jaccard_iter = pool.imap(compute_jaccard_partial, lshcache.bins)
+      compute_jaccard_iter = pool.imap(compute_jaccard_partial, self.lshcache.bins)
 
       print("multiprocessing init took {:.2f}".format(time.time() - start_time),\
           flush=True)
       bin_id = 0
       for similar_list, deduped_local, counter_local, bin in compute_jaccard_iter:
-          self.lshcache.bins[bin_id] = bin
+          self.lshcache.bins[bin_id] = bin # we probably need to merge instead of overwriting
           bin_id += 1
           deduped += deduped_local
           counter += counter_local
