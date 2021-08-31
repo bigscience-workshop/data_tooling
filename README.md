@@ -1,4 +1,7 @@
-# data-tooling
+# Data Tooling and Governance
+Tools for managing datasets for governance and training.
+
+# Issues we aim to address
 - How should we store and serve the dataset?
 - How do we manage personally identificable information and bias in data?
 - How do we store and serve meta-data in datasets?
