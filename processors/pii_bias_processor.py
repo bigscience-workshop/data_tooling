@@ -41,6 +41,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir, os.path.pardir)))
 
 from data_tooling.processors.processor import Processor
+from data_tooling.translation.backtrans import BackTranslate
 
 class PIIProcessor (Processor):
   """
@@ -129,9 +130,8 @@ class PIIProcessor (Processor):
   zip_code_regex         = re.compile(r'\b\d{5}(?:[-\s]\d{4})?\b')
   po_box_regex           = re.compile(r'P\.? ?O\.? Box \d+', re.IGNORECASE)
   ssn_regex              = re.compile('(?!000|666|333)0*(?:[0-6][0-9][0-9]|[0-7][0-6][0-9]|[0-7][0-7][0-2])[- ](?!00)[0-9]{2}[- ](?!0000)[0-9]{4}')
-  # from https://gist.github.com/jakebathman/c18cc117caaf9bb28e7f60e002fb174d - but this could be totally wrong!
-  # see also https://stackoverflow.com/questions/5590862/icd9-regex-pattern
-  icd_code_regex         = re.compile(r'([V\d]\d{2}(\.?\d{0,2})?|E\d{3}(\.?\d)?|\d{2}(\.?\d{0,2})?)|([A-TV-Z][0-9][A-Z0-9](\.?[A-Z0-9]{0,4})?)', re.IGNORECASE)
+  # see also https://stackoverflow.com/questions/5590862/icd9-regex-pattern - but this could be totally wrong!
+  icd_code_regex         = re.compile('[A-TV-Z][0-9][A-Z0-9](\.[A-Z0-9]{1,4})', re.IGNORECASE)
 
   # we do regex in this order in order to not capture ner inside domain names and email addresses.
   default_ner_regexes = OrderedDict([
@@ -389,6 +389,7 @@ class PIIProcessor (Processor):
 
   def __init__(self, target_lang='fr', ner_regexes=None, ontology=None, salt=""):
     super().__init__(ner_regexes, ontology)
+    self.backtrans = BackTranslate(target_lang)
     self.target_lang = target_lang
     try:
       self.stopwords_target_lang = {} if target_lang not in self.langs else set(stopwords.words(self.langs[target_lang].lower()))
@@ -443,9 +444,10 @@ class PIIProcessor (Processor):
     self.add_ontology(self.disease_en)    
     self.add_ontology(self.job_en)    
     #self.add_ontology(self.nrp_recognizer) 
+    # maps ner_label to function to generate fake value
     self.default_recognizer = dict([("PRONOUN", None), ("TITLE", None), ("GENDER", None), ("PERSON", None), \
                            ("CREDIT_CARD", None), ("CRYPTO", None), ("IP_ADDRESS", None), ("LOC", None), \
-                           ("US_SSN", self.faker_en.ssn), ("TIME", None), ("GPE", self.faker_en.country()), \
+                           ("US_SSN", self.faker_en.ssn), ("TIME", None), ("GPE", self.faker_en.country), \
                            ("DATE", self.faker_en.date), ("STREET_ADDRESS", None), ("ORG", None), \
                            ("DOMAIN_NAME", None), ("JOB", self.faker_en.job), ("NORP", self.nrp), ("RACE", self.nrp), \
                            ("DISEASE", self.disease), ("RELIGION", self.religion), ("PHONE_NUMBER", None), ("EMAIL_ADDRESS", None)])
@@ -476,7 +478,7 @@ class PIIProcessor (Processor):
     return (base64.b64encode(hashlib.sha512((s.strip().lower()+salt).encode()).digest()))
 
 
-  def add_PII_context_data_en(self, span, swap_fn, span2ref, ref2span, PII_context, pronoun, args=None):
+  def add_PII_context_data_en(self, span, swap_fn, chunk2ner, chunk2ref, ref2chunk, PII_context, pronoun=None, args=None):
     """
     Modifies the PII_context by adding associations of old detected PII/NER labels to a mention/span. 
     :arg span: the old NER/II value in english that was detected.
@@ -492,52 +494,62 @@ class PIIProcessor (Processor):
     and then spwap, pronoun, title, or gender word closest to the person's name.
     
     """
-    do_gender_swap=True, do_religion_swap=True, do_job_swap=True, do_nrp_swap=True
+    do_gender_swap=True
+    do_religion_swap=True
+    do_job_swap=True
+    do_nrp_swap=True
     if args is not None:
-      do_gender_swap=ars.do_gender_swap, do_religion_swap=args.do_religion_swap, do_job_swap=args.do_job_swap, do_nrp_swap=ars.do_nrp_swap
-
+      do_gender_swap=ars.do_gender_swap
+      do_religion_swap=args.do_religion_swap
+      do_job_swap=args.do_job_swap
+      do_nrp_swap=ars.do_nrp_swap
+    if pronoun is None:
+      pronoun = {}
     word = span[0]
-    label, coref = span2ner.get(span), span2ref.get(span)
+    label, coref = chunk2ner.get(span), chunk2ref.get(span)
     id = len(PII_context)+1
     val = f"[{id}]"
     if label == "PRONOUN":
       if do_gender_swap:
-        target_pronoun = self.pronoun_swap.get(word, "she")
-        pronoun.clear()
-        pronoun.append(self.pronoun.get(target_pronoun, "she").lower())
+        if pronoun.get(coref):
+          target_pronoun = pronoun[coref] # this might be wrong. we need to map "she" back to "her"
+        else:
+          target_pronoun = self.pronoun_swap.get(word, "she")
+          pronoun[coref] = self.pronoun.get(target_pronoun, "she").lower()
         return target_pronoun
       else:
         return word
     elif label == "TITLE":
       if do_gender_swap:
-        target_title = self.title_swap.get(word.lower(), "Mrs.")
-        pronoun.clear()
-        pronoun.append(self.title2pronoun.get(target_title, "she"))
+        if pronoun.get(coref):
+          target_title = self.pronoun2itle[pronoun[coref]]
+        else:
+          target_title = self.title_swap.get(word.lower(), "Mrs.")
+          pronoun[coref] = self.title2pronoun.get(target_title, "she")
         return target_title
       else:
         return word
     elif label == "GENDER":
       if do_gender_swap:
-        gender = choice(list(self.gender2pronoun.keys()))
-        pronoun.clear()
-        pronoun.append(self.gender2pronoun.get(gender, "she"))
-      elif pronoun:
-        gender  = choice(list(self.pronoun2ender[pronoun[0]]))
+        if pronoun.get(coref):
+          gender = self.pronoun2gender[pronoun[coref]]
+        else:
+          gender = self.gender()
+        pronoun[coref] = self.gender2pronoun.get(gender, "she")
       else:
-        gender = text_to_anonymize
+        gender = word
       val = f"[{id}] {gender} * "  
     elif label == "PERSON":
       if pronoun:
-        pr = pronoun[0]
+        pr = pronoun[coref]
       else:
         pr = "she"
-      pronoun.clear()
-      pronoun.append(pr)
+      pronoun[coref] = pr
       val =  f"[{id}]"
 
     target_pronoun = None
     if label in ("PERSON", "GENDER",):
-      target_pronoun = None if not pronoun else pronoun[0]
+      target_pronoun = None if not pronoun else pronoun.get(coref, "she")
     if swap_fn is not None:
       swap_val = swap_fn()
       val = f"[{id}] {swap_val} * "
@@ -574,25 +586,27 @@ class PIIProcessor (Processor):
   #check if faker.name() does proportionate male/female or just picks at random in the firstname, lastname list.
   def apply_PII_en(self, analyzer_results, PII_context={}, recognizer=None, sep=" "):  
     """
-    Apply the recognizer to the NER labeled span to process the span appropraitely. 
+    Apply the recognizer to the NER labeled span to process the span appropriately. 
     """
     text = []
     if recognizer is None:
       recognizer = self.default_recognizer
+    chunk2ner = analyzer_results['chunk2ner']
     for span in  analyzer_results['chunks']:
+      label = chunk2ner.get(span, '')
       if label in ('', 'NOUN', None):
         text.append(span[0])
       else:
         if label not in recognizer:
           text.append(span[0])
         else:
-          text.append(self.add_PII_context_data_en(span, recognizer[label], analyzer_results['span2ref'], analyzer_results['ref2span'], PII_context))
+          text.append(self.add_PII_context_data_en(span, recognizer[label], analyzer_results['chunk2ner'], analyzer_results['chunk2ref'], analyzer_results['ref2chunk'], PII_context))
       return sep.join(text)
 
   def apply_PII_target_lang(self, text_to_anonymize, PII_context):
       """
       Apply PII replacement in the target language. Some PII can't easily be translated back, or don't need to be translated back,
-      so we apply PII swapping in the native language. 
+      so we apply PII swapping in the target language. 
 
       Uses target_pronoun to determine the generated name of the person.
       For person, replace the first occurance with the full name, and subsequent occurance with a short version of the name.
@@ -676,7 +690,7 @@ class PIIProcessor (Processor):
     #score = float(matchLen+1)/float(nonMatchLen+1)
     return (blocks2, score)
 
-  def process(self, text="", batch=None, docId=0, lang=None, encrypt_value=False, return_original_text=False):
+  def process(self, text="", batch=None, row_id=0, doc_id=0, lang=None, encrypt_value=False, return_original_text=False):
     """
     The main PII processor.
     """
@@ -699,10 +713,10 @@ class PIIProcessor (Processor):
         text_to_anonymize_en = text
       else:
         text_to_anonymize_en = self.backtrans.translate(text, fr=lang, to='en')
-      analyzer_results = self.analyze_with_ner_coref_en(document=text_to_anonymize_en, docId=docId)
+      analyzer_results = self.analyze_with_ner_coref_en(text=text_to_anonymize_en, row_id=row_id, doc_id=doc_id)
       PII_context = {}
       print (analyzer_results)
-      pii_text_analyzed_en = self.apply_PII_en(analyzer_results, already_replaced={}, PII_context=PII_context) 
+      pii_text_analyzed_en = self.apply_PII_en(analyzer_results,  PII_context=PII_context) 
       print (pii_text_analyzed_en)
       if self.target_lang=='en':
         templated_text = pii_text_analyzed_en
@@ -720,6 +734,8 @@ class PIIProcessor (Processor):
           ret.append({"text": text, f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret})
         else:
           ret.append({f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret})
+        row_id += 1
+        continue
       else:
         target_to_label = dict([(b, a) for a, b in PII_context.items()])
         target_to_label_ret={}
@@ -750,4 +766,6 @@ class PIIProcessor (Processor):
           ret.append({"text": text, f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text,  "pii": target_to_label_ret})
         else:
           ret.append({f"anonymized_text_{self.target_lang}": anonymized_text, f"template_{self.target_lang}": templated_text, "pii": target_to_label_ret})
+        row_id += 1
+        continue
     return ret

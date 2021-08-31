@@ -34,7 +34,7 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir, os.path.pardir)))
 
-from data_tooling.translation.backtrans import BackTranslate
+
 
 # TODO, add data lineage and processing meta-data, inlcuding processor state varaibles like random seeds.
 # text examples can be processed and merged, and split. 
@@ -44,10 +44,10 @@ from data_tooling.translation.backtrans import BackTranslate
 
 class ProcessorPipeline:
   """
-  Used to pre-process text. Processes text in a sequence of processors
+  Used to pre-process text. Processes text in a sequence of processors. 
   """
 
-  def __init__(self, processors)
+  def __init__(self, processors):
     self.processors = processors
   
   def process(self, text="", batch=None, *args, **argv):
@@ -55,7 +55,7 @@ class ProcessorPipeline:
     if batch is None:
       batch = [text]
     for processor in self.processors:
-      ret =  processor.analyze_with_ner_coref_en(batch=ret) #TODO, pass in doc_id and row_id/id ?
+      ret =  processor.process(batch=ret) #TODO, pass in doc_id and row_id/id ?
     return ret
 
 
@@ -87,7 +87,6 @@ class Processor:
   """
 
   def __init__(self,  ner_regexes=None, ontology=None):
-    self.backtrans = BackTranslate(target_lang)
 
     #TODO: we need to get the title and pronoun list for a particular language in order to do better backtrans matching
     if Processor.stopwords_en is {}:
@@ -119,41 +118,41 @@ class Processor:
 
   def analyze_with_ner_coref_en(self, text, row_id=0, doc_id=0, chunk2ner=None, ref2chunk = None, chunk2ref=None, ontology=None, ner_regexes=None, connector="_", pronouns=("who", "whom", "whose", "our", "ours", "you", "your", "my", "i", "me", "mine", "he", "she", "his", "her", "him", "hers", "it", "its", "they", "their", "theirs", "them", "we")):
     """
-    Process NER on spans of text. Apply the coreference clustering from neuralcoref. 
-    Use some rules to expand and cleanup the coreference and labeling.
+    Process NER on spans of text. Apply the coref clustering from neuralcoref. 
+    Use some rules to expand and cleanup the coref and ner labeling.
     Return a hash of form {'text': text, 'chunks':chunks, 'chunk2ner': chunk2ner, 'ref2chunk': ref2chunk, 'chunk2ref': chunk2ref}  
     Each chunks is in the form of a list of tuples [(text_span, start_id, end_id, doc_id, row_id), ...]
     A note on terminology. A span is a segment of text of one or more words. 
     A mention is a chunk that is recognized by some processor. 
     """
 
-    def add_chunks_span_coref(chunks, span, old_mention, label, ref, chunk2ner, chunk2ref, ref2chunk, row_id=0, doc_id=0):
+    def add_chunks_span(chunks, span, old_mention, label, coref, chunk2ner, chunk2ref, ref2chunk, row_id=0, doc_id=0):
       """ add a span to the chunks sequence and update the various ref and NER hashes """
       len_span = len(span)
       if not chunks:
         span_pos = 0
       else:
         span_pos = chunks[-1][2]+1
-      new_span = (span, span_pos, span_pos+len_span-1, row_id, doc_id)
+      new_mention = (span, span_pos, span_pos+len_span-1, row_id, doc_id)
       if old_mention in chunk2ner:
-        del chunk2ner[old_label]
+        del chunk2ner[old_mention]
       if label:
-        chunk2ner[new_span] = label
+        chunk2ner[new_mention] = label
       if old_mention in chunk2ref:
         old_ref = chunk2ref[old_mention]
         ref2chunk[old_ref].remove(old_mention)
         if not ref2chunk[old_ref]:
           del ref2chunk[old_ref]
         del chunk2ref[old_mention]
-      if ref:
-        chunk2ref[new_span] = ref
-        ref2chunk[ref] = ref2chunk.get(ref, []) + [new_span]
-      chunks.append(span)
+      if coref:
+        chunk2ref[new_mention] = coref
+        ref2chunk[coref] = ref2chunk.get(coref, []) + [new_mention]
+      chunks.append(new_mention)
 
     def del_ner_coref(old_mention, chunk2ner, chunk2ref, ref2chunk):
-       """ remove an old_mention from the various NER and ref hashes """
+      """ remove an old_mention from the various NER and ref hashes """
       if old_mention in chunk2ner:
-        del chunk2ner[old_label]
+        del chunk2ner[old_mention]
       if old_mention in chunk2ref:
         old_ref = chunk2ref[old_mention]
         ref2chunk[old_ref].remove(old_mention)
@@ -162,6 +161,7 @@ class Processor:
         del chunk2ref[old_mention]
 
     #######
+    ret={}
     nlp = self.nlp
     if ref2chunk is None:
       ref2chunk = {}
@@ -173,8 +173,8 @@ class Processor:
       ontology = self.ontology
     if ner_regexes is None:
       ner_regexes = self.ner_regexes
-    txt = txt.strip()
-    if not txt: return ret
+    text = text.strip()
+    if not text: return ret
     if text[0] == '{' and text[-1] == '}':
       ret = json.loads(text)
       text = ret['text']
@@ -183,9 +183,9 @@ class Processor:
       chunk2ner = ret.get('chunk2ner', chunk2ner)
       chunk2ref = ret.get('chunk2ref', chunk2ref)
       ref2chunk = ret.get('ref2chunk', ref2chunk)
-    doc = nlp(txt)
+    doc = nlp(text)
 
-    #store away NOUNs for potential label and coreference reference
+    #store away NOUNs for potential label and coref reference
     #rule for promotig a noun span into one considered for further processing:
     # - length of the number of words > 2 or length of span > 2 and the span is all uppercase (for abbreviations)
     for entity in list(doc.noun_chunks) + list(doc.ents):
@@ -199,7 +199,7 @@ class Processor:
       elif (len(entity.text) >=2 and entity.text == entity.text.upper()): # or (len(entity.text) >=4 and entity.text not in pronouns):
         ref2chunk[entity.text.lower()] = ref2chunk.get(entity.text.lower(), []) + [(entity.text, entity.start, entity.end, row_id, doc_id)]
     
-    #store away coref NOUNs for potential label and coreference reference
+    #store away coref NOUNs for potential label and coref reference
     #same rule as above for promoting a noun span into one cosndiered for further processing.
     for cl in doc._.coref_clusters:
       mentions = [(entity.text, entity.start, entity.end, row_id, doc_id) for entity in cl.mentions]
@@ -219,9 +219,9 @@ class Processor:
     
     #cleanup the chunk2ref, favoring large clusters
     seen = {}
-    coreferences = list(ref2chunk.items())
-    coreferences.sort(key=lambda a: len(a[1]), reverse=True)
-    for coreference, spans in coreferences:
+    corefs = list(ref2chunk.items())
+    corefs.sort(key=lambda a: len(a[1]), reverse=True)
+    for coref, spans in corefs:
       new_spans = []
       spans = list(set(spans))
       spans.sort(key=lambda a: a[1]+(1.0/(1.0+a[2]-a[1])))
@@ -234,44 +234,44 @@ class Processor:
         if span in seen: continue
         seen[span] = 1
         new_spans.append(span)
-      del ref2chunk[coreference]
+      del ref2chunk[coref]
       if new_spans:
-        new_coreference = [s[0] for s in new_spans]
-        new_coreference.sort(key=lambda a: len(a), reverse=True)
-        ref2chunk[new_coreference[0].lower()] = list(set(list(ref2chunk.get(new_coreference[0].lower(), [])) + new_spans))
+        new_coref = [s[0] for s in new_spans]
+        new_coref.sort(key=lambda a: len(a), reverse=True)
+        ref2chunk[new_coref[0].lower()] = list(set(list(ref2chunk.get(new_coref[0].lower(), [])) + new_spans))
 
     chunk2ref.clear()
     for a, b1 in ref2chunk.items():
       for b in b1:
         chunk2ref[b] = a
 
-    # expand coreference/coref information
+    # expand coref information
     if doc._.has_coref:
       for cl in doc._.coref_clusters:
         mentions = [(entity.text, entity.start, entity.end, row_id, doc_id) for entity in cl.mentions]
-        coreferences = [chunk2ref[mention] for mention in mentions if mention in chunk2ref]
-        if coreferences:
-          coreference = Counter(coreferences).most_common()[0][0]
+        corefs = [chunk2ref[mention] for mention in mentions if mention in chunk2ref]
+        if corefs:
+          coref = Counter(corefs).most_common()[0][0]
           for mention in mentions:
-            chunk2ref[mention] = coreference
-            if mention not in ref2chunk[coreference]:
-              ref2chunk[coreference].append(mention)
+            chunk2ref[mention] = coref
+            if mention not in ref2chunk[coref]:
+              ref2chunk[coref].append(mention)
         else:
-          coreference = cl.main.text.lower()
+          coref = cl.main.text.lower()
           for mention in mentions:
-            chunk2ref[mention] = coreference
-            if coreference not in ref2chunk:
-              ref2chunk[coreference] = []
-            if mention not in ref2chunk[coreference]:
-              ref2chunk[coreference].append(mention)
+            chunk2ref[mention] = coref
+            if coref not in ref2chunk:
+              ref2chunk[coref] = []
+            if mention not in ref2chunk[coref]:
+              ref2chunk[coref].append(mention)
 
-    #expand ner labels based on coreference matches 
+    #expand ner labels based on coref matches 
     for entity in doc.ents:
       mention = (entity.text, entity.start, entity.end, row_id, doc_id)
       chunk2ner[mention]= entity.label_  
       if mention in chunk2ref:
-        coreference = chunk2ref[mention]
-        for mention in ref2chunk[coreference]:
+        coref = chunk2ref[mention]
+        for mention in ref2chunk[coref]:
           chunk2ner[mention] = entity.label_  
 
 
@@ -286,7 +286,7 @@ class Processor:
             chunk2ner[(m.text, m.start, m.end, row_id, doc_id)] = label
 
     # propogate the ner label to everything in the same coref group
-    for coreference, spans in ref2chunk.items():
+    for coref, spans in ref2chunk.items():
       labels = [chunk2ner[mention]  for mention in spans if mention in chunk2ner and chunk2ner[mention] != 'NOUN']
       if labels:
         label = Counter(labels).most_common()[0][0]
@@ -294,15 +294,15 @@ class Processor:
           chunk2ner[mention] = label
 
     #add other words from the document into a sequence of form (word, start_idx, end_idx, docId)
-    #add in coreference label into the sequence
+    #add in coref label into the sequence
     #clear duplicates and subsumed mentions 
-    chunks = [a for a in chunk2ner.items() if a[0][-1] == row_id, doc_id]
+    chunks = [a for a in chunk2ner.items() if a[0][-2] == row_id and a[0][-1] == doc_id]
     chunks.sort(key=lambda a: a[0][1]+(1.0/(1.0+a[0][2]-a[0][1])))
     chunks2 = []
     prevPos = 0
     for mention, label in chunks:
       if prevPos<= mention[1]:
-        add_chunks_span_coref(chunks2, doc[prevPos: mention[1]].text, mention, None, None, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+        add_chunks_span(chunks2, doc[prevPos: mention[1]].text, mention, None, None, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
       else:
         if chunks2 and chunk2ner.get(chunks2[-1]) not in (None, '', 'NOUN'):
           del_ner_coref(mention, chunk2ner, chunk2ref, ref2chunk)
@@ -317,64 +317,68 @@ class Processor:
         old_mention = chunks2.pop()
         del_ner_coref(old_mention, chunk2ner, chunk2ref, ref2chunk)
         if sArr[0].strip():
-          add_chunks_ner_coref(chunks2,  sArr[0].strip(), mention, oldLabel, oldAnaphore, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
-        add_chunks_ner_coref(chunks2,  mention[0], mention, label, chunk2ref.get(mention), chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+          add_chunks_span(chunks2,  sArr[0].strip(), mention, oldLabel, oldAnaphore, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+        add_chunks_span(chunks2,  mention[0], mention, label, chunk2ref.get(mention), chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
         if sArr[1].strip():
-          add_chunks_ner_coref(chunks2,  sArr[1].strip(), mention, oldLabel, oldAnaphore, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+          add_chunks_span(chunks2,  sArr[1].strip(), mention, oldLabel, oldAnaphore, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
         continue
       prevPos = mention[2]
-      add_chunks_ner_coref(chunks2,  mention[0], mention, label, chunk2ref.get(mention), chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+      add_chunks_span(chunks2,  mention[0], mention, label, chunk2ref.get(mention), chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
     len_doc = len(doc)
     if prevPos < len_doc:
-      add_chunks_ner_coref(chunks2,  doc[len_doc:].text, None, None, None, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+      add_chunks_span(chunks2,  doc[len_doc:].text, None, None, None, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
     
     #apply ontology to add more labels
     #capture more coref for pronouns based on coref match of surronding info   
     chunks = []
     len_chunks2 = len(chunks2)
     for spanIdx, mention in enumerate(chunks2):
-      label, coreference = chunk2ner.get(mention), chunk2ref.get(mention)
+      label, coref = chunk2ner.get(mention), chunk2ref.get(mention)
       spanStr = mention[0]
       prev_words = []
       label2word = {}
       idx = 0
+      # TODO, check surronding words for additional contexts when doing regexes
       for label2, regex in ner_regexes.items():
         if type(regex) is not list:
           regex = [regex]
         for regex0 in regex:
           for x in regex0.findall(spanStr):
+            print (x)
             spanStr = spanStr.replace(x.strip(), " "+label2.upper()+str(idx)+" ")
             label2word[label2.upper()+str(idx)] = (x.strip(), label2)
             idx += 1
             
-      for orig_word in spanStr.split():
+      # TODO, do multiword like "young woman" and patterns like "old* woman", or "*ician"
+      spanArr = spanStr.split()
+      for idx_word, orig_word in enumerate(spanArr):
         if orig_word in label2word:
           if prev_words:
             pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
             pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
             pWords = connector.join(pWords)
-            add_chunks_ner_coref(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
-          add_chunks_ner_coref(chunks, label2word[orig_word][0], mention, label2word[orig_word][1], coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
+            add_chunks_span(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+          add_chunks_span(chunks, label2word[orig_word][0], mention, label2word[orig_word][1], coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
           prev_words = []
           continue
         word = orig_word.lower()
-        if not coreference and word in pronouns:
+        if not coref and word in pronouns:
           for idx in (spanIdx-1, spanIdx-2, spanIdx+1 , spanIdx+2 ):
             if idx >= 0 and idx < len_chunks2  and chunks2[idx][2]:
-              coreference = chunks2[idx][2]
+              coref = chunks2[idx][2]
               break
-        if not coreference and word in pronouns:
+        if not coref and word in pronouns:
           for idx in (spanIdx-1, spanIdx-2, spanIdx+1 , spanIdx+2 ):
             if idx >= 0 and idx < len_chunks2  and chunks2[idx][2] and chunks2[idx][1] == 'NOUN' and chunks2[idx][0].lower() not in pronouns:
-              coreference = chunks2[idx][0].lower()
+              coref = chunks2[idx][0].lower()
               break
         if word in ontology:
           if prev_words:
             pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
             pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
             pWords = connector.join(pWords)
-            add_chunks_ner_coref(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
-          add_chunks_ner_coref(chunks, orig_word, mention, ontology[word], coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
+            add_chunks_span(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+          add_chunks_span(chunks, orig_word, mention, ontology[word], coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
           prev_words = []
           continue
 
@@ -385,8 +389,8 @@ class Processor:
             pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
             pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
             pWords = connector.join(pWords)
-            add_chunks_ner_coref(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
-          add_chunks_ner_coref(chunks, orig_word, mention, ontology[word], coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
+            add_chunks_span(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
+          add_chunks_span(chunks, orig_word, mention, ontology[word], coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
           prev_words = []
           continue
         prev_words.append(orig_word)
@@ -395,11 +399,11 @@ class Processor:
         pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
         pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
         pWords = connector.join(pWords)
-        add_chunks_ner_coref(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coreference, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id))
+        add_chunks_span(chunks, " ".join(prev_words), mention, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk, row_id, doc_id)
 
     ret['doc_id'] = doc_id
     ret['id'] = row_id
-    ret['text'] = " ".join([c[0] for c in chunks]
+    ret['text'] = " ".join([c[0] for c in chunks])
     ret['chunks'] = chunks
     ret['chunk2ner'] = chunk2ner
     ret['chunk2ref'] = chunk2ref
