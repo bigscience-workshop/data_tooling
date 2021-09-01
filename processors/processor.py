@@ -36,9 +36,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 
 
-# TODO, add data lineage and processing meta-data, inlcuding processor state varaibles like random seeds.
+# TODO, add data lineage and processing meta-data, inlcuding processor state varaibles like random seeds. store as meta-data.
 # text examples can be processed and merged, and split. 
-# we want to be able to identify a particular text example for removal or recompute based on 
+# a data-point is composed of a (row_id, doc_id). 
+# data-linage is stored as a tree, with the root node as the current data point.
+# the goal is we want to be able to identify a particular text example for removal or recompute based on 
 # contestation.
 # we want to also be able to recreate examples from the metadata. 
 
@@ -55,15 +57,17 @@ class ProcessorPipeline:
     if batch is None:
       batch = [text]
     for processor in self.processors:
-      ret =  processor.process(batch=ret) #TODO, pass in doc_id and row_id/id ?
+      ret =  processor.process(batch=ret, *args, **argv) 
     return ret
 
 
 class Processor:
   """
-  Used to pre-process text. Provides basic functionality for English NER tagging and chunking. 
+  Used to pre-process text. Users Spacy and Neuralcoref to obtain NER labels and coreference labels.
+  
+  Provides basic functionality for English NER tagging and chunking. 
 
-  Recognizes the following Spacy NER:
+  Recognizes the following  using Spacy NER:
 
       PERSON - People, including fictional.
       NORP - Nationalities or religious or political groups.
@@ -86,8 +90,45 @@ class Processor:
 
   """
 
-  def __init__(self,  ner_regexes=None, ontology=None, person_pronouns = ("who", "whom", "whose", "our", "ours", "you", "your", "my", "i", "me", "mine", "he", "she", "his", "her", "him", "hers", "we"),  other_pronouns=("it", "its", "they", "their", "theirs", "them", "we")):
-    
+  # basic template ontology that might be useful when parsing. the actual ontology is stored in the '.ontology' class variable.
+  # an ontology maps a word to a parent hiearchy, with the top of the hiearchy being the last item.
+  # leaves of the ontology are all lower cased, and intermediate leaves are upper case. 
+  basic_ontology = {
+      'PERSON': ['PERSON'],
+      'NORP': ['NORP'],
+      'FAC': ['FAC', 'PLACE'],
+      'ORG': ['ORG'],
+      'GPE': ['GPE', 'PLACE'],
+      'LOC': ['LOC', 'PLACE'],
+      'PRODUCT': ['PRODUCT', 'THING'],
+      'EVENT': ['EVENT'],
+      'WORK_OF_ART': ['WORK_OF_ART', 'THING'],
+      'LAW': ['LAW', 'THING'],
+      'LANGUAGE': ['LANGUAGE'],
+      'DATE': ['DATE', 'DATE_AND_TIME'],
+      'TIME': ['TIME', 'DATE_AND_TIME'],
+      'PERCENT': ['PERCENT'],
+      'MONEY': ['MONEY'],
+      'QUANTITY': ['QUANTITY'],
+      'ORDINAL': ['ORDINAL'],
+      'CARDINAL': ['CARDINAL'],
+  }
+
+  nlp = None
+  stopwords_en = {}
+  default_strip_chars="-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\""
+  default_person_pronouns = ("who", "whom", "whose", "our", "ours", "you", "your", "my", "i", "me", "mine", "he", "she", "his", "her", "him", "hers", "we")
+  default_other_pronouns=("it", "its", "they", "their", "theirs", "them", "we")
+
+  def __init__(self,  ner_regexes=None, ontology=None, strip_chars=None, person_pronouns=None,  other_pronouns=None, connector="_"):
+    self.connector = connector
+    if strip_chars is None:
+      strip_chars = Processor.default_strip_chars
+    if person_pronouns is None:
+      person_pronouns = Processor.default_person_pronouns
+    if other_pronouns is None:
+      other_pronouns = Processor.default_other_pronouns
+    self.strip_chars = strip_chars
     self.person_pronouns = person_pronouns
     self.other_pronouns = other_pronouns
     self.pronouns = set(list(person_pronouns)+list(other_pronouns))
@@ -103,35 +144,42 @@ class Processor:
       Processor.nlp.add_pipe(coref, name='neuralcoref')
     if ontology is None: ontology = {}
     self.ontology = ontology
+    for key, val in Processor.basic_ontology.items():
+      self.ontology[key] = val
     if ner_regexes is None:
       ner_regexes = {}
     self.ner_regexes = ner_regexes
 
   def add_ontology(self, onto):
     for word, label in onto.items():
+      label = label.upper()
       word = word.lower()
-      self.ontology[word] = label
-      word = word.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"")
+      self.ontology[word] = self.ontology.get(label, [label])
+      word = word.strip(self.strip_chars)
       if len(word) > 5: word = word[:5]
-      self.ontology[word] = label
+      self.ontology[word] = self.ontology.get(label, [label])
 
-  nlp = None
-  stopwords_en = {}
-  
-
-  def analyze_with_ner_coref_en(self, text, row_id=0, doc_id=0, chunk2ner=None, ref2chunk = None, chunk2ref=None, ontology=None, ner_regexes=None, connector="_"):
+  def analyze_with_ner_coref_en(self, text,  row_id=0, doc_id=0, chunk2ner=None, ref2chunk=None, chunk2ref=None, ontology=None, ner_regexes=None, connector=None):
     """
-    Process NER on spans of text. Apply the coref clustering from neuralcoref. 
-    Use some rules to expand and cleanup the coref and ner labeling.
+    Process NER on spans of text. Apply the coref clustering from neuralcoref. Use rules to expand and cleanup the coref and ner labeling.
+    :arg text:
+    :arg row_id
+    :arg doc_id
+    :arg chunk2ner
+    :arg ref2chunk
+    :arg chunk2ref
+    :arg ontology
+    :arg ner_regexes
+    :arg connector
+    
     Return a hash of form {'text': text, 'chunks':chunks, 'chunk2ner': chunk2ner, 'ref2chunk': ref2chunk, 'chunk2ref': chunk2ref}  
     Each chunks is in the form of a list of tuples [(text_span, start_id, end_id, doc_id, row_id), ...]
     A note on terminology. A span is a segment of text of one or more words. 
     A mention is a chunk that is recognized by some processor. 
     """
+    
     def add_chunks_span(chunks, new_mention, old_mention, label, coref, chunk2ner, chunk2ref, ref2chunk):
       """ add a span to the chunks sequence and update the various ref and NER hashes """
-      if type(coref) is int:
-        raise
       if old_mention in chunk2ner:
         del chunk2ner[old_mention]
       if label:
@@ -150,11 +198,14 @@ class Processor:
         del chunk2ref[new_mention]
       if coref:
         chunk2ref[new_mention] = coref
-        ref2chunk[coref] = ref2chunk.get(coref, []) + [new_mention]
+        lst = ref2chunk.get(coref, [])
+        if new_mention not in lst:
+          ref2chunk[coref] = lst + [new_mention]
       chunks.append(new_mention)
 
     def del_ner_coref(old_mention, chunk2ner, chunk2ref, ref2chunk):
       """ remove an old_mention from the various NER and ref hashes """
+
       if old_mention in chunk2ner:
         del chunk2ner[old_mention]
       if old_mention in chunk2ref:
@@ -165,6 +216,8 @@ class Processor:
         del chunk2ref[old_mention]
 
     #######
+    if connector is None:
+      connector = self.connector
     pronouns = self.pronouns
     person_pronouns = self.person_pronouns
     ret={}
@@ -195,8 +248,8 @@ class Processor:
     #rule for promotig a noun span into one considered for further processing:
     # - length of the number of words > 2 or length of span > 2 and the span is all uppercase (for abbreviations)
     # coref candidates:
-    # - also create an abbreviation from noun phrases as a candidate coref.
-    # - use either the last non-stopword in a span or a word that has been used as a coref as a candidate coref.
+    # - create an abbreviation from noun phrases as a candidate coref.
+    # - use either the last two words a span as a candidate coref.
     # - use the abbreviation as a candidate coref
     for entity in list(doc.noun_chunks) + list(doc.ents):
       chunk2ner[(entity.text, entity.start, entity.end, row_id, doc_id)]= "NOUN"
@@ -374,6 +427,7 @@ class Processor:
           regex = [regex]
         for regex0 in regex:
           for x in regex0.findall(spanStr):
+            if type(x) != str: continue
             spanStr = spanStr.replace(x.strip(), " "+label2.upper()+str(idx)+" ")
             label2word[label2.upper()+str(idx)] = (x.strip(), label2)
             idx += 1
@@ -383,12 +437,12 @@ class Processor:
       for idx_word, orig_word in enumerate(spanArr):
         if orig_word in label2word:
           if prev_words:
-            pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
+            pWords = [w.strip(self.strip_chars) for w in prev_words]
             pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
             pWords = connector.join(pWords)
             new_word = " ".join(prev_words)
             len_new_word = len(new_word)
-            add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk)
+            add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, [label])[0], coref, chunk2ner, chunk2ref, ref2chunk)
           new_word = label2word[orig_word][0]
           len_new_word = len(new_word)
           add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, label2word[orig_word][1], coref, chunk2ner, chunk2ref, ref2chunk)
@@ -403,44 +457,46 @@ class Processor:
         if not coref and word in pronouns:
           for idx in (spanIdx-1, spanIdx-2, spanIdx+1 , spanIdx+2 ):
             if idx >= 0 and idx < len_chunks2  and chunk2ner.get(chunks2[idx]) and chunks2[idx][0].lower() not in pronouns:
-              if word in person_pronouns and chunk2ner.get(chunks2[idx]) != 'PERSON':
+              if word in person_pronouns and 'PERSON' not in self.ontology.get(chunk2ner.get(chunks2[idx]), []): 
                 continue
               coref = chunk2ref.get(chunks2[idx])
               break
         if word in ontology:
           if prev_words:
-            pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
+            pWords = [w.strip(self.strip_chars) for w in prev_words]
             pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
             pWords = connector.join(pWords)
             new_word = " ".join(prev_words)
             len_new_word = len(new_word)
-            add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk)
-          add_chunks_span(chunks, mention, None, ontology[word], coref, chunk2ner, chunk2ref, ref2chunk)
+            add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, [label])[0], coref, chunk2ner, chunk2ref, ref2chunk)
+          len_new_word = len(mention[0])
+          add_chunks_span(chunks, (mention[0], 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology[word][0], coref, chunk2ner, chunk2ref, ref2chunk)
           prev_words = []
           continue
 
-        word = word.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"")
+        word = word.strip(self.strip_chars)
         if len(word) > 5: word = word[:5]
         if word in ontology:
           if prev_words:
-            pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
+            pWords = [w.strip(self.strip_chars) for w in prev_words]
             pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
             pWords = connector.join(pWords)
             new_word = " ".join(prev_words)
             len_new_word = len(new_word)
-            add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk)
-          add_chunks_span(chunks, mention, None, ontology[word], coref, chunk2ner, chunk2ref, ref2chunk)
+            add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, [label])[0], coref, chunk2ner, chunk2ref, ref2chunk)
+          len_new_word = len(mention[0])
+          add_chunks_span(chunks, (mention[0], 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology[word][0], coref, chunk2ner, chunk2ref, ref2chunk)
           prev_words = []
           continue
         prev_words.append(orig_word)
 
       if prev_words:
-        pWords = [w.strip("-,~`!@#$%^&*(){}[]|\\/-_+=<>;:'\"") for w in prev_words]
+        pWords = [w.strip(self.strip_chars) for w in prev_words]
         pWords = [w if len(w) <= 5 else w[:5] for w in pWords if w]
         pWords = connector.join(pWords)
         new_word = " ".join(prev_words)
         len_new_word = len(new_word)
-        add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1,  len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, label), coref, chunk2ner, chunk2ref, ref2chunk)
+        add_chunks_span(chunks, (new_word, 0 if not chunks else chunks[-1][2]+1, len_new_word if not chunks else chunks[-1][2]+1+len_new_word, row_id, doc_id), None, ontology.get(pWords, [label])[0], coref, chunk2ner, chunk2ref, ref2chunk)
     
     ret['doc_id'] = doc_id
     ret['id'] = row_id
@@ -452,7 +508,19 @@ class Processor:
     return ret
 
   def process(self, text="", batch=None, *args, **argv):
+    """
+    Process a single row of text or a batch. Performs basic chunking into roughly interesting phrases, and corefrence and NER identification.
+    """
+    # need paramater to decide if we want toreset the varioous *2* hashes for each example in a batch?
+    row_id=argv.get('row_id',0)
+    doc_id=argv.get('doc_id',0)
+    chunk2ner=argv.get('chunk2ner')
+    ref2chunk=argv.get('ref2chunk')
+    chunk2ref=argv.get('chunk2ref')
+    ontology=argv.get('ontology')
+    ner_regexes=argv.get('ner_regexes')
+    connector=argv.get('connector', "_")
     if batch is not None:
-      return [self.analyze_with_ner_coref_en(text)  for text in batch]
-    return self.analyze_with_ner_coref_en(text) #TODO, pass in doc_id and row_id/id ?
+      return [self.analyze_with_ner_coref_en(text, row_id=row_id, doc_id=doc_id, chunk2ner=chunk2ner, ref2chunk=ref2chunk, chunk2ref=chunk2ref, ontology=ontology, ner_regexes=ner_regexes, connector=connector)  for text in batch]
+    return self.analyze_with_ner_coref_en(text, row_id=row_id, doc_id=doc_id, chunk2ner=chunk2ner, ref2chunk=ref2chunk, chunk2ref=chunk2ref, ontology=ontology, ner_regexes=ner_regexes, connector=connector) 
 

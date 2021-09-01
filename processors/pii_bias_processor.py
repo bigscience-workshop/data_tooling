@@ -52,7 +52,7 @@ class PIIProcessor (Processor):
       - John went to the store, and he bought gum. => [1] went to the store, and he bought gum.
 
     Can be used to anonymize and do gender swapping:
-      - Jane went to the store, and she bought gum.
+      - John went to the store, and he bought gum. => Jane went to the store, and she bought gum.
 
     Can extract various PII/NER categories described below.
 
@@ -85,6 +85,7 @@ class PIIProcessor (Processor):
       GENDER
       TITLE
       RELIGION
+      RACE # TODO
       JOB
       POLITICAL_PARTY #TODO
       UNION_MEMBERSHIP #TODO
@@ -95,12 +96,32 @@ class PIIProcessor (Processor):
       PRICE
       CREDIT_CARD
       CRYPTO
-      LOCATION
+      STREET_ADDRESS
       US_SSN
 
   """
 
   # class varaiables
+
+  pii_ontology = {
+      'PRONOUN': ['PRONOUN', 'PERSON'],
+      'GENDER': ['GENDER', 'PERSON'],
+      'TITLE': ['TITLE', 'PERSON'],
+      'JOB': ['JOB', 'PERSON'],
+      'RELIGION': ['RELIGION', 'NORP'],
+      'RACE': ['RACE', 'NORP'],
+      'DISEASE': ['DISEASE'],
+      'POLITICAL_PARTY': ['POLITICAL_PARTY', 'ORG'],
+      'UNION_MEMBERSHIP': ['UNION_MEMBERSHIP', 'ORG'],
+      'STREET_ADDRESS': ['STREET_ADDRESS', 'PLACE'],
+      'CRYPTO': ['CRYPTO'],
+      'CREDIT_CARD': ['CREDIT_CARD'],
+      'PRICE': ['PRICE', 'MONEY'],
+      'DOMAIN_NAME': ['DOMAIN_NAME', 'ELECTRONIC_ADDRESS'],
+      'EMAIL_ADDRESS': ['EMAIL_ADDRESS', 'ELECTRONIC_ADDRESS'],
+      'IP_ADDRESS': ['IP_ADDRESS', 'ELECTRONIC_ADDRESS'],
+      'US_SSN': ['US_SSN', 'CARDINAL'],
+  }
 
   faker_en = None
   faker_map = {
@@ -387,7 +408,7 @@ class PIIProcessor (Processor):
       'barman':'barwoman',
       'barmen':'barwomen',
       'tailor':'seamstress',
-      'tailors':'seamstress'',
+      'tailors':'seamstress',
       'prince':'princess',
       'princes':'princesses',
       'governor':'governess',
@@ -642,10 +663,11 @@ class PIIProcessor (Processor):
             'Zika Virus',
         ]
 
-  def __init__(self, target_lang='fr', ner_regexes=None, ontology=None, salt=""):
-    super().__init__(ner_regexes, ontology)
-    #TODO: we need to get the title and pronoun list for a particular language in order to do better backtrans matching
-    
+  #TODO: we need to get the title and pronoun list for a particular language in order to do better backtrans matching
+  def __init__(self, target_lang='fr', ner_regexes=None, ontology=None, strip_chars=None, person_pronouns=None, other_pronouns=None, salt=""):
+    super().__init__(ner_regexes=ner_regexes, ontology=ontology, strip_chars=strip_chars, person_pronouns=person_pronouns, other_pronouns=other_pronouns)
+    for key, val in PIIProcessor.pii_ontology.items():
+      self.ontology[key] = val
     self.backtrans = BackTranslate(target_lang)
     self.target_lang = target_lang
     try:
@@ -682,7 +704,8 @@ class PIIProcessor (Processor):
       list2 = list(set(self.race_list0+person.Provider.language_names+list(self.backtrans.langs.values())))
       list2.remove('Interlingua')
       PIIProcessor.race_list = list(set(list2))
-    self.titles_en = dict ([(word, "RACE") for word in self.race_list])
+    #for now, we are not going to add 
+    self.races_en = dict ([(word, "RACE") for word in self.race_list])
     self.titles_en = dict ([(word, "TITLE") for word in self.title2pronoun.keys()])
     self.pronoun_en = dict ([(word, "PRONOUN") for word in self.pronoun.keys()])
     self.gender_en = dict ([(word, "GENDER") for word in self.gender2pronoun.keys()])
