@@ -389,6 +389,8 @@ class PIIProcessor (Processor):
 
   def __init__(self, target_lang='fr', ner_regexes=None, ontology=None, salt=""):
     super().__init__(ner_regexes, ontology)
+    #TODO: we need to get the title and pronoun list for a particular language in order to do better backtrans matching
+    
     self.backtrans = BackTranslate(target_lang)
     self.target_lang = target_lang
     try:
@@ -584,11 +586,13 @@ class PIIProcessor (Processor):
     return PII_context[key]
 
   #check if faker.name() does proportionate male/female or just picks at random in the firstname, lastname list.
-  def apply_PII_en(self, analyzer_results, PII_context={}, recognizer=None, sep=" "):  
+  def apply_PII_en(self, analyzer_results, PII_context={}, pronoun=None, recognizer=None, sep=" "):  
     """
     Apply the recognizer to the NER labeled span to process the span appropriately. 
     """
     text = []
+    if pronoun is None:
+      pronoun = {}
     if recognizer is None:
       recognizer = self.default_recognizer
     chunk2ner = analyzer_results['chunk2ner']
@@ -600,7 +604,7 @@ class PIIProcessor (Processor):
         if label not in recognizer:
           text.append(span[0])
         else:
-          text.append(self.add_PII_context_data_en(span, recognizer[label], analyzer_results['chunk2ner'], analyzer_results['chunk2ref'], analyzer_results['ref2chunk'], PII_context))
+          text.append(self.add_PII_context_data_en(span, recognizer[label], analyzer_results['chunk2ner'], analyzer_results['chunk2ref'], analyzer_results['ref2chunk'], PII_context, pronoun))
       return sep.join(text)
 
   def apply_PII_target_lang(self, text_to_anonymize, PII_context):
@@ -714,9 +718,10 @@ class PIIProcessor (Processor):
       else:
         text_to_anonymize_en = self.backtrans.translate(text, fr=lang, to='en')
       analyzer_results = self.analyze_with_ner_coref_en(text=text_to_anonymize_en, row_id=row_id, doc_id=doc_id)
-      PII_context = {}
+      PII_context = {} 
+      pronoun = {}
       print (analyzer_results)
-      pii_text_analyzed_en = self.apply_PII_en(analyzer_results,  PII_context=PII_context) 
+      pii_text_analyzed_en = self.apply_PII_en(analyzer_results,  PII_context=PII_context, pronoun=pronoun) 
       print (pii_text_analyzed_en)
       if self.target_lang=='en':
         templated_text = pii_text_analyzed_en
