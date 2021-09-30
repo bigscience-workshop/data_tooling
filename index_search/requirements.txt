@@ -1,3 +1,5 @@
 git+https://github.com/ggdupont/datasets@bigscience_datatooling#egg=datasets
-elasticsearch==7.13.1
+elasticsearch==7.10.1
 ray~=1.4.1
+iso-639==0.4.5
+simplejson
