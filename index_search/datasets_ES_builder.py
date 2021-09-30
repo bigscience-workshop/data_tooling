@@ -48,3 +48,5 @@ elasticsearch_builder = ElasticsearchBuilder(
 elasticsearch_builder.download_and_prepare()
 
 oscar_dataset = elasticsearch_builder.as_dataset()
+print(oscar_dataset)
+
