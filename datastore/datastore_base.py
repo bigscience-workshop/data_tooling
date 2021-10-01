@@ -1499,3 +1499,4 @@ class Sqlite3FTSIndex(BaseIndex):
         """Deserialize the index from disk"""
         raise NotImplementedError
     
+	
