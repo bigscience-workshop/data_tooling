@@ -12,61 +12,9 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-""" Utilities to access dataset/SqlAlchemy's sql utilities"""
+""" Utilities to access dataset's SqlAlchemy sql utilities"""
 
-
-from dataclasses import asdict
-from collections.abc import Iterable
-from collections import OrderedDict
-from dataclasses import dataclass, field, fields
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple, Union
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-from datasets.info import DatasetInfo
-from datasets.features import PandasArrayExtensionArray, PandasArrayExtensionDtype, Features, Value, cast_to_python_objects, pandas_types_mapper
-from datasets import utils, Dataset
-from datasets.splits import NamedSplit
-from datasets.arrow_writer import ArrowWriter, OptimizedTypedSequence
-import os
-import json
-from pathlib import Path
-from pathlib import PurePath
-from datasets.utils.typing import PathLike
-from datasets.arrow_dataset import map_function, transmit_format# , replayable_table_alteration
-
-import copy
-import shutil
-from datasets.fingerprint import (
-	fingerprint_transform,
-	generate_fingerprint,
-	generate_random_fingerprint,
-	get_temporary_cache_files_directory,
-	is_caching_enabled,
-	update_fingerprint,
-	)
-
-from datasets.search import BaseIndex, BatchedSearchResults, SearchResults
-from datasets.tasks import TaskTemplate
-from datasets.table import InMemoryTable,  concat_tables
-from datasets.dataset_dict import DatasetDict
-from datasets import config
-from datasets.filesystems import extract_path_from_uri, is_remote_filesystem
-from datasets.utils import logging, map_nested
-        
-from torch import nn
-import pickle
-import glob, shutil, os, time
-import indexed_gzip as igzip
-import zipfile
-import  fsspec.compression
-
-import dataset
-import six
-from six.moves.urllib.parse import parse_qs, urlparse
-import threading
-
+from functools import lru_cache
 from sqlalchemy.exc import ResourceClosedError
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
@@ -74,61 +22,19 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.util import safe_reraise
 from sqlalchemy.engine.reflection import Inspector
+import dataset
 from dataset.types import Types
 from dataset.util import DatasetException, ResultIter, QUERY_STEP, row_type, normalize_table_name, convert_row
-
-import dask
-import dask.array as da
-from dask.distributed import Client
-
-from getpass import getpass
-import atexit, os, subprocess
-import requests
-import atexit
-import uuid
-import multiprocessing
-from smart_open import open
-import urllib
-
-
-import random
-import socket
-import copy
-import itertools
-from datetime import datetime, timedelta
-import signal
-import atexit
-import warnings
-
-from pandas import DataFrame, read_csv
-import platform
-import subprocess
-import tempfile
-from threading import Timer, Thread
-from multiprocessing import Process
-import subprocess
-import requests
-import multiprocessing
-from filelock import UnixFileLock, FileLock
-try:
-  from megatron.data.indexed_dataset import MMapIndexedDataset
-except:
-  MMapIndexedDataset = None
-
-import snorkel
-from functools import partial
-from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
-from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
-import sys
+import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir, os.path.pardir)))
 
-from data_tooling.datastore.utils.persisted_row_shards import *
 
   
 ######################################################################################
 # SqlAlchemy/Dataset based classes for interconnect with SQL, and in particular sqlite3
 ### A note about naming: dataset and datasets are not the same libraries.
+
 
 def multi_iter_result_proxy(rps, step=None, batch_fns=None, row_types=row_type):
     """Iterate over the ResultProxyExt."""
@@ -218,7 +124,7 @@ class ResultIterExt():
         for rp in self.result_proxy:
            rp.close()
 
-class TableSharded(dataset.Table, PersistedRowShards):
+class TableSharded(dataset.Table):
     PRIMARY_DEFAULT = "id"
 
     """ Extends dataset.Table's functionality to work with
@@ -244,17 +150,45 @@ class TableSharded(dataset.Table, PersistedRowShards):
         end_row=None,
         fs = None,
     ):
+      super().__init__(database, table_name, primary_id=primary_id, primary_type=primary_type, primary_increment=primary_increment, auto_create=auto_create)
       assert shards is not None or database is not None
       self.auto_create = auto_create
       self.start_row=start_row
       self.start_row=end_row
-
+      if shard_dres:
+        shard_defs.sort(key=lambda a:a['start_row'])
+      else:
+        shard_defs=[]
+      self.shard_defs = shard_defs
+      self._shards = [None]*len(shard_defs) # TODO - use LRU cache so we can clear out db connecitons that are old or stale
+      if fs is None:
+        fs = os
+      self.fs = fs
+      if cache_dir is None: cache_dir = get_temporary_cache_files_directory()
+      self.cache_dir = cache_dir
       auto_create = False
-      super(dataset.Table).__init__(database, table_name, primary_id=primary_id, primary_type=primary_type, primary_increment=primary_increment, auto_create=auto_create)
       super(PersistedRowShards).__init(shard_defs, fs)
       # TODO: automatically fill in external_fts_columns and has_fts_trigger in the _sync* methods.
       self.external_fts_columns = {}
       self.has_fts_trigger = False
+
+    def cache_shard_file(self, idx, f):
+      shard_def = self.shard_defs[idx]
+      fs = self.fs
+      dataset_path = self.cache_dir
+      if is_remote_filesystem(fs):
+        f_dataset_path = extract_path_from_uri(f) 
+        data_path = Path(dataset_path, f_dataset_path)
+        fs.download(f_dataset_path, data_path.as_posix(), recursive=True)
+      next(wait_until_files_loaded(f))
+      return f
+
+    @lru_cache(100)
+    def shards(self, idx):
+      shard =  self._shard_by_idx(idx)
+      shard.start_row = self.shard_defs['start_row']
+      shard.end_row = self.shard_defs['end_row']
+      return shard
 
     def _shard_by_idx(self, idx):
       shard_def = self.shard_defs[idx]
@@ -273,10 +207,9 @@ class TableSharded(dataset.Table, PersistedRowShards):
       return TableSharded(database=DatabaseExt(*shard_def['database_args'], **shard_def['database_kwargs']), table_name = self.name, primary_id= self._primary_id, primary_type= self._primary_type, primary_increment=self._primary_increment, auto_create=self.auto_create,  start_row=shard_def['start_row'], end_row=shard_def['end_row'],)
 
     def _sync_all_shards(self):
-      if self.shards:
+      if self.shards_defs:
         for idx, shard_def, shard in enumerate(self.shard_defs):
           self.shards(idx)
-
       
     @property
     def exists(self):
