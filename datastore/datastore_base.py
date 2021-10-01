@@ -1,106 +1,3 @@
-#Copyright 2021, Ontocord, LLC
-#
-#Licensed under the Apache License, Version 2.0 (the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-#Unless required by applicable law or agreed to in writing, software
-#distributed under the License is distributed on an "AS IS" BASIS,
-#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#See the License for the specific language governing permissions and
-#limitations under the License.
-
-""" A distributed datastore based on Huggingface's datasets and Dask"""
-
-from dataclasses import asdict
-from collections.abc import Iterable
-from collections import OrderedDict
-from dataclasses import dataclass, field, fields
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple, Union
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-from datasets.info import DatasetInfo
-from datasets.features import PandasArrayExtensionArray, PandasArrayExtensionDtype, Features, Value, cast_to_python_objects, pandas_types_mapper
-from datasets import utils, Dataset
-from datasets.splits import NamedSplit
-from datasets.arrow_writer import ArrowWriter, OptimizedTypedSequence
-import os
-import json
-from pathlib import Path
-from pathlib import PurePath
-from datasets.utils.typing import PathLike
-from datasets.arrow_dataset import map_function, transmit_format# , replayable_table_alteration
-
-import copy
-import shutil
-from datasets.fingerprint import (
-	fingerprint_transform,
-	generate_fingerprint,
-	generate_random_fingerprint,
-	get_temporary_cache_files_directory,
-	is_caching_enabled,
-	update_fingerprint,
-	)
-
-from datasets.search import BaseIndex, BatchedSearchResults, SearchResults
-from datasets.tasks import TaskTemplate
-from datasets.table import InMemoryTable,  concat_tables
-from datasets.dataset_dict import DatasetDict
-from datasets import config
-from datasets.filesystems import extract_path_from_uri, is_remote_filesystem
-from datasets.utils import logging, map_nested
-        
-from torch import nn
-import pickle
-import glob, shutil, os, time
-import indexed_gzip as igzip
-import zipfile
-import  fsspec.compression
-
-import dataset
-import six
-from six.moves.urllib.parse import parse_qs, urlparse
-import threading
-
-from sqlalchemy.exc import ResourceClosedError
-from sqlalchemy import create_engine
-from sqlalchemy.sql import text
-from sqlalchemy.schema import MetaData
-from sqlalchemy.pool import StaticPool
-from sqlalchemy.util import safe_reraise
-from sqlalchemy.engine.reflection import Inspector
-from dataset.types import Types
-from dataset.util import DatasetException, ResultIter, QUERY_STEP, row_type, normalize_table_name, convert_row
-
-import dask
-import dask.array as da
-from dask.distributed import Client
-
-from getpass import getpass
-import atexit, os, subprocess
-import requests
-import atexit
-import uuid
-import multiprocessing
-from smart_open import open
-import urllib
-
-
-import random
-import socket
-import copy
-import itertools
-from datetime import datetime, timedelta
-import signal
-import atexit
-import warnings
-
-from pandas import DataFrame, read_csv
-import platform
 import subprocess
 import tempfile
 from threading import Timer, Thread
@@ -109,39 +6,27 @@ import subprocess
 import requests
 import multiprocessing
 from filelock import UnixFileLock, FileLock
-try:
-  from megatron.data.indexed_dataset import MMapIndexedDataset
-except:
-  MMapIndexedDataset = None
-
-import snorkel
 from functools import partial
 
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir)))
 
-from data_tooling.datastore.utils.persisted_row_shards import *
+
 from data_tooling.datastore.utils.utils import *
 from data_tooling.datastore.connectors.sql import *
 from data_tooling.datastore.connectors.memmap import *
-from data_tooling.datastore.connectors.igzip import *
-from data_tooling.datastore.connectors.snorkel import *
-from data_tooling.datastore.distributed_context import *
 
 ######################################################################################
 # Extensions to Huggingface's datasets to create a datastore that
-# interconnects to many backends and supports dsitributed storage and
-# processing.
+# interconnects to sqlite and memmap
 #
-### We want to have mutliple types of storage that ideally can be
-### transported as a file transfer with an arrow dataset (perhaps a
-### tar file?). So if we have <signature>.arrow, we may have
-### fts_<signature>.db (for full text indexing sqlite database) and
-### <signature>.db (sqlite database), and <siganture>.mmap (mmap file
-### reprsenting a tensor), and <singature>.igz (if we wish to store
-### some portion of the text columns in igzip format for compression
-### and legacy purposes.
+# We want to have mutliple types of storage that ideally can be
+# transported as a file transfer with an arrow dataset (perhaps a tar
+# file?). So if we have <signature>.arrow, we may have
+# fts_<signature>.db (for full text indexing sqlite database) and
+# <signature>.db (sqlite database), and <siganture>.mmap (mmap file
+# reprsenting a tensor)
 
 #NOTE: datasets uses the terms 'features' and 'columns' interchangably.
 
@@ -149,12 +34,8 @@ from data_tooling.datastore.distributed_context import *
 class Datastore(Dataset): 
     """
     A class that wraps a Huggingface arrow based Dataset to provide
-    some distributed processing over Dask and optimized reading and
-    *writing* in various persistance backends.  
-
-    Currently provides support for features bound to sharded memmap,
-    sharded indexed gzip (igzip) file, and sharded sqlalchemy
-    databases.
+    support for features bound to memmap and sqlalchemy via the
+    package datastore.
     
     Also permits full text indexing and searching (via .filter or
     .search) into a sqlite database for any text feature in a
@@ -189,15 +70,6 @@ class Datastore(Dataset):
         else:
           self.id2idx_identity = True
 
-        if  hasattr(dataset, "pipelines_manager"):
-          self.pipelines_manager = dataset.pipelines_manager
-        elif  pipelines_manager is not None:
-          self.id2idx_identity = pipelines_manager
-        elif hasattr(template_datastore, "pipelines_manager"):
-          self.pipelines_manager = template_datastore.pipelines_manager
-        else:
-          self.pipelines_manager = None
-
         if  hasattr(dataset, "_primary_id"):
           self._primary_id = dataset._primary_id
         elif  primary_id is not None:
@@ -218,18 +90,6 @@ class Datastore(Dataset):
 
         return self
 
-    #NOTE:if you remove a field that was previously monitored, the metadata generated from it will not be removed too.
-    def apply_pipelines_manager(self, pipelines_manager=None, batch_size=1000, num_proc=4, ):
-      if hasattr(self, 'pipelines_manager') and self.pipelines_manager not in (None, pipelines_manager):
-          print(f"warning: resetting the metadta_manager to {pipelines_manager}")
-      if pipelines_manager is not None:
-          self.pipelines_manager = pipelines_manager
-      if self.pipelines_manager is not None and self.pipelines_manager.preprocess:
-        self = self.map(self.pipelines_manager.preprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
-      if self.pipelines_manager is not None and self.pipelines_manager.postprocess:
-        self = self.map(self.pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
-      return self
-
     def _get_mmap(self, path,  dtype, shape):
       shape[0] = max(shape[0], len(self))
       # what happens when the datastore shrinks??
@@ -240,31 +100,6 @@ class Datastore(Dataset):
         self.mmap_access_cnt=0
       self.mmap_access_cnt+=1
       return ret
-
-    # we use class variables to cache handles to igzip files because
-    # we don't want handles to igzip files serialized in an instance
-    # of this dataset. this might take up too much memory.  we might
-    # use an LRU cache to clear things out and keep memory low.
-    igzip_fobj = {}
-    def _get_igzip_fobj(self, feature):
-        if feature in self.views_map and self.views_map[feature]['type'] == 'igzip':
-          files = self.views_map[feature]['path']
-          if type(files) is str:
-            file_path = files
-            if file_path in Datastore.igzip_fobj:
-              fobj = Datastore.igzip_fobj[file_path]
-            else:
-              Datastore.igzip_fobj[file_path] = fobj = IndexGzipFileExt()
-            return fobj
-          else:
-            file_path = tuple(file['file'] for file in files)
-            if file_path in Datastore.igzip_fobj:
-              fobj = Datastore.igzip_fobj[file_path]
-            else:
-              Datastore.igzip_fobj[file_path] = fobj = IndexGzipFileExtBlocks(files)
-            return fobj
-        else:
-          raise RuntimeError(f"{feature} is not a igzip type")
 
     # we use class variables to cache sql connections because we don't
     # want it serialized in this instance. TODO: this might take up
@@ -296,11 +131,11 @@ class Datastore(Dataset):
         ret[batch[primary_id]] = batch[src_feature]
 
     @classmethod
-    def from_mmap(cls,  feature_view, shape, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4, pipelines_manager=None, auto_shard=False, shard_size=1000000):
-      return cls.from_dict({}).add_mmap(feature_view=feature_view, shape=shape, path=path, dtype=dtype, dtype_str_len=dtype_str_len, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc, pipelines_manager=pipelines_manager, auto_shard=auto_shard)
+    def from_mmap(cls,  feature_view, shape, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4):
+      return cls.from_dict({}).add_mmap(feature_view=feature_view, shape=shape, path=path, dtype=dtype, dtype_str_len=dtype_str_len, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc)
 
 
-    def move_to_mmap(self, src_feature, dst_feature_view=None, shape=None, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4, pipelines_manager=None, auto_shard=False, shard_size=1000000):
+    def move_to_mmap(self, src_feature, dst_feature_view=None, shape=None, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4):
       if dst_feature_view in (src_feature, None):
         self = self.rename_column(src_feature, "__tmp__"+src_feature)
         dst_feature_view = src_feature
@@ -322,7 +157,7 @@ class Datastore(Dataset):
         else:
           raise RuntimeError(f"could not infer shape and dtype for example {item}")
       shape[0] = max(shape[0],len(self))
-      self.add_mmap(feature_view=dst_feature_view, shape=shape, path=path, dtype=dtype, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc, auto_shard=auto_shard, shard_size=shard_size) #don't pass in the pipelines_manager
+      self.add_mmap(feature_view=dst_feature_view, shape=shape, path=path, dtype=dtype, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc,) #don't pass in the pipelines_manager
       val = self.views_map[dst_feature_view]
       self.map(Datastore._move_to_mmap_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'src_feature':src_feature, 'primary_id':primary_id, 'path': val['path'], 'dtype': val['dtype'], 'shape':shape})
       self= self.remove_columns(src_feature)
@@ -335,7 +170,7 @@ class Datastore(Dataset):
         self = self.map(pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
       return self
 
-    def add_mmap(self, feature_view, shape, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4, pipelines_manager=None, auto_shard=False):
+    def add_mmap(self, feature_view, shape, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4):
       """"mapping a feature/columun to a memmap array accessed by row"""
       if not hasattr(self, 'views_map'): self.views_map = {}
       if hasattr(self, '_primary_id') and self._primary_id != primary_id:
@@ -386,60 +221,8 @@ class Datastore(Dataset):
       return self
 
 
-    @classmethod
-    def from_igzip(cls, feature_view, path,  primary_id="id", batch_size=1000, num_proc=4, pipelines_manager=None, fts_connection_uri=None, fts_table_name=None):
-      return cls.from_dict({}).add_igzip(feature_view=feature_view, path=path,  primary_id=primary_id, batch_size=batch_size, num_proc=num_proc, pipelines_manager=pipelines_manager, fts_connection_uri=fts_connection_uri, fts_table_name=fts_table_name)
 
-
-    def add_igzip(self, feature_view, path,  primary_id="id", batch_size=1000, num_proc=4, pipelines_manager=None, fts_connection_uri=None, fts_table_name=None):
-      """    
-      mapping a feature/columun to an indexed gzip file accessed by line 
-      """
-      if not hasattr(self, 'views_map'): self.views_map = {}
-      if hasattr(self, '_primary_id') and self._primary_id != primary_id:
-        raise RuntimeError(f"attempting to reset the index to {primary_id}")
-      else:
-        self._primary_id = primary_id
-      if hasattr(self, 'pipelines_manager') and self.pipelines_manager not in (None, pipelines_manager):
-          print(f"warning: resetting the metadta_manager to {pipelines_manager}")
-      if pipelines_manager is not None:
-          self.pipelines_manager = pipelines_manager
-      fobj = self._get_igzip_fobj(path)
-      if primary_id not in self.features:
-          if len(self) == 0:
-            self = Datastore.from_dataset(Dataset.from_dict({primary_id: range(len(fobj))}), self)
-            ids = dict([(a,1) for a in range(len(self))])
-            self.id2idx_identity = True
-          else:
-            print ("adding idx")
-            self = self.map(Datastore._add_idx, with_indices=True, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'primary_id': primary_id})
-            ids = dict([(a,1) for a in range(len(self))])
-            self.id2idx_identity = True
-      else:
-          ids = dict([(a,1) for a in self[primary_id]])
-      missing_ids=[]
-      for id in range(len(fobj)):
-            if id not in ids:
-              missing_ids.append(id)
-      if missing_ids:
-              self = self.add_batch({primary_id: missing_ids})
-              if not hasattr(self, 'id2idx_identity'):  self.id2idx_identity = True
-              if self.id2idx_identity:
-                contiguous, start, end = is_contiguous(missing_ids)
-                self.id2idx_identity = start ==len(self) and contiguous
-              else:
-                self.id2idx_identity = False
-      if fts_table_name is None:
-        fts_table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}_{column}_fts_idx"
-      if not fts_connection_uri:
-        fts_connection_uri="sqlite:///"+self.cache_files[0]['filename'].replace(".arrow", ".db")
-      self.views_map[feature_view] = {'type':"igzip", 'path': path, 'fts_connection_uri': fts_connection_uri, 'fts_table_name': fts_table_name}
-      if pipelines_manager is not None and feature_view in pipelines_manager.features_monitored() and self.pipelines_manager.postprocess:
-        self = self.map(pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
-      return self
-
-
-    def move_to_sql(self, src_feature_to_dst_views_map, table_name=None, connection_uri=None,  primary_id="id",  batch_size=1000, num_proc=4, pipelines_manager=None, fts_connection_uri=None, auto_shard=False):
+    def move_to_sql(self, src_feature_to_dst_views_map, table_name=None, connection_uri=None,  primary_id="id",  batch_size=1000, num_proc=4, fts_connection_uri=None):
       if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
@@ -465,19 +248,13 @@ class Datastore(Dataset):
       self.add_sql(feature_view=feature_view, table_name=table_name, connection_uri=connection_uri, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc, fts_connection_uri=fts_connection_uri)
       self = self.map(Datastore.upsert_sql_from_batch, batch_size=batch_size, batched=True, num_proc=1 if connection_uri=="sqlite://" else num_proc, fn_kwargs={'views_map':self.views_map, 'primary_id':primary_id, 'src_feature_to_dst_views_map': src_feature_to_dst_views_map})
       self = self.remove_columns(src_feature)
-      if hasattr(self, 'pipelines_manager') and self.pipelines_manager not in (None, pipelines_manager):
-          print(f"warning: resetting the metadta_manager to {pipelines_manager}")
-      if pipelines_manager is not None:
-          self.pipelines_manager = pipelines_manager
-      if pipelines_manager is not None and self.pipelines_manager.postprocess:
-        self = self.map(pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
       return self
 
     @classmethod
-    def from_sql(cls,  feature_view, table_name, connection_uri, dtype="str", primary_id="id",  batch_size=1000, num_proc=4, pipelines_manager=None, fts_connection_uri=None):
-      return cls.from_dict({}).add_sql(feature_view=feature_view, table_name=table_name, connection_uri=connection_uri, dtype=dtype, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc, pipelines_manager=pipelines_manager, fts_connection_uri=fts_connection_uri)
+    def from_sql(cls,  feature_view, table_name, connection_uri, dtype="str", primary_id="id",  batch_size=1000, num_proc=4,  fts_connection_uri=None):
+      return cls.from_dict({}).add_sql(feature_view=feature_view, table_name=table_name, connection_uri=connection_uri, dtype=dtype, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc,  fts_connection_uri=fts_connection_uri)
 
-    def add_sql(self, feature_view=None, table_name=None, connection_uri=None, dtype="str", primary_id="id",  batch_size=1000, num_proc=4, pipelines_manager=None):
+    def add_sql(self, feature_view=None, table_name=None, connection_uri=None, dtype="str", primary_id="id",  batch_size=1000, num_proc=4):
         """
         mapping one or more columns/features to a sql database. creates a sqlalchmey/dataset dynamically with primary_id as the primary key. 
         TODO: remember to strip passwords from any connection_uri. passwords should be passed as vargs and added to the conneciton url dynamically
@@ -489,10 +266,6 @@ class Datastore(Dataset):
           raise RuntimeError(f"attempting to reset the index to {primary_id}")
         else:
           self._primary_id = primary_id
-        if hasattr(self, 'pipelines_manager') and self.pipelines_manager not in (None, pipelines_manager):
-          print(f"warning: resetting  the metadta_manager to {pipelines_manager}")
-        if pipelines_manager is not None:
-          self.pipelines_manager = pipelines_manager
         if table_name is None:
           #print (self.info.builder_name, self.info.config_name)
           table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}"
@@ -537,7 +310,6 @@ class Datastore(Dataset):
               self.id2idx_identity = start ==len(self) and contiguous
             else:
               self.id2idx_identity = False
-        do_pipelines_manager = False
         for col in feature_view:
             if type(col) is tuple:
               col, dtype = col
@@ -558,13 +330,9 @@ class Datastore(Dataset):
                 table.create_column(col, dtype)
             fts_table_name = f"_{self._fingerprint}_{self.info.builder_name}_{self.info.config_name}_{self.split}_{col}_fts_idx"
             self.views_map[col] = {'type':'sql', 'connection_uri': connection_uri, 'table_name': table_name, 'fts_connection_uri': fts_connection_uri, 'fts_table_name': fts_table_name}
-            if pipelines_manager is not None and cl in pipelines_manager.features_monitored():
-              do_pipelines_manager = True
-        if do_pipelines_manager and self.pipelines_manager.postprocess:
-          self = self.map(pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
         return self
     
-    def add_fts(self, feature_view, fts_table_name=None, fts_connection_uri=None,  primary_id="id",  batch_size=1000, num_proc=4, pipelines_manager=None):
+    def add_fts(self, feature_view, fts_table_name=None, fts_connection_uri=None,  primary_id="id",  batch_size=1000, num_proc=4):
       if type(feature_view) is str:
         feature_view = [feature_view,]
       for col in feature_view:
@@ -627,14 +395,11 @@ class Datastore(Dataset):
             sql_query2[(connection_uri, table_name)] = sql_query2.get((connection_uri, table_name), [])+[query]
         for feature_view, query in fts_query.items():
           val = self.views_map.get(feature_view)
-          if not val or val['type'] not in ('sql', 'igzip' 'fts_only'):
-            raise RuntimeError(f"{feature_view} is not a sql, igzip, or fts view and can not be filtered as such")
+          if not val or val['type'] not in ('sql', 'fts_only'):
+            raise RuntimeError(f"{feature_view} is not a sql, or fts view and can not be filtered as such")
           if val['type']=='sql' and 'fts_connection_uri' in view:
             connection_uri, table_name = val['connection_uri'], val['table_name']
             fts_query2[(connection_uri, table_name)] = sql_query2.get((connection_uri, table_name), [])+[query]
-          elif val['type'] == 'igzip' and 'fts_connection_uri' in view:
-            connection_uri, table_name = val['fts_connection_uri'], val['fts_table_name']
-            fts_query2[(connection_uri, table_name)] = sql_query2.get((connection_uri, table_name), [])+[query]            
           elif val['type'] == 'fts_only':
             connection_uri, table_name = val['connection_uri'], val['table_name']
             fts_query2[(connection_uri, table_name)] = sql_query2.get((connection_uri, table_name), [])+[query]            
@@ -699,7 +464,7 @@ class Datastore(Dataset):
 
       # return map function
       return ret.map(
-          partial(map_function, function=function, with_indices=with_indices),
+          partial(get_indices_from_mask_function, function=function, with_indices=with_indices),
           batched=True,
           with_indices=with_indices,
           features=self.features,
@@ -820,11 +585,6 @@ class Datastore(Dataset):
                             outputs[feature] = mmap_array[start:end]
                         else:
                             outputs[feature] = mmap_array[keys]                            
-                elif val['type'] == 'igzip':
-                    if contiguous:
-                        outputs[feature] = self._get_igzip_fobj(val['path'])[start:end]
-                    else:
-                        outputs[feature] = self._get_igzip_fobj(val['path'])[keys]
                 elif val['type'] == 'sql':
                     sql_results[(val['table_name'], val['connection_uri'])] = sql_results.get((val['table_name'], val['connection_uri']),[])+[feature]
             for table_connection, features in sql_results.items():
@@ -926,178 +686,6 @@ class Datastore(Dataset):
             return outputs
         raise RuntimeError("got unknown outputs or keys type")
 
-
-  # Basic helper functions for map, sort and then reduce functions
-  # over Dask using Datastore as the primary data storage and
-  # multi-processer.  The main file transfer and sharing are through a
-  # shared directory (e.g., Google Colab) as opposed to through Dask.
-  # Dask is used for coordination of processing only.  Requires unix
-  # like programs, split, cat, sort, gzip and gunzip
-
-    @staticmethod
-    def sort_merge(batch_idx_files, output_igzip_file, cache_dir=".", lock=True):
-      if lock:
-        lock - FileLock(output_igzip_file+".lock")
-      else:
-        lock = DummyLock()
-      with lock:
-        batch_idx_files = list(wait_until_files_loaded(batch_idx_files))
-        gzipped_output = [o for o in batch_idx_files if o.endswith(".gz")]
-        if gzipped_output:
-          zcat = "zcat "+" < (zcat ".join(gzipped_output)
-          files = " ".join([o for o in batch_idx_files if not o.endswith(".gz")])
-          os.system(f"sort --parallel=32 -T {cache_dir} -n -m {files} -o {output_igzip_file} < ({zcat})")
-        else:
-          files
-          os.system(f"sort --parallel=32 -T {cache_dir} -n -m {files} -o {output_igzip_file}")
-      
-    @staticmethod
-    def cat(batch_idx_files, output_igzip_file, cache_dir=".", lock=True):
-      if lock:
-        lock - FileLock(output_igzip_file+".lock")
-      else:
-        lock = DummyLock()
-      with lock:
-        batch_idx_files = list(wait_until_files_loaded(batch_idx_files))
-        gzipped_output = [o for o in batch_idx_files if o.endswith(".gz")]
-        if gzipped_output:
-          os.system("cat " + " ".join([o for o in batch_idx_files if not o.endswith(".gz")]) + " < (zcat "+ ") < (zcat ".join(gzipped_output) + ")"  + " > " +  cache_dir+"___tmp___" + output_igzip_file)
-        else:
-          os.system("cat " + " ".join(batch_idx_files) + " > " +  cache_dir+"___tmp___" + output_igzip_file)
-        next(wait_until_files_loaded(cache_dir+"/___tmp___" + output_igzip_file))
-        os.system("mv "+cache_dir+"/___tmp___" + output_igzip_file + " " + output_igzip_file)
-      
-    @staticmethod
-    def sort_file(f, cache_dir=".", gzip_output=False, lock=True):
-      if lock:
-        lock - FileLock(f+".lock")
-      else:
-        lock = DummyLock()
-      with lock:
-        if os.path.exists(f):
-          f = next(wait_until_files_loaded(f))
-          os.system("sort --parallel=32 -T "+cache_dir+" -n "+f+" -o "+f)  
-          if gzip_output:
-            os.system(f"gzip {f}")
-            return f+".gz"
-
-    @staticmethod
-    def merge_and_save_files(batch_idx_files, output_igzip_file, sort=False, shared_dir=None, gzip_output=None, split_lines=5000000, lock=True):
-      """ If sorting, assume all batch_idx_files are already sorted. """
-      #if the files are all on the shared dir, then move it to cache_dir
-      if lock:
-        lock - FileLock(f+".lock")
-      else:
-        lock = DummyLock()
-      with lock:
-        batch_idx_files = list(wait_until_files_loaded(batch_idx_files))
-        batch_idx_files.sort()
-        if sort:
-          Datastore.sort_merge(batch_idx_files, output_igzip_file, lock=False)
-        else:
-          Datastore.cat(batch_idx_files, output_igzip_file, lock=False)
-        next(wait_until_files_loaded(output_igzip_file))
-        for f in batch_idx_files:
-          os.unlink(f)
-        output_igzip_files = []
-        if os.stat(output_igzip_file).st_size > self.small_file and split_lines > 0:
-          output_igzip_file0 = output_igzip_file.split(".")
-          suff = output_igzip_file0[-1]
-          output_igzip_file0 = ".".join(output_igzip_file0[:len(output_igzip_file0)-1])
-          split_lines = max(10000, split_lines)
-          os.system(f"split -l {split_lines} {output_igzip_file} {output_igzip_file0}")
-          for f in glob.glob(output_igzip_file0+"*"):
-            if gzip_output:
-              next(wait_until_files_loaded(f))
-              os.system(f"gzip -S {suff}.gz {f}")
-              f = f+f"{suff}.gz"
-              next(wait_until_files_loaded(f)) 
-            if shared_dir:
-              shutil.move(f, self.shared_dir)
-              ouptut_files.append(Path(shared_dir, Path(f).name))
-            else:
-              ouptut_files.append(f)
-        else:
-          f = output_igzip_file
-          if gzip_output:
-            next(wait_until_files_loaded(f))
-            os.system(f"gzip {f}")
-            f = f+".gz"
-            next(wait_until_files_loaded(f)) 
-          if shared_dir:
-            shutil.move(f, self.shared_dir)
-            ouptut_files.append(Path(shared_dir, Path(f).name))
-          else:
-            ouptut_files.append(f)
-        return ouptut_files
-    
-    @staticmethod
-    def _distributed_map(dataset_path: str=None,
-          shard: Tuple[int]=None,
-          function: Callable = None,
-          with_indices: bool = False,
-          input_columns: Optional[Union[str, List[str]]] = None,
-          batched: bool = True,
-          batch_size: Optional[int] = 1000,
-          drop_last_batch: bool = False,
-          remove_columns: Optional[List[str]] = None,
-          keep_in_memory: bool = False,
-          load_from_cache_file: bool = True,
-          cache_file_name: Optional[str] = None,
-          writer_batch_size: Optional[int] = 1000,
-          features: Optional[Features] = None,
-          disable_nullable: bool = False,
-          fn_kwargs: Optional[dict] = None,
-          num_proc: Optional[int] = None,
-          suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
-          new_fingerprint: Optional[str] = None,
-          desc: Optional[str] = None,
-          curr_task_subfile_path: str =None, 
-          intermediate_sort: bool =None):
-        args['inputfile'] = dataset_path
-        args['outfile'] = curr_task_subfile_path
-        # if input_file_path sits on the shared_dir, copy to cache_dir
-        datastore = Datastore.load_from_disk(dataset_path, shared_dir=shared_dir, cache_dir=cache_dir)
-        # make sure we are not going to recursively send the job
-        # through the distributed context.  batch should always be
-        # true here, and batch size should produce together about 1gb
-        # per num_proc.  we will be sending this file to a shared
-        # directory every cycle. num process should be some reasonable
-        # number.  if each dask node runs 4 main processes, and each 4
-        # main processes runs 4 sub processes, we have 16 processes
-        # running per node
-        # 
-        datastore.distributed_context = None
-        ret = datastore.select(range(shard[0], shard[1])).map(function=function, with_indices=with_indices, input_columns=input_columns,
-                      batched=batched, batch_size=batch_size, drop_last_batch=drop_last_batch, 
-                      remove_columns=remove_columns, keep_in_memory=keep_in_memory, 
-                      load_from_cache_file=load_from_cache_file, cache_file_name=cache_file_name,
-                      writer_batch_size=writer_batch_size, features=features,
-                      disable_nullable=disable_nullable, fn_kwargs=fn_kwargs,
-                      num_proc=num_proc, suffix_template=suffix_template,
-                      new_fingerprint=new_fingerprint, desc=desc,distributed_context=None)
-        ret.save_to_disk(dataset_path)
-        output_igzip_files = glob.glob(curr_task_subfile_path+".*")
-        if sort:
-          for f in output_igzip_files:
-            Datastore.sort_file(f, cache_dir=cache_dir, gzip_output=gzip_output)
-        if [_ for r in curr_result_subfile_path if r]:
-          for input_file_path, _ in input_files:
-            if (delete_input_files_on_finalize or input_file_path.startswith("__result")):
-                os.unlink(input_file_path)
-                if input_file_path.endswith(".gz") and os.path.exists(input_file_path.repalce(".gz", ".igz")):
-                  os.unlink(input_file_path.repalce(".gz", ".igz"))
-
-        ret= Datastore.merge_and_save_files(output_igzip_files, curr_task_subfile_path, sort, shared_dir, gzip_output=gzip_output)
-        # add in the other info for this shard and return the complete shard with ranges in json format
-        return ret
-
-    def init_map_reduce(self, *args, **kwargs):
-      self.map_reduce_args=[args,kwargs]
-      if kwargs.get('input_file_function'):
-        self.input_files = kwargs.get('input_file_function')(self)
-      return self
-
     @staticmethod
     def upsert_sql_from_batch(batch, views_map, primary_id, src_feature_to_dst_views_map):
       sql_results={}
@@ -1139,8 +727,6 @@ class Datastore(Dataset):
               if val['type'] == 'mmap':
                   mmap_array = np_mmap(val['path'], val['dtype'], val['shape'])
                   mmap_array[batch[primary_id]] = batch[feature]                     
-              elif val['type'] == 'igzip':
-                  raise RuntimeError("cannot update an igzip file")
             elif handle_views == Datastore.STATIC_VIEWS:
               if key in ret:
                 del ret[key]
@@ -1159,8 +745,6 @@ class Datastore(Dataset):
               if val['type'] == 'mmap':
                   mmap_array = np_mmap(val['path'], val['dtype'], val['shape'])
                   mmap_array[batch[primary_id]] = batch[feature]                     
-              elif val['type'] == 'igzip':
-                  raise RuntimeError("cannot update an igzip file")
             elif handle_views == Datatsore.STATIC_VIEWS:
               if key in ret:
                 del ret[key]
@@ -1176,13 +760,12 @@ class Datastore(Dataset):
         function: Optional[Callable] = None,
         with_indices: bool = False,
         input_columns: Optional[Union[str, List[str]]] = None,
-        batched: bool = True,
+        batched: bool = False,
         batch_size: Optional[int] = 1000,
         drop_last_batch: bool = False,
-        remove_columns: Optional[List[str]] = None,
-        keep_columns: Optional[List[str]] = None,
+        remove_columns: Optional[Union[str, List[str]]] = None,
         keep_in_memory: bool = False,
-        load_from_cache_file: bool = True,
+        load_from_cache_file: bool = None,
         cache_file_name: Optional[str] = None,
         writer_batch_size: Optional[int] = 1000,
         features: Optional[Features] = None,
@@ -1192,17 +775,6 @@ class Datastore(Dataset):
         suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
         new_fingerprint: Optional[str] = None,
         desc: Optional[str] = None,
-        handle_views: int = STATIC_VIEWS,
-        output_igzip_file: Optional[str] =None,
-        output_igzip_file_schema: List = None,
-        keep_features: List = None, 
-        cache_dir: Optional[str] =None,  
-        distributed_context: DistributedContext = None, # we only use the next parameters if there is a distributed_context.
-        intermediate_sort: Optional[bool] = True, 
-        final_reduce: Optional[bool] =True,  
-        shared_dir: Optional[str] =None, 
-        gzip_output: Optional[bool]=True,
-        delete_input_files_on_finalize: Optional[bool] = True,
         #add_memmap_views=None,
         #add_sql_views=None,
     ) -> "Datastore":
@@ -1219,19 +791,7 @@ class Datastore(Dataset):
             function = Datastore.map_fn_and_handle_views
       if shared_dir is None:
         shared_dir = self.shared_dir
-      if distributed_context is None:
-        distributed_context = self.distributed_context
-      
-      #let's see if the data is broken by shards. if not, then we are doing regular map without distributed context. 
-      #and we need o synch to the shared drive
-      shards = []
-      for key, val in self.views_map:
-        if (val['type'] == 'igzip' and type(val['path']) is list):
-          for input_file, start, end in val['path']:
-              shards.append((start, end))
-
-      if not shared_dir or not distributed_context or not shards:
-        ret= self.map(function=function, with_indices=with_indices, input_columns=input_columns,
+      ret= super().map(function=function, with_indices=with_indices, input_columns=input_columns,
                      batched=batched, batch_size=batch_size, drop_last_batch=drop_last_batch, 
                      remove_columns=remove_columns, keep_in_memory=keep_in_memory, 
                      load_from_cache_file=load_from_cache_file, cache_file_name=cache_file_name,
@@ -1239,70 +799,10 @@ class Datastore(Dataset):
                      disable_nullable=disable_nullable, fn_kwargs=fn_kwargs,
                      num_proc=num_proc, suffix_template=suffix_template,
                      new_fingerprint=new_fingerprint, desc=desc,)
-        for column in remove_columns if remove_columns is not None else []:
-          if column in self.views_map and column in ret:
-            print (f"warning: the map function returned a column {column} which is the same as a detached view. this column will be persisted to arrow.")
-        return ret
-        
-      else:
-        self.save_to_disk(Path(shared_dir, self.output_dir))
-        kwds_per_shard = [dict(Path(shared_dir, self.output_dir,),
-                      shard, function=function, with_indices=with_indices, input_columns=input_columns,
-                      batched=batched, batch_size=batch_size, drop_last_batch=drop_last_batch, 
-                      remove_columns=remove_columns, keep_in_memory=keep_in_memory, 
-                      load_from_cache_file=load_from_cache_file, cache_file_name=cache_file_name,
-                      writer_batch_size=writer_batch_size, features=features,
-                      disable_nullable=disable_nullable, fn_kwargs=fn_kwargs,
-                      num_proc=num_proc, suffix_template=suffix_template,
-                      new_fingerprint=new_fingerprint, desc=desc,
-                      handle_views=handle_views,
-                      )
-                      for shard in shards
-                  ]
-
-        shard_file_and_ranges = [r.result() for r in self.distributed_context.map(Datastore._distributed_map, kwds_per_shard)]
-        shard_file_and_ranges = [r for r in shard_file_and_ranges if r]
-        if final_sort_reduce: # there is a case where the final reduce is just a concat?
-          #, split_lines=5000000, lock=True
-            shard_file_and_ranges = self.merge_and_save_files(shard_file_and_ranges, output_igzip_file, intermediate_sort, shared_dir, gzip_output)
-        # now see if the schema includes any other views
-        shutil.mkdir(Path(shared_dir, output_igzip_file))
-        feature_views = {}
-        if type(output_igzip_file_schema) is dict:
-          output_igzip_file_schema = list(output_igzip_file_schema.items())
-        for column, feature_dtype in enumerate(output_igzip_file_schema):
-          feature, dtype = feature_dtype
-          feature_views[feature] = {'type': 'igzip', 'col': column, 'dtype': dtype, 'file_type': shard_file_and_ranges[0][0].split(".")[-2], 'path': shard_file_and_ranges}
-        if keep_columns:
-          keep_columns = list(set(keep_columns+[self.primary_id]))
-          for view in keep_columns:
-            if view in self.feature_views:
-              feature_views[view] = copy.deepcopy(self.feature_views[view])
-          for column in self.columns:
-            if column not in keep_columns:
-                self = self.remove_columns(column)
-          if shard_file_ranges[-1][-1] < len(self):
-            self = self.select(range(shard_file_ranges[-1][-1]))
-          ret = Datastore.from_dataset(self, self, feature_views=feature_views, output_dir=output_dir)
-        else:
-          ret = Datastore.from_dataset(Datastore.from_dict({self.primary_id: range(shard_file_ranges[-1][-1])}), self, feature_views=feature_views, output_dir=output_dir)
-
-        for column in remove_columns if remove_columns is not None else []:
-          if column in self.views_map and column in ret:
-            print (f"warning: the map function returned a column {column} which is the same as a detached view. this column will be persisted to arrow.")
-        ret.save_to_disk(Path(shared_dir, output_igzip_file), move_files=True, shared_dir=shared_dir, cache_dir=cache_dir)
-        if clear_cache:
-            dataset_path = os.path.dirname(self.cache_files[0]['filename'])
-            if os.path.isdir(dataset_path):
-                logger.warning(f"Clearing cache at {dataset_path}")
-                shutil.rmtree(builder._cache_dir)
-            download_dir = os.path.join(self.cache_dir, datasets.config.DOWNLOADED_DATASETS_DIR)
-            if os.path.isdir(download_dir):
-                logger.warning(f"Clearing cache at {download_dir}")
-                shutil.rmtree(download_dir)
-
-      return Datastore.from_dataset(ret, self, views_map=views_map)
-
+      for column in remove_columns if remove_columns is not None else []:
+         if column in self.views_map and column in ret:
+           print (f"warning: the map function returned a column {column} which is the same as a detached view. this column will be persisted to arrow.")
+      return ret
 
     @transmit_format
     @fingerprint_transform(inplace=False)
@@ -1757,13 +1257,6 @@ class Datastore(Dataset):
                   shutil.move(src, dest)
                 else:
                   shutil.copy(src, dest)
-                if value['type'] == 'igzip':
-                  src = src.replace(".gz", ".igz")
-                  dest = dest.replace(".gz", ".igz")
-                  if move_files:
-                    shutil.move(src, dest)
-                  else:
-                    shutil.copy(src, dest)
 
         # Get json serializable state
         state = {
@@ -1778,7 +1271,6 @@ class Datastore(Dataset):
                 "views_map",
                 "id2idx_identity",
                 "_primary_id",
-                "pipelines_manager"
             ]
         }
         self.views_map = views_map_copy
@@ -1871,10 +1363,6 @@ class Datastore(Dataset):
                 tmp_dir = tempfile.TemporaryDirectory()
                 data_path = Path(tmp_dir.name, src_dataset_path)
                 fs.download(src_dataset_path, data_path.as_posix(), recursive=True)
-                if value['type'] == 'igzip':
-                  src_dataset_path2 = src_dataset_path2.replace(".gz", ".igz")
-                  data_path2 = Path(tmp_dir.name, src_dataset_path2)
-                  fs.download(src_dataset_path2, data_path2.as_posix(), recursive=True)
             else:
                 data_path = os.path.abspath(os.path.join(dataset_path, src))
             if 'connection_uri' in value:
