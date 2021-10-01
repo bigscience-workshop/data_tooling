@@ -1,7 +1,6 @@
 # Extensions to Huggingface's datasets 
 
-Creates a datastore that interconnects to many backends and supports
-fast writing and distributed storage and processing.
+Creates a datastore that interconnects to sqlite and memmap backends.
 
 ## Run
 
