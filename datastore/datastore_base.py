@@ -93,7 +93,6 @@ from multiprocessing import Process
 import subprocess
 import requests
 import multiprocessing
-from filelock import UnixFileLock, FileLock
 from functools import partial
 
 import sys, os
@@ -101,7 +100,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir)))
 
 
-from data_tooling.datastore.utils.utils import *
+from data_tooling.datastore.utils import *
 from data_tooling.datastore.connectors.sql import *
 from data_tooling.datastore.connectors.memmap import *
 
@@ -137,7 +136,7 @@ class Datastore(Dataset):
     
 
     @classmethod
-    def from_dataset(cls, dataset, template_datastore=None, views_map=None, primary_id=None, pipelines_manager=None, id2idx_identity=None,):
+    def from_dataset(cls, dataset, template_datastore=None, views_map=None, primary_id=None, id2idx_identity=None,):
         self = cls(
             arrow_table=dataset._data,
             indices_table=dataset._indices,
@@ -222,8 +221,8 @@ class Datastore(Dataset):
     def from_mmap(cls,  feature_view, shape, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4):
       return cls.from_dict({}).add_mmap(feature_view=feature_view, shape=shape, path=path, dtype=dtype, dtype_str_len=dtype_str_len, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc)
 
-
     def move_to_mmap(self, src_feature, dst_feature_view=None, shape=None, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4):
+      """"move data from the src_feature to a memmap file that is viewed via dst_feature_view"""        
       if dst_feature_view in (src_feature, None):
         self = self.rename_column(src_feature, "__tmp__"+src_feature)
         dst_feature_view = src_feature
@@ -245,17 +244,10 @@ class Datastore(Dataset):
         else:
           raise RuntimeError(f"could not infer shape and dtype for example {item}")
       shape[0] = max(shape[0],len(self))
-      self.add_mmap(feature_view=dst_feature_view, shape=shape, path=path, dtype=dtype, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc,) #don't pass in the pipelines_manager
+      self.add_mmap(feature_view=dst_feature_view, shape=shape, path=path, dtype=dtype, primary_id=primary_id, batch_size=batch_size, num_proc=num_proc,) 
       val = self.views_map[dst_feature_view]
       self.map(Datastore._move_to_mmap_col, batch_size=batch_size, batched=True, num_proc=num_proc, fn_kwargs={'src_feature':src_feature, 'primary_id':primary_id, 'path': val['path'], 'dtype': val['dtype'], 'shape':shape})
       self= self.remove_columns(src_feature)
-      if hasattr(self, 'pipelines_manager') and self.pipelines_manager not in (None, pipelines_manager):
-          print(f"warning: resetting the metadta_manager to {pipelines_manager}")
-      if pipelines_manager is not None:
-          self.pipelines_manager = pipelines_manager
-      #only apply the pipelines_manager if we are moving to a new feature and that feature is monitored. 
-      if pipelines_manager is not None and src_feature.startswith ("__tmp__") and  dst_feature_view in pipelines_manager.features_monitored() and self.pipelines_manager.postprocess:
-        self = self.map(pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
       return self
 
     def add_mmap(self, feature_view, shape, path=None, dtype='float32', dtype_str_len=100, primary_id="id", batch_size=1000, num_proc=4):
@@ -265,10 +257,6 @@ class Datastore(Dataset):
         raise RuntimeError(f"attempting to reset the index to {primary_id}")
       else:
         self._primary_id = _primary_id
-      if hasattr(self, 'pipelines_manager') and self.pipelines_manager not in (None, pipelines_manager):
-          print(f"warning: resetting the metadata_manager to {pipelines_manager}")
-      if pipelines_manager is not None:
-          self.pipelines_manager = pipelines_manager
       if not self.cache_files:
         dataset_path = get_temporary_cache_files_directory()
       else:  
@@ -304,8 +292,6 @@ class Datastore(Dataset):
           dtype =np.dtype(dtype).name
 
       self.views_map[feature_view] = {'type':"mmap", 'path': path,  'dtype': dtype, 'shape': shape}
-      if pipelines_manager is not None and feature_view in pipelines_manager.features_monitored() and self.pipelines_manager.postprocess:
-        self = self.map(pipelines_manager.postprocess,  batch_size=batch_size, batched=True, num_proc=num_proc)
       return self
 
 
@@ -344,10 +330,19 @@ class Datastore(Dataset):
 
     def add_sql(self, feature_view=None, table_name=None, connection_uri=None, dtype="str", primary_id="id",  batch_size=1000, num_proc=4):
         """
-        mapping one or more columns/features to a sql database. creates a sqlalchmey/dataset dynamically with primary_id as the primary key. 
-        TODO: remember to strip passwords from any connection_uri. passwords should be passed as vargs and added to the conneciton url dynamically
-        passwords should not be perisisted.
-        NOTE: this dataset will not automatically change if the database changes, and vice versa. periodically call this method again to sync the two or create callbacks/triggers in your code.
+        mapping one or more columns/features to a sql
+        database. creates a sqlalchmey/dataset dynamically with
+        primary_id as the primary key.
+
+        TODO: remember to strip passwords from any
+        connection_uri. passwords should be passed as vargs and added
+        to the conneciton url dynamically passwords should not be
+        perisisted.
+
+        NOTE: this dataset will not automatically change if the
+        database changes, and vice versa. periodically call this
+        method again to sync the two or create callbacks/triggers in
+        your code.
         """
         if not hasattr(self, 'views_map'): self.views_map = {}
         if hasattr(self, '_primary_id') and self._primary_id != primary_id:
@@ -447,12 +442,6 @@ class Datastore(Dataset):
         num_proc: Optional[int] = None,
         suffix_template: str = "_{rank:05d}_of_{num_proc:05d}",
         new_fingerprint: Optional[str] = None,
-        distributed_context: DistributedContext = None, # we only use the next parameters if there is a distributed_context.
-        intermediate_sort: Optional[bool] = True, 
-        final_reduce: Optional[bool] =True,  
-        shared_dir: Optional[str] =None, 
-        gzip_output: Optional[bool]=True,
-        delete_input_files_on_finalize: Optional[bool] = True,
     ) -> "Datastore":
       """
       the same as datasets.filter except we add sql_query and
@@ -566,11 +555,6 @@ class Datastore(Dataset):
           num_proc=num_proc,
           suffix_template=suffix_template,
           new_fingerprint=new_fingerprint,
-          distributed_context=distributed_context,
-          intermediate_sort=intermediate_sort,
-          final_reduce=final_reduce,
-          shared_dir=shared_dir,
-          delete_input_files_on_finalize=delete_input_files_on_finalize,
       )
 
     # note that while the primary_id corresponds to an item in an
