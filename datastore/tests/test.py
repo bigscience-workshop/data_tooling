@@ -8,25 +8,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir, os.path.pardir)))
                                       
 from data_tooling.datastore.datastore_base import *
-from data_tooling.datastore.distributed_context import *
+
 
 if __name__ == "__main__":
 
     args = sys.argv[1:]
     if not args:
       exit()
-    if "-launch_dask_node" == args[0]:
-      scheduler_file = args[1]
-      DistributedContext.start(scheduler_file=scheduler_file)
-        
-    if "-test_igzip_basic" in args:
-      if not os.path.exists("wikitext-2"):
-        os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
-        os.system('unzip wikitext-2-v1.zip')
-        os.system('gzip wikitext-2/wiki.train.tokens')
-      vi1 = get_file_read_obj("wikitext-2/wiki.train.tokens.gz")
-      assert len(vi1[[0, 5, 1000]]) == 3
-      assert len(vi1[0:]) == len(vi1)
 
     if "-test_sql_basic" in args:
       db = DatabaseExt("sqlite://")
@@ -47,18 +35,6 @@ if __name__ == "__main__":
       assert list(table.find(id={'in':range(0, 2)}))[-1]['id'] == 1
 
       
-    if "-test_igzip" in args:
-      if not os.path.exists("wikitext-2"):
-        os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
-        os.system('unzip wikitext-2-v1.zip')
-        os.system('gzip wikitext-2/wiki.train.tokens')
-      datastore = Datastore.from_igzip("txt", "wikitext-2/wiki.train.tokens.gz")
-      datastore = Datastore.from_dict({'id':range(10000), 'len':[5]*10000})
-      datastore = datastore.add_igzip("txt", "wikitext-2/wiki.train.tokens.gz")
-      print (datastore)
-      print (datastore[0])
-      print (datastore[10100])
-
     if "-test_memmap" in args:
        datastore = Datastore.from_mmap('embed', [1000, 512, 512], )
        print (datastore)
@@ -76,36 +52,12 @@ if __name__ == "__main__":
        assert (datastore[0:10]['token'].shape) == (10, 512)
        print (datastore)
 
-    if "-test_sql" in args:
+    if "-test_move_to_sql" in args:
         data = load_dataset("oscar", "unshuffled_deduplicated_yo")['train']
         datastore = Datastore.from_dataset(data)
         Datastore.db_connection = {}
         Datastore.db_table = {}
         datastore= datastore.move_to_sql('text')
-    if "-test_load_save" in args:
-        if not os.path.exists("wikitext-2"):
-          os.system('wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip')
-          os.system('unzip wikitext-2-v1.zip')
-          os.system('gzip wikitext-2/wiki.train.tokens')
-        data = load_dataset("oscar", "unshuffled_deduplicated_yo")['train']
-        datastore = Datastore.from_dataset(data)
-        datastore = datastore.add_mmap('embed', [-1, 512, 512], )
-        Datastore.db_connection = {}
-        Datastore.db_table = {}
-        datastore= datastore.move_to_sql('text') 
-        print (datastore)
-        print (datastore[-1])
-        datastore = datastore.save_to_disk("/content/test")
-        print (datastore)
-        print (datastore[-1])
-        datastore = datastore.save_to_disk("/content/test", move_files=True)
-        print (datastore)
-        print (datastore[-1])
-        datastore= Datastore.load_from_disk("/content/test")
-        print (datastore)
-        print (datastore[-1])
-        datastore = datastore.add_igzip("txt", "wikitext-2/wiki.train.tokens.gz")
-        datastore = datastore.save_to_disk("/content/test2", move_files=True)
 
     if "-test_sqlite_fs" in args:
       db = DatabaseExt("sqlite:///test.db")
