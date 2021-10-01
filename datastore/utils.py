@@ -13,131 +13,13 @@
 #limitations under the License.
 
 """ Common utilities for datastorage"""
-
-
-from dataclasses import asdict
-from collections.abc import Iterable
-from collections import OrderedDict
-from dataclasses import dataclass, field, fields
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple, Union
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-from datasets.info import DatasetInfo
-from datasets.features import PandasArrayExtensionArray, PandasArrayExtensionDtype, Features, Value, cast_to_python_objects, pandas_types_mapper
-from datasets import utils, Dataset
-from datasets.splits import NamedSplit
-from datasets.arrow_writer import ArrowWriter, OptimizedTypedSequence
-import os
-import json
-from pathlib import Path
-from pathlib import PurePath
-from datasets.utils.typing import PathLike
-from datasets.arrow_dataset import map_function, transmit_format# , replayable_table_alteration
-
-import copy
-import shutil
-from datasets.fingerprint import (
-	fingerprint_transform,
-	generate_fingerprint,
-	generate_random_fingerprint,
-	get_temporary_cache_files_directory,
-	is_caching_enabled,
-	update_fingerprint,
-	)
-
-from datasets.search import BaseIndex, BatchedSearchResults, SearchResults
-from datasets.tasks import TaskTemplate
-from datasets.table import InMemoryTable,  concat_tables
-from datasets.dataset_dict import DatasetDict
-from datasets import config
-from datasets.filesystems import extract_path_from_uri, is_remote_filesystem
-from datasets.utils import logging, map_nested
-        
-from torch import nn
-import pickle
-import glob, shutil, os, time
-import indexed_gzip as igzip
-import zipfile
-import  fsspec.compression
-
-import dataset
-import six
-from six.moves.urllib.parse import parse_qs, urlparse
-import threading
-
-from sqlalchemy.exc import ResourceClosedError
-from sqlalchemy import create_engine
-from sqlalchemy.sql import text
-from sqlalchemy.schema import MetaData
-from sqlalchemy.pool import StaticPool
-from sqlalchemy.util import safe_reraise
-from sqlalchemy.engine.reflection import Inspector
-from dataset.types import Types
-from dataset.util import DatasetException, ResultIter, QUERY_STEP, row_type, normalize_table_name, convert_row
-
-import dask
-import dask.array as da
-from dask.distributed import Client
-
-from getpass import getpass
-import atexit, os, subprocess
-import requests
-import atexit
-import uuid
-import multiprocessing
-from smart_open import open
-import urllib
-
-
-import random
-import socket
-import copy
-import itertools
-from datetime import datetime, timedelta
-import signal
-import atexit
-import warnings
-
-from pandas import DataFrame, read_csv
-import platform
-import subprocess
-import tempfile
-from threading import Timer, Thread
-from multiprocessing import Process
-import subprocess
-import requests
-import multiprocessing
+from datasets.utils import logging
 from filelock import UnixFileLock, FileLock
-try:
-  from megatron.data.indexed_dataset import MMapIndexedDataset
-except:
-  MMapIndexedDataset = None
-
-import snorkel
-from functools import partial
-from snorkel.labeling.apply.core import BaseLFApplier, _FunctionCaller
-from snorkel.labeling.apply.pandas import apply_lfs_to_data_point, rows_to_triplets
-
-Scheduler = Union[str, Client]
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir, os.path.pardir)))
 
-
 logger = logging.get_logger(__name__)
-
-def preexec(): # Don't forward signals.
-    os.setpgrp()
-
-	
-#import IPython
-#import ipysheets
-#import pandas as pd
-#def display_results(batch):
-#    IPython.display(pd.DataFrame(batch))
-
 ####################################################################################################
 # some utils
 
@@ -194,9 +76,12 @@ class DummyLock:
         pass
 
     
-# FileLock does not really work for gdrive or other types of shared drives (ftp). 
-# So we create a SharedFileLock instead, which is not guranteed to lock a file, but the best we have.
-# This is because if two nodes are trying to write to the same file, gdrive will for example create a file.txt and a file(1).txt as the other file being written to.
+# FileLock does not really work for gdrive or other types of shared
+# drives (ftp).  So we create a SharedFileLock instead, which is not
+# guranteed to lock a file, but the best we have.  This is because if
+# two nodes are trying to write to the same file, gdrive will for
+# example create a file.txt and a file(1).txt as the other file being
+# written to.
 class SharedFileLock(UnixFileLock):
     def __init__(self, lock_file, timeout = -1, locks=None):
         super().__init__(lock_file, timeout)
