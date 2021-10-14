@@ -4,7 +4,6 @@ import ssl
 from datasets import load_dataset
 import ray
 
-
 # ray config on 4 parallel processing
 nb_shard = 4
 ray.init(num_cpus=nb_shard)
@@ -42,13 +41,26 @@ es_index_config = \
                 }
             }
         },
-        "mappings": {"properties": {"text": {"type": "text", "analyzer": "ngram_analyzer", "similarity": "BM25"}}},
+        "mappings": {
+            "properties": {
+                "text": {
+                    "type": "text",
+                    "fields": {
+                        "hash": {
+                            "type": "murmur3"
+                        }
+                    },
+                    "analyzer": "ngram_analyzer",
+                    "similarity": "BM25"
+                }
+            }
+        },
     }
 
 index = "oscar_unshuffled_deduplicated"
 
 
-@ray.remote
+# @ray.remote
 def index_shard(dataset_shard):
     dataset_shard.add_elasticsearch_index(column="text", index_name=index,
                                           host=the_host, port=the_port,
@@ -59,12 +71,12 @@ def index_shard(dataset_shard):
 my_dataset = load_dataset('oscar', f'unshuffled_deduplicated_{oscar_lang_code}', split='train')
 
 # single thread indexing
-# index_shard(my_dataset)
+index_shard(my_dataset)
 
 # parallel indexing
-dataset_shards = [my_dataset.shard(nb_shard, i) for i in range(nb_shard)]
-futures = [index_shard.remote(dataset_shard) for dataset_shard in dataset_shards]
-ray.get(futures)
+# dataset_shards = [my_dataset.shard(nb_shard, i) for i in range(nb_shard)]
+# futures = [index_shard.remote(dataset_shard) for dataset_shard in dataset_shards]
+# ray.get(futures)
 
 my_dataset.load_elasticsearch_index(index_name=index,
                                     host=the_host, port=the_port,

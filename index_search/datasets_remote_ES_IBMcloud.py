@@ -29,5 +29,8 @@ es = Elasticsearch(
 
 print(f"ES info {json.dumps(es.info(), indent=4 * ' ')}")
 
+# index_get_response = es.indices.get(index='oscar_unshuffled_deduplicated')
+# print(json.dumps(index_get_response, indent=4 * ' '))
+
 delete_response = es.indices.delete(index='oscar_unshuffled_deduplicated')
-print(json.dumps(delete_response))
+print(json.dumps(delete_response, indent=4 * ' '))

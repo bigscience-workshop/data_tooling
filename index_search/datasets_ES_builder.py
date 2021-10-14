@@ -1,22 +1,6 @@
 from datasets.packaged_modules.elasticsearch.elasticsearch import ElasticsearchBuilder
 import simplejson as json
 
-es_index_config = {
-    "settings": {
-        "number_of_shards": 1,
-        "analysis": {
-            "analyzer": {
-                "stop_standard": {"type": "standard", " stopwords": "_galician_"}
-            }
-        },
-    },
-    "mappings": {
-        "properties": {
-            "text": {"type": "text", "analyzer": "standard", "similarity": "BM25"}
-        }
-    },
-}
-
 ca_file = '/Users/gdupont/src/github.com/bigscience-workshop/data-tooling/index_search/ca.cert'
 with open('/Users/gdupont/src/github.com/bigscience-workshop/data-tooling/index_search/credentials.json') as f:
     credentials = json.load(f)
@@ -33,7 +17,7 @@ oscar_lang_code = "nn"
 elasticsearch_builder = ElasticsearchBuilder(
     host=the_host, port=the_port,
     es_username=username, es_psw=psw, ca_file=ca_file,
-    es_index_name=index_name, es_index_config=es_index_config,
+    es_index_name=index_name, es_index_config=None,
     query="mykje arbeid og slit"
 )
 
@@ -47,6 +31,8 @@ elasticsearch_builder = ElasticsearchBuilder(
 
 elasticsearch_builder.download_and_prepare()
 
-oscar_dataset = elasticsearch_builder.as_dataset()
-print(oscar_dataset)
+oscar_dataset_filtered = elasticsearch_builder.as_dataset()
+print(oscar_dataset_filtered)
+
+print(oscar_dataset_filtered.values())
 

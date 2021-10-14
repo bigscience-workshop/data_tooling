@@ -34,7 +34,10 @@ Improve datasets indexing capabilities
     - [x] enable re-connection to existing index in ES
     - [x] enable continuing indexing process
     - [x] ensure no duplicate with mmh3 hash
-- [ ] instantiate datasets from elasticsearch query
+- [x] instantiate datasets from elasticsearch query
+- [ ] clear cache when instantiating with new query
+- [ ] validate dataset info are propagated
+- [ ] check scalability 
 - [ ] allow export of search results in arrow for datasets or jsonl for export => specialized filter operation?
 - [ ] secure elasticsearch cluster: free read, protected write
 - [ ] allow update on the dataset to be reflected with index update
