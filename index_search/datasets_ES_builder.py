@@ -32,7 +32,9 @@ elasticsearch_builder = ElasticsearchBuilder(
 elasticsearch_builder.download_and_prepare()
 
 oscar_dataset_filtered = elasticsearch_builder.as_dataset()
-print(oscar_dataset_filtered)
+print(oscar_dataset_filtered.keys())
 
-print(oscar_dataset_filtered.values())
+first_split = next(iter(oscar_dataset_filtered))
 
+for i in range(0, 5):
+    print(f"- [#{oscar_dataset_filtered[first_split]['id'][i]}] {oscar_dataset_filtered[first_split]['text'][i]}")
