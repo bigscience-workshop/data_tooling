@@ -38,6 +38,6 @@ Improve datasets indexing capabilities
 - [x] clear cache when instantiating with new query
 - [ ] validate dataset info are propagated
 - [ ] check scalability 
-- [ ] allow export of search results in arrow for datasets or jsonl for export => specialized filter operation?
+- ~~allow export of search results in arrow for datasets or jsonl for export => specialized filter operation?~~
 - [ ] secure elasticsearch cluster: free read, protected write
-- [ ] allow update on the dataset to be reflected with index update
+- [x] allow update on the dataset to be reflected with index update
