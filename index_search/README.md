@@ -35,7 +35,7 @@ Improve datasets indexing capabilities
     - [x] enable continuing indexing process
     - [x] ensure no duplicate with mmh3 hash
 - [x] instantiate datasets from elasticsearch query
-- [ ] clear cache when instantiating with new query
+- [x] clear cache when instantiating with new query
 - [ ] validate dataset info are propagated
 - [ ] check scalability 
 - [ ] allow export of search results in arrow for datasets or jsonl for export => specialized filter operation?
