@@ -1,4 +1,4 @@
-# BERTING-OSCAR
+# BERTIN-OSCAR
 
 This is a copy of https://huggingface.co/bertin-project/bertin-roberta-base-spanish/tree/main.
 We will make changes in this directory to load and sample from OSCAR.
