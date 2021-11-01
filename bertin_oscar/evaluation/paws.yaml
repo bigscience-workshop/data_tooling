@@ -1,0 +1,54 @@
+name: BERTIN PAWS-X es
+project: bertin-eval
+enitity: versae
+program: run_glue.py
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args}
+method: grid
+metric:
+  name: eval/accuracy
+  goal: maximize
+parameters:
+  model_name_or_path:
+    values:
+    - bertin-project/bertin-base-gaussian-exp-512seqlen
+    - bertin-project/bertin-base-stepwise-exp-512seqlen
+    - bertin-project/bertin-base-random-exp-512seqlen
+    - bertin-project/bertin-base-gaussian
+    - bertin-project/bertin-base-stepwise
+    - bertin-project/bertin-base-random
+    - bertin-project/bertin-roberta-base-spanish
+    - flax-community/bertin-roberta-large-spanish
+    - BSC-TeMU/roberta-base-bne
+    - dccuchile/bert-base-spanish-wwm-cased
+    - bert-base-multilingual-cased
+  num_train_epochs:
+    values: [5]
+  task_name:
+    value: paws-x
+  dataset_name:
+    value: paws-x
+  dataset_config_name:
+    value: es
+  output_dir:
+    value: ./outputs
+  overwrite_output_dir:
+    value: true
+  max_seq_length:
+    value: 512
+  pad_to_max_length:
+    value: true
+  per_device_train_batch_size:
+    value: 16
+  per_device_eval_batch_size:
+    value: 16
+  save_total_limit:
+    value: 1
+  do_train:
+    value: true
+  do_eval:
+    value: true
+
