@@ -2,7 +2,7 @@
 Tools for managing datasets for governance and training.
 
 ## Issues we aim to address
-- How do we automatically curate datasets to create datasets that permit performant training on small to large scales, in accordance with BigScience ethical values?
+- How do we automatically curate data to create datasets that are performant and comply with BigScience ethical values?
 - How do we remediate a dataset for personally identifiable information without degrading performance?
 - How should we store and serve the dataset?
 - How do we store and serve meta-data in datasets?
