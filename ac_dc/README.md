@@ -1,4 +1,4 @@
-*Big Science - Automated Classification & Dataset Curation - AC⚡DC* 
+## Big Science - Automated Classification & Dataset Curation - AC/DC
 
 This is the data filtering code for BigScience.
 
