@@ -1,9 +1,11 @@
-"""Basic junk filtering and perplexity sampled dataset based on OSCAR v1."""
+"""Basic filtering of garbage and perplexity sampling for OSCAR v1."""
+
+import os
 
 import gzip
+import gzip
+import fsspec
 
-import datasets
-import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import numpy as np
 from numpy.random import default_rng
 import langid
@@ -13,14 +15,20 @@ from datasets import load_dataset
 from random import sample
 import os
 import multiprocessing
+from random import sample
+
 from transformers import AutoTokenizer
-import gzip
-import ftfy
-mt5_underscore= "▁"
-import fsspec, aiohttp, os
+
+from nltk.corpus import stopwords
+import langid
+import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
+
+import multiprocessing
+
   
 class OscarSampler:
-    """ based on bertin/mc4/mc4.py, except this code does not use HF's datasets for efficiency reasons """
+    """Based on bertin/mc4/mc4.py.
+    This code does not use HF's datasets for efficiency reasons."""
     
     langs = {
         "af": "Afrikaans",
@@ -191,147 +199,193 @@ class OscarSampler:
         "zh": "Chinese",
     }
 
+    stopwords_cutoff = 0.1
+    junk_ratio = 0.5
+    stopword_check = True
+    special_characters = "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-\'?,./<>!@#^&*()+-‑=:;`→¶'"
+
     #TODO - add params for other languages
-    params = {'en': {'stopwords_cutoff':0.1,'junk_ratio':0.5, 'stopword_check':True, 'strip_chars':"' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-\'?,./<>!@#^&*()+-‑=:;`→¶'", 'junk_chars':"' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-\'?,./<>!@#^&*()+-‑=:;`→¶'"}}
+    params = {'en': {'stopwords_cutoff': stopwords_cutoff,
+                     'junk_ratio': junk_ratio,
+                     'stopword_check': stopword_check,
+                     'strip_chars': special_characters,
+                     'junk_chars': special_characters}
+             }
     
-    def __init__(self, *args, writer_batch_size=None, **kwargs):
+    def __init__(self, **kwargs):
         self.sampling_method = kwargs.pop("sampling_method", "random")
         self.perplexity_model = kwargs.pop("perplexity_model", None)
         self.sampling_factor = kwargs.pop("sampling_factor", None)
         self.boundaries = kwargs.pop("boundaries", None)
-        self.seed = kwargs.pop("seed", None)
-        self.kwargs = kwargs
         if self.sampling_method:
             if self.sampling_method == "random":
                 self.should_keep_doc = self._should_keep_doc_random
             else:
                 # Loading 5-gram model
                 # http://dl.fbaipublicfiles.com/cc_net/lm/es.arpa.bin
-                logger.info("loading model = %s", self.perplexity_model)
+                print("loading model = %s", self.perplexity_model)
                 if self.sampling_method == "gaussian":
                     self.should_keep_doc = self._should_keep_doc_gaussian
                 else:
                     self.should_keep_doc = self._should_keep_doc_step
+        self.seed = kwargs.pop("seed", None)
+        self.kwargs = kwargs
               
     @staticmethod  
     def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
-      _BASE_DATA_URL_FORMAT_STR = ("https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/")
-      _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
-      base_data_url = _BASE_DATA_URL_FORMAT_STR.format(
-                shuffled=shuffled, language=language, deduplicated=deduplicated
-            )
-      checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(language=language)
-      with fsspec.open(checksum_url, encoding="utf-8") as f:
-        data_filenames = [line.decode().split("\t")[0] for line in f if line]
+        _BASE_DATA_URL_FORMAT_STR = ("https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/")
+        _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
+        base_data_url = _BASE_DATA_URL_FORMAT_STR.format(shuffled=shuffled,
+                                                         language=language,
+                                                         deduplicated=deduplicated)
+        checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(language=language)
+        with fsspec.open(checksum_url, encoding="utf-8") as f:
+            data_filenames = [line.decode().split("\t")[0] for line in f if line]
         return [base_data_url + data_filename for data_filename in data_filenames]
 
     @staticmethod  
     def _download_urls(urls):
-      for url in urls:
-        if not os.path.exists(url.split("/")[-1]):
-          os.system(f"wget {url}")
+        for url in urls:
+            if not os.path.exists(url.split("/")[-1]):
+                os.system(f"wget {url}")
 
     @staticmethod 
-    def check_good_sentence(s, stopwords, junk_dict, strip_chars, target_lang, stopwords_cutoff=0.1, junk_ratio=0.5, stopword_check=True, ):
-      #basic dejunk
-      s = s.lower().strip()
-      if not s: return False
-      jr = len([s2 for s2 in s if s2 in junk_dict])/len(s)
-      if jr >= junk_ratio:
-        return False
-      sArr = [s2.strip(strip_chars) for s2 in s.lower().split()]
-      if len(sArr) == 0:
-        return False
-      #stopword check
-      if stopword_check and len([s2 for s2 in sArr if s2 in stopwords])/len(sArr) < stopwords_cutoff:
-        return False
-      else:
-        #langid check
-        try:
-          lang =  langid.classify(s)[0]
-        except:
-          lang = ""
-        return lang == target_lang
-
+    def check_good_sentence(sentence,
+                            stopwords,
+                            junk_dict,
+                            strip_chars,
+                            target_lang,
+                            stopwords_cutoff,
+                            junk_ratio,
+                            stopword_check):
+        #basic dejunk
+        sent = sentence.lower().strip()
+        if not sent:
+            return False
+        jr = len([char for char in sent if char in junk_dict]) / len(sent)
+        if jr >= junk_ratio:
+            return False
+        words = [word.strip(strip_chars) for word in sent.split()]
+        if len(words) == 0:
+            return False
+        #stopword check
+        if stopword_check:
+            stopword_cond = (len([word for word in words if word in stopwords]) / len(words) < stopwords_cutoff)
+            if stopword_cond:
+                return False
+        else:
+            #langid check
+            try:
+                lang =  langid.classify(sent)[0]
+            except:
+                lang = ""
+            return lang == target_lang
 
     @staticmethod
-    def filter_and_tok_cjk(url, target_lang, sampling_factor, boundaries, should_keep_doc, perplexity_model, seed, stopwords_cutoff=0.1, junk_ratio=0.5, stopword_check=True, strip_chars="' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-\'?,./<>!@#^&*()+-‑=:;`→¶'", junk_chars="' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-\'?,./<>!@#^&*()+-‑=:;`→¶'"):
-      if perplexity_model:
-        pp_model = kenlm.Model(perplexity_model)
-      else:
-        pp_model = None
-      if seed is not None:
-        rng = default_rng(seed)
-      else:
-        rng = default_rng()
-      stopwords = set(stopwords.words(OscarSampler.langs[taret_lang].lower()))
-      junk_dict=dict([(a,1) for a in junk_chars])
-      if target_lang in ('ja', 'zh', 'ko'):
-        tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
-      _download_urls([url])
-      file = url.split("/")[-1]
-      with open(file.replace("txt.gz", "")+".sample_filtered.txt", "w", encoding="utf8") as f:
-        with gzip.open(file, "rb") as f2:
-          for id_, line in enumerate(f2):
-            line = line.decode().strip()
-            if target_lang in ('ja', 'zh', 'ko'):
-              line = " ".join(tokenizer.tokenize(line)).replace(mt5_underscore+" ", mt5_underscore)
-            #We assume OSCAR has been mostly deduped. But we could do a form of near dedup here. 
-            #TODO - if is_dup(line): continue
-            #now filter for basic junk
-            if check_good_sentence(line, stopwords, junk_dict, strip_chars, target_lang, stopwords_cutoff, junk_ratio, stopword_check):
-              # now do perplexity sampling
-              if should_keep_doc(
-                  line,
-                  rng=rng,
-                  factor=sampling_factor,
-                  boundaries=boundaries, 
-                  pp_model=pp_model):
-                f.write(line+"\n")
-      os.unlink(file)
+    def filter_and_tok_cjk(url,
+                           target_lang,
+                           sampling_factor,
+                           boundaries,
+                           should_keep_doc,
+                           perplexity_model,
+                           seed,
+                           stopwords_cutoff,
+                           junk_ratio,
+                           stopword_check,
+                           strip_chars,
+                           junk_chars):
+        mt5_underscore = "_"
+        if seed is not None:
+            rng = default_rng(seed)
+        else:
+            rng = default_rng()
+        if perplexity_model:
+            pp_model = kenlm.Model(perplexity_model)
+        else:
+            pp_model = None
+        stopwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
+        junk_dict = dict([(a,1) for a in junk_chars])
+        if target_lang in ('ja', 'zh', 'ko'):
+            tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
+        OscarSampler._download_urls([url])
+        file = url.split("/")[-1]
+        with open(file.replace("txt.gz", "")+".sample_filtered.txt", "w", encoding="utf8") as f:
+            with gzip.open(file, "rb") as f2:
+                for id_, line in enumerate(f2):
+                    line = line.decode().strip()
+                    if target_lang in ('ja', 'zh', 'ko'):
+                        line = " ".join(tokenizer.tokenize(line)).replace(mt5_underscore+" ", mt5_underscore)
+                    if OscarSampler.check_good_sentence(line,
+                                                        stopwords,
+                                                        junk_dict,
+                                                        strip_chars,
+                                                        target_lang,
+                                                        stopwords_cutoff,
+                                                        junk_ratio,
+                                                        stopword_check):
+                        # now do perplexity sampling
+                        if should_keep_doc(line,
+                                           rng=rng,
+                                           factor=sampling_factor,
+                                           boundaries=boundaries,
+                                           pp_model=pp_model):
+                            f.write(line+"\n")
+        os.unlink(file)
 
-
-    def sample_filter(self, target_lang, force=True, sample_shard=5):
+    def sample_filter(self, target_lang, sample_shard=5):
         if target_lang in self.params:
-          param = self.params[target_lang]
+            param = self.params[target_lang]
         else:
-          param = self.params['en']
-        stopwords_cutoff=param['stopwords_cutoff']
-        junk_ratio=param['junk_ratio']
-        stopword_check=param['stopword_check']
-        strip_chars=param['strip_chars']
-        junk_chars=param['junk_chars']
+            param = self.params['en']
+        stopwords_cutoff = param['stopwords_cutoff']
+        junk_ratio = param['junk_ratio']
+        stopword_check = param['stopword_check']
+        strip_chars = param['strip_chars']
+        junk_chars = param['junk_chars']
         if target_lang in self.langs:
-          lst = self.get_oscar_urls(target_lang)
-          if sample_shard and len(lst) > sample_shard:
-            lst = sample(lst,sample_shard)
-          #TODO, we should create 
-          processes = [multiprocessing.Process(target=filter_and_tok_cjk, args=(url, target_lang, self.sampling_factor, self.boundaries, self.should_keep_doc, self.perplexity_model, self.seed, stopwords_cutoff, junk_ratio, stopword_check, strip_chars, junk_chars )) for url in lst]
-          for process in processes:
-            process.start()
-          for process in processes:
-            process.join()
-          os.system(f"cat {target_lang}_*.sample_filtered.txt > {target_lang}.sample_filtered.txt")
-          os.system(f"gzip {target_lang}.sample_filtered.txt")
-          return f"{target_lang}.sample_filtered.txt.gz" #TODO put this in a data folder.
+            lst = self.get_oscar_urls(target_lang)
+            if sample_shard and len(lst) > sample_shard:
+                lst = sample(lst,sample_shard)
+            #TODO, we should create 
+            processes = [multiprocessing.Process(target=OscarSampler.filter_and_tok_cjk,
+                                                 args=(url,
+                                                       target_lang,
+                                                       self.sampling_factor,
+                                                       self.boundaries,
+                                                       self.should_keep_doc,
+                                                       self.perplexity_model,
+                                                       self.seed,
+                                                       stopwords_cutoff,
+                                                       junk_ratio,
+                                                       stopword_check,
+                                                       strip_chars,
+                                                       junk_chars ))
+                         for url in lst]
+            for process in processes:
+                process.start()
+            for process in processes:
+                process.join()
+            os.system(f"cat {target_lang}_*.sample_filtered.txt > {target_lang}.sample_filtered.txt")
+            os.system(f"gzip {target_lang}.sample_filtered.txt")
+            return f"{target_lang}.sample_filtered.txt.gz" #TODO put this in a data folder.
         else:
-          print (f"{target_lang} not supported")
-          return ""
+            print (f"{target_lang} not supported")
+            return ""
       
     @staticmethod
     def create_knlm_model(lang='pt'):
-      if not os.path.exists("/content/lmplz"):
-        os.system("cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/")
-        os.system("chmod ugo+x /content/lmplz")
-      file = tokenize_oscar_subset(lang, force=False)
-      file2 = os.path.split(file)[-1]
-      if not os.path.exists(file2) and not os.path.exists(file2.replace(".gz", "")):
-        os.system(f"cp {file} ./{file2}")
-      if os.path.exists(file2):
-        os.system(f"gunzip ./{file2}")
-      file2 = file2.replace(".gz", "")
-      os.system(f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}")
-      os.system(f"mv {lang}.arpa /content/drive/Shareddrives/BigScience")
+        if not os.path.exists("/content/lmplz"):
+            os.system("cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/")
+            os.system("chmod ugo+x /content/lmplz")
+        file = tokenize_oscar_subset(lang, force=False)
+        file2 = os.path.split(file)[-1]
+        if not os.path.exists(file2) and not os.path.exists(file2.replace(".gz", "")):
+            os.system(f"cp {file} ./{file2}")
+        if os.path.exists(file2):
+            os.system(f"gunzip ./{file2}")
+        file2 = file2.replace(".gz", "")
+        os.system(f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}")
+        os.system(f"mv {lang}.arpa /content/drive/Shareddrives/BigScience")
 
     @staticmethod
     def get_perplexity(doc, pp_model):
@@ -346,7 +400,7 @@ class OscarSampler:
     @staticmethod
     def _should_keep_doc_step(doc, rng, factor=1.5e5, boundaries=None, **kwargs):
         pp_model = width = kwargs.get("pp_model")
-        perplexity = get_perplexity(doc, pp_model)
+        perplexity = OscarSampler.get_perplexity(doc, pp_model)
         if boundaries is None:
             boundaries = [536394.99320948, 662247.50212365, 919250.87225178]
         if perplexity <= boundaries[0]:
@@ -364,7 +418,7 @@ class OscarSampler:
     def _should_keep_doc_gaussian(doc, rng, factor=0.78, boundaries=None, **kwargs):
         pp_model = width = kwargs.get("pp_model")
         width = kwargs.get("width", 9 / 2)  # width (spread) of the exponential curve
-        perplexity = get_perplexity(doc, pp_model)
+        perplexity = OscarSampler.get_perplexity(doc, pp_model)
         if boundaries is not None:
             m = boundaries[1]
         else:
