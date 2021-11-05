@@ -1,31 +1,20 @@
 """Basic filtering of garbage and perplexity sampling for OSCAR v1."""
 
-import os
-
 import gzip
-import gzip
-import fsspec
-
-import numpy as np
-from numpy.random import default_rng
-import langid
-from nltk.corpus import stopwords
-import os
-from datasets import load_dataset
-from random import sample
-import os
 import multiprocessing
+import os
 from random import sample
 
+import fsspec
+import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
+import langid
+import numpy as np
+from datasets import load_dataset
+from nltk.corpus import stopwords
+from numpy.random import default_rng
 from transformers import AutoTokenizer
 
-from nltk.corpus import stopwords
-import langid
-import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
-import multiprocessing
-
-  
 class OscarSampler:
     """Based on bertin/mc4/mc4.py.
     This code does not use HF's datasets for efficiency reasons."""
