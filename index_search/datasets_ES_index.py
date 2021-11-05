@@ -1,5 +1,4 @@
 import simplejson as json
-import ssl
 
 from datasets import load_dataset
 import ray

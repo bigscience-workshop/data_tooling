@@ -16,10 +16,9 @@
 
 from dataclasses import asdict
 from collections.abc import Iterable
-from collections import OrderedDict
-from dataclasses import dataclass, field, fields
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from dataclasses import field
+from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -55,15 +54,12 @@ from datasets.filesystems import extract_path_from_uri, is_remote_filesystem
 from datasets.utils import logging, map_nested
         
 from torch import nn
-import pickle
-import glob, shutil, os, time
-import zipfile
+import shutil, os
 import  fsspec.compression
 
 import dataset
 import six
 from six.moves.urllib.parse import parse_qs, urlparse
-import threading
 
 from sqlalchemy.exc import ResourceClosedError
 from sqlalchemy import create_engine
@@ -75,24 +71,13 @@ from sqlalchemy.engine.reflection import Inspector
 from dataset.types import Types
 from dataset.util import DatasetException, ResultIter, QUERY_STEP, row_type, normalize_table_name, convert_row
 
-import random
-import socket
 import copy
 import itertools
-from datetime import datetime, timedelta
-import signal
 import atexit
-import warnings
 
 from pandas import DataFrame, read_csv
-import platform
-import subprocess
 import tempfile
-from threading import Timer, Thread
-from multiprocessing import Process
-import subprocess
 import requests
-import multiprocessing
 from functools import partial
 
 import sys, os
