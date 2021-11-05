@@ -9,7 +9,6 @@ import numpy as np
 from numpy.random import default_rng
 import langid
 from nltk.corpus import stopwords
-import json
 import os
 from datasets import load_dataset
 from random import sample
