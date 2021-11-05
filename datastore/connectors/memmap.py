@@ -1,5 +1,5 @@
 import numpy as np
-import sys, os
+import os
 
 #################################################################################################################################
 # Code for utilities related Dask distributed arrays and np.memmap based array access

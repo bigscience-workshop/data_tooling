@@ -1,7 +1,6 @@
 """Basic junk filtering and perplexity sampled dataset based on OSCAR v1."""
 
 import gzip
-import json
 
 import datasets
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
@@ -9,11 +8,10 @@ import numpy as np
 from numpy.random import default_rng
 import langid
 from nltk.corpus import stopwords
-import json
 import os
 from datasets import load_dataset
 from random import sample
-import glob, os
+import os
 import multiprocessing
 from transformers import AutoTokenizer
 import gzip
