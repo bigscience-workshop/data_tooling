@@ -7,6 +7,7 @@ from tqdm import tqdm
 def pp(log_score, length):
     return 10.0 ** (-log_score / length)
 
+
 # http://dl.fbaipublicfiles.com/cc_net/lm/es.arpa.bin
 model = kenlm.Model("es.arpa.bin")
 mc4 = load_dataset("mc4", "es", streaming=True)

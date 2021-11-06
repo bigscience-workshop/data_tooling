@@ -1,0 +1,3 @@
+[tool.isort]
+profile = 'black'
+treat_comments_as_code = "# %%"

@@ -1,4 +1,4 @@
-# Extensions to Huggingface's datasets 
+# Extensions to Huggingface's datasets
 
 Creates a datastore that interconnects to sqlite and memmap backends.
 
@@ -13,4 +13,3 @@ python datastore/tests/test.py
 ```
 
 ## TODO list
-

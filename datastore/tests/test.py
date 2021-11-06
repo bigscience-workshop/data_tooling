@@ -1,69 +1,83 @@
-import sys
 import os
-import numpy as np
-from datasets import load_dataset
-import fsspec, requests, aiohttp
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir, os.path.pardir, os.path.pardir)))
-                                      
-from data_tooling.datastore.datastore_base import *
+import sys
 
+import aiohttp
+import fsspec
+import numpy as np
+import requests
+from datasets import load_dataset
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), os.path.pardir, os.path.pardir, os.path.pardir
+        )
+    )
+)
+
+from data_tooling.datastore.datastore_base import *
 
 if __name__ == "__main__":
 
     args = sys.argv[1:]
     if not args:
-      exit()
+        exit()
 
     if "-test_sql_basic" in args:
-      db = DatabaseExt("sqlite://")
-      table = db['user']
-      assert table.exists == False
-      assert table.has_column('id') == False
-      assert table.insert(dict(name='John Doe', age=37)) == 0
-      assert table.exists == True
-      assert table.has_column('id') == True
-      assert table.insert(dict(name='Jane Doe', age=20)) == 1
-      jane  = table.find_one(name='Jane Doe')
-      assert jane['id'] == 1
+        db = DatabaseExt("sqlite://")
+        table = db["user"]
+        assert table.exists == False
+        assert table.has_column("id") == False
+        assert table.insert(dict(name="John Doe", age=37)) == 0
+        assert table.exists == True
+        assert table.has_column("id") == True
+        assert table.insert(dict(name="Jane Doe", age=20)) == 1
+        jane = table.find_one(name="Jane Doe")
+        assert jane["id"] == 1
 
-      db = DatabaseExt("sqlite://")
-      table = db['user']
-      rows = [dict(name='Dolly')] * 10
-      table.insert_many(rows)
-      assert list(table.find(id={'in':range(0, 2)}))[-1]['id'] == 1
+        db = DatabaseExt("sqlite://")
+        table = db["user"]
+        rows = [dict(name="Dolly")] * 10
+        table.insert_many(rows)
+        assert list(table.find(id={"in": range(0, 2)}))[-1]["id"] == 1
 
-      
     if "-test_memmap" in args:
-       datastore = Datastore.from_mmap('embed', [1000, 512, 512], )
-       print (datastore)
-       datastore = Datastore.from_dataset(load_dataset("oscar", "unshuffled_deduplicated_sw")['train'])
-       datastore = datastore.add_mmap('embed', [-1, 512, 512], )
-       datastore = datastore.add_mmap('token', [-1, 512], dtype=np.int32)
-       assert (datastore['embed'][0].shape) == (512, 512)
-       datastore['embed'][0][0] = 0.0
-       assert np.mean(datastore['embed'][0][0]) == 0
-       datastore['embed'][0][0] = 1.0
-       assert np.mean(datastore['embed'][0][0]) == 1.0
-       assert set(datastore[0].keys()) == set(['id', 'text', 'embed', 'token'])
-       assert len(datastore['text']) == 24803
-       assert len(datastore[0:10]['text']) == 10
-       assert (datastore[0:10]['token'].shape) == (10, 512)
-       print (datastore)
+        datastore = Datastore.from_mmap(
+            "embed",
+            [1000, 512, 512],
+        )
+        print(datastore)
+        datastore = Datastore.from_dataset(
+            load_dataset("oscar", "unshuffled_deduplicated_sw")["train"]
+        )
+        datastore = datastore.add_mmap(
+            "embed",
+            [-1, 512, 512],
+        )
+        datastore = datastore.add_mmap("token", [-1, 512], dtype=np.int32)
+        assert (datastore["embed"][0].shape) == (512, 512)
+        datastore["embed"][0][0] = 0.0
+        assert np.mean(datastore["embed"][0][0]) == 0
+        datastore["embed"][0][0] = 1.0
+        assert np.mean(datastore["embed"][0][0]) == 1.0
+        assert set(datastore[0].keys()) == {"id", "text", "embed", "token"}
+        assert len(datastore["text"]) == 24803
+        assert len(datastore[0:10]["text"]) == 10
+        assert (datastore[0:10]["token"].shape) == (10, 512)
+        print(datastore)
 
     if "-test_move_to_sql" in args:
-        data = load_dataset("oscar", "unshuffled_deduplicated_yo")['train']
+        data = load_dataset("oscar", "unshuffled_deduplicated_yo")["train"]
         datastore = Datastore.from_dataset(data)
         Datastore.db_connection = {}
         Datastore.db_table = {}
-        datastore= datastore.move_to_sql('text')
+        datastore = datastore.move_to_sql("text")
 
     if "-test_sqlite_fs" in args:
-      db = DatabaseExt("sqlite:///test.db")
-      books_table = db['books']
-      books_table.create_fts_index_column('text', stemmer="unicode61")
-      for t in """In Which We Are Introduced to Winnie the Pooh and Some Bees and the Stories Begin
+        db = DatabaseExt("sqlite:///test.db")
+        books_table = db["books"]
+        books_table.create_fts_index_column("text", stemmer="unicode61")
+        for t in """In Which We Are Introduced to Winnie the Pooh and Some Bees and the Stories Begin
 Winnie-the-Pooh is out of honey, so he and Christopher Robin attempt to trick some bees out of theirs, with disastrous results.
 In Which Pooh Goes Visiting and Gets into a Tight Place
 Pooh visits Rabbit, but eats so much while in Rabbit's house that he gets stuck in Rabbit's door on the way out.
@@ -134,15 +148,22 @@ As the trio searches for the Horcruxes, they learn details about an ancient prop
 The book culminates in the Battle of Hogwarts. Harry, Ron and Hermione, in conjunction with members of the Order of the Phoenix and many of the teachers and students, defend Hogwarts from Voldemort, his Death Eaters, and various dangerous magical creatures. Several major characters are killed in the first wave of the battle, including Remus Lupin and Fred Weasley, Ron's older brother. After learning that he himself is a Horcrux, Harry surrenders himself to Voldemort in the Forbidden Forest, who casts a killing curse (Avada Kedavra) at him. The defenders of Hogwarts do not surrender after learning of Harry's presumed death and continue to fight on. Harry awakens and faces Voldemort, whose Horcruxes have all been destroyed. In the final battle, Voldemort's killing curse rebounds off Harry's defensive spell (Expelliarmus), killing Voldemort.
 
 An epilogue "Nineteen Years Later"[21] describes the lives of the surviving characters and the effects of Voldemort's death on the Wizarding World. In the epilogue, Harry and Ginny are married with three children, and Ron and Hermione are married with two children.[22]
-""".split("\n"):
-        if t.strip():
-            books_table.insert({'text': t})
-      print(list(books_table.find(id={'in': (3,4)})))
-      print(list(books_table.find()))
-      print("Bottle*", list(books_table.find(_fts_query=[('text','Bottle*')])))
-      print("robin", list(books_table.find(_fts_query=[('text','robin')])))
-      print("Home", list(books_table.find(_fts_query=[('text','Home')])))
-      print("notic*", list(books_table.find(_fts_query=[('text','notic*')])))
-      print("sign* AND notic*", list(books_table.find(_fts_query=[('text','sign* AND notic*')])))
-      print("sign AND notic*", list(books_table.find(_fts_query=[('text','sign AND notic*')])))
-      
+""".split(
+            "\n"
+        ):
+            if t.strip():
+                books_table.insert({"text": t})
+        print(list(books_table.find(id={"in": (3, 4)})))
+        print(list(books_table.find()))
+        print("Bottle*", list(books_table.find(_fts_query=[("text", "Bottle*")])))
+        print("robin", list(books_table.find(_fts_query=[("text", "robin")])))
+        print("Home", list(books_table.find(_fts_query=[("text", "Home")])))
+        print("notic*", list(books_table.find(_fts_query=[("text", "notic*")])))
+        print(
+            "sign* AND notic*",
+            list(books_table.find(_fts_query=[("text", "sign* AND notic*")])),
+        )
+        print(
+            "sign AND notic*",
+            list(books_table.find(_fts_query=[("text", "sign AND notic*")])),
+        )
