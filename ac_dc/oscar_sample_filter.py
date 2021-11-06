@@ -18,7 +18,7 @@ from transformers import AutoTokenizer
 class OscarSampler:
     """Based on bertin/mc4/mc4.py.
     This code does not use HF's datasets for efficiency reasons."""
-    
+
     langs = {
         "af": "Afrikaans",
         "als": "Tosk Albanian",
@@ -125,7 +125,7 @@ class OscarSampler:
         "my": "Burmese",
         "myv": "Erzya",
         "mzn": "Mazanderani",
-        "nah": "Nahuatl", # languages
+        "nah": "Nahuatl",  # languages
         "nap": "Neapolitan",
         "nds": "Low German",
         "ne": "Nepali",
@@ -191,16 +191,21 @@ class OscarSampler:
     stopwords_cutoff = 0.1
     junk_ratio = 0.5
     stopword_check = True
-    special_characters = "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-\'?,./<>!@#^&*()+-‑=:;`→¶'"
+    special_characters = (
+        "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
+    )
 
-    #TODO - add params for other languages
-    params = {'en': {'stopwords_cutoff': stopwords_cutoff,
-                     'junk_ratio': junk_ratio,
-                     'stopword_check': stopword_check,
-                     'strip_chars': special_characters,
-                     'junk_chars': special_characters}
-             }
-    
+    # TODO - add params for other languages
+    params = {
+        "en": {
+            "stopwords_cutoff": stopwords_cutoff,
+            "junk_ratio": junk_ratio,
+            "stopword_check": stopword_check,
+            "strip_chars": special_characters,
+            "junk_chars": special_characters,
+        }
+    }
+
     def __init__(self, **kwargs):
         self.sampling_method = kwargs.pop("sampling_method", "random")
         self.perplexity_model = kwargs.pop("perplexity_model", None)
@@ -219,35 +224,39 @@ class OscarSampler:
                     self.should_keep_doc = self._should_keep_doc_step
         self.seed = kwargs.pop("seed", None)
         self.kwargs = kwargs
-              
-    @staticmethod  
+
+    @staticmethod
     def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
-        _BASE_DATA_URL_FORMAT_STR = ("https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/")
+        _BASE_DATA_URL_FORMAT_STR = "https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/"
         _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
-        base_data_url = _BASE_DATA_URL_FORMAT_STR.format(shuffled=shuffled,
-                                                         language=language,
-                                                         deduplicated=deduplicated)
-        checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(language=language)
+        base_data_url = _BASE_DATA_URL_FORMAT_STR.format(
+            shuffled=shuffled, language=language, deduplicated=deduplicated
+        )
+        checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(
+            language=language
+        )
         with fsspec.open(checksum_url, encoding="utf-8") as f:
             data_filenames = [line.decode().split("\t")[0] for line in f if line]
         return [base_data_url + data_filename for data_filename in data_filenames]
 
-    @staticmethod  
+    @staticmethod
     def _download_urls(urls):
         for url in urls:
             if not os.path.exists(url.split("/")[-1]):
                 os.system(f"wget {url}")
 
-    @staticmethod 
-    def check_good_sentence(sentence,
-                            stopwords,
-                            junk_dict,
-                            strip_chars,
-                            target_lang,
-                            stopwords_cutoff,
-                            junk_ratio,
-                            stopword_check):
-        #basic dejunk
+    @staticmethod
+    def check_good_sentence(
+        sentence,
+        stopwords,
+        junk_dict,
+        strip_chars,
+        target_lang,
+        stopwords_cutoff,
+        junk_ratio,
+        stopword_check,
+    ):
+        # basic dejunk
         sent = sentence.lower().strip()
         if not sent:
             return False
@@ -257,32 +266,37 @@ class OscarSampler:
         words = [word.strip(strip_chars) for word in sent.split()]
         if len(words) == 0:
             return False
-        #stopword check
+        # stopword check
         if stopword_check:
-            stopword_cond = (len([word for word in words if word in stopwords]) / len(words) < stopwords_cutoff)
+            stopword_cond = (
+                len([word for word in words if word in stopwords]) / len(words)
+                < stopwords_cutoff
+            )
             if stopword_cond:
                 return False
         else:
-            #langid check
+            # langid check
             try:
-                lang =  langid.classify(sent)[0]
+                lang = langid.classify(sent)[0]
             except:
                 lang = ""
             return lang == target_lang
 
     @staticmethod
-    def filter_and_tok_cjk(url,
-                           target_lang,
-                           sampling_factor,
-                           boundaries,
-                           should_keep_doc,
-                           perplexity_model,
-                           seed,
-                           stopwords_cutoff,
-                           junk_ratio,
-                           stopword_check,
-                           strip_chars,
-                           junk_chars):
+    def filter_and_tok_cjk(
+        url,
+        target_lang,
+        sampling_factor,
+        boundaries,
+        should_keep_doc,
+        perplexity_model,
+        seed,
+        stopwords_cutoff,
+        junk_ratio,
+        stopword_check,
+        strip_chars,
+        junk_chars,
+    ):
         mt5_underscore = "_"
         if seed is not None:
             rng = default_rng(seed)
@@ -293,78 +307,96 @@ class OscarSampler:
         else:
             pp_model = None
         stopwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
-        junk_dict = dict([(a,1) for a in junk_chars])
-        if target_lang in ('ja', 'zh', 'ko'):
+        junk_dict = {a: 1 for a in junk_chars}
+        if target_lang in ("ja", "zh", "ko"):
             tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
         OscarSampler._download_urls([url])
         file = url.split("/")[-1]
-        with open(file.replace("txt.gz", "")+".sample_filtered.txt", "w", encoding="utf8") as f:
+        with open(
+            file.replace("txt.gz", "") + ".sample_filtered.txt", "w", encoding="utf8"
+        ) as f:
             with gzip.open(file, "rb") as f2:
                 for id_, line in enumerate(f2):
                     line = line.decode().strip()
-                    if target_lang in ('ja', 'zh', 'ko'):
-                        line = " ".join(tokenizer.tokenize(line)).replace(mt5_underscore+" ", mt5_underscore)
-                    if OscarSampler.check_good_sentence(line,
-                                                        stopwords,
-                                                        junk_dict,
-                                                        strip_chars,
-                                                        target_lang,
-                                                        stopwords_cutoff,
-                                                        junk_ratio,
-                                                        stopword_check):
+                    if target_lang in ("ja", "zh", "ko"):
+                        line = " ".join(tokenizer.tokenize(line)).replace(
+                            mt5_underscore + " ", mt5_underscore
+                        )
+                    if OscarSampler.check_good_sentence(
+                        line,
+                        stopwords,
+                        junk_dict,
+                        strip_chars,
+                        target_lang,
+                        stopwords_cutoff,
+                        junk_ratio,
+                        stopword_check,
+                    ):
                         # now do perplexity sampling
-                        if should_keep_doc(line,
-                                           rng=rng,
-                                           factor=sampling_factor,
-                                           boundaries=boundaries,
-                                           pp_model=pp_model):
-                            f.write(line+"\n")
+                        if should_keep_doc(
+                            line,
+                            rng=rng,
+                            factor=sampling_factor,
+                            boundaries=boundaries,
+                            pp_model=pp_model,
+                        ):
+                            f.write(line + "\n")
         os.unlink(file)
 
     def sample_filter(self, target_lang, sample_shard=5):
         if target_lang in self.params:
             param = self.params[target_lang]
         else:
-            param = self.params['en']
-        stopwords_cutoff = param['stopwords_cutoff']
-        junk_ratio = param['junk_ratio']
-        stopword_check = param['stopword_check']
-        strip_chars = param['strip_chars']
-        junk_chars = param['junk_chars']
+            param = self.params["en"]
+        stopwords_cutoff = param["stopwords_cutoff"]
+        junk_ratio = param["junk_ratio"]
+        stopword_check = param["stopword_check"]
+        strip_chars = param["strip_chars"]
+        junk_chars = param["junk_chars"]
         if target_lang in self.langs:
             lst = self.get_oscar_urls(target_lang)
             if sample_shard and len(lst) > sample_shard:
-                lst = sample(lst,sample_shard)
-            #TODO, we should create 
-            processes = [multiprocessing.Process(target=OscarSampler.filter_and_tok_cjk,
-                                                 args=(url,
-                                                       target_lang,
-                                                       self.sampling_factor,
-                                                       self.boundaries,
-                                                       self.should_keep_doc,
-                                                       self.perplexity_model,
-                                                       self.seed,
-                                                       stopwords_cutoff,
-                                                       junk_ratio,
-                                                       stopword_check,
-                                                       strip_chars,
-                                                       junk_chars ))
-                         for url in lst]
+                lst = sample(lst, sample_shard)
+            # TODO, we should create
+            processes = [
+                multiprocessing.Process(
+                    target=OscarSampler.filter_and_tok_cjk,
+                    args=(
+                        url,
+                        target_lang,
+                        self.sampling_factor,
+                        self.boundaries,
+                        self.should_keep_doc,
+                        self.perplexity_model,
+                        self.seed,
+                        stopwords_cutoff,
+                        junk_ratio,
+                        stopword_check,
+                        strip_chars,
+                        junk_chars,
+                    ),
+                )
+                for url in lst
+            ]
             for process in processes:
                 process.start()
             for process in processes:
                 process.join()
-            os.system(f"cat {target_lang}_*.sample_filtered.txt > {target_lang}.sample_filtered.txt")
+            os.system(
+                f"cat {target_lang}_*.sample_filtered.txt > {target_lang}.sample_filtered.txt"
+            )
             os.system(f"gzip {target_lang}.sample_filtered.txt")
-            return f"{target_lang}.sample_filtered.txt.gz" #TODO put this in a data folder.
+            return f"{target_lang}.sample_filtered.txt.gz"  # TODO put this in a data folder.
         else:
-            print (f"{target_lang} not supported")
+            print(f"{target_lang} not supported")
             return ""
-      
+
     @staticmethod
-    def create_knlm_model(lang='pt'):
+    def create_knlm_model(lang="pt"):
         if not os.path.exists("/content/lmplz"):
-            os.system("cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/")
+            os.system(
+                "cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/"
+            )
             os.system("chmod ugo+x /content/lmplz")
         file = tokenize_oscar_subset(lang, force=False)
         file2 = os.path.split(file)[-1]
@@ -373,7 +405,9 @@ class OscarSampler:
         if os.path.exists(file2):
             os.system(f"gunzip ./{file2}")
         file2 = file2.replace(".gz", "")
-        os.system(f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}")
+        os.system(
+            f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}"
+        )
         os.system(f"mv {lang}.arpa /content/drive/Shareddrives/BigScience")
 
     @staticmethod
@@ -415,7 +449,7 @@ class OscarSampler:
         exponential = np.exp((-1 / width) * ((perplexity - m) / m) ** 2)
         weighted_perplexity = factor * exponential
         return rng.uniform() < weighted_perplexity
-        
+
     @staticmethod
     def _should_keep_doc_random(doc, rng, factor=None, boundaries=None, **kwargs):
         if factor is None:

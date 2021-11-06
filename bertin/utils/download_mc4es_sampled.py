@@ -1,5 +1,5 @@
-import io
 import gzip
+import io
 import json
 import sys
 

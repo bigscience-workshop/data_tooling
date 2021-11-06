@@ -1,3 +1,4 @@
+#! /bin/bash
 # From https://arxiv.org/pdf/1907.11692.pdf for base model
 python -c "import jax; print('TPUs', jax.device_count())"
 python ./run_mlm_flax_stream.py \

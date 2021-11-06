@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import kenlm
-from datasets import load_dataset
-from tqdm import tqdm
-import pandas as pd
 import numpy as np
+import pandas as pd
+from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
-
+from tqdm import tqdm
 
 TOTAL_SENTENCES = 20000
+
+
 def pp(log_score, length):
     return 10.0 ** (-log_score / length)
 
@@ -39,7 +40,9 @@ for sample in tqdm(mc4["train"].shuffle(buffer_size=100_000), total=416057992):
             break
     if count == TOTAL_SENTENCES:
         embeddings = np.array(embeddings)
-        df = pd.DataFrame({"sentence": sentences, "length": lenghts, "perplexity": perplexities})
+        df = pd.DataFrame(
+            {"sentence": sentences, "length": lenghts, "perplexity": perplexities}
+        )
         for dim in range(embedding_shape):
             df[f"dim_{dim}"] = embeddings[:, dim]
         df.to_csv("mc4-es-perplexity-sentences.tsv", index=None, sep="\t")

@@ -9,7 +9,6 @@ import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import numpy as np
 from numpy.random import default_rng
 
-
 logger = datasets.logging.get_logger(__name__)
 
 
@@ -389,9 +388,13 @@ class Mc4(datasets.GeneratorBasedBuilder):
         else:
             validation_downloaded_files = dl_manager.download(data_urls["validation"])
         return [
-            datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepaths": train_downloaded_files}),
             datasets.SplitGenerator(
-                name=datasets.Split.VALIDATION, gen_kwargs={"filepaths": validation_downloaded_files}
+                name=datasets.Split.TRAIN,
+                gen_kwargs={"filepaths": train_downloaded_files},
+            ),
+            datasets.SplitGenerator(
+                name=datasets.Split.VALIDATION,
+                gen_kwargs={"filepaths": validation_downloaded_files},
             ),
         ]
 
@@ -418,7 +421,8 @@ class Mc4(datasets.GeneratorBasedBuilder):
                                     example["text"],
                                     factor=self.sampling_factor,
                                     boundaries=self.boundaries,
-                                    **self.kwargs):
+                                    **self.kwargs,
+                                ):
                                     yield id_, example
                                     id_ += 1
                     else:

@@ -1,8 +1,10 @@
 import json
+
 import kenlm
 from tqdm import tqdm
 
 model = kenlm.Model("../es.arpa.bin")
+
 
 def get_perplexity(doc):
     doc_log_score, doc_length = 0, 0
@@ -12,6 +14,7 @@ def get_perplexity(doc):
         doc_log_score += log_score
         doc_length += length
     return 10.0 ** (-doc_log_score / doc_length)
+
 
 with open("mc4-es-train-50M-stats.csv", "w") as csv:
     with open("mc4-es-train-50M-steps.jsonl", "r") as data:
