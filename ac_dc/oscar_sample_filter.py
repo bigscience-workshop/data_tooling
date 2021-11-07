@@ -192,7 +192,7 @@ class OscarSampler:
     junk_ratio = 0.5
     stopword_check = True
     special_characters = (
-        "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
+        "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'€"
     )
 
     # TODO - add params for other languages
@@ -204,8 +204,16 @@ class OscarSampler:
             "strip_chars": special_characters,
             "junk_chars": special_characters,
         }
+        
+        "fr": {
+            "stopwords_cutoff": 0.1,
+            "junk_ratio": 0.5,
+            "stopword_check": True,
+            "strip_chars": "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'€«»",
+            "junk_chars": "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'€«»",
+        }
     }
-
+    
     def __init__(self, **kwargs):
         self.sampling_method = kwargs.pop("sampling_method", "random")
         self.perplexity_model = kwargs.pop("perplexity_model", None)
