@@ -11,6 +11,7 @@ import langid
 import numpy as np
 from datasets import load_dataset
 from nltk.corpus import stopwords
+import wordfreq
 from numpy.random import default_rng
 from transformers import AutoTokenizer
 
@@ -194,6 +195,12 @@ class OscarSampler:
     special_characters = (
         "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
     )
+    
+    # list of languages in wordfreq
+    wordfreq_avail_langs = wordfreq.available_languages(wordlist='best')
+    wordfreq_langs = []
+        for lang in wordfreq_avail_langs:
+            wordfreq_langs.append(lang)
 
     # TODO - add params for other languages
     params = {
@@ -248,7 +255,6 @@ class OscarSampler:
     @staticmethod
     def check_good_sentence(
         sentence,
-        stopwords,
         junk_dict,
         strip_chars,
         target_lang,
@@ -266,8 +272,11 @@ class OscarSampler:
         words = [word.strip(strip_chars) for word in sent.split()]
         if len(words) == 0:
             return False
-        # stopword check
+        # stopword check (with wordfreq)
         if stopword_check:
+            stopwords = []
+            if target_lang in wordfreq_langs:
+                stopwords = wordfreq.top_n_list(target_lang, n=150)       
             stopword_cond = (
                 len([word for word in words if word in stopwords]) / len(words)
                 < stopwords_cutoff
@@ -306,7 +315,10 @@ class OscarSampler:
             pp_model = kenlm.Model(perplexity_model)
         else:
             pp_model = None
-        stopwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
+        stopwords = []
+        if target_lang in wordfreq_langs:
+            stopwords = wordfreq.top_n_list(target_lang, n=150)
+        #topwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
         junk_dict = {a: 1 for a in junk_chars}
         if target_lang in ("ja", "zh", "ko"):
             tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
