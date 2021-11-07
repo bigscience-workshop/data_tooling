@@ -9,9 +9,9 @@ import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import langid
 import numpy as np
+import wordfreq
 from datasets import load_dataset
 from nltk.corpus import stopwords
-import wordfreq
 from numpy.random import default_rng
 from transformers import AutoTokenizer
 
@@ -195,7 +195,7 @@ class OscarSampler:
     special_characters = (
         "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
     )
-    
+
     # list of languages in wordfreq
     wordfreq_avail_langs = wordfreq.available_languages(wordlist='best')
     wordfreq_langs = []
@@ -276,7 +276,7 @@ class OscarSampler:
         if stopword_check:
             stopwords = []
             if target_lang in wordfreq_langs:
-                stopwords = wordfreq.top_n_list(target_lang, n=150)       
+                stopwords = wordfreq.top_n_list(target_lang, n=150)
             stopword_cond = (
                 len([word for word in words if word in stopwords]) / len(words)
                 < stopwords_cutoff
