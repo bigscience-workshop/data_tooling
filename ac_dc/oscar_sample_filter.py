@@ -11,18 +11,16 @@ import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import langid
 import numpy as np
+from languages_id import langs_id
 from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
-
-from languages_id import langs_id
 
 
 # TODO: Split the different filtering methods
 # into different functions and implement ideas
 # described in the google doc
 class BasicFiltering:
-
     @staticmethod
     def lower_strip_sentence(sentence):
         sent = sentence.lower().strip()
@@ -48,9 +46,11 @@ class BasicFiltering:
         special_characters_cutoff,
     ):
         sent = BasicFiltering.lower_strip_sentence(sentence)
-        set_special_characters = set([char for char in special_characters])
-        special_characters_ratio = len([char for char in sent if char in set_special_characters]) / len(sent)
-        cond = (special_characters_ratio < special_characters_cutoff)
+        set_special_characters = {char for char in special_characters}
+        special_characters_ratio = len(
+            [char for char in sent if char in set_special_characters]
+        ) / len(sent)
+        cond = special_characters_ratio < special_characters_cutoff
         return cond
 
     @staticmethod
@@ -61,10 +61,14 @@ class BasicFiltering:
         stopwords_cutoff,
     ):
         words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
-        nltk_lang_id = langs_id.loc[langs_id["oscar_id"] == oscar_lang_id, "nltk_id"].iloc[0]
+        nltk_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == oscar_lang_id, "nltk_id"
+        ].iloc[0]
         stopwords = set(nltk_stopwords.words(nltk_lang_id.lower()))
-        stopwords_ratio = len([word for word in words if word in stopwords]) / len(words)
-        cond = (stopwords_ratio < stopwords_cutoff)
+        stopwords_ratio = len([word for word in words if word in stopwords]) / len(
+            words
+        )
+        cond = stopwords_ratio < stopwords_cutoff
         return cond
 
     @staticmethod
@@ -109,12 +113,11 @@ class BasicFiltering:
 # the fly during the training, remove functions
 # create_knlm_model and get_perplexity and simply
 # get this pre-computed score by looking at the file.
-# Otherwise, modify functions create_knlm_model and 
+# Otherwise, modify functions create_knlm_model and
 # get_perplexity to take (and download first) knlm model
 # pre-trained by facebook (5-gram model
 # http://dl.fbaipublicfiles.com/cc_net/lm/es.arpa.bin)
 class PerplexitySampling:
-
     @staticmethod
     def create_knlm_model(lang="pt"):
         if not os.path.exists("/content/lmplz"):
@@ -185,7 +188,9 @@ class PerplexitySampling:
         return rng.uniform() <= factor
 
     @staticmethod
-    def should_keep_doc(sampling_method, doc, rng, factor=None, boundaries=None, **kwargs):
+    def should_keep_doc(
+        sampling_method, doc, rng, factor=None, boundaries=None, **kwargs
+    ):
         if sampling_method not in ["random", "gaussian", "step"]:
             raise ValueError("sampling_method should be random, gaussian or step.")
         if sampling_method == "random":
@@ -205,24 +210,23 @@ class PerplexitySampling:
 
 
 class OscarSampler:
-
     def __init__(
         self,
         oscar_lang_id,
-        stopwords_cutoff = 0.1,
-        junk_ratio = 0.5,
-        stopword_check = True,
-        strip_chars = (
+        stopwords_cutoff=0.1,
+        junk_ratio=0.5,
+        stopword_check=True,
+        strip_chars=(
             "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
         ),
-        junk_chars = (
+        junk_chars=(
             "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
         ),
-        sampling_method = "random",
-        perplexity_model = None,
-        sampling_factor = None,
-        boundaries = None,
-        seed = None,
+        sampling_method="random",
+        perplexity_model=None,
+        sampling_factor=None,
+        boundaries=None,
+        seed=None,
         **kwargs,
     ):
 
@@ -373,4 +377,3 @@ class OscarSampler:
         else:
             print(f"{target_lang} not supported")
             return ""
-
