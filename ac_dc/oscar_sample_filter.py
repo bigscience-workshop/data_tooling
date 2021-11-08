@@ -31,8 +31,18 @@ class BasicFiltering:
     @staticmethod
     def get_words_from_sentence(sentence, strip_characters):
         sent = BasicFiltering.lower_strip_sentence(sentence)
-        words = [word.strip(strip_characters) for word in sent.split()]
+        words = [word.strip(strip_characters) for word in sent.split(" ")]
         return words
+
+    @staticmethod
+    def remove_incorrect_words(
+        sentence,
+        incorrect_word_substrings,
+    ):
+        words = sentence.split(" ")
+        words = [word for word in words if all([(i_substr not in word) for i_substr in incorrect_word_substrings])]
+        filtered_sentence = " ".join(words)
+        return filtered_sentence
 
     @staticmethod
     def check_empty(sentence, strip_characters):
