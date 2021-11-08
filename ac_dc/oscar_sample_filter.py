@@ -11,7 +11,7 @@ import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import langid
 import numpy as np
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
 
@@ -22,6 +22,50 @@ from languages_id import langs_id
 # into different functions and implement ideas
 # described in the google doc
 class BasicFiltering:
+
+    @staticmethod
+    def lower_strip_sentence(sentence):
+        sent = sentence.lower().strip()
+        return sent
+
+    @staticmethod
+    def get_words_from_sentence(sentence, strip_characters):
+        sent = BasicFiltering.lower_strip_sentence(sentence)
+        words = [word.strip(strip_characters) for word in sent.split()]
+        return words
+
+    @staticmethod
+    def check_empty(sentence, strip_characters):
+        sent = BasicFiltering.lower_strip_sentence(sentence)
+        words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+        cond = (len(sent) > 0) and (len(words) > 0)
+        return cond
+
+    @staticmethod
+    def check_special_characters(
+        sentence,
+        special_characters,
+        special_characters_cutoff,
+    ):
+        sent = BasicFiltering.lower_strip_sentence(sentence)
+        set_special_characters = set([char for char in special_characters])
+        special_characters_ratio = len([char for char in sent if char in set_special_characters]) / len(sent)
+        cond = (special_characters_ratio < special_characters_cutoff)
+        return cond
+
+    @staticmethod
+    def check_stopwords(
+        sentence,
+        strip_characters,
+        oscar_lang_id,
+        stopwords_cutoff,
+    ):
+        words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+        nltk_lang_id = langs_id.loc[langs_id["oscar_id"] == oscar_lang_id, "nltk_id"].iloc[0]
+        stopwords = set(nltk_stopwords.words(nltk_lang_id.lower()))
+        stopwords_ratio = len([word for word in words if word in stopwords]) / len(words)
+        cond = (stopwords_ratio < stopwords_cutoff)
+        return cond
 
     @staticmethod
     def check_good_sentence(
