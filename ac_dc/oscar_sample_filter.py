@@ -9,7 +9,7 @@ from random import sample
 
 import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
-import langid
+import fasttext
 import numpy as np
 from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
@@ -57,14 +57,37 @@ class BasicFiltering:
     def check_stopwords(
         sentence,
         strip_characters,
-        oscar_lang_id,
+        lang_oscar_id,
         stopwords_cutoff,
     ):
-        words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
-        nltk_lang_id = langs_id.loc[langs_id["oscar_id"] == oscar_lang_id, "nltk_id"].iloc[0]
-        stopwords = set(nltk_stopwords.words(nltk_lang_id.lower()))
-        stopwords_ratio = len([word for word in words if word in stopwords]) / len(words)
-        cond = (stopwords_ratio < stopwords_cutoff)
+        cond = True
+        nltk_lang_id = langs_id.loc[langs_id["oscar_id"] == lang_oscar_id, "nltk_id"].iloc[0]
+        if nltk_lang_id:
+            words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+            stopwords = set(nltk_stopwords.words(nltk_lang_id))
+            stopwords_ratio = len([word for word in words if word in stopwords]) / len(words)
+            cond = (stopwords_ratio < stopwords_cutoff)
+        return cond
+
+    @staticmethod
+    def check_lang_id(
+        sentence,
+        strip_characters,
+        lang_oscar_id,
+        path_model_fasttext,
+        lang_id_cutoff,
+    ):
+        cond = True
+        fasttext_lang_id = langs_id.loc[langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"].iloc[0]
+        if fasttext_lang_id:
+            words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+            sent = ' '.join(words)
+            model_lang_id = fasttext.load_model(path_model_fasttext)
+            pred = model_lang_id.predict(sent)
+            lang_pred_fasttext_id = pred[0][0].replace('__label__', '')
+            score_pred = pred[1][0]
+            lang_pred_oscar_id = langs_id.loc[langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"].iloc[0]
+            cond = (lang_pred_oscar_id == lang_oscar_id) and (score_pred > lang_id_cutoff)
         return cond
 
     @staticmethod
@@ -208,7 +231,7 @@ class OscarSampler:
 
     def __init__(
         self,
-        oscar_lang_id,
+        lang_oscar_id,
         stopwords_cutoff = 0.1,
         junk_ratio = 0.5,
         stopword_check = True,
@@ -226,7 +249,7 @@ class OscarSampler:
         **kwargs,
     ):
 
-        self.oscar_lang_id = oscar_lang_id
+        self.lang_oscar_id = lang_oscar_id
 
         self.stopwords_cutoff = stopwords_cutoff
         self.junk_ratio = junk_ratio
