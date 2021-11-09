@@ -3,669 +3,171 @@ import pandas as pd
 # TODO: Complete this dataframe by adding for each
 # language the id of the kenlm model, and the langid lib
 langs_id = [
-    {
-        "oscar_id": "af",
-        "nltk_id": "Afrikaans",
-    },
-    {
-        "oscar_id": "als",
-        "nltk_id": "Tosk Albanian",
-    },
-    {
-        "oscar_id": "am",
-        "nltk_id": "Amharic",
-    },
-    {
-        "oscar_id": "an",
-        "nltk_id": "Aragonese",
-    },
-    {
-        "oscar_id": "ar",
-        "nltk_id": "Arabic",
-    },
-    {
-        "oscar_id": "arz",
-        "nltk_id": "Egyptian Arabic",
-    },
-    {
-        "oscar_id": "ast",
-        "nltk_id": "Asturian",
-    },
-    {
-        "oscar_id": "as",
-        "nltk_id": "Assamese",
-    },
-    {
-        "oscar_id": "av",
-        "nltk_id": "Avaric",
-    },
-    {
-        "oscar_id": "azb",
-        "nltk_id": "South Azerbaijani",
-    },
-    {
-        "oscar_id": "az",
-        "nltk_id": "Azerbaijani",
-    },
-    {
-        "oscar_id": "bar",
-        "nltk_id": "Bavarian",
-    },
-    {
-        "oscar_id": "ba",
-        "nltk_id": "Bashkir",
-    },
-    {
-        "oscar_id": "bcl",
-        "nltk_id": "Central Bikol",
-    },
-    {
-        "oscar_id": "be",
-        "nltk_id": "Belarusian",
-    },
-    {
-        "oscar_id": "bg",
-        "nltk_id": "Bulgarian",
-    },
-    {
-        "oscar_id": "bh",
-        "nltk_id": "Bihari",
-    },
-    {
-        "oscar_id": "bn",
-        "nltk_id": "Bengali",
-    },
-    {
-        "oscar_id": "bo",
-        "nltk_id": "Tibetan",
-    },
-    {
-        "oscar_id": "bpy",
-        "nltk_id": "Bishnupriya",
-    },
-    {
-        "oscar_id": "br",
-        "nltk_id": "Breton",
-    },
-    {
-        "oscar_id": "bs",
-        "nltk_id": "Bosnian",
-    },
-    {
-        "oscar_id": "bxr",
-        "nltk_id": "Russia Buriat",
-    },
-    {
-        "oscar_id": "ca",
-        "nltk_id": "Catalan",
-    },
-    {
-        "oscar_id": "cbk",
-        "nltk_id": "Chavacano",
-    },
-    {
-        "oscar_id": "ceb",
-        "nltk_id": "Cebuano",
-    },
-    {
-        "oscar_id": "ce",
-        "nltk_id": "Chechen",
-    },
-    {
-        "oscar_id": "ckb",
-        "nltk_id": "Central Kurdish",
-    },
-    {
-        "oscar_id": "cs",
-        "nltk_id": "Czech",
-    },
-    {
-        "oscar_id": "cv",
-        "nltk_id": "Chuvash",
-    },
-    {
-        "oscar_id": "cy",
-        "nltk_id": "Welsh",
-    },
-    {
-        "oscar_id": "da",
-        "nltk_id": "Danish",
-    },
-    {
-        "oscar_id": "de",
-        "nltk_id": "German",
-    },
-    {
-        "oscar_id": "diq",
-        "nltk_id": "Dimli",
-    },
-    {
-        "oscar_id": "dsb",
-        "nltk_id": "Lower Sorbian",
-    },
-    {
-        "oscar_id": "dv",
-        "nltk_id": "Dhivehi",
-    },
-    {
-        "oscar_id": "el",
-        "nltk_id": "Modern Greek",
-    },
-    {
-        "oscar_id": "eml",
-        "nltk_id": "Emilian-Romagnol",
-    },
-    {
-        "oscar_id": "en",
-        "nltk_id": "English",
-    },
-    {
-        "oscar_id": "eo",
-        "nltk_id": "Esperanto",
-    },
-    {
-        "oscar_id": "es",
-        "nltk_id": "Spanish",
-    },
-    {
-        "oscar_id": "et",
-        "nltk_id": "Estonian",
-    },
-    {
-        "oscar_id": "eu",
-        "nltk_id": "Basque",
-    },
-    {
-        "oscar_id": "fa",
-        "nltk_id": "Persian",
-    },
-    {
-        "oscar_id": "fi",
-        "nltk_id": "Finnish",
-    },
-    {
-        "oscar_id": "frr",
-        "nltk_id": "Northern Frisian",
-    },
-    {
-        "oscar_id": "fr",
-        "nltk_id": "French",
-    },
-    {
-        "oscar_id": "fy",
-        "nltk_id": "Western Frisian",
-    },
-    {
-        "oscar_id": "ga",
-        "nltk_id": "Irish",
-    },
-    {
-        "oscar_id": "gd",
-        "nltk_id": "Scottish Gaelic",
-    },
-    {
-        "oscar_id": "gl",
-        "nltk_id": "Galician",
-    },
-    {
-        "oscar_id": "gn",
-        "nltk_id": "Guarani",
-    },
-    {
-        "oscar_id": "gom",
-        "nltk_id": "Goan Konkani",
-    },
-    {
-        "oscar_id": "gu",
-        "nltk_id": "Gujarati",
-    },
-    {
-        "oscar_id": "he",
-        "nltk_id": "Hebrew",
-    },
-    {
-        "oscar_id": "hi",
-        "nltk_id": "Hindi",
-    },
-    {
-        "oscar_id": "hr",
-        "nltk_id": "Croatian",
-    },
-    {
-        "oscar_id": "hsb",
-        "nltk_id": "Upper Sorbian",
-    },
-    {
-        "oscar_id": "ht",
-        "nltk_id": "Haitian",
-    },
-    {
-        "oscar_id": "hu",
-        "nltk_id": "Hungarian",
-    },
-    {
-        "oscar_id": "hy",
-        "nltk_id": "Armenian",
-    },
-    {
-        "oscar_id": "ia",
-        "nltk_id": "Interlingua",
-    },
-    {
-        "oscar_id": "id",
-        "nltk_id": "Indonesian",
-    },
-    {
-        "oscar_id": "ie",
-        "nltk_id": "Interlingue",
-    },
-    {
-        "oscar_id": "ilo",
-        "nltk_id": "Iloko",
-    },
-    {
-        "oscar_id": "io",
-        "nltk_id": "Ido",
-    },
-    {
-        "oscar_id": "is",
-        "nltk_id": "Icelandic",
-    },
-    {
-        "oscar_id": "it",
-        "nltk_id": "Italian",
-    },
-    {
-        "oscar_id": "ja",
-        "nltk_id": "Japanese",
-    },
-    {
-        "oscar_id": "jbo",
-        "nltk_id": "Lojban",
-    },
-    {
-        "oscar_id": "jv",
-        "nltk_id": "Javanese",
-    },
-    {
-        "oscar_id": "ka",
-        "nltk_id": "Georgian",
-    },
-    {
-        "oscar_id": "kk",
-        "nltk_id": "Kazakh",
-    },
-    {
-        "oscar_id": "km",
-        "nltk_id": "Central Khmer",
-    },
-    {
-        "oscar_id": "kn",
-        "nltk_id": "Kannada",
-    },
-    {
-        "oscar_id": "ko",
-        "nltk_id": "Korean",
-    },
-    {
-        "oscar_id": "krc",
-        "nltk_id": "Karachay-Balkar",
-    },
-    {
-        "oscar_id": "ku",
-        "nltk_id": "Kurdish",
-    },
-    {
-        "oscar_id": "kv",
-        "nltk_id": "Komi",
-    },
-    {
-        "oscar_id": "kw",
-        "nltk_id": "Cornish",
-    },
-    {
-        "oscar_id": "ky",
-        "nltk_id": "Kirghiz",
-    },
-    {
-        "oscar_id": "la",
-        "nltk_id": "Latin",
-    },
-    {
-        "oscar_id": "lb",
-        "nltk_id": "Luxembourgish",
-    },
-    {
-        "oscar_id": "lez",
-        "nltk_id": "Lezghian",
-    },
-    {
-        "oscar_id": "li",
-        "nltk_id": "Limburgan",
-    },
-    {
-        "oscar_id": "lmo",
-        "nltk_id": "Lombard",
-    },
-    {
-        "oscar_id": "lo",
-        "nltk_id": "Lao",
-    },
-    {
-        "oscar_id": "lrc",
-        "nltk_id": "Northern Luri",
-    },
-    {
-        "oscar_id": "lt",
-        "nltk_id": "Lithuanian",
-    },
-    {
-        "oscar_id": "lv",
-        "nltk_id": "Latvian",
-    },
-    {
-        "oscar_id": "mai",
-        "nltk_id": "Maithili",
-    },
-    {
-        "oscar_id": "mg",
-        "nltk_id": "Malagasy",
-    },
-    {
-        "oscar_id": "mhr",
-        "nltk_id": "Eastern Mari",
-    },
-    {
-        "oscar_id": "min",
-        "nltk_id": "Minangkabau",
-    },
-    {
-        "oscar_id": "mk",
-        "nltk_id": "Macedonian",
-    },
-    {
-        "oscar_id": "ml",
-        "nltk_id": "Malayalam",
-    },
-    {
-        "oscar_id": "mn",
-        "nltk_id": "Mongolian",
-    },
-    {
-        "oscar_id": "mrj",
-        "nltk_id": "Western Mari",
-    },
-    {
-        "oscar_id": "mr",
-        "nltk_id": "Marathi",
-    },
-    {
-        "oscar_id": "ms",
-        "nltk_id": "Malay",
-    },
-    {
-        "oscar_id": "mt",
-        "nltk_id": "Maltese",
-    },
-    {
-        "oscar_id": "mwl",
-        "nltk_id": "Mirandese",
-    },
-    {
-        "oscar_id": "my",
-        "nltk_id": "Burmese",
-    },
-    {
-        "oscar_id": "myv",
-        "nltk_id": "Erzya",
-    },
-    {
-        "oscar_id": "mzn",
-        "nltk_id": "Mazanderani",
-    },
-    {
-        "oscar_id": "nah",
-        "nltk_id": "Nahuatl",
-    },
-    {
-        "oscar_id": "nap",
-        "nltk_id": "Neapolitan",
-    },
-    {
-        "oscar_id": "nds",
-        "nltk_id": "Low German",
-    },
-    {
-        "oscar_id": "ne",
-        "nltk_id": "Nepali",
-    },
-    {
-        "oscar_id": "new",
-        "nltk_id": "Newari",
-    },
-    {
-        "oscar_id": "nl",
-        "nltk_id": "Dutch",
-    },
-    {
-        "oscar_id": "nn",
-        "nltk_id": "Norwegian Nynorsk",
-    },
-    {
-        "oscar_id": "no",
-        "nltk_id": "Norwegian",
-    },
-    {
-        "oscar_id": "oc",
-        "nltk_id": "Occitan",
-    },
-    {
-        "oscar_id": "or",
-        "nltk_id": "Oriya",
-    },
-    {
-        "oscar_id": "os",
-        "nltk_id": "Ossetian",
-    },
-    {
-        "oscar_id": "pam",
-        "nltk_id": "Pampanga",
-    },
-    {
-        "oscar_id": "pa",
-        "nltk_id": "Panjabi",
-    },
-    {
-        "oscar_id": "pl",
-        "nltk_id": "Polish",
-    },
-    {
-        "oscar_id": "pms",
-        "nltk_id": "Piemontese",
-    },
-    {
-        "oscar_id": "pnb",
-        "nltk_id": "Western Panjabi",
-    },
-    {
-        "oscar_id": "ps",
-        "nltk_id": "Pushto",
-    },
-    {
-        "oscar_id": "pt",
-        "nltk_id": "Portuguese",
-    },
-    {
-        "oscar_id": "qu",
-        "nltk_id": "Quechua",
-    },
-    {
-        "oscar_id": "rm",
-        "nltk_id": "Romansh",
-    },
-    {
-        "oscar_id": "ro",
-        "nltk_id": "Romanian",
-    },
-    {
-        "oscar_id": "ru",
-        "nltk_id": "Russian",
-    },
-    {
-        "oscar_id": "sah",
-        "nltk_id": "Yakut",
-    },
-    {
-        "oscar_id": "sa",
-        "nltk_id": "Sanskrit",
-    },
-    {
-        "oscar_id": "scn",
-        "nltk_id": "Sicilian",
-    },
-    {
-        "oscar_id": "sd",
-        "nltk_id": "Sindhi",
-    },
-    {
-        "oscar_id": "sh",
-        "nltk_id": "Serbo-Croatian",
-    },
-    {
-        "oscar_id": "si",
-        "nltk_id": "Sinhala",
-    },
-    {
-        "oscar_id": "sk",
-        "nltk_id": "Slovak",
-    },
-    {
-        "oscar_id": "sl",
-        "nltk_id": "Slovenian",
-    },
-    {
-        "oscar_id": "so",
-        "nltk_id": "Somali",
-    },
-    {
-        "oscar_id": "sq",
-        "nltk_id": "Albanian",
-    },
-    {
-        "oscar_id": "sr",
-        "nltk_id": "Serbian",
-    },
-    {
-        "oscar_id": "su",
-        "nltk_id": "Sundanese",
-    },
-    {
-        "oscar_id": "sv",
-        "nltk_id": "Swedish",
-    },
-    {
-        "oscar_id": "sw",
-        "nltk_id": "Swahili",
-    },
-    {
-        "oscar_id": "ta",
-        "nltk_id": "Tamil",
-    },
-    {
-        "oscar_id": "te",
-        "nltk_id": "Telugu",
-    },
-    {
-        "oscar_id": "tg",
-        "nltk_id": "Tajik",
-    },
-    {
-        "oscar_id": "th",
-        "nltk_id": "Thai",
-    },
-    {
-        "oscar_id": "tk",
-        "nltk_id": "Turkmen",
-    },
-    {
-        "oscar_id": "tl",
-        "nltk_id": "Tagalog",
-    },
-    {
-        "oscar_id": "tr",
-        "nltk_id": "Turkish",
-    },
-    {
-        "oscar_id": "tt",
-        "nltk_id": "Tatar",
-    },
-    {
-        "oscar_id": "tyv",
-        "nltk_id": "Tuvinian",
-    },
-    {
-        "oscar_id": "ug",
-        "nltk_id": "Uighur",
-    },
-    {
-        "oscar_id": "uk",
-        "nltk_id": "Ukrainian",
-    },
-    {
-        "oscar_id": "ur",
-        "nltk_id": "Urdu",
-    },
-    {
-        "oscar_id": "uz",
-        "nltk_id": "Uzbek",
-    },
-    {
-        "oscar_id": "vec",
-        "nltk_id": "Venetian",
-    },
-    {
-        "oscar_id": "vi",
-        "nltk_id": "Vietnamese",
-    },
-    {
-        "oscar_id": "vo",
-        "nltk_id": "Volapük",
-    },
-    {
-        "oscar_id": "war",
-        "nltk_id": "Waray",
-    },
-    {
-        "oscar_id": "wa",
-        "nltk_id": "Walloon",
-    },
-    {
-        "oscar_id": "wuu",
-        "nltk_id": "Wu Chinese",
-    },
-    {
-        "oscar_id": "xal",
-        "nltk_id": "Kalmyk",
-    },
-    {
-        "oscar_id": "xmf",
-        "nltk_id": "Mingrelian",
-    },
-    {
-        "oscar_id": "yi",
-        "nltk_id": "Yiddish",
-    },
-    {
-        "oscar_id": "yo",
-        "nltk_id": "Yoruba",
-    },
-    {
-        "oscar_id": "yue",
-        "nltk_id": "Yue Chinese",
-    },
-    {
-        "oscar_id": "zh",
-        "nltk_id": "Chinese",
-    },
+    {"oscar_id": "af", "nltk_id": "Afrikaans", "kenlm_id": "af"},
+    {"oscar_id": "als", "nltk_id": "Tosk Albanian", "kenlm_id": None},
+    {"oscar_id": "am", "nltk_id": "Amharic", "kenlm_id": None},
+    {"oscar_id": "an", "nltk_id": "Aragonese", "kenlm_id": None},
+    {"oscar_id": "ar", "nltk_id": "Arabic", "kenlm_id": "ar"},
+    {"oscar_id": "arz", "nltk_id": "Egyptian Arabic", "kenlm_id": None},
+    {"oscar_id": "ast", "nltk_id": "Asturian", "kenlm_id": None},
+    {"oscar_id": "as", "nltk_id": "Assamese", "kenlm_id": None},
+    {"oscar_id": "av", "nltk_id": "Avaric", "kenlm_id": None},
+    {"oscar_id": "azb", "nltk_id": "South Azerbaijani", "kenlm_id": None},
+    {"oscar_id": "az", "nltk_id": "Azerbaijani", "kenlm_id": "az"},
+    {"oscar_id": "bar", "nltk_id": "Bavarian", "kenlm_id": None},
+    {"oscar_id": "ba", "nltk_id": "Bashkir", "kenlm_id": None},
+    {"oscar_id": "bcl", "nltk_id": "Central Bikol", "kenlm_id": None},
+    {"oscar_id": "be", "nltk_id": "Belarusian", "kenlm_id": "be"},
+    {"oscar_id": "bg", "nltk_id": "Bulgarian", "kenlm_id": "bg"},
+    {"oscar_id": "bh", "nltk_id": "Bihari", "kenlm_id": None},
+    {"oscar_id": "bn", "nltk_id": "Bengali", "kenlm_id": "bn"},
+    {"oscar_id": "bo", "nltk_id": "Tibetan", "kenlm_id": None},
+    {"oscar_id": "bpy", "nltk_id": "Bishnupriya", "kenlm_id": None},
+    {"oscar_id": "br", "nltk_id": "Breton", "kenlm_id": None},
+    {"oscar_id": "bs", "nltk_id": "Bosnian", "kenlm_id": None},
+    {"oscar_id": "bxr", "nltk_id": "Russia Buriat", "kenlm_id": None},
+    {"oscar_id": "ca", "nltk_id": "Catalan", "kenlm_id": "ca"},
+    {"oscar_id": "cbk", "nltk_id": "Chavacano", "kenlm_id": None},
+    {"oscar_id": "ceb", "nltk_id": "Cebuano", "kenlm_id": None},
+    {"oscar_id": "ce", "nltk_id": "Chechen", "kenlm_id": None},
+    {"oscar_id": "ckb", "nltk_id": "Central Kurdish", "kenlm_id": None},
+    {"oscar_id": "cs", "nltk_id": "Czech", "kenlm_id": "cs"},
+    {"oscar_id": "cv", "nltk_id": "Chuvash", "kenlm_id": None},
+    {"oscar_id": "cy", "nltk_id": "Welsh", "kenlm_id": None},
+    {"oscar_id": "da", "nltk_id": "Danish", "kenlm_id": "da"},
+    {"oscar_id": "de", "nltk_id": "German", "kenlm_id": "de"},
+    {"oscar_id": "diq", "nltk_id": "Dimli", "kenlm_id": None},
+    {"oscar_id": "dsb", "nltk_id": "Lower Sorbian", "kenlm_id": None},
+    {"oscar_id": "dv", "nltk_id": "Dhivehi", "kenlm_id": None},
+    {"oscar_id": "el", "nltk_id": "Modern Greek", "kenlm_id": "el"},
+    {"oscar_id": "eml", "nltk_id": "Emilian-Romagnol", "kenlm_id": None},
+    {"oscar_id": "en", "nltk_id": "English", "kenlm_id": "en"},
+    {"oscar_id": "eo", "nltk_id": "Esperanto", "kenlm_id": None},
+    {"oscar_id": "es", "nltk_id": "Spanish", "kenlm_id": "es"},
+    {"oscar_id": "et", "nltk_id": "Estonian", "kenlm_id": "et"},
+    {"oscar_id": "eu", "nltk_id": "Basque", "kenlm_id": None},
+    {"oscar_id": "fa", "nltk_id": "Persian", "kenlm_id": "fa"},
+    {"oscar_id": "fi", "nltk_id": "Finnish", "kenlm_id": "fi"},
+    {"oscar_id": "frr", "nltk_id": "Northern Frisian", "kenlm_id": None},
+    {"oscar_id": "fr", "nltk_id": "French", "kenlm_id": "fr"},
+    {"oscar_id": "fy", "nltk_id": "Western Frisian", "kenlm_id": None},
+    {"oscar_id": "ga", "nltk_id": "Irish", "kenlm_id": None},
+    {"oscar_id": "gd", "nltk_id": "Scottish Gaelic", "kenlm_id": None},
+    {"oscar_id": "gl", "nltk_id": "Galician", "kenlm_id": None},
+    {"oscar_id": "gn", "nltk_id": "Guarani", "kenlm_id": None},
+    {"oscar_id": "gom", "nltk_id": "Goan Konkani", "kenlm_id": None},
+    {"oscar_id": "gu", "nltk_id": "Gujarati", "kenlm_id": "gu"},
+    {"oscar_id": "he", "nltk_id": "Hebrew", "kenlm_id": "he"},
+    {"oscar_id": "hi", "nltk_id": "Hindi", "kenlm_id": "hi"},
+    {"oscar_id": "hr", "nltk_id": "Croatian", "kenlm_id": "hr"},
+    {"oscar_id": "hsb", "nltk_id": "Upper Sorbian", "kenlm_id": None},
+    {"oscar_id": "ht", "nltk_id": "Haitian", "kenlm_id": None},
+    {"oscar_id": "hu", "nltk_id": "Hungarian", "kenlm_id": "hu"},
+    {"oscar_id": "hy", "nltk_id": "Armenian", "kenlm_id": "hy"},
+    {"oscar_id": "ia", "nltk_id": "Interlingua", "kenlm_id": None},
+    {"oscar_id": "id", "nltk_id": "Indonesian", "kenlm_id": "id"},
+    {"oscar_id": "ie", "nltk_id": "Interlingue", "kenlm_id": None},
+    {"oscar_id": "ilo", "nltk_id": "Iloko", "kenlm_id": None},
+    {"oscar_id": "io", "nltk_id": "Ido", "kenlm_id": None},
+    {"oscar_id": "is", "nltk_id": "Icelandic", "kenlm_id": "is"},
+    {"oscar_id": "it", "nltk_id": "Italian", "kenlm_id": "it"},
+    {"oscar_id": "ja", "nltk_id": "Japanese", "kenlm_id": "ja"},
+    {"oscar_id": "jbo", "nltk_id": "Lojban", "kenlm_id": None},
+    {"oscar_id": "jv", "nltk_id": "Javanese", "kenlm_id": None},
+    {"oscar_id": "ka", "nltk_id": "Georgian", "kenlm_id": "ka"},
+    {"oscar_id": "kk", "nltk_id": "Kazakh", "kenlm_id": "kk"},
+    {"oscar_id": "km", "nltk_id": "Central Khmer", "kenlm_id": "km"},
+    {"oscar_id": "kn", "nltk_id": "Kannada", "kenlm_id": "kn"},
+    {"oscar_id": "ko", "nltk_id": "Korean", "kenlm_id": "ko"},
+    {"oscar_id": "krc", "nltk_id": "Karachay-Balkar", "kenlm_id": None},
+    {"oscar_id": "ku", "nltk_id": "Kurdish", "kenlm_id": None},
+    {"oscar_id": "kv", "nltk_id": "Komi", "kenlm_id": None},
+    {"oscar_id": "kw", "nltk_id": "Cornish", "kenlm_id": None},
+    {"oscar_id": "ky", "nltk_id": "Kirghiz", "kenlm_id": None},
+    {"oscar_id": "la", "nltk_id": "Latin", "kenlm_id": None},
+    {"oscar_id": "lb", "nltk_id": "Luxembourgish", "kenlm_id": None},
+    {"oscar_id": "lez", "nltk_id": "Lezghian", "kenlm_id": None},
+    {"oscar_id": "li", "nltk_id": "Limburgan", "kenlm_id": None},
+    {"oscar_id": "lmo", "nltk_id": "Lombard", "kenlm_id": None},
+    {"oscar_id": "lo", "nltk_id": "Lao", "kenlm_id": None},
+    {"oscar_id": "lrc", "nltk_id": "Northern Luri", "kenlm_id": None},
+    {"oscar_id": "lt", "nltk_id": "Lithuanian", "kenlm_id": "lt"},
+    {"oscar_id": "lv", "nltk_id": "Latvian", "kenlm_id": "lv"},
+    {"oscar_id": "mai", "nltk_id": "Maithili", "kenlm_id": None},
+    {"oscar_id": "mg", "nltk_id": "Malagasy", "kenlm_id": None},
+    {"oscar_id": "mhr", "nltk_id": "Eastern Mari", "kenlm_id": None},
+    {"oscar_id": "min", "nltk_id": "Minangkabau", "kenlm_id": None},
+    {"oscar_id": "mk", "nltk_id": "Macedonian", "kenlm_id": "mk"},
+    {"oscar_id": "ml", "nltk_id": "Malayalam", "kenlm_id": "ml"},
+    {"oscar_id": "mn", "nltk_id": "Mongolian", "kenlm_id": "mn"},
+    {"oscar_id": "mrj", "nltk_id": "Western Mari", "kenlm_id": None},
+    {"oscar_id": "mr", "nltk_id": "Marathi", "kenlm_id": "mr"},
+    {"oscar_id": "ms", "nltk_id": "Malay", "kenlm_id": None},
+    {"oscar_id": "mt", "nltk_id": "Maltese", "kenlm_id": None},
+    {"oscar_id": "mwl", "nltk_id": "Mirandese", "kenlm_id": None},
+    {"oscar_id": "my", "nltk_id": "Burmese", "kenlm_id": "my"},
+    {"oscar_id": "myv", "nltk_id": "Erzya", "kenlm_id": None},
+    {"oscar_id": "mzn", "nltk_id": "Mazanderani", "kenlm_id": None},
+    {"oscar_id": "nah", "nltk_id": "Nahuatl", "kenlm_id": None},
+    {"oscar_id": "nap", "nltk_id": "Neapolitan", "kenlm_id": None},
+    {"oscar_id": "nds", "nltk_id": "Low German", "kenlm_id": None},
+    {"oscar_id": "ne", "nltk_id": "Nepali", "kenlm_id": "ne"},
+    {"oscar_id": "new", "nltk_id": "Newari", "kenlm_id": None},
+    {"oscar_id": "nl", "nltk_id": "Dutch", "kenlm_id": "nl"},
+    {"oscar_id": "nn", "nltk_id": "Norwegian Nynorsk", "kenlm_id": None},
+    {"oscar_id": "no", "nltk_id": "Norwegian", "kenlm_id": "no"},
+    {"oscar_id": "oc", "nltk_id": "Occitan", "kenlm_id": None},
+    {"oscar_id": "or", "nltk_id": "Oriya", "kenlm_id": None},
+    {"oscar_id": "os", "nltk_id": "Ossetian", "kenlm_id": None},
+    {"oscar_id": "pam", "nltk_id": "Pampanga", "kenlm_id": None},
+    {"oscar_id": "pa", "nltk_id": "Panjabi", "kenlm_id": None},
+    {"oscar_id": "pl", "nltk_id": "Polish", "kenlm_id": "pl"},
+    {"oscar_id": "pms", "nltk_id": "Piemontese", "kenlm_id": None},
+    {"oscar_id": "pnb", "nltk_id": "Western Panjabi", "kenlm_id": None},
+    {"oscar_id": "ps", "nltk_id": "Pushto", "kenlm_id": None},
+    {"oscar_id": "pt", "nltk_id": "Portuguese", "kenlm_id": "pt"},
+    {"oscar_id": "qu", "nltk_id": "Quechua", "kenlm_id": None},
+    {"oscar_id": "rm", "nltk_id": "Romansh", "kenlm_id": None},
+    {"oscar_id": "ro", "nltk_id": "Romanian", "kenlm_id": "ro"},
+    {"oscar_id": "ru", "nltk_id": "Russian", "kenlm_id": "ru"},
+    {"oscar_id": "sah", "nltk_id": "Yakut", "kenlm_id": None},
+    {"oscar_id": "sa", "nltk_id": "Sanskrit", "kenlm_id": None},
+    {"oscar_id": "scn", "nltk_id": "Sicilian", "kenlm_id": None},
+    {"oscar_id": "sd", "nltk_id": "Sindhi", "kenlm_id": None},
+    {"oscar_id": "sh", "nltk_id": "Serbo-Croatian", "kenlm_id": None},
+    {"oscar_id": "si", "nltk_id": "Sinhala", "kenlm_id": None},
+    {"oscar_id": "sk", "nltk_id": "Slovak", "kenlm_id": None},
+    {"oscar_id": "sl", "nltk_id": "Slovenian", "kenlm_id": None},
+    {"oscar_id": "so", "nltk_id": "Somali", "kenlm_id": None},
+    {"oscar_id": "sq", "nltk_id": "Albanian", "kenlm_id": None},
+    {"oscar_id": "sr", "nltk_id": "Serbian", "kenlm_id": None},
+    {"oscar_id": "su", "nltk_id": "Sundanese", "kenlm_id": None},
+    {"oscar_id": "sv", "nltk_id": "Swedish", "kenlm_id": None},
+    {"oscar_id": "sw", "nltk_id": "Swahili", "kenlm_id": None},
+    {"oscar_id": "ta", "nltk_id": "Tamil", "kenlm_id": None},
+    {"oscar_id": "te", "nltk_id": "Telugu", "kenlm_id": None},
+    {"oscar_id": "tg", "nltk_id": "Tajik", "kenlm_id": None},
+    {"oscar_id": "th", "nltk_id": "Thai", "kenlm_id": None},
+    {"oscar_id": "tk", "nltk_id": "Turkmen", "kenlm_id": None},
+    {"oscar_id": "tl", "nltk_id": "Tagalog", "kenlm_id": None},
+    {"oscar_id": "tr", "nltk_id": "Turkish", "kenlm_id": None},
+    {"oscar_id": "tt", "nltk_id": "Tatar", "kenlm_id": None},
+    {"oscar_id": "tyv", "nltk_id": "Tuvinian", "kenlm_id": None},
+    {"oscar_id": "ug", "nltk_id": "Uighur", "kenlm_id": None},
+    {"oscar_id": "uk", "nltk_id": "Ukrainian", "kenlm_id": "uk"},
+    {"oscar_id": "ur", "nltk_id": "Urdu", "kenlm_id": None},
+    {"oscar_id": "uz", "nltk_id": "Uzbek", "kenlm_id": None},
+    {"oscar_id": "vec", "nltk_id": "Venetian", "kenlm_id": None},
+    {"oscar_id": "vi", "nltk_id": "Vietnamese", "kenlm_id": None},
+    {"oscar_id": "vo", "nltk_id": "Volap\u00fck", "kenlm_id": None},
+    {"oscar_id": "war", "nltk_id": "Waray", "kenlm_id": None},
+    {"oscar_id": "wa", "nltk_id": "Walloon", "kenlm_id": None},
+    {"oscar_id": "wuu", "nltk_id": "Wu Chinese", "kenlm_id": None},
+    {"oscar_id": "xal", "nltk_id": "Kalmyk", "kenlm_id": None},
+    {"oscar_id": "xmf", "nltk_id": "Mingrelian", "kenlm_id": None},
+    {"oscar_id": "yi", "nltk_id": "Yiddish", "kenlm_id": None},
+    {"oscar_id": "yo", "nltk_id": "Yoruba", "kenlm_id": None},
+    {"oscar_id": "yue", "nltk_id": "Yue Chinese", "kenlm_id": None},
+    {"oscar_id": "zh", "nltk_id": "Chinese", "kenlm_id": "zh"},
 ]
 langs_id = pd.DataFrame(langs_id)
