@@ -150,7 +150,7 @@ langs_id = [
     {"lang": "Thai", "oscar_id": "th", "nltk_id": None, "kenlm_id": None},
     {"lang": "Turkmen", "oscar_id": "tk", "nltk_id": None, "kenlm_id": None},
     {"lang": "Tagalog", "oscar_id": "tl", "nltk_id": None, "kenlm_id": None},
-    {"lang": "Turkish", "oscar_id": "tr", "nltk_id": "turkish", "kenlm_id": None},
+    {"lang": "Turkish", "oscar_id": "tr", "nltk_id": "turkish", "kenlm_id": "tr"},
     {"lang": "Tatar", "oscar_id": "tt", "nltk_id": None, "kenlm_id": None},
     {"lang": "Tuvinian", "oscar_id": "tyv", "nltk_id": None, "kenlm_id": None},
     {"lang": "Uighur", "oscar_id": "ug", "nltk_id": None, "kenlm_id": None},
