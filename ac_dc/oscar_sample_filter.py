@@ -38,7 +38,11 @@ class BasicFiltering:
         incorrect_word_substrings,
     ):
         words = sentence.split(" ")
-        words = [word for word in words if all([(i_substr not in word) for i_substr in incorrect_word_substrings])]
+        words = [
+            word
+            for word in words
+            if all([(i_substr not in word) for i_substr in incorrect_word_substrings])
+        ]
         filtered_sentence = " ".join(words)
         return filtered_sentence
 
@@ -133,12 +137,13 @@ class BasicFiltering:
             return False
         # stopword check
         if stopword_check:
-            stopword_cond = (
-                len([word for word in words if word in stopwords]) / len(words)
-                < stopwords_cutoff
+            stopword_ratio = len([word for word in words if word in stopwords]) / len(
+                words
             )
+            stopword_cond = stopword_ratio > stopwords_cutoff
             if stopword_cond:
                 return False
+            return True
         else:
             # langid check
             try:
@@ -320,6 +325,7 @@ class OscarSampler:
         stopword_check,
         strip_chars,
         junk_chars,
+        sampling_method,
     ):
         mt5_underscore = "_"
         if seed is not None:
@@ -330,14 +336,16 @@ class OscarSampler:
             pp_model = kenlm.Model(perplexity_model)
         else:
             pp_model = None
-        stopwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
+        # TODO: add stopwords per language
+        # stopwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
+        stopwords = set()
         junk_dict = {a: 1 for a in junk_chars}
         if target_lang in ("ja", "zh", "ko"):
             tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
         OscarSampler._download_urls([url])
         file = url.split("/")[-1]
         with open(
-            file.replace("txt.gz", "") + ".sample_filtered.txt", "w", encoding="utf8"
+            file.replace(".txt.gz", "") + ".sample_filtered.txt", "w", encoding="utf8"
         ) as f:
             with gzip.open(file, "rb") as f2:
                 for id_, line in enumerate(f2):
@@ -358,11 +366,12 @@ class OscarSampler:
                     ):
                         # now do perplexity sampling
                         if should_keep_doc(
-                            line,
+                            doc=line,
                             rng=rng,
                             factor=sampling_factor,
                             boundaries=boundaries,
                             pp_model=pp_model,
+                            sampling_method=sampling_method,
                         ):
                             f.write(line + "\n")
         os.unlink(file)
@@ -400,6 +409,7 @@ class OscarSampler:
                         stopword_check,
                         strip_chars,
                         junk_chars,
+                        self.sampling_method,
                     ),
                 )
                 for url in lst
@@ -416,3 +426,25 @@ class OscarSampler:
         else:
             print(f"{target_lang} not supported")
             return ""
+
+
+if __name__ == "__main__":
+    # Download a sample dataset and run filtering pipeline
+    lang = "af"
+    sampler = OscarSampler(lang_oscar_id=lang)
+    url = OscarSampler.get_oscar_urls(lang)[0]
+    OscarSampler.filter_and_tok_cjk(
+        url=url,
+        target_lang="af",
+        seed=42,
+        stopwords_cutoff=0.1,
+        junk_ratio=0.15,
+        stopword_check=True,
+        strip_chars=sampler.strip_chars,
+        junk_chars=sampler.junk_chars,
+        should_keep_doc=PerplexitySampling.should_keep_doc,
+        perplexity_model="/tmp/af.arpa.bin",
+        sampling_factor=None,
+        boundaries=None,
+        sampling_method="random",
+    )
