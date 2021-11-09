@@ -12,7 +12,11 @@ from sentence_transformers import SentenceTransformer
 from perplexity_lenses.visualization import draw_interactive_scatter_plot
 
 logger = logging.getLogger(__name__)
-EMBEDDING_MODELS = ["distiluse-base-multilingual-cased-v1", "all-mpnet-base-v2", "flax-sentence-embeddings/all_datasets_v3_mpnet-base"]
+EMBEDDING_MODELS = [
+    "distiluse-base-multilingual-cased-v1",
+    "all-mpnet-base-v2",
+    "flax-sentence-embeddings/all_datasets_v3_mpnet-base",
+]
 DIMENSIONALITY_REDUCTION_ALGORITHMS = ["UMAP", "t-SNE"]
 DOCUMENT_TYPES = ["Whole document", "Sentence"]
 SEED = 0
@@ -91,7 +95,9 @@ def generate_plot(
     context_logger: Union[st.spinner, ContextLogger] = ContextLogger,
 ) -> Figure:
     if text_column not in df.columns:
-        raise ValueError(f"The specified column name doesn't exist. Columns available: {df.columns.values}")
+        raise ValueError(
+            f"The specified column name doesn't exist. Columns available: {df.columns.values}"
+        )
     if label_column not in df.columns:
         df[label_column] = 0
     df = df.dropna(subset=[text_column, label_column])
@@ -105,6 +111,12 @@ def generate_plot(
         embeddings_2d = dimensionality_reduction_function(embeddings)
     logger.info("Generating figure")
     plot = draw_interactive_scatter_plot(
-        df[text_column].values, embeddings_2d[:, 0], embeddings_2d[:, 1], encoded_labels.values, df[label_column].values, text_column, label_column
+        df[text_column].values,
+        embeddings_2d[:, 0],
+        embeddings_2d[:, 1],
+        encoded_labels.values,
+        df[label_column].values,
+        text_column,
+        label_column,
     )
     return plot

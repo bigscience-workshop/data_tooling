@@ -13,7 +13,9 @@ class KenlmModel:
             os.remove(f"{language}.arpa.bin")
             if os.path.exists(f"{language}.sp.model"):
                 os.remove(f"{language}.sp.model")
-            raise OSError("File was corrupt and should have been removed. Please, retry.")
+            raise OSError(
+                "File was corrupt and should have been removed. Please, retry."
+            )
 
     @classmethod
     def from_pretrained(cls, language: str):

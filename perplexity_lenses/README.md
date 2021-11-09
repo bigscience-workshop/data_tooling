@@ -15,13 +15,13 @@ pip install -r requirements.txt
 ```
 
 # Web App:
-The app is hosted [here](https://huggingface.co/spaces/edugp/perplexity-lenses). To run it locally:  
+The app is hosted [here](https://huggingface.co/spaces/edugp/perplexity-lenses). To run it locally:
 ```
 python -m streamlit run app.py
 ```
 
 # CLI:
-The CLI with no arguments defaults to running mc4 in Spanish.  
+The CLI with no arguments defaults to running mc4 in Spanish.
 For full usage:
 ```
 python cli.py --help
