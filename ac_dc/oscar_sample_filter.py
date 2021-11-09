@@ -39,7 +39,11 @@ class BasicFiltering:
         incorrect_word_substrings,
     ):
         words = sentence.split(" ")
-        words = [word for word in words if all([(i_substr not in word) for i_substr in incorrect_word_substrings])]
+        words = [
+            word
+            for word in words
+            if all([(i_substr not in word) for i_substr in incorrect_word_substrings])
+        ]
         filtered_sentence = " ".join(words)
         return filtered_sentence
 
@@ -126,7 +130,9 @@ class BasicFiltering:
             return False
         # stopword check (with wordfreq)
         if stopword_check:
-            wordfreq_avail_langs = wordfreq.available_languages(wordlist='best') # build list of wordfreq lang ids
+            wordfreq_avail_langs = wordfreq.available_languages(
+                wordlist="best"
+            )  # build list of wordfreq lang ids
             wordfreq_langs = []
             for lang in wordfreq_avail_langs:
                 wordfreq_langs.append(lang)
@@ -330,14 +336,16 @@ class OscarSampler:
             pp_model = kenlm.Model(perplexity_model)
         else:
             pp_model = None
-        wordfreq_avail_langs = wordfreq.available_languages(wordlist='best') # build list of wordfreq lang ids
+        wordfreq_avail_langs = wordfreq.available_languages(
+            wordlist="best"
+        )  # build list of wordfreq lang ids
         wordfreq_langs = []
         for lang in wordfreq_avail_langs:
             wordfreq_langs.append(lang)
         stopwords = []
         if target_lang in wordfreq_langs:
             stopwords = wordfreq.top_n_list(target_lang, n=150)
-        #topwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
+        # topwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
         junk_dict = {a: 1 for a in junk_chars}
         if target_lang in ("ja", "zh", "ko"):
             tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
