@@ -11,8 +11,8 @@ import fasttext
 import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import numpy as np
-from languages_id import langs_id
 import wordfreq
+from languages_id import langs_id
 from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
@@ -129,7 +129,7 @@ class BasicFiltering:
             wordfreq_avail_langs = wordfreq.available_languages(wordlist='best') # build list of wordfreq lang ids
             wordfreq_langs = []
                 for lang in wordfreq_avail_langs:
-                wordfreq_langs.append(lang) 
+                wordfreq_langs.append(lang)
             stopwords = []
             if target_lang in wordfreq_langs:
                 stopwords = wordfreq.top_n_list(target_lang, n=150)
