@@ -203,7 +203,7 @@ class OscarSampler:
             "stopword_check": stopword_check,
             "strip_chars": special_characters,
             "junk_chars": special_characters,
-        }
+        },
 
         "fr": {
             "stopwords_cutoff": 0.1,
