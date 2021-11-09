@@ -12,10 +12,11 @@ import fasttext
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
+import nltk
 import numpy as np
 from languages_id import langs_id
-import nltk
-nltk.download('stopwords')
+
+nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
