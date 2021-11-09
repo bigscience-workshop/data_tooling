@@ -1,256 +1,108 @@
-"""Basic filtering of garbage and perplexity sampling for OSCAR v1."""
+"""Basic filtering of garbage and perplexity sampling for OSCAR v1.
+Based on https://github.com/bigscience-workshop/data_tooling/blob/master/bertin/mc4/mc4.py.
+This code does not use HF's datasets for efficiency reasons."""
 
 import gzip
 import multiprocessing
 import os
 from random import sample
 
+import fasttext
 import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
-import langid
 import numpy as np
+from languages_id import langs_id
 import wordfreq
-from datasets import load_dataset
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
 
 
-class OscarSampler:
-    """Based on bertin/mc4/mc4.py.
-    This code does not use HF's datasets for efficiency reasons."""
-
-    langs = {
-        "af": "Afrikaans",
-        "als": "Tosk Albanian",
-        "am": "Amharic",
-        "an": "Aragonese",
-        "ar": "Arabic",
-        "arz": "Egyptian Arabic",
-        "ast": "Asturian",
-        "as": "Assamese",
-        "av": "Avaric",
-        "azb": "South Azerbaijani",
-        "az": "Azerbaijani",
-        "bar": "Bavarian",
-        "ba": "Bashkir",
-        "bcl": "Central Bikol",
-        "be": "Belarusian",
-        "bg": "Bulgarian",
-        "bh": "Bihari",
-        "bn": "Bengali",
-        "bo": "Tibetan",
-        "bpy": "Bishnupriya",
-        "br": "Breton",
-        "bs": "Bosnian",
-        "bxr": "Russia Buriat",
-        "ca": "Catalan",
-        "cbk": "Chavacano",
-        "ceb": "Cebuano",
-        "ce": "Chechen",
-        "ckb": "Central Kurdish",
-        "cs": "Czech",
-        "cv": "Chuvash",
-        "cy": "Welsh",
-        "da": "Danish",
-        "de": "German",
-        "diq": "Dimli",
-        "dsb": "Lower Sorbian",
-        "dv": "Dhivehi",
-        "el": "Modern Greek",
-        "eml": "Emilian-Romagnol",
-        "en": "English",
-        "eo": "Esperanto",
-        "es": "Spanish",
-        "et": "Estonian",
-        "eu": "Basque",
-        "fa": "Persian",
-        "fi": "Finnish",
-        "frr": "Northern Frisian",
-        "fr": "French",
-        "fy": "Western Frisian",
-        "ga": "Irish",
-        "gd": "Scottish Gaelic",
-        "gl": "Galician",
-        "gn": "Guarani",
-        "gom": "Goan Konkani",
-        "gu": "Gujarati",
-        "he": "Hebrew",
-        "hi": "Hindi",
-        "hr": "Croatian",
-        "hsb": "Upper Sorbian",
-        "ht": "Haitian",
-        "hu": "Hungarian",
-        "hy": "Armenian",
-        "ia": "Interlingua",
-        "id": "Indonesian",
-        "ie": "Interlingue",
-        "ilo": "Iloko",
-        "io": "Ido",
-        "is": "Icelandic",
-        "it": "Italian",
-        "ja": "Japanese",
-        "jbo": "Lojban",
-        "jv": "Javanese",
-        "ka": "Georgian",
-        "kk": "Kazakh",
-        "km": "Central Khmer",
-        "kn": "Kannada",
-        "ko": "Korean",
-        "krc": "Karachay-Balkar",
-        "ku": "Kurdish",
-        "kv": "Komi",
-        "kw": "Cornish",
-        "ky": "Kirghiz",
-        "la": "Latin",
-        "lb": "Luxembourgish",
-        "lez": "Lezghian",
-        "li": "Limburgan",
-        "lmo": "Lombard",
-        "lo": "Lao",
-        "lrc": "Northern Luri",
-        "lt": "Lithuanian",
-        "lv": "Latvian",
-        "mai": "Maithili",
-        "mg": "Malagasy",
-        "mhr": "Eastern Mari",
-        "min": "Minangkabau",
-        "mk": "Macedonian",
-        "ml": "Malayalam",
-        "mn": "Mongolian",
-        "mrj": "Western Mari",
-        "mr": "Marathi",
-        "ms": "Malay",
-        "mt": "Maltese",
-        "mwl": "Mirandese",
-        "my": "Burmese",
-        "myv": "Erzya",
-        "mzn": "Mazanderani",
-        "nah": "Nahuatl",  # languages
-        "nap": "Neapolitan",
-        "nds": "Low German",
-        "ne": "Nepali",
-        "new": "Newari",
-        "nl": "Dutch",
-        "nn": "Norwegian Nynorsk",
-        "no": "Norwegian",
-        "oc": "Occitan",
-        "or": "Oriya",
-        "os": "Ossetian",
-        "pam": "Pampanga",
-        "pa": "Panjabi",
-        "pl": "Polish",
-        "pms": "Piemontese",
-        "pnb": "Western Panjabi",
-        "ps": "Pushto",
-        "pt": "Portuguese",
-        "qu": "Quechua",
-        "rm": "Romansh",
-        "ro": "Romanian",
-        "ru": "Russian",
-        "sah": "Yakut",
-        "sa": "Sanskrit",
-        "scn": "Sicilian",
-        "sd": "Sindhi",
-        "sh": "Serbo-Croatian",
-        "si": "Sinhala",
-        "sk": "Slovak",
-        "sl": "Slovenian",
-        "so": "Somali",
-        "sq": "Albanian",
-        "sr": "Serbian",
-        "su": "Sundanese",
-        "sv": "Swedish",
-        "sw": "Swahili",
-        "ta": "Tamil",
-        "te": "Telugu",
-        "tg": "Tajik",
-        "th": "Thai",
-        "tk": "Turkmen",
-        "tl": "Tagalog",
-        "tr": "Turkish",
-        "tt": "Tatar",
-        "tyv": "Tuvinian",
-        "ug": "Uighur",
-        "uk": "Ukrainian",
-        "ur": "Urdu",
-        "uz": "Uzbek",
-        "vec": "Venetian",
-        "vi": "Vietnamese",
-        "vo": "Volapük",
-        "war": "Waray",
-        "wa": "Walloon",
-        "wuu": "Wu Chinese",
-        "xal": "Kalmyk",
-        "xmf": "Mingrelian",
-        "yi": "Yiddish",
-        "yo": "Yoruba",
-        "yue": "Yue Chinese",
-        "zh": "Chinese",
-    }
-
-    stopwords_cutoff = 0.1
-    junk_ratio = 0.5
-    stopword_check = True
-    special_characters = (
-        "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
-    )
-
-    # list of languages in wordfreq
-    wordfreq_avail_langs = wordfreq.available_languages(wordlist='best')
-    wordfreq_langs = []
-        for lang in wordfreq_avail_langs:
-            wordfreq_langs.append(lang)
-
-    # TODO - add params for other languages
-    params = {
-        "en": {
-            "stopwords_cutoff": stopwords_cutoff,
-            "junk_ratio": junk_ratio,
-            "stopword_check": stopword_check,
-            "strip_chars": special_characters,
-            "junk_chars": special_characters,
-        }
-    }
-
-    def __init__(self, **kwargs):
-        self.sampling_method = kwargs.pop("sampling_method", "random")
-        self.perplexity_model = kwargs.pop("perplexity_model", None)
-        self.sampling_factor = kwargs.pop("sampling_factor", None)
-        self.boundaries = kwargs.pop("boundaries", None)
-        if self.sampling_method:
-            if self.sampling_method == "random":
-                self.should_keep_doc = self._should_keep_doc_random
-            else:
-                # Loading 5-gram model
-                # http://dl.fbaipublicfiles.com/cc_net/lm/es.arpa.bin
-                print("loading model = %s", self.perplexity_model)
-                if self.sampling_method == "gaussian":
-                    self.should_keep_doc = self._should_keep_doc_gaussian
-                else:
-                    self.should_keep_doc = self._should_keep_doc_step
-        self.seed = kwargs.pop("seed", None)
-        self.kwargs = kwargs
+# TODO: Split the different filtering methods
+# into different functions and implement ideas
+# described in the google doc
+class BasicFiltering:
+    @staticmethod
+    def lower_strip_sentence(sentence):
+        sent = sentence.lower().strip()
+        return sent
 
     @staticmethod
-    def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
-        _BASE_DATA_URL_FORMAT_STR = "https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/"
-        _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
-        base_data_url = _BASE_DATA_URL_FORMAT_STR.format(
-            shuffled=shuffled, language=language, deduplicated=deduplicated
-        )
-        checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(
-            language=language
-        )
-        with fsspec.open(checksum_url, encoding="utf-8") as f:
-            data_filenames = [line.decode().split("\t")[0] for line in f if line]
-        return [base_data_url + data_filename for data_filename in data_filenames]
+    def get_words_from_sentence(sentence, strip_characters):
+        sent = BasicFiltering.lower_strip_sentence(sentence)
+        words = [word.strip(strip_characters) for word in sent.split(" ")]
+        return words
 
     @staticmethod
-    def _download_urls(urls):
-        for url in urls:
-            if not os.path.exists(url.split("/")[-1]):
-                os.system(f"wget {url}")
+    def remove_incorrect_words(
+        sentence,
+        incorrect_word_substrings,
+    ):
+        words = sentence.split(" ")
+        words = [word for word in words if all([(i_substr not in word) for i_substr in incorrect_word_substrings])]
+        filtered_sentence = " ".join(words)
+        return filtered_sentence
+
+    @staticmethod
+    def check_special_characters(
+        sentence,
+        special_characters,
+        special_characters_cutoff,
+    ):
+        sent = BasicFiltering.lower_strip_sentence(sentence)
+        set_special_characters = {char for char in special_characters}
+        special_characters_ratio = len(
+            [char for char in sent if char in set_special_characters]
+        ) / len(sent)
+        cond = special_characters_ratio < special_characters_cutoff
+        return cond
+
+    @staticmethod
+    def check_stopwords(
+        sentence,
+        strip_characters,
+        lang_oscar_id,
+        stopwords_cutoff,
+    ):
+        cond = True
+        nltk_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
+        ].iloc[0]
+        if nltk_lang_id:
+            words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+            stopwords = set(nltk_stopwords.words(nltk_lang_id))
+            stopwords_ratio = len([word for word in words if word in stopwords]) / len(
+                words
+            )
+            cond = stopwords_ratio < stopwords_cutoff
+        return cond
+
+    @staticmethod
+    def check_lang_id(
+        sentence,
+        strip_characters,
+        lang_oscar_id,
+        path_model_fasttext,
+        lang_id_cutoff,
+    ):
+        cond = True
+        fasttext_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
+        ].iloc[0]
+        if fasttext_lang_id:
+            words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+            sent = " ".join(words)
+            model_lang_id = fasttext.load_model(path_model_fasttext)
+            pred = model_lang_id.predict(sent)
+            lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
+            score_pred = pred[1][0]
+            lang_pred_oscar_id = langs_id.loc[
+                langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
+            ].iloc[0]
+            cond = (lang_pred_oscar_id == lang_oscar_id) and (
+                score_pred > lang_id_cutoff
+            )
+        return cond
 
     @staticmethod
     def check_good_sentence(
@@ -274,6 +126,10 @@ class OscarSampler:
             return False
         # stopword check (with wordfreq)
         if stopword_check:
+            wordfreq_avail_langs = wordfreq.available_languages(wordlist='best') # build list of wordfreq lang ids
+            wordfreq_langs = []
+                for lang in wordfreq_avail_langs:
+                wordfreq_langs.append(lang) 
             stopwords = []
             if target_lang in wordfreq_langs:
                 stopwords = wordfreq.top_n_list(target_lang, n=150)
@@ -291,6 +147,165 @@ class OscarSampler:
                 lang = ""
             return lang == target_lang
 
+
+# TODO: If getting the perplexity score is not done on
+# the fly during the training, remove functions
+# create_knlm_model and get_perplexity and simply
+# get this pre-computed score by looking at the file.
+# Otherwise, modify functions create_knlm_model and
+# get_perplexity to take (and download first) knlm model
+# pre-trained by facebook (5-gram model
+# http://dl.fbaipublicfiles.com/cc_net/lm/es.arpa.bin)
+class PerplexitySampling:
+    @staticmethod
+    def create_knlm_model(lang="pt"):
+        if not os.path.exists("/content/lmplz"):
+            os.system(
+                "cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/"
+            )
+            os.system("chmod ugo+x /content/lmplz")
+        file = tokenize_oscar_subset(lang, force=False)
+        file2 = os.path.split(file)[-1]
+        if not os.path.exists(file2) and not os.path.exists(file2.replace(".gz", "")):
+            os.system(f"cp {file} ./{file2}")
+        if os.path.exists(file2):
+            os.system(f"gunzip ./{file2}")
+        file2 = file2.replace(".gz", "")
+        os.system(
+            f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}"
+        )
+        os.system(f"mv {lang}.arpa /content/drive/Shareddrives/BigScience")
+
+    @staticmethod
+    def get_perplexity(doc, pp_model):
+        doc_log_score, doc_length = 0, 0
+        for line in doc.split("\n"):
+            log_score = pp_model.score(line)
+            length = len(line.split()) + 1
+            doc_log_score += log_score
+            doc_length += length
+        return 10.0 ** (-doc_log_score / doc_length)
+
+    @staticmethod
+    def _should_keep_doc_step(doc, rng, factor=None, boundaries=None, **kwargs):
+        if factor is None:
+            factor = 1.5e5
+        pp_model = kwargs.get("pp_model")
+        perplexity = PerplexitySampling.get_perplexity(doc, pp_model)
+        if boundaries is None:
+            boundaries = [536394.99320948, 662247.50212365, 919250.87225178]
+        if perplexity <= boundaries[0]:
+            quartile_range = boundaries[0]
+        elif boundaries[0] < perplexity < boundaries[1]:
+            quartile_range = boundaries[1] - boundaries[0]
+        elif boundaries[1] < perplexity < boundaries[2]:
+            quartile_range = boundaries[2] - boundaries[1]
+        elif perplexity >= boundaries[2]:
+            quartile_range = 10 * boundaries[2]
+        probability = factor / quartile_range
+        return rng.uniform() < probability
+
+    @staticmethod
+    def _should_keep_doc_gaussian(doc, rng, factor=None, boundaries=None, **kwargs):
+        if factor is None:
+            factor = 0.78
+        pp_model = kwargs.get("pp_model")
+        width = kwargs.get("width", 9 / 2)  # width (spread) of the exponential curve
+        perplexity = PerplexitySampling.get_perplexity(doc, pp_model)
+        if boundaries is not None:
+            m = boundaries[1]
+        else:
+            m = 662247.50212365
+        exponential = np.exp((-1 / width) * ((perplexity - m) / m) ** 2)
+        weighted_perplexity = factor * exponential
+        return rng.uniform() < weighted_perplexity
+
+    @staticmethod
+    def _should_keep_doc_random(doc, rng, factor=None, boundaries=None, **kwargs):
+        if factor is None:
+            factor = 0.5
+        return rng.uniform() <= factor
+
+    @staticmethod
+    def should_keep_doc(
+        sampling_method, doc, rng, factor=None, boundaries=None, **kwargs
+    ):
+        if sampling_method not in ["random", "gaussian", "step"]:
+            raise ValueError("sampling_method should be random, gaussian or step.")
+        if sampling_method == "random":
+            func_should_keep = PerplexitySampling._should_keep_doc_random
+        elif sampling_method == "gaussian":
+            func_should_keep = PerplexitySampling._should_keep_doc_gaussian
+        else:
+            func_should_keep = PerplexitySampling._should_keep_doc_step
+        should_keep = func_should_keep(
+            doc,
+            rng,
+            factor,
+            boundaries,
+            **kwargs,
+        )
+        return should_keep
+
+
+class OscarSampler:
+    def __init__(
+        self,
+        lang_oscar_id,
+        stopwords_cutoff=0.1,
+        junk_ratio=0.5,
+        stopword_check=True,
+        strip_chars=(
+            "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
+        ),
+        junk_chars=(
+            "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
+        ),
+        sampling_method="random",
+        perplexity_model=None,
+        sampling_factor=None,
+        boundaries=None,
+        seed=None,
+        **kwargs,
+    ):
+
+        self.lang_oscar_id = lang_oscar_id
+
+        self.stopwords_cutoff = stopwords_cutoff
+        self.junk_ratio = junk_ratio
+        self.stopword_check = stopword_check
+        self.strip_chars = strip_chars
+        self.junk_chars = junk_chars
+
+        self.sampling_method = sampling_method
+        self.perplexity_model = perplexity_model
+        self.sampling_factor = sampling_factor
+        self.boundaries = boundaries
+        self.seed = seed
+        self.kwargs = kwargs
+
+    @staticmethod
+    def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
+        _BASE_DATA_URL_FORMAT_STR = "https://s3.amazonaws.com/datasets.huggingface.co/oscar/1.0/{shuffled}/{deduplicated}/{language}/"
+        _BASE_CHECKSUM_FILE_NAME = "{language}_sha256.txt"
+        base_data_url = _BASE_DATA_URL_FORMAT_STR.format(
+            shuffled=shuffled, language=language, deduplicated=deduplicated
+        )
+        checksum_url = base_data_url + _BASE_CHECKSUM_FILE_NAME.format(
+            language=language
+        )
+        with fsspec.open(checksum_url, encoding="utf-8") as f:
+            data_filenames = [line.decode().split("\t")[0] for line in f if line]
+        return [base_data_url + data_filename for data_filename in data_filenames]
+
+    @staticmethod
+    def _download_urls(urls):
+        for url in urls:
+            if not os.path.exists(url.split("/")[-1]):
+                os.system(f"wget {url}")
+
+    # TODO: Finish to adapt the following function
+    # make it work with the changes in the code
     @staticmethod
     def filter_and_tok_cjk(
         url,
@@ -315,6 +330,10 @@ class OscarSampler:
             pp_model = kenlm.Model(perplexity_model)
         else:
             pp_model = None
+        wordfreq_avail_langs = wordfreq.available_languages(wordlist='best') # build list of wordfreq lang ids
+        wordfreq_langs = []
+            for lang in wordfreq_avail_langs:
+                wordfreq_langs.append(lang)
         stopwords = []
         if target_lang in wordfreq_langs:
             stopwords = wordfreq.top_n_list(target_lang, n=150)
@@ -334,7 +353,7 @@ class OscarSampler:
                         line = " ".join(tokenizer.tokenize(line)).replace(
                             mt5_underscore + " ", mt5_underscore
                         )
-                    if OscarSampler.check_good_sentence(
+                    if BasicFiltering.check_good_sentence(
                         line,
                         stopwords,
                         junk_dict,
@@ -355,6 +374,8 @@ class OscarSampler:
                             f.write(line + "\n")
         os.unlink(file)
 
+    # TODO: Finish to adapt the following function
+    # make it work with the changes in the code
     def sample_filter(self, target_lang, sample_shard=5):
         if target_lang in self.params:
             param = self.params[target_lang]
@@ -402,68 +423,3 @@ class OscarSampler:
         else:
             print(f"{target_lang} not supported")
             return ""
-
-    @staticmethod
-    def create_knlm_model(lang="pt"):
-        if not os.path.exists("/content/lmplz"):
-            os.system(
-                "cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/"
-            )
-            os.system("chmod ugo+x /content/lmplz")
-        file = tokenize_oscar_subset(lang, force=False)
-        file2 = os.path.split(file)[-1]
-        if not os.path.exists(file2) and not os.path.exists(file2.replace(".gz", "")):
-            os.system(f"cp {file} ./{file2}")
-        if os.path.exists(file2):
-            os.system(f"gunzip ./{file2}")
-        file2 = file2.replace(".gz", "")
-        os.system(
-            f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}"
-        )
-        os.system(f"mv {lang}.arpa /content/drive/Shareddrives/BigScience")
-
-    @staticmethod
-    def get_perplexity(doc, pp_model):
-        doc_log_score, doc_length = 0, 0
-        for line in doc.split("\n"):
-            log_score = pp_model.score(line)
-            length = len(line.split()) + 1
-            doc_log_score += log_score
-            doc_length += length
-        return 10.0 ** (-doc_log_score / doc_length)
-
-    @staticmethod
-    def _should_keep_doc_step(doc, rng, factor=1.5e5, boundaries=None, **kwargs):
-        pp_model = width = kwargs.get("pp_model")
-        perplexity = OscarSampler.get_perplexity(doc, pp_model)
-        if boundaries is None:
-            boundaries = [536394.99320948, 662247.50212365, 919250.87225178]
-        if perplexity <= boundaries[0]:
-            quartile_range = boundaries[0]
-        elif boundaries[0] < perplexity < boundaries[1]:
-            quartile_range = boundaries[1] - boundaries[0]
-        elif boundaries[1] < perplexity < boundaries[2]:
-            quartile_range = boundaries[2] - boundaries[1]
-        elif perplexity >= boundaries[2]:
-            quartile_range = 10 * boundaries[2]
-        probability = factor / quartile_range
-        return rng.uniform() < probability
-
-    @staticmethod
-    def _should_keep_doc_gaussian(doc, rng, factor=0.78, boundaries=None, **kwargs):
-        pp_model = width = kwargs.get("pp_model")
-        width = kwargs.get("width", 9 / 2)  # width (spread) of the exponential curve
-        perplexity = OscarSampler.get_perplexity(doc, pp_model)
-        if boundaries is not None:
-            m = boundaries[1]
-        else:
-            m = 662247.50212365
-        exponential = np.exp((-1 / width) * ((perplexity - m) / m) ** 2)
-        weighted_perplexity = factor * exponential
-        return rng.uniform() < weighted_perplexity
-
-    @staticmethod
-    def _should_keep_doc_random(doc, rng, factor=None, boundaries=None, **kwargs):
-        if factor is None:
-            factor = 0.5
-        return rng.uniform() <= factor
