@@ -1,32 +1,25 @@
-"""Basic filtering of garbage and perplexity sampling for OSCAR v1.
-Based on https://github.com/bigscience-workshop/data_tooling/blob/master/bertin/mc4/mc4.py.
+"""Basic filtering of garbage and perplexity filtering for OSCAR v1.
 This code does not use HF's datasets for efficiency reasons."""
 
+import os
+import fsspec
 import gzip
 import multiprocessing
-import os
+
+import numpy as np
 from random import sample
 
-
-# To download fasttext model:
-# wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
-import fasttext
-import fsspec
-import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import nltk
-import numpy as np
-
 nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
-from numpy.random import default_rng
-from transformers import AutoTokenizer
+import fasttext
+# To download the fasttext model:
+# wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 from languages_id import langs_id
 
 
-# TODO: Split the different filtering methods
-# into different functions and implement ideas
-# described in the google doc
 class BasicFiltering:
     @staticmethod
     def lower_strip_sentence(sentence):
@@ -186,42 +179,16 @@ class BasicFiltering:
         else:
             # langid check
             try:
-                lang = langid.classify(sent)[0]
+                #lang = langid.classify(sent)[0]
+                pass
             except:
                 lang = ""
             return lang == target_lang
 
 
-# TODO: If getting the perplexity score is not done on
-# the fly during the training, remove functions
-# create_knlm_model and get_perplexity and simply
-# get this pre-computed score by looking at the file.
-# Otherwise, modify functions create_knlm_model and
-# get_perplexity to take (and download first) knlm model
-# pre-trained by facebook (5-gram model
-# http://dl.fbaipublicfiles.com/cc_net/lm/es.arpa.bin)
-class PerplexitySampling:
+class PerplexityFiltering:
     @staticmethod
-    def create_knlm_model(lang="pt"):
-        if not os.path.exists("/content/lmplz"):
-            os.system(
-                "cp /content/drive/Shareddrives/BigScience/kenlm/bin/lmplz /content/"
-            )
-            os.system("chmod ugo+x /content/lmplz")
-        file = tokenize_oscar_subset(lang, force=False)
-        file2 = os.path.split(file)[-1]
-        if not os.path.exists(file2) and not os.path.exists(file2.replace(".gz", "")):
-            os.system(f"cp {file} ./{file2}")
-        if os.path.exists(file2):
-            os.system(f"gunzip ./{file2}")
-        file2 = file2.replace(".gz", "")
-        os.system(
-            f"/content/lmplz --discount_fallback  --skip_symbols -o 5 --prune 5 --collapse_values  --arpa {lang}.arpa < ./{file2}"
-        )
-        os.system(f"mv {lang}.arpa /content/drive/Shareddrives/BigScience")
-
-    @staticmethod
-    def get_perplexity(doc, pp_model):
+    def get_perplexity(pp_model, doc):
         doc_log_score, doc_length = 0, 0
         for line in doc.split("\n"):
             log_score = pp_model.score(line)
@@ -230,69 +197,8 @@ class PerplexitySampling:
             doc_length += length
         return 10.0 ** (-doc_log_score / doc_length)
 
-    @staticmethod
-    def _should_keep_doc_step(doc, rng, factor=None, boundaries=None, **kwargs):
-        if factor is None:
-            factor = 1.5e5
-        pp_model = kwargs.get("pp_model")
-        perplexity = PerplexitySampling.get_perplexity(doc, pp_model)
-        if boundaries is None:
-            boundaries = [536394.99320948, 662247.50212365, 919250.87225178]
-        if perplexity <= boundaries[0]:
-            quartile_range = boundaries[0]
-        elif boundaries[0] < perplexity < boundaries[1]:
-            quartile_range = boundaries[1] - boundaries[0]
-        elif boundaries[1] < perplexity < boundaries[2]:
-            quartile_range = boundaries[2] - boundaries[1]
-        elif perplexity >= boundaries[2]:
-            quartile_range = 10 * boundaries[2]
-        probability = factor / quartile_range
-        return rng.uniform() < probability
 
-    @staticmethod
-    def _should_keep_doc_gaussian(doc, rng, factor=None, boundaries=None, **kwargs):
-        if factor is None:
-            factor = 0.78
-        pp_model = kwargs.get("pp_model")
-        width = kwargs.get("width", 9 / 2)  # width (spread) of the exponential curve
-        perplexity = PerplexitySampling.get_perplexity(doc, pp_model)
-        if boundaries is not None:
-            m = boundaries[1]
-        else:
-            m = 662247.50212365
-        exponential = np.exp((-1 / width) * ((perplexity - m) / m) ** 2)
-        weighted_perplexity = factor * exponential
-        return rng.uniform() < weighted_perplexity
-
-    @staticmethod
-    def _should_keep_doc_random(doc, rng, factor=None, boundaries=None, **kwargs):
-        if factor is None:
-            factor = 0.5
-        return rng.uniform() <= factor
-
-    @staticmethod
-    def should_keep_doc(
-        sampling_method, doc, rng, factor=None, boundaries=None, **kwargs
-    ):
-        if sampling_method not in ["random", "gaussian", "step"]:
-            raise ValueError("sampling_method should be random, gaussian or step.")
-        if sampling_method == "random":
-            func_should_keep = PerplexitySampling._should_keep_doc_random
-        elif sampling_method == "gaussian":
-            func_should_keep = PerplexitySampling._should_keep_doc_gaussian
-        else:
-            func_should_keep = PerplexitySampling._should_keep_doc_step
-        should_keep = func_should_keep(
-            doc,
-            rng,
-            factor,
-            boundaries,
-            **kwargs,
-        )
-        return should_keep
-
-
-class OscarSampler:
+class OscarFiltering:
     def __init__(
         self,
         lang_oscar_id,
@@ -305,12 +211,7 @@ class OscarSampler:
         junk_chars=(
             "' 0123456789¯_%$§½¼¾×|†—~\"—±′–'°−{}[]·-'?,./<>!@#^&*()+-‑=:;`→¶'"
         ),
-        sampling_method="random",
         perplexity_model=None,
-        sampling_factor=None,
-        boundaries=None,
-        seed=None,
-        **kwargs,
     ):
 
         self.lang_oscar_id = lang_oscar_id
@@ -320,13 +221,7 @@ class OscarSampler:
         self.stopword_check = stopword_check
         self.strip_chars = strip_chars
         self.junk_chars = junk_chars
-
-        self.sampling_method = sampling_method
         self.perplexity_model = perplexity_model
-        self.sampling_factor = sampling_factor
-        self.boundaries = boundaries
-        self.seed = seed
-        self.kwargs = kwargs
 
     @staticmethod
     def get_oscar_urls(language, shuffled="unshuffled", deduplicated="deduplicated"):
@@ -354,34 +249,20 @@ class OscarSampler:
     def filter_and_tok_cjk(
         url,
         target_lang,
-        sampling_factor,
-        boundaries,
-        should_keep_doc,
         perplexity_model,
-        seed,
         stopwords_cutoff,
         junk_ratio,
         stopword_check,
         strip_chars,
         junk_chars,
-        sampling_method,
     ):
-        mt5_underscore = "_"
-        if seed is not None:
-            rng = default_rng(seed)
-        else:
-            rng = default_rng()
         if perplexity_model:
             pp_model = kenlm.Model(perplexity_model)
         else:
             pp_model = None
-        # TODO: add stopwords per language
-        # stopwords = set(stopwords.words(OscarSampler.langs[target_lang].lower()))
         stopwords = set()
         junk_dict = {a: 1 for a in junk_chars}
-        if target_lang in ("ja", "zh", "ko"):
-            tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
-        OscarSampler._download_urls([url])
+        OscarFiltering._download_urls([url])
         file = url.split("/")[-1]
         with open(
             file.replace(".txt.gz", "") + ".sample_filtered.txt", "w", encoding="utf8"
@@ -389,10 +270,6 @@ class OscarSampler:
             with gzip.open(file, "rb") as f2:
                 for id_, line in enumerate(f2):
                     line = line.decode().strip()
-                    if target_lang in ("ja", "zh", "ko"):
-                        line = " ".join(tokenizer.tokenize(line)).replace(
-                            mt5_underscore + " ", mt5_underscore
-                        )
                     if BasicFiltering.check_good_sentence(
                         line,
                         stopwords,
@@ -403,16 +280,7 @@ class OscarSampler:
                         junk_ratio,
                         stopword_check,
                     ):
-                        # now do perplexity sampling
-                        if should_keep_doc(
-                            doc=line,
-                            rng=rng,
-                            factor=sampling_factor,
-                            boundaries=boundaries,
-                            pp_model=pp_model,
-                            sampling_method=sampling_method,
-                        ):
-                            f.write(line + "\n")
+                        f.write(line + "\n")
         os.unlink(file)
 
     # TODO: Finish to adapt the following function
@@ -434,7 +302,7 @@ class OscarSampler:
             # TODO, we should create
             processes = [
                 multiprocessing.Process(
-                    target=OscarSampler.filter_and_tok_cjk,
+                    target=OscarFiltering.filter_and_tok_cjk,
                     args=(
                         url,
                         target_lang,
@@ -470,20 +338,15 @@ class OscarSampler:
 if __name__ == "__main__":
     # Download a sample dataset and run filtering pipeline
     lang = "af"
-    sampler = OscarSampler(lang_oscar_id=lang)
-    url = OscarSampler.get_oscar_urls(lang)[0]
-    OscarSampler.filter_and_tok_cjk(
+    sampler = OscarFiltering(lang_oscar_id=lang)
+    url = OscarFiltering.get_oscar_urls(lang)[0]
+    OscarFiltering.filter_and_tok_cjk(
         url=url,
         target_lang="af",
-        seed=42,
         stopwords_cutoff=0.1,
         junk_ratio=0.15,
         stopword_check=True,
         strip_chars=sampler.strip_chars,
         junk_chars=sampler.junk_chars,
-        should_keep_doc=PerplexitySampling.should_keep_doc,
         perplexity_model="ac_dc/af.arpa.bin",
-        sampling_factor=None,
-        boundaries=None,
-        sampling_method="gaussian",
     )
