@@ -8,6 +8,7 @@ import os
 from random import sample
 
 import fasttext
+
 # To download fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 import fsspec
