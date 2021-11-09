@@ -7,20 +7,21 @@ import multiprocessing
 import os
 from random import sample
 
-import fasttext
 
 # To download fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+import fasttext
 import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import nltk
 import numpy as np
-from languages_id import langs_id
 
 nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
+
+from languages_id import langs_id
 
 
 # TODO: Split the different filtering methods
