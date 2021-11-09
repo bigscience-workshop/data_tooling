@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Kenlm models
+*.arpa.bin
+
+# Filtering outputs
+*filtered.txt
+
+# DS_Store
+*.DS_Store

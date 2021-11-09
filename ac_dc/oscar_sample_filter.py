@@ -12,6 +12,8 @@ import fsspec
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 import numpy as np
 from languages_id import langs_id
+import nltk
+nltk.download('stopwords')
 from nltk.corpus import stopwords as nltk_stopwords
 from numpy.random import default_rng
 from transformers import AutoTokenizer
@@ -33,7 +35,7 @@ class BasicFiltering:
         return words
 
     @staticmethod
-    def remove_incorrect_words(
+    def remove_words_with_incorrect_substrings(
         sentence,
         incorrect_word_substrings,
     ):
@@ -43,6 +45,16 @@ class BasicFiltering:
             for word in words
             if all([(i_substr not in word) for i_substr in incorrect_word_substrings])
         ]
+        filtered_sentence = " ".join(words)
+        return filtered_sentence
+
+    @staticmethod
+    def remove_long_words(
+        sentence,
+        length_word_cutoff,
+    ):
+        words = sentence.split(" ")
+        words = [word for word in words if len(word) < length_word_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
 
@@ -85,6 +97,28 @@ class BasicFiltering:
                 words
             )
             cond = stopwords_ratio < stopwords_cutoff
+        return cond
+
+    @staticmethod
+    def check_badwords(
+        sentence,
+        strip_characters,
+        lang_oscar_id,
+        badwords_cutoff,
+    ):
+        cond = True
+        badwords_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
+        ].iloc[0]
+        if badwords_lang_id:
+            words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
+            f = open(f"badwords_{badwords_lang_id}.txt", "r")
+            badwords = set(f.read().split("\n"))
+            f.close()
+            badwords_ratio = len([word for word in words if word in badwords]) / len(
+                words
+            )
+            cond = badwords_ratio < badwords_cutoff
         return cond
 
     @staticmethod
@@ -443,8 +477,8 @@ if __name__ == "__main__":
         strip_chars=sampler.strip_chars,
         junk_chars=sampler.junk_chars,
         should_keep_doc=PerplexitySampling.should_keep_doc,
-        perplexity_model="/tmp/af.arpa.bin",
+        perplexity_model="ac_dc/af.arpa.bin",
         sampling_factor=None,
         boundaries=None,
-        sampling_method="random",
+        sampling_method="gaussian",
     )
