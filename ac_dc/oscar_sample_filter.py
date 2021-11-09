@@ -332,8 +332,8 @@ class OscarSampler:
             pp_model = None
         wordfreq_avail_langs = wordfreq.available_languages(wordlist='best') # build list of wordfreq lang ids
         wordfreq_langs = []
-            for lang in wordfreq_avail_langs:
-                wordfreq_langs.append(lang)
+        for lang in wordfreq_avail_langs:
+            wordfreq_langs.append(lang)
         stopwords = []
         if target_lang in wordfreq_langs:
             stopwords = wordfreq.top_n_list(target_lang, n=150)
