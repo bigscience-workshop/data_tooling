@@ -1,7 +1,6 @@
 import pandas as pd
 
-# TODO: Complete this dataframe by adding for each
-# language the id of the kenlm model, and the langid lib
+
 langs_id = [
     {
         "lang": "Afrikaans",
