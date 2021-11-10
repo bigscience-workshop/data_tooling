@@ -147,6 +147,73 @@ class BasicFiltering:
         return cond
 
     @staticmethod
+    def basic_filtering(
+        sentence,
+        lang_oscar_id,
+        cond_remove_words_with_incorrect_substrings,
+        incorrect_word_substrings,
+        cond_remove_long_words,
+        length_word_cutoff,
+        cond_check_empty,
+        strip_characters,
+        cond_check_special_characters,
+        special_characters,
+        special_characters_cutoff,
+        cond_check_stopwords,
+        stopwords_cutoff,
+        cond_check_badwords,
+        badwords_cutoff,
+        cond_check_lang_id,
+        path_model_fasttext,
+        lang_id_cutoff,
+    ):
+        if cond_remove_words_with_incorrect_substrings:
+            sentence = BasicFiltering.remove_words_with_incorrect_substrings(
+                sentence,
+                incorrect_word_substrings,
+            )
+        if cond_remove_long_words:
+            sentence = BasicFiltering.remove_long_words(sentence, length_word_cutoff)
+
+        if cond_check_empty:
+            if not BasicFiltering.check_empty(sentence, strip_characters):
+                return False
+        if cond_check_special_characters:
+            if not BasicFiltering.check_special_characters(
+                sentence,
+                special_characters,
+                special_characters_cutoff,
+            ):
+                return False
+        if cond_check_stopwords:
+            if not BasicFiltering.check_stopwords(
+                sentence,
+                strip_characters,
+                lang_oscar_id,
+                stopwords_cutoff,
+            ):
+                return False
+        if cond_check_badwords:
+            if not BasicFiltering.check_badwords(
+                sentence,
+                strip_characters,
+                lang_oscar_id,
+                badwords_cutoff,
+            ):
+                return False
+        if cond_check_lang_id:
+            if not BasicFiltering.check_lang_id(
+                sentence,
+                strip_characters,
+                lang_oscar_id,
+                path_model_fasttext,
+                lang_id_cutoff,
+            ):
+                return False
+        return True
+        
+
+    @staticmethod
     def check_good_sentence(
         sentence,
         stopwords,
