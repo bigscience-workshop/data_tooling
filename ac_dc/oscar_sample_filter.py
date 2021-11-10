@@ -5,9 +5,11 @@ import os
 import gzip
 
 import nltk
+
 nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
 import fasttext
+
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
