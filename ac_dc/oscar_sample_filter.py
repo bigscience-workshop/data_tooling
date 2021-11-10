@@ -179,7 +179,7 @@ class BasicFiltering:
         else:
             # langid check
             try:
-                #lang = langid.classify(sent)[0]
+                # lang = langid.classify(sent)[0]
                 pass
             except:
                 lang = ""

@@ -22,7 +22,7 @@ def download_kenlm_models(output_path: str) -> None:
                 shell=True,
             )
         except:
-            pass
+            print(f"Warning: Download failed for KenLM model for language {lang}.")
 
 
 if __name__ == "__main__":
