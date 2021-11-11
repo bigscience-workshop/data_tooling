@@ -18,6 +18,7 @@ import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
+from badwords import badwords
 
 
 class BasicFiltering:
@@ -234,9 +235,7 @@ class OscarBasicFiltering:
             langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
         ].iloc[0]
         if badwords_lang_id:
-            f = open(f"badwords_{badwords_lang_id}.txt", "r")
-            self.badwords = set(f.read().split("\n"))
-            f.close()
+            self.badwords = set(badwords[badwords_lang_id])
         else:
             self.badwords = None
 
@@ -294,7 +293,7 @@ class OscarBasicFiltering:
                         model_lang_id=self.model_lang_id,
                         lang_id_cutoff=self.param["lang_id_cutoff"],
                     ):
-                        f.write(line + "\n")
+                        f.write(line + "\n\n")
         os.unlink(path_oscar_file)
 
 
