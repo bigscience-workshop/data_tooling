@@ -4,14 +4,14 @@ def lower_strip_sentence(sentence):
 
 
 def get_words_from_sentence(sentence, strip_characters):
-    """ Get lower case words from a sentence."""
+    """Get lower case words from a sentence."""
     sent = lower_strip_sentence(sentence)
     words = [word.strip(strip_characters) for word in sent.split(" ")]
     return words
 
 
 def check_empty(sentence, strip_characters):
-    """ Return True if sentence is not empty. """
+    """Return True if sentence is not empty."""
     sent = lower_strip_sentence(sentence)
     words = get_words_from_sentence(sentence, strip_characters)
     cond = (len(sent) > 0) and (len(words) > 0)

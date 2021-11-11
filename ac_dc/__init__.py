@@ -1,4 +1,1 @@
-from . import (
-    filters,
-    normalizers
-)
+from . import filters, normalizers
