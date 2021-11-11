@@ -82,7 +82,7 @@ def check_lang_id(
     lang_id_cutoff,
 ):
     """
-    Return True if model_lang_id predict the same language with lang_oscars_id 
+    Return True if model_lang_id predict the same language with lang_oscars_id
     """
     cond = True
     if model_lang_id:
@@ -94,8 +94,6 @@ def check_lang_id(
         lang_pred_oscar_id = langs_id.loc[
             langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
         ].iloc[0]
-        cond = (lang_pred_oscar_id == lang_oscar_id) and (
-            score_pred > lang_id_cutoff
-        )
+        cond = (lang_pred_oscar_id == lang_oscar_id) and (score_pred > lang_id_cutoff)
 
     return cond
