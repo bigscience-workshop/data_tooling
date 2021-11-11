@@ -18,7 +18,6 @@ def test_lower_strip_sentence():
 def test_get_words_from_sentence():
     sentence = "This is a test sentence."
     expected = ["this", "is", "a", "test", "sentence"]
-    print(">>>>>>>>>>>>", get_words_from_sentence(sentence, strip_characters))
     assert get_words_from_sentence(sentence, strip_characters) == expected
 
 

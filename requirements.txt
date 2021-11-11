@@ -12,3 +12,4 @@ sentencepiece
 sqlalchemy>=1.4.20
 transformers
 wordfreq
+pytest
