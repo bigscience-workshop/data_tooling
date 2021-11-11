@@ -1,1 +1,1 @@
-from . import filters, normalizers, processors, config
+from . import filters, normalizers, pipeline, config

@@ -108,7 +108,7 @@ if __name__ == "__main__":
             from tqdm import tqdm as tqdm
 
             for id_, line in enumerate(tqdm(f2)):
-                line = pipeline.normalize(line)
+                line = pipeline.normalize(line.decode().strip())
                 if pipeline.filter(line):
                     f.write(line + "\n\n")
 
