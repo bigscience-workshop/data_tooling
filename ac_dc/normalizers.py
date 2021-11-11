@@ -1,8 +1,3 @@
-def lower_strip_sentence(sentence):
-    sent = sentence.lower().strip()
-    return sent
-
-
 def remove_words_with_incorrect_substrings(
     sentence,
     incorrect_word_substrings,

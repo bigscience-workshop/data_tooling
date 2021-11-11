@@ -3,10 +3,6 @@ from ac_dc.normalizers import *
 incorrect_word_substrings = ["http", "www", ".com", "href", "//"]
 
 
-def test_lower_strip_sentence():
-    assert lower_strip_sentence(" Hello World   ") == "hello world"
-
-
 def test_remove_words_with_incorrect_substrings():
     assert (
         remove_words_with_incorrect_substrings(
