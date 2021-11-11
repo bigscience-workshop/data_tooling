@@ -1,3 +1,6 @@
+from .languages_id import langs_id
+
+
 def lower_strip_sentence(sentence):
     sent = sentence.lower().strip()
     return sent
@@ -60,6 +63,9 @@ def check_badwords(
     badwords,
     badwords_cutoff,
 ):
+    """
+    Return True if the ratio of badwords in the sentence is below the cutoff.
+    """
     cond = True
     if badwords:
         words = get_words_from_sentence(sentence, strip_characters)
@@ -74,8 +80,10 @@ def check_lang_id(
     lang_oscar_id,
     model_lang_id,
     lang_id_cutoff,
-    fasttext_lang_id,
 ):
+    """
+    Return True if model_lang_id predict the same language with lang_oscars_id 
+    """
     cond = True
     if model_lang_id:
         words = get_words_from_sentence(sentence, strip_characters)
@@ -83,6 +91,11 @@ def check_lang_id(
         pred = model_lang_id.predict(sent)
         lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
         score_pred = pred[1][0]
-        cond = (fasttext_lang_id == lang_oscar_id) and (score_pred > lang_id_cutoff)
+        lang_pred_oscar_id = langs_id.loc[
+            langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
+        ].iloc[0]
+        cond = (lang_pred_oscar_id == lang_oscar_id) and (
+            score_pred > lang_id_cutoff
+        )
 
     return cond
