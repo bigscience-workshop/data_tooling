@@ -7,17 +7,22 @@ All 48 kenlm language models will be saved under /tmp.
 """
 
 import argparse
-import os
+import subprocess
 
 from languages_id import langs_id
 
 
 def download_kenlm_models(output_path: str) -> None:
     supported_kenlm_langs = langs_id["kenlm_id"].dropna().unique()
-    for lang in supported_kenlm_langs[1:]:
-        os.system(
-            f"wget http://dl.fbaipublicfiles.com/cc_net/lm/{lang}.arpa.bin -P {output_path}"
-        )
+    # unsupported_kenlm_langs = langs_id.loc[~langs_id.oscar_id.isin(langs_id.kenlm_id)].oscar_id.dropna().unique()
+    for lang in supported_kenlm_langs:
+        try:
+            output = subprocess.check_output(
+                f"wget http://dl.fbaipublicfiles.com/cc_net/lm/{lang}.arpa.bin -P {output_path}",
+                shell=True,
+            )
+        except:
+            print(f"Warning: Download failed for KenLM model for language {lang}.")
 
 
 if __name__ == "__main__":
