@@ -1,13 +1,13 @@
 import fasttext
 from . import filters, normalizers
 from .pipeline import BasePipeline
-from .config import PipelineConfig
+from .config import BaseConfig
 
 
 class BasicPipeline(BasePipeline):
     """A Basic pipeline to start."""
 
-    def __init__(self, config: PipelineConfig):
+    def __init__(self, config: BaseConfig):
         super().__init__(config)
         if self.config.cond_check_lang_id:
             self.model_lang_id = fasttext.load_model(config.path_model_fasttext)

@@ -4,7 +4,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-class PipelineConfig:
+class BaseConfig:
     """Base class for all pipeline configurations
 
     Class attributes (overridden by derived classes)

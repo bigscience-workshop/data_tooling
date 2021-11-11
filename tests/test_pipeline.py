@@ -1,5 +1,5 @@
 from ac_dc.badwords import badwords
-from ac_dc.config import PipelineConfig
+from ac_dc.config import BaseConfig
 from ac_dc.basic_pipeline import BasicPipeline
 from tqdm import tqdm
 import gzip
@@ -32,7 +32,7 @@ def test_basic_pipeline():
         "lang_id_cutoff": 0.8,
     }
 
-    config = PipelineConfig("en", **parameters_filtering_en)
+    config = BaseConfig("en", **parameters_filtering_en)
     pipeline = BasicPipeline(config)
 
     dropped_records = path_oscar_file.replace(".txt.gz", "") + ".sample_dropped.txt"

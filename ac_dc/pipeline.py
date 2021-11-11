@@ -1,5 +1,5 @@
 from . import filters, normalizers
-from .config import PipelineConfig
+from .config import BaseConfig
 
 
 class BasePipeline:
@@ -7,7 +7,7 @@ class BasePipeline:
     Base class for all pipelines.
     """
 
-    def __init__(self, config: PipelineConfig):
+    def __init__(self, config: BaseConfig):
         self.config = config
 
     def normalize(self, sentence: str) -> str:
