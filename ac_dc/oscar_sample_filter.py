@@ -5,10 +5,12 @@ import os
 import gzip
 
 import nltk
+
 nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
 
 import fasttext
+
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
@@ -16,6 +18,7 @@ import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
+from badwords import badwords
 
 
 class BasicFiltering:
@@ -202,6 +205,7 @@ class BasicFiltering:
 class PerplexityFiltering:
     @staticmethod
     def get_perplexity(pp_model, doc):
+        # To open a model: pp_model = kenlm.Model(path_model)
         doc_log_score, doc_length = 0, 0
         for line in doc.split("\n"):
             log_score = pp_model.score(line)
@@ -211,7 +215,7 @@ class PerplexityFiltering:
         return 10.0 ** (-doc_log_score / doc_length)
 
 
-class OscarFiltering:
+class OscarBasicFiltering:
     def __init__(
         self,
         lang_oscar_id,
@@ -231,9 +235,7 @@ class OscarFiltering:
             langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
         ].iloc[0]
         if badwords_lang_id:
-            f = open(f"badwords_{badwords_lang_id}.txt", "r")
-            self.badwords = set(f.read().split("\n"))
-            f.close()
+            self.badwords = set(badwords[badwords_lang_id])
         else:
             self.badwords = None
 
@@ -250,59 +252,56 @@ class OscarFiltering:
         else:
             self.param = parameters_filtering["default"]
 
-    # TODO: Finish to adapt the following function
-    # make it work with the changes in the code
-    @staticmethod
-    def filter_and_tok_cjk(
-        url,
-        target_lang,
-        perplexity_model,
-        stopwords_cutoff,
-        junk_ratio,
-        stopword_check,
-        strip_chars,
-        junk_chars,
-    ):
-        if perplexity_model:
-            pp_model = kenlm.Model(perplexity_model)
-        else:
-            pp_model = None
-        stopwords = set()
-        junk_dict = {a: 1 for a in junk_chars}
-        OscarFiltering._download_urls([url])
-        file = url.split("/")[-1]
+    def filtering(self, path_oscar_file):
         with open(
-            file.replace(".txt.gz", "") + ".sample_filtered.txt", "w", encoding="utf8"
+            path_oscar_file.replace(".txt.gz", "") + ".sample_filtered.txt",
+            "w",
+            encoding="utf8",
         ) as f:
-            with gzip.open(file, "rb") as f2:
-                for id_, line in enumerate(f2):
+            with gzip.open(path_oscar_file, "rb") as f2:
+                from tqdm import tqdm as tqdm
+
+                for id_, line in enumerate(tqdm(f2)):
                     line = line.decode().strip()
-                    if BasicFiltering.check_good_sentence(
-                        line,
-                        stopwords,
-                        junk_dict,
-                        strip_chars,
-                        target_lang,
-                        stopwords_cutoff,
-                        junk_ratio,
-                        stopword_check,
+                    if BasicFiltering.basic_filtering(
+                        sentence=line,
+                        lang_oscar_id=self.lang_oscar_id,
+                        cond_remove_words_with_incorrect_substrings=self.param[
+                            "cond_remove_words_with_incorrect_substrings"
+                        ],
+                        incorrect_word_substrings=self.param[
+                            "incorrect_word_substrings"
+                        ],
+                        cond_remove_long_words=self.param["cond_remove_long_words"],
+                        length_word_cutoff=self.param["length_word_cutoff"],
+                        cond_check_empty=self.param["cond_check_empty"],
+                        strip_characters=self.param["strip_characters"],
+                        cond_check_special_characters=self.param[
+                            "cond_check_special_characters"
+                        ],
+                        special_characters=self.param["special_characters"],
+                        special_characters_cutoff=self.param[
+                            "special_characters_cutoff"
+                        ],
+                        cond_check_stopwords=self.param["cond_check_stopwords"],
+                        stopwords=self.stopwords,
+                        stopwords_cutoff=self.param["stopwords_cutoff"],
+                        cond_check_badwords=self.param["cond_check_badwords"],
+                        badwords=self.badwords,
+                        badwords_cutoff=self.param["badwords_cutoff"],
+                        cond_check_lang_id=self.param["cond_check_lang_id"],
+                        model_lang_id=self.model_lang_id,
+                        lang_id_cutoff=self.param["lang_id_cutoff"],
                     ):
-                        f.write(line + "\n")
-        os.unlink(file)
+                        f.write(line + "\n\n")
+        os.unlink(path_oscar_file)
 
 
 if __name__ == "__main__":
-    # Download a sample dataset and run filtering pipeline
-    lang = "af"
-    sampler = OscarFiltering(lang_oscar_id=lang)
-    url = OscarFiltering.get_oscar_urls(lang)[0]
-    OscarFiltering.filter_and_tok_cjk(
-        url=url,
-        target_lang="af",
-        stopwords_cutoff=0.1,
-        junk_ratio=0.15,
-        stopword_check=True,
-        strip_chars=sampler.strip_chars,
-        junk_chars=sampler.junk_chars,
-        perplexity_model="ac_dc/af.arpa.bin",
+    lang_oscar_id = "en"
+    path_model_fasttext = "/tmp/lid.176.bin"
+    path_oscar_file = "../en_part_1.txt.gz"
+    oscar_basic_filtering = OscarBasicFiltering(
+        lang_oscar_id=lang_oscar_id, path_model_fasttext=path_model_fasttext
     )
+    oscar_basic_filtering.filtering(path_oscar_file=path_oscar_file)

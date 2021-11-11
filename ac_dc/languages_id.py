@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 langs_id = [
     {
         "lang": "Afrikaans",
@@ -8,6 +7,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "af",
         "fasttext_id": "af",
+        "badwords_id": None,
     },
     {
         "lang": "Tosk Albanian",
@@ -15,6 +15,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "als",
+        "badwords_id": None,
     },
     {
         "lang": "Amharic",
@@ -22,6 +23,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "am",
+        "badwords_id": None,
     },
     {
         "lang": "Aragonese",
@@ -29,6 +31,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "an",
+        "badwords_id": None,
     },
     {
         "lang": "Arabic",
@@ -36,6 +39,7 @@ langs_id = [
         "nltk_id": "arabic",
         "kenlm_id": "ar",
         "fasttext_id": "ar",
+        "badwords_id": None,
     },
     {
         "lang": "Egyptian Arabic",
@@ -43,6 +47,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "arz",
+        "badwords_id": None,
     },
     {
         "lang": "Asturian",
@@ -50,6 +55,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ast",
+        "badwords_id": None,
     },
     {
         "lang": "Assamese",
@@ -57,6 +63,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "as",
+        "badwords_id": None,
     },
     {
         "lang": "Avaric",
@@ -64,6 +71,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "av",
+        "badwords_id": None,
     },
     {
         "lang": "South Azerbaijani",
@@ -71,6 +79,7 @@ langs_id = [
         "nltk_id": "azerbaijani",
         "kenlm_id": None,
         "fasttext_id": "azb",
+        "badwords_id": None,
     },
     {
         "lang": "Azerbaijani",
@@ -78,6 +87,7 @@ langs_id = [
         "nltk_id": "azerbaijani",
         "kenlm_id": "az",
         "fasttext_id": "az",
+        "badwords_id": None,
     },
     {
         "lang": "Bavarian",
@@ -85,6 +95,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bar",
+        "badwords_id": None,
     },
     {
         "lang": "Bashkir",
@@ -92,6 +103,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ba",
+        "badwords_id": None,
     },
     {
         "lang": "Central Bikol",
@@ -99,6 +111,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bcl",
+        "badwords_id": None,
     },
     {
         "lang": "Belarusian",
@@ -106,6 +119,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "be",
         "fasttext_id": "be",
+        "badwords_id": "be",
     },
     {
         "lang": "Bulgarian",
@@ -113,6 +127,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "bg",
         "fasttext_id": "bg",
+        "badwords_id": "bg",
     },
     {
         "lang": "Bihari",
@@ -120,6 +135,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bh",
+        "badwords_id": None,
     },
     {
         "lang": "Bengali",
@@ -127,6 +143,7 @@ langs_id = [
         "nltk_id": "bengali",
         "kenlm_id": "bn",
         "fasttext_id": "bn",
+        "badwords_id": None,
     },
     {
         "lang": "Tibetan",
@@ -134,6 +151,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bo",
+        "badwords_id": None,
     },
     {
         "lang": "Bishnupriya",
@@ -141,6 +159,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bpy",
+        "badwords_id": None,
     },
     {
         "lang": "Breton",
@@ -148,6 +167,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "br",
+        "badwords_id": None,
     },
     {
         "lang": "Bosnian",
@@ -155,6 +175,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bs",
+        "badwords_id": None,
     },
     {
         "lang": "Russia Buriat",
@@ -162,6 +183,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "bxr",
+        "badwords_id": None,
     },
     {
         "lang": "Catalan",
@@ -169,6 +191,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "ca",
         "fasttext_id": "ca",
+        "badwords_id": "ca",
     },
     {
         "lang": "Chavacano",
@@ -176,6 +199,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "cbk",
+        "badwords_id": None,
     },
     {
         "lang": "Cebuano",
@@ -183,6 +207,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ceb",
+        "badwords_id": None,
     },
     {
         "lang": "Chechen",
@@ -190,6 +215,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ce",
+        "badwords_id": None,
     },
     {
         "lang": "Central Kurdish",
@@ -197,6 +223,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ckb",
+        "badwords_id": None,
     },
     {
         "lang": "Czech",
@@ -204,6 +231,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "cs",
         "fasttext_id": "cs",
+        "badwords_id": "cs",
     },
     {
         "lang": "Chuvash",
@@ -211,6 +239,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "cv",
+        "badwords_id": None,
     },
     {
         "lang": "Welsh",
@@ -218,6 +247,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "cy",
+        "badwords_id": "cy",
     },
     {
         "lang": "Danish",
@@ -225,6 +255,7 @@ langs_id = [
         "nltk_id": "danish",
         "kenlm_id": "da",
         "fasttext_id": "da",
+        "badwords_id": "da",
     },
     {
         "lang": "German",
@@ -232,6 +263,7 @@ langs_id = [
         "nltk_id": "german",
         "kenlm_id": "de",
         "fasttext_id": "de",
+        "badwords_id": "de",
     },
     {
         "lang": "Dimli",
@@ -239,6 +271,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "diq",
+        "badwords_id": None,
     },
     {
         "lang": "Lower Sorbian",
@@ -246,6 +279,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "dsb",
+        "badwords_id": None,
     },
     {
         "lang": "Dhivehi",
@@ -253,6 +287,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "dv",
+        "badwords_id": None,
     },
     {
         "lang": "Modern Greek",
@@ -260,6 +295,7 @@ langs_id = [
         "nltk_id": "greek",
         "kenlm_id": "el",
         "fasttext_id": "el",
+        "badwords_id": "el",
     },
     {
         "lang": "Emilian-Romagnol",
@@ -267,6 +303,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "eml",
+        "badwords_id": None,
     },
     {
         "lang": "English",
@@ -274,6 +311,7 @@ langs_id = [
         "nltk_id": "english",
         "kenlm_id": "en",
         "fasttext_id": "en",
+        "badwords_id": "en",
     },
     {
         "lang": "Esperanto",
@@ -281,6 +319,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "eo",
+        "badwords_id": None,
     },
     {
         "lang": "Spanish",
@@ -288,6 +327,7 @@ langs_id = [
         "nltk_id": "spanish",
         "kenlm_id": "es",
         "fasttext_id": "es",
+        "badwords_id": "es",
     },
     {
         "lang": "Estonian",
@@ -295,6 +335,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "et",
         "fasttext_id": "et",
+        "badwords_id": "et",
     },
     {
         "lang": "Basque",
@@ -302,6 +343,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "eu",
+        "badwords_id": "eu",
     },
     {
         "lang": "Persian",
@@ -309,6 +351,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "fa",
         "fasttext_id": "fa",
+        "badwords_id": "fa",
     },
     {
         "lang": "Finnish",
@@ -316,6 +359,7 @@ langs_id = [
         "nltk_id": "finnish",
         "kenlm_id": "fi",
         "fasttext_id": "fi",
+        "badwords_id": "fi",
     },
     {
         "lang": "Northern Frisian",
@@ -323,6 +367,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "frr",
+        "badwords_id": None,
     },
     {
         "lang": "French",
@@ -330,6 +375,7 @@ langs_id = [
         "nltk_id": "french",
         "kenlm_id": "fr",
         "fasttext_id": "fr",
+        "badwords_id": "fr",
     },
     {
         "lang": "Western Frisian",
@@ -337,6 +383,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "fy",
+        "badwords_id": None,
     },
     {
         "lang": "Irish",
@@ -344,6 +391,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ga",
+        "badwords_id": None,
     },
     {
         "lang": "Scottish Gaelic",
@@ -351,6 +399,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "gd",
+        "badwords_id": "gd",
     },
     {
         "lang": "Galician",
@@ -358,6 +407,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "gl",
+        "badwords_id": "gl",
     },
     {
         "lang": "Guarani",
@@ -365,6 +415,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "gn",
+        "badwords_id": None,
     },
     {
         "lang": "Goan Konkani",
@@ -372,6 +423,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "gom",
+        "badwords_id": None,
     },
     {
         "lang": "Gujarati",
@@ -379,6 +431,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "gu",
         "fasttext_id": "gu",
+        "badwords_id": None,
     },
     {
         "lang": "Hebrew",
@@ -386,6 +439,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "he",
         "fasttext_id": "he",
+        "badwords_id": None,
     },
     {
         "lang": "Hindi",
@@ -393,6 +447,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "hi",
         "fasttext_id": "hi",
+        "badwords_id": "hi",
     },
     {
         "lang": "Croatian",
@@ -400,6 +455,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "hr",
         "fasttext_id": "hr",
+        "badwords_id": "hr",
     },
     {
         "lang": "Upper Sorbian",
@@ -407,6 +463,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "hsb",
+        "badwords_id": None,
     },
     {
         "lang": "Haitian",
@@ -414,6 +471,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ht",
+        "badwords_id": None,
     },
     {
         "lang": "Hungarian",
@@ -421,6 +479,7 @@ langs_id = [
         "nltk_id": "hungarian",
         "kenlm_id": "hu",
         "fasttext_id": "hu",
+        "badwords_id": "hu",
     },
     {
         "lang": "Armenian",
@@ -428,6 +487,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "hy",
         "fasttext_id": "hy",
+        "badwords_id": "hy",
     },
     {
         "lang": "Interlingua",
@@ -435,6 +495,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ia",
+        "badwords_id": None,
     },
     {
         "lang": "Indonesian",
@@ -442,6 +503,7 @@ langs_id = [
         "nltk_id": "indonesian",
         "kenlm_id": "id",
         "fasttext_id": "id",
+        "badwords_id": "id",
     },
     {
         "lang": "Interlingue",
@@ -449,6 +511,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ie",
+        "badwords_id": None,
     },
     {
         "lang": "Iloko",
@@ -456,6 +519,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ilo",
+        "badwords_id": None,
     },
     {
         "lang": "Ido",
@@ -463,6 +527,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "io",
+        "badwords_id": None,
     },
     {
         "lang": "Icelandic",
@@ -470,6 +535,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "is",
         "fasttext_id": "is",
+        "badwords_id": "is",
     },
     {
         "lang": "Italian",
@@ -477,6 +543,7 @@ langs_id = [
         "nltk_id": "italian",
         "kenlm_id": "it",
         "fasttext_id": "it",
+        "badwords_id": "it",
     },
     {
         "lang": "Japanese",
@@ -484,6 +551,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "ja",
         "fasttext_id": "ja",
+        "badwords_id": "ja",
     },
     {
         "lang": "Lojban",
@@ -491,6 +559,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "jbo",
+        "badwords_id": None,
     },
     {
         "lang": "Javanese",
@@ -498,6 +567,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "jv",
+        "badwords_id": None,
     },
     {
         "lang": "Georgian",
@@ -505,6 +575,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "ka",
         "fasttext_id": "ka",
+        "badwords_id": None,
     },
     {
         "lang": "Kazakh",
@@ -512,6 +583,7 @@ langs_id = [
         "nltk_id": "kazakh",
         "kenlm_id": "kk",
         "fasttext_id": "kk",
+        "badwords_id": None,
     },
     {
         "lang": "Central Khmer",
@@ -519,6 +591,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "km",
         "fasttext_id": "km",
+        "badwords_id": None,
     },
     {
         "lang": "Kannada",
@@ -526,6 +599,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "kn",
         "fasttext_id": "kn",
+        "badwords_id": "kn",
     },
     {
         "lang": "Korean",
@@ -533,6 +607,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "ko",
         "fasttext_id": "ko",
+        "badwords_id": "ko",
     },
     {
         "lang": "Karachay-Balkar",
@@ -540,6 +615,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "krc",
+        "badwords_id": None,
     },
     {
         "lang": "Kurdish",
@@ -547,6 +623,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ku",
+        "badwords_id": None,
     },
     {
         "lang": "Komi",
@@ -554,6 +631,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "kv",
+        "badwords_id": None,
     },
     {
         "lang": "Cornish",
@@ -561,6 +639,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "kw",
+        "badwords_id": None,
     },
     {
         "lang": "Kirghiz",
@@ -568,6 +647,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ky",
+        "badwords_id": None,
     },
     {
         "lang": "Latin",
@@ -575,6 +655,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "la",
+        "badwords_id": "la",
     },
     {
         "lang": "Luxembourgish",
@@ -582,6 +663,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "lb",
+        "badwords_id": None,
     },
     {
         "lang": "Lezghian",
@@ -589,6 +671,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "lez",
+        "badwords_id": None,
     },
     {
         "lang": "Limburgan",
@@ -596,6 +679,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "li",
+        "badwords_id": None,
     },
     {
         "lang": "Lombard",
@@ -603,6 +687,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "lmo",
+        "badwords_id": None,
     },
     {
         "lang": "Lao",
@@ -610,6 +695,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "lo",
+        "badwords_id": None,
     },
     {
         "lang": "Northern Luri",
@@ -617,6 +703,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "lrc",
+        "badwords_id": None,
     },
     {
         "lang": "Lithuanian",
@@ -624,6 +711,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "lt",
         "fasttext_id": "lt",
+        "badwords_id": "lt",
     },
     {
         "lang": "Latvian",
@@ -631,6 +719,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "lv",
         "fasttext_id": "lv",
+        "badwords_id": "lv",
     },
     {
         "lang": "Maithili",
@@ -638,6 +727,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mai",
+        "badwords_id": None,
     },
     {
         "lang": "Malagasy",
@@ -645,6 +735,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mg",
+        "badwords_id": None,
     },
     {
         "lang": "Eastern Mari",
@@ -652,6 +743,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mhr",
+        "badwords_id": None,
     },
     {
         "lang": "Minangkabau",
@@ -659,6 +751,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "min",
+        "badwords_id": None,
     },
     {
         "lang": "Macedonian",
@@ -666,6 +759,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "mk",
         "fasttext_id": "mk",
+        "badwords_id": "mk",
     },
     {
         "lang": "Malayalam",
@@ -673,6 +767,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "ml",
         "fasttext_id": "ml",
+        "badwords_id": "ml",
     },
     {
         "lang": "Mongolian",
@@ -680,6 +775,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "mn",
         "fasttext_id": "mn",
+        "badwords_id": "mn",
     },
     {
         "lang": "Western Mari",
@@ -687,6 +783,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mrj",
+        "badwords_id": None,
     },
     {
         "lang": "Marathi",
@@ -694,6 +791,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "mr",
         "fasttext_id": "mr",
+        "badwords_id": "mr",
     },
     {
         "lang": "Malay",
@@ -701,6 +799,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ms",
+        "badwords_id": "ms",
     },
     {
         "lang": "Maltese",
@@ -708,6 +807,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mt",
+        "badwords_id": "mt",
     },
     {
         "lang": "Mirandese",
@@ -715,6 +815,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mwl",
+        "badwords_id": None,
     },
     {
         "lang": "Burmese",
@@ -722,6 +823,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "my",
         "fasttext_id": "my",
+        "badwords_id": "my",
     },
     {
         "lang": "Erzya",
@@ -729,6 +831,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "myv",
+        "badwords_id": None,
     },
     {
         "lang": "Mazanderani",
@@ -736,6 +839,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "mzn",
+        "badwords_id": None,
     },
     {
         "lang": "Nahuatl",
@@ -743,6 +847,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "nah",
+        "badwords_id": None,
     },
     {
         "lang": "Neapolitan",
@@ -750,6 +855,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "nap",
+        "badwords_id": None,
     },
     {
         "lang": "Low German",
@@ -757,6 +863,7 @@ langs_id = [
         "nltk_id": "german",
         "kenlm_id": None,
         "fasttext_id": "nds",
+        "badwords_id": None,
     },
     {
         "lang": "Nepali",
@@ -764,6 +871,7 @@ langs_id = [
         "nltk_id": "nepali",
         "kenlm_id": "ne",
         "fasttext_id": "ne",
+        "badwords_id": None,
     },
     {
         "lang": "Newari",
@@ -771,6 +879,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "new",
+        "badwords_id": None,
     },
     {
         "lang": "Dutch",
@@ -778,6 +887,7 @@ langs_id = [
         "nltk_id": "dutch",
         "kenlm_id": "nl",
         "fasttext_id": "nl",
+        "badwords_id": "nl",
     },
     {
         "lang": "Norwegian Nynorsk",
@@ -785,6 +895,7 @@ langs_id = [
         "nltk_id": "norwegian",
         "kenlm_id": None,
         "fasttext_id": "nn",
+        "badwords_id": None,
     },
     {
         "lang": "Norwegian",
@@ -792,6 +903,7 @@ langs_id = [
         "nltk_id": "norwegian",
         "kenlm_id": "no",
         "fasttext_id": "no",
+        "badwords_id": None,
     },
     {
         "lang": "Occitan",
@@ -799,6 +911,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "oc",
+        "badwords_id": None,
     },
     {
         "lang": "Oriya",
@@ -806,6 +919,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "or",
+        "badwords_id": None,
     },
     {
         "lang": "Ossetian",
@@ -813,6 +927,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "os",
+        "badwords_id": None,
     },
     {
         "lang": "Pampanga",
@@ -820,6 +935,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "pam",
+        "badwords_id": None,
     },
     {
         "lang": "Panjabi",
@@ -827,6 +943,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "pa",
+        "badwords_id": None,
     },
     {
         "lang": "Polish",
@@ -834,6 +951,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "pl",
         "fasttext_id": "pl",
+        "badwords_id": "pl",
     },
     {
         "lang": "Piemontese",
@@ -841,6 +959,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "pms",
+        "badwords_id": None,
     },
     {
         "lang": "Western Panjabi",
@@ -848,6 +967,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "pnb",
+        "badwords_id": None,
     },
     {
         "lang": "Pushto",
@@ -855,6 +975,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ps",
+        "badwords_id": None,
     },
     {
         "lang": "Portuguese",
@@ -862,6 +983,7 @@ langs_id = [
         "nltk_id": "portuguese",
         "kenlm_id": "pt",
         "fasttext_id": "pt",
+        "badwords_id": "pt",
     },
     {
         "lang": "Quechua",
@@ -869,6 +991,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "qu",
+        "badwords_id": None,
     },
     {
         "lang": "Romansh",
@@ -876,6 +999,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "rm",
+        "badwords_id": None,
     },
     {
         "lang": "Romanian",
@@ -883,6 +1007,7 @@ langs_id = [
         "nltk_id": "romanian",
         "kenlm_id": "ro",
         "fasttext_id": "ro",
+        "badwords_id": "ro",
     },
     {
         "lang": "Russian",
@@ -890,6 +1015,7 @@ langs_id = [
         "nltk_id": "russian",
         "kenlm_id": "ru",
         "fasttext_id": "ru",
+        "badwords_id": "ru",
     },
     {
         "lang": "Yakut",
@@ -897,6 +1023,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sah",
+        "badwords_id": None,
     },
     {
         "lang": "Sanskrit",
@@ -904,6 +1031,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sa",
+        "badwords_id": None,
     },
     {
         "lang": "Sicilian",
@@ -911,6 +1039,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "scn",
+        "badwords_id": None,
     },
     {
         "lang": "Sindhi",
@@ -918,6 +1047,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sd",
+        "badwords_id": None,
     },
     {
         "lang": "Serbo-Croatian",
@@ -925,6 +1055,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sh",
+        "badwords_id": None,
     },
     {
         "lang": "Sinhala",
@@ -932,6 +1063,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "si",
+        "badwords_id": None,
     },
     {
         "lang": "Slovak",
@@ -939,6 +1071,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sk",
+        "badwords_id": "sk",
     },
     {
         "lang": "Slovenian",
@@ -946,6 +1079,7 @@ langs_id = [
         "nltk_id": "slovene",
         "kenlm_id": None,
         "fasttext_id": "sl",
+        "badwords_id": "sl",
     },
     {
         "lang": "Somali",
@@ -953,6 +1087,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "so",
+        "badwords_id": None,
     },
     {
         "lang": "Albanian",
@@ -960,6 +1095,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sq",
+        "badwords_id": "sq",
     },
     {
         "lang": "Serbian",
@@ -967,6 +1103,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sr",
+        "badwords_id": "sr",
     },
     {
         "lang": "Sundanese",
@@ -974,6 +1111,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "su",
+        "badwords_id": None,
     },
     {
         "lang": "Swedish",
@@ -981,6 +1119,7 @@ langs_id = [
         "nltk_id": "swedish",
         "kenlm_id": None,
         "fasttext_id": "sv",
+        "badwords_id": "sv",
     },
     {
         "lang": "Swahili",
@@ -988,6 +1127,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "sw",
+        "badwords_id": None,
     },
     {
         "lang": "Tamil",
@@ -995,6 +1135,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ta",
+        "badwords_id": None,
     },
     {
         "lang": "Telugu",
@@ -1002,6 +1143,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "te",
+        "badwords_id": "te",
     },
     {
         "lang": "Tajik",
@@ -1009,6 +1151,7 @@ langs_id = [
         "nltk_id": "tajik",
         "kenlm_id": None,
         "fasttext_id": "tg",
+        "badwords_id": None,
     },
     {
         "lang": "Thai",
@@ -1016,6 +1159,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "th",
+        "badwords_id": "th",
     },
     {
         "lang": "Turkmen",
@@ -1023,6 +1167,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "tk",
+        "badwords_id": None,
     },
     {
         "lang": "Tagalog",
@@ -1030,6 +1175,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "tl",
+        "badwords_id": None,
     },
     {
         "lang": "Turkish",
@@ -1037,6 +1183,7 @@ langs_id = [
         "nltk_id": "turkish",
         "kenlm_id": "tr",
         "fasttext_id": "tr",
+        "badwords_id": "tr",
     },
     {
         "lang": "Tatar",
@@ -1044,6 +1191,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "tt",
+        "badwords_id": None,
     },
     {
         "lang": "Tuvinian",
@@ -1051,6 +1199,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "tyv",
+        "badwords_id": None,
     },
     {
         "lang": "Uighur",
@@ -1058,6 +1207,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ug",
+        "badwords_id": None,
     },
     {
         "lang": "Ukrainian",
@@ -1065,6 +1215,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "uk",
         "fasttext_id": "uk",
+        "badwords_id": "uk",
     },
     {
         "lang": "Urdu",
@@ -1072,6 +1223,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "ur",
+        "badwords_id": None,
     },
     {
         "lang": "Uzbek",
@@ -1079,6 +1231,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "uz",
+        "badwords_id": "uz",
     },
     {
         "lang": "Venetian",
@@ -1086,6 +1239,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "vec",
+        "badwords_id": None,
     },
     {
         "lang": "Vietnamese",
@@ -1093,13 +1247,15 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "vi",
+        "badwords_id": "vi",
     },
     {
-        "lang": "Volapük",
+        "lang": "Volap\u00fck",
         "oscar_id": "vo",
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "vo",
+        "badwords_id": None,
     },
     {
         "lang": "Waray",
@@ -1107,6 +1263,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "war",
+        "badwords_id": None,
     },
     {
         "lang": "Walloon",
@@ -1114,6 +1271,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "wa",
+        "badwords_id": None,
     },
     {
         "lang": "Wu Chinese",
@@ -1121,6 +1279,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "wuu",
+        "badwords_id": None,
     },
     {
         "lang": "Kalmyk",
@@ -1128,6 +1287,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "xal",
+        "badwords_id": None,
     },
     {
         "lang": "Mingrelian",
@@ -1135,6 +1295,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "xmf",
+        "badwords_id": None,
     },
     {
         "lang": "Yiddish",
@@ -1142,6 +1303,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "yi",
+        "badwords_id": None,
     },
     {
         "lang": "Yoruba",
@@ -1149,6 +1311,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "yo",
+        "badwords_id": None,
     },
     {
         "lang": "Yue Chinese",
@@ -1156,6 +1319,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": None,
         "fasttext_id": "yue",
+        "badwords_id": None,
     },
     {
         "lang": "Chinese",
@@ -1163,6 +1327,7 @@ langs_id = [
         "nltk_id": None,
         "kenlm_id": "zh",
         "fasttext_id": "zh",
+        "badwords_id": None,
     },
 ]
 langs_id = pd.DataFrame(langs_id)
