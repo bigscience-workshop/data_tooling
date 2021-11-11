@@ -7,9 +7,9 @@ indexed_gzip>=1.6.1
 indexed_gzip>=1.6.1
 langid>=1.1.6
 nltk
+pytest
 scikit-learn
 sentencepiece
 sqlalchemy>=1.4.20
 transformers
 wordfreq
-pytest
