@@ -7,7 +7,7 @@ strip_characters = (
 )
 
 special_characters = (
-    "' 0123456789¯_%$§½¼¾×|†~\"—±′–'°−{}[]·'?,./<>!@#^&*()+-‑=:;，：,...�`→¶.…‘’”",
+    """\' 0123456789¯_%$§½¼¾×|†~"—±′–\'°−{}[]·\'?,./<>!@#^&*()+-‑=:;，：,...�`→¶.…‘’”'"""
 )
 
 
@@ -41,7 +41,7 @@ Winnie-the-Pooh is out of honey, so he and Christopher Robin attempt to trick so
 
     assert (
         check_special_characters(
-            "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+            "/////////",
             special_characters,
             special_characters_cutoff,
         )
