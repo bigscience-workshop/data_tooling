@@ -61,7 +61,7 @@ class BasicPipeline(BasePipeline):
                 sentence,
                 self.config.strip_characters,
                 self.config.lang_oscar_id,
-                self.config.model_lang_id,
+                self.model_lang_id,
                 self.config.lang_id_cutoff,
             ):
                 return False
@@ -94,6 +94,7 @@ if __name__ == "__main__":
         "badwords": badwords[lang_oscar_id],
         "cond_check_lang_id": True,
         "path_model_fasttext": path_model_fasttext,
+        "lang_oscar_id": lang_oscar_id,
         "lang_id_cutoff": 0.8,
     }
     config = PipelineConfig("en", **parameters_filtering_en)
