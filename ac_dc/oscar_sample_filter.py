@@ -248,7 +248,7 @@ class OscarFiltering:
         if lang_oscar_id in parameters_filtering:
             self.param = parameters_filtering[lang_oscar_id]
         else:
-            self.param = parameters_filtering["en"]
+            self.param = parameters_filtering["default"]
 
     # TODO: Finish to adapt the following function
     # make it work with the changes in the code
