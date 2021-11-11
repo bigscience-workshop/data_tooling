@@ -5,13 +5,13 @@ import os
 import gzip
 
 import nltk
-
 nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
-import fasttext
 
+import fasttext
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 from languages_id import langs_id
@@ -79,16 +79,12 @@ class BasicFiltering:
     def check_stopwords(
         sentence,
         strip_characters,
-        lang_oscar_id,
+        stopwords,
         stopwords_cutoff,
     ):
         cond = True
-        nltk_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
-        ].iloc[0]
-        if nltk_lang_id:
+        if stopwords:
             words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
-            stopwords = set(nltk_stopwords.words(nltk_lang_id))
             stopwords_ratio = len([word for word in words if word in stopwords]) / len(
                 words
             )
@@ -99,18 +95,12 @@ class BasicFiltering:
     def check_badwords(
         sentence,
         strip_characters,
-        lang_oscar_id,
+        badwords,
         badwords_cutoff,
     ):
         cond = True
-        badwords_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
-        ].iloc[0]
-        if badwords_lang_id:
+        if badwords:
             words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
-            f = open(f"badwords_{badwords_lang_id}.txt", "r")
-            badwords = set(f.read().split("\n"))
-            f.close()
             badwords_ratio = len([word for word in words if word in badwords]) / len(
                 words
             )
@@ -122,17 +112,13 @@ class BasicFiltering:
         sentence,
         strip_characters,
         lang_oscar_id,
-        path_model_fasttext,
+        model_lang_id,
         lang_id_cutoff,
     ):
         cond = True
-        fasttext_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
-        ].iloc[0]
-        if fasttext_lang_id:
+        if model_lang_id:
             words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
             sent = " ".join(words)
-            model_lang_id = fasttext.load_model(path_model_fasttext)
             pred = model_lang_id.predict(sent)
             lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
             score_pred = pred[1][0]
@@ -158,11 +144,13 @@ class BasicFiltering:
         special_characters,
         special_characters_cutoff,
         cond_check_stopwords,
+        stopwords,
         stopwords_cutoff,
         cond_check_badwords,
+        badwords,
         badwords_cutoff,
         cond_check_lang_id,
-        path_model_fasttext,
+        model_lang_id,
         lang_id_cutoff,
     ):
         if cond_remove_words_with_incorrect_substrings:
@@ -187,7 +175,7 @@ class BasicFiltering:
             if not BasicFiltering.check_stopwords(
                 sentence,
                 strip_characters,
-                lang_oscar_id,
+                stopwords,
                 stopwords_cutoff,
             ):
                 return False
@@ -195,7 +183,7 @@ class BasicFiltering:
             if not BasicFiltering.check_badwords(
                 sentence,
                 strip_characters,
-                lang_oscar_id,
+                badwords,
                 badwords_cutoff,
             ):
                 return False
@@ -204,7 +192,7 @@ class BasicFiltering:
                 sentence,
                 strip_characters,
                 lang_oscar_id,
-                path_model_fasttext,
+                model_lang_id,
                 lang_id_cutoff,
             ):
                 return False
@@ -230,7 +218,33 @@ class OscarFiltering:
         path_model_fasttext,
     ):
         self.lang_oscar_id = lang_oscar_id
-        self.path_model_fasttext = path_model_fasttext
+
+        nltk_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
+        ].iloc[0]
+        if nltk_lang_id:
+            self.stopwords = set(nltk_stopwords.words(nltk_lang_id))
+        else:
+            self.stopwords = None
+
+        badwords_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
+        ].iloc[0]
+        if badwords_lang_id:
+            f = open(f"badwords_{badwords_lang_id}.txt", "r")
+            self.badwords = set(f.read().split("\n"))
+            f.close()
+        else:
+            self.badwords = None
+
+        fasttext_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
+        ].iloc[0]
+        if fasttext_lang_id:
+            self.model_lang_id = fasttext.load_model(path_model_fasttext)
+        else:
+            self.model_lang_id = None
+
         if lang_oscar_id in parameters_filtering:
             self.param = parameters_filtering[lang_oscar_id]
         else:
