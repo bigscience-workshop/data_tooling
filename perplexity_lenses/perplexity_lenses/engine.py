@@ -14,6 +14,7 @@ from perplexity_lenses.visualization import draw_interactive_scatter_plot
 logger = logging.getLogger(__name__)
 EMBEDDING_MODELS = [
     "distiluse-base-multilingual-cased-v1",
+    "distiluse-base-multilingual-cased-v2",
     "all-mpnet-base-v2",
     "flax-sentence-embeddings/all_datasets_v3_mpnet-base",
 ]
