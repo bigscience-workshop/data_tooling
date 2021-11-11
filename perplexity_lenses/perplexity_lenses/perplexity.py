@@ -110,7 +110,7 @@ class KenlmModel:
         return "".join(output)
 
     def replace_unicode_punct(self, text: str) -> str:
-        return "".join((self.unicode_punct.get(c, c) for c in text))
+        return "".join(self.unicode_punct.get(c, c) for c in text)
 
     def remove_unicode_punct(self, text: str) -> str:
         """More aggressive version of replace_unicode_punct but also faster."""
