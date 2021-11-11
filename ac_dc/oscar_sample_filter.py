@@ -298,9 +298,9 @@ class OscarBasicFiltering:
 
 
 if __name__ == "__main__":
-    lang_oscar_id = "af"
+    lang_oscar_id = "en"
     path_model_fasttext = "/tmp/lid.176.bin"
-    path_oscar_file = "../af_dedup.txt.gz"
+    path_oscar_file = "../en_part_1.txt.gz"
     oscar_basic_filtering = OscarBasicFiltering(
         lang_oscar_id=lang_oscar_id, path_model_fasttext=path_model_fasttext
     )
