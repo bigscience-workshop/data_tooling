@@ -6,7 +6,7 @@ def remove_words_with_incorrect_substrings(
     words = [
         word
         for word in words
-        if all([(i_substr not in word) for i_substr in incorrect_word_substrings])
+        if all((i_substr not in word) for i_substr in incorrect_word_substrings)
     ]
     filtered_sentence = " ".join(words)
     return filtered_sentence
