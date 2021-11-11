@@ -96,3 +96,12 @@ Winnie-the-Pooh is out of honey, so he and Christopher Robin attempt to trick so
         )
         is False
     )
+
+
+# TODO
+def test_check_badwords():
+    pass
+
+
+def test_check_lang_id():
+    pass
