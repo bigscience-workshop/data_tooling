@@ -6,11 +6,14 @@ import pathlib
 from datasets import load_dataset
 
 import nltk
+import numpy as np
 
 nltk.download("stopwords")
 from nltk.corpus import stopwords as nltk_stopwords
 
 import fasttext
+
+np.random.seed(1337)
 
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
@@ -92,7 +95,7 @@ class BasicFiltering:
         set_special_characters = {char for char in special_characters}
         special_characters_ratio = len(
             [char for char in sent if char in set_special_characters]
-        ) / len(sent)
+        ) / (len(sent) + 1e-10)
         cond = special_characters_ratio < special_characters_cutoff
         return cond
 
@@ -150,6 +153,63 @@ class BasicFiltering:
                 score_pred > lang_id_cutoff
             )
         return cond
+        
+    @staticmethod
+    def basic_filtering_debug(
+        example,
+        lang_oscar_id,
+        cond_check_empty,
+        strip_characters,
+        cond_check_special_characters,
+        special_characters,
+        special_characters_cutoff,
+        cond_check_stopwords,
+        stopwords,
+        stopwords_cutoff,
+        cond_check_badwords,
+        badwords,
+        badwords_cutoff,
+        cond_check_lang_id,
+        model_lang_id,
+        lang_id_cutoff,
+    ):
+        sentence = example["text"].strip()
+        if cond_check_empty:
+            example["cond_check_empty"] = BasicFiltering.check_empty(sentence, strip_characters)
+                
+        if cond_check_special_characters:
+            example["cond_check_special_characters"] = BasicFiltering.check_special_characters(
+                sentence,
+                special_characters,
+                special_characters_cutoff,
+            )
+
+        if cond_check_stopwords:
+            example["cond_check_stopwords"] = BasicFiltering.check_stopwords(
+                sentence,
+                strip_characters,
+                stopwords,
+                stopwords_cutoff,
+            )
+
+        if cond_check_badwords:
+            example["cond_check_badwords"] = BasicFiltering.check_badwords(
+                sentence,
+                strip_characters,
+                badwords,
+                badwords_cutoff,
+            )
+
+        if cond_check_lang_id:
+            example["cond_check_lang_id"] = BasicFiltering.check_lang_id(
+                sentence,
+                strip_characters,
+                lang_oscar_id,
+                model_lang_id,
+                lang_id_cutoff,
+            )
+
+        return example
 
     @staticmethod
     def basic_filtering(
@@ -227,6 +287,7 @@ class OscarBasicFiltering:
         lang_oscar_id,
         path_model_fasttext,
         num_proc,
+        sample_subset,
     ):
         self.lang_oscar_id = lang_oscar_id
 
@@ -262,9 +323,12 @@ class OscarBasicFiltering:
         self.ds = load_dataset(
             "oscar", f"unshuffled_deduplicated_{self.lang_oscar_id}"
         )["train"]
+        if sample_subset:
+            subset_idx = np.random.randint(0, len(self.ds), sample_subset)
+            self.ds = self.ds.select(subset_idx)
         self.num_proc = num_proc
 
-    def basic_filtering(self):
+    def basic_filtering(self, debug: bool = False):
         def func_modifying_sentences(example):
             example["text"] = BasicFiltering.modifying_sentences(
                 sentence=example["text"],
@@ -297,6 +361,29 @@ class OscarBasicFiltering:
             model_lang_id=self.model_lang_id,
             lang_id_cutoff=self.param["lang_id_cutoff"],
         )
+        if debug:
+            debug_func_basic_filtering = lambda example: BasicFiltering.basic_filtering_debug(
+                example=example,
+                lang_oscar_id=self.lang_oscar_id,
+                cond_check_empty=self.param["cond_check_empty"],
+                strip_characters=self.param["strip_characters"],
+                cond_check_special_characters=self.param["cond_check_special_characters"],
+                special_characters=self.param["special_characters"],
+                special_characters_cutoff=self.param["special_characters_cutoff"],
+                cond_check_stopwords=self.param["cond_check_stopwords"],
+                stopwords=self.stopwords,
+                stopwords_cutoff=self.param["stopwords_cutoff"],
+                cond_check_badwords=self.param["cond_check_badwords"],
+                badwords=self.badwords,
+                badwords_cutoff=self.param["badwords_cutoff"],
+                cond_check_lang_id=self.param["cond_check_lang_id"],
+                model_lang_id=self.model_lang_id,
+                lang_id_cutoff=self.param["lang_id_cutoff"],
+            )
+
+            # save Dataset with conditions for analysis
+            self.ds_debug = self.ds.map(debug_func_basic_filtering, num_proc=self.num_proc)
+
         self.ds = self.ds.filter(func_basic_filtering, num_proc=self.num_proc)
 
 
@@ -328,6 +415,18 @@ if __name__ == "__main__":
         default="../Oscar_filtered/",
         help="Path to the directory where the filtered version of Oscar will be saved.",
     )
+    parser.add_argument(
+        "--save_debug_dataset",
+        type=bool,
+        default=False,
+        help="Whether to save the dataset with filtering conditions for debugging.",
+    )
+    parser.add_argument(
+        "--sample_subset",
+        type=int,
+        default=None,
+        help="Number of lines to randomly sample.",
+    )
     args = parser.parse_args()
 
     pathlib.Path(args.path_dir_save_oscar).mkdir(parents=True, exist_ok=True)
@@ -340,6 +439,13 @@ if __name__ == "__main__":
         lang_oscar_id=args.lang_oscar_id,
         path_model_fasttext=args.path_model_fasttext,
         num_proc=args.num_proc,
+        sample_subset=args.sample_subset,
     )
-    oscar_basic_filtering.basic_filtering()
+    oscar_basic_filtering.basic_filtering(debug=args.save_debug_dataset)
     oscar_basic_filtering.ds.save_to_disk(path_dir_save_dataset)
+    if args.save_debug_dataset:
+        path_dir_save_dataset_discarded = pathlib.PurePath(
+            args.path_dir_save_oscar, args.lang_oscar_id + "_debug"
+        )
+        pathlib.Path(path_dir_save_dataset_discarded).mkdir(parents=True, exist_ok=True)
+        oscar_basic_filtering.ds_debug.save_to_disk(path_dir_save_dataset_discarded)
