@@ -1,8 +1,9 @@
-"""Basic filtering of garbage and perplexity filtering for OSCAR v1.
-This code does not use HF's datasets for efficiency reasons."""
+"""Basic filtering of garbage and perplexity filtering for OSCAR v1."""
 
-import os
-import gzip
+import argparse
+import pathlib
+
+from datasets import load_dataset
 
 import nltk
 
@@ -14,7 +15,7 @@ import fasttext
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
-import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
+# import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
@@ -56,6 +57,23 @@ class BasicFiltering:
         words = [word for word in words if len(word) < length_word_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
+
+    @staticmethod
+    def modifying_sentences(
+        sentence,
+        cond_remove_words_with_incorrect_substrings,
+        incorrect_word_substrings,
+        cond_remove_long_words,
+        length_word_cutoff,
+    ):
+        if cond_remove_words_with_incorrect_substrings:
+            sentence = BasicFiltering.remove_words_with_incorrect_substrings(
+                sentence,
+                incorrect_word_substrings,
+            )
+        if cond_remove_long_words:
+            sentence = BasicFiltering.remove_long_words(sentence, length_word_cutoff)
+        return sentence
 
     @staticmethod
     def check_empty(sentence, strip_characters):
@@ -121,7 +139,7 @@ class BasicFiltering:
         cond = True
         if model_lang_id:
             words = BasicFiltering.get_words_from_sentence(sentence, strip_characters)
-            sent = " ".join(words)
+            sent = " ".join(words).replace("\n", " ")
             pred = model_lang_id.predict(sent)
             lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
             score_pred = pred[1][0]
@@ -137,10 +155,6 @@ class BasicFiltering:
     def basic_filtering(
         sentence,
         lang_oscar_id,
-        cond_remove_words_with_incorrect_substrings,
-        incorrect_word_substrings,
-        cond_remove_long_words,
-        length_word_cutoff,
         cond_check_empty,
         strip_characters,
         cond_check_special_characters,
@@ -156,14 +170,6 @@ class BasicFiltering:
         model_lang_id,
         lang_id_cutoff,
     ):
-        if cond_remove_words_with_incorrect_substrings:
-            sentence = BasicFiltering.remove_words_with_incorrect_substrings(
-                sentence,
-                incorrect_word_substrings,
-            )
-        if cond_remove_long_words:
-            sentence = BasicFiltering.remove_long_words(sentence, length_word_cutoff)
-
         if cond_check_empty:
             if not BasicFiltering.check_empty(sentence, strip_characters):
                 return False
@@ -220,6 +226,7 @@ class OscarBasicFiltering:
         self,
         lang_oscar_id,
         path_model_fasttext,
+        num_proc,
     ):
         self.lang_oscar_id = lang_oscar_id
 
@@ -252,56 +259,87 @@ class OscarBasicFiltering:
         else:
             self.param = parameters_filtering["default"]
 
-    def filtering(self, path_oscar_file):
-        with open(
-            path_oscar_file.replace(".txt.gz", "") + ".sample_filtered.txt",
-            "w",
-            encoding="utf8",
-        ) as f:
-            with gzip.open(path_oscar_file, "rb") as f2:
-                from tqdm import tqdm as tqdm
+        self.ds = load_dataset(
+            "oscar", f"unshuffled_deduplicated_{self.lang_oscar_id}"
+        )["train"]
+        self.num_proc = num_proc
 
-                for id_, line in enumerate(tqdm(f2)):
-                    line = line.decode().strip()
-                    if BasicFiltering.basic_filtering(
-                        sentence=line,
-                        lang_oscar_id=self.lang_oscar_id,
-                        cond_remove_words_with_incorrect_substrings=self.param[
-                            "cond_remove_words_with_incorrect_substrings"
-                        ],
-                        incorrect_word_substrings=self.param[
-                            "incorrect_word_substrings"
-                        ],
-                        cond_remove_long_words=self.param["cond_remove_long_words"],
-                        length_word_cutoff=self.param["length_word_cutoff"],
-                        cond_check_empty=self.param["cond_check_empty"],
-                        strip_characters=self.param["strip_characters"],
-                        cond_check_special_characters=self.param[
-                            "cond_check_special_characters"
-                        ],
-                        special_characters=self.param["special_characters"],
-                        special_characters_cutoff=self.param[
-                            "special_characters_cutoff"
-                        ],
-                        cond_check_stopwords=self.param["cond_check_stopwords"],
-                        stopwords=self.stopwords,
-                        stopwords_cutoff=self.param["stopwords_cutoff"],
-                        cond_check_badwords=self.param["cond_check_badwords"],
-                        badwords=self.badwords,
-                        badwords_cutoff=self.param["badwords_cutoff"],
-                        cond_check_lang_id=self.param["cond_check_lang_id"],
-                        model_lang_id=self.model_lang_id,
-                        lang_id_cutoff=self.param["lang_id_cutoff"],
-                    ):
-                        f.write(line + "\n\n")
-        os.unlink(path_oscar_file)
+    def basic_filtering(self):
+        def func_modifying_sentences(example):
+            example["text"] = BasicFiltering.modifying_sentences(
+                sentence=example["text"],
+                cond_remove_words_with_incorrect_substrings=self.param[
+                    "cond_remove_words_with_incorrect_substrings"
+                ],
+                incorrect_word_substrings=self.param["incorrect_word_substrings"],
+                cond_remove_long_words=self.param["cond_remove_long_words"],
+                length_word_cutoff=self.param["length_word_cutoff"],
+            )
+            return example
+
+        self.ds = self.ds.map(func_modifying_sentences, num_proc=self.num_proc)
+
+        func_basic_filtering = lambda example: BasicFiltering.basic_filtering(
+            sentence=example["text"].strip(),
+            lang_oscar_id=self.lang_oscar_id,
+            cond_check_empty=self.param["cond_check_empty"],
+            strip_characters=self.param["strip_characters"],
+            cond_check_special_characters=self.param["cond_check_special_characters"],
+            special_characters=self.param["special_characters"],
+            special_characters_cutoff=self.param["special_characters_cutoff"],
+            cond_check_stopwords=self.param["cond_check_stopwords"],
+            stopwords=self.stopwords,
+            stopwords_cutoff=self.param["stopwords_cutoff"],
+            cond_check_badwords=self.param["cond_check_badwords"],
+            badwords=self.badwords,
+            badwords_cutoff=self.param["badwords_cutoff"],
+            cond_check_lang_id=self.param["cond_check_lang_id"],
+            model_lang_id=self.model_lang_id,
+            lang_id_cutoff=self.param["lang_id_cutoff"],
+        )
+        self.ds = self.ds.filter(func_basic_filtering, num_proc=self.num_proc)
 
 
 if __name__ == "__main__":
-    lang_oscar_id = "en"
-    path_model_fasttext = "/tmp/lid.176.bin"
-    path_oscar_file = "../en_part_1.txt.gz"
-    oscar_basic_filtering = OscarBasicFiltering(
-        lang_oscar_id=lang_oscar_id, path_model_fasttext=path_model_fasttext
+    parser = argparse.ArgumentParser(
+        description="Basic filtering of garbage for OSCAR v1."
     )
-    oscar_basic_filtering.filtering(path_oscar_file=path_oscar_file)
+    parser.add_argument(
+        "--lang_oscar_id",
+        type=str,
+        default="af",
+        help="ID of the language Oscar is filtered on.",
+    )
+    parser.add_argument(
+        "--path_model_fasttext",
+        type=str,
+        default="/tmp/lid.176.bin",
+        help="Path to the Fasttext model used for language identification.",
+    )
+    parser.add_argument(
+        "--num_proc",
+        type=int,
+        default=1,
+        help="Number of processes for multiprocessing.",
+    )
+    parser.add_argument(
+        "--path_dir_save_oscar",
+        type=str,
+        default="../Oscar_filtered/",
+        help="Path to the directory where the filtered version of Oscar will be saved.",
+    )
+    args = parser.parse_args()
+
+    pathlib.Path(args.path_dir_save_oscar).mkdir(parents=True, exist_ok=True)
+    path_dir_save_dataset = pathlib.PurePath(
+        args.path_dir_save_oscar, args.lang_oscar_id
+    )
+    pathlib.Path(path_dir_save_dataset).mkdir(parents=True, exist_ok=True)
+
+    oscar_basic_filtering = OscarBasicFiltering(
+        lang_oscar_id=args.lang_oscar_id,
+        path_model_fasttext=args.path_model_fasttext,
+        num_proc=args.num_proc,
+    )
+    oscar_basic_filtering.basic_filtering()
+    oscar_basic_filtering.ds.save_to_disk(path_dir_save_dataset)
