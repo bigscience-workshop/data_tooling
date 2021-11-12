@@ -72,7 +72,9 @@ class ModifyingSentences:
                 incorrect_word_substrings,
             )
         if cond_remove_long_words:
-            sentence = ModifyingSentences.remove_long_words(sentence, length_word_cutoff)
+            sentence = ModifyingSentences.remove_long_words(
+                sentence, length_word_cutoff
+            )
         return sentence
 
 
@@ -107,7 +109,9 @@ class BasicFiltering:
     ):
         cond = True
         if stopwords:
-            words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+            words = ModifyingSentences.get_words_from_sentence(
+                sentence, strip_characters
+            )
             stopwords_ratio = len([word for word in words if word in stopwords]) / len(
                 words
             )
@@ -123,7 +127,9 @@ class BasicFiltering:
     ):
         cond = True
         if badwords:
-            words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+            words = ModifyingSentences.get_words_from_sentence(
+                sentence, strip_characters
+            )
             badwords_ratio = len([word for word in words if word in badwords]) / len(
                 words
             )
@@ -185,7 +191,9 @@ class LangIdFiltering:
     ):
         cond = True
         if model_lang_id:
-            words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+            words = ModifyingSentences.get_words_from_sentence(
+                sentence, strip_characters
+            )
             sent = " ".join(words).replace("\n", " ")
             pred = model_lang_id.predict(sent)
             lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
@@ -205,7 +213,7 @@ class LangIdFiltering:
         strip_characters,
         lang_oscar_id,
         model_lang_id,
-        lang_id_cutoff
+        lang_id_cutoff,
     ):
         if cond_check_lang_id:
             if not LangIdFiltering.check_lang_id(
