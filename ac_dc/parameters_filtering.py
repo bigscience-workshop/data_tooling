@@ -9,7 +9,7 @@ parameters_filtering_default = {
     "special_characters": "' 0123456789¯_%$§½¼¾×|†~\"—±′–'°−{}[]·'?,./<>!@#^&*()+-‑=:;，：,...�`→¶.…‘’”",
     "special_characters_cutoff": 0.4,
     "cond_check_stopwords": True,
-    "stopwords_cutoff": 0.40,
+    "stopwords_cutoff": 0.60,
     "cond_check_badwords": True,
     "badwords_cutoff": 0.4,
     "cond_check_lang_id": True,
