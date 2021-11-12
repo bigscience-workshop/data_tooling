@@ -153,7 +153,7 @@ class BasicFiltering:
                 score_pred > lang_id_cutoff
             )
         return cond
-        
+
     @staticmethod
     def basic_filtering_debug(
         example,
@@ -175,10 +175,14 @@ class BasicFiltering:
     ):
         sentence = example["text"].strip()
         if cond_check_empty:
-            example["cond_check_empty"] = BasicFiltering.check_empty(sentence, strip_characters)
-                
+            example["cond_check_empty"] = BasicFiltering.check_empty(
+                sentence, strip_characters
+            )
+
         if cond_check_special_characters:
-            example["cond_check_special_characters"] = BasicFiltering.check_special_characters(
+            example[
+                "cond_check_special_characters"
+            ] = BasicFiltering.check_special_characters(
                 sentence,
                 special_characters,
                 special_characters_cutoff,
@@ -362,27 +366,33 @@ class OscarBasicFiltering:
             lang_id_cutoff=self.param["lang_id_cutoff"],
         )
         if debug:
-            debug_func_basic_filtering = lambda example: BasicFiltering.basic_filtering_debug(
-                example=example,
-                lang_oscar_id=self.lang_oscar_id,
-                cond_check_empty=self.param["cond_check_empty"],
-                strip_characters=self.param["strip_characters"],
-                cond_check_special_characters=self.param["cond_check_special_characters"],
-                special_characters=self.param["special_characters"],
-                special_characters_cutoff=self.param["special_characters_cutoff"],
-                cond_check_stopwords=self.param["cond_check_stopwords"],
-                stopwords=self.stopwords,
-                stopwords_cutoff=self.param["stopwords_cutoff"],
-                cond_check_badwords=self.param["cond_check_badwords"],
-                badwords=self.badwords,
-                badwords_cutoff=self.param["badwords_cutoff"],
-                cond_check_lang_id=self.param["cond_check_lang_id"],
-                model_lang_id=self.model_lang_id,
-                lang_id_cutoff=self.param["lang_id_cutoff"],
+            debug_func_basic_filtering = (
+                lambda example: BasicFiltering.basic_filtering_debug(
+                    example=example,
+                    lang_oscar_id=self.lang_oscar_id,
+                    cond_check_empty=self.param["cond_check_empty"],
+                    strip_characters=self.param["strip_characters"],
+                    cond_check_special_characters=self.param[
+                        "cond_check_special_characters"
+                    ],
+                    special_characters=self.param["special_characters"],
+                    special_characters_cutoff=self.param["special_characters_cutoff"],
+                    cond_check_stopwords=self.param["cond_check_stopwords"],
+                    stopwords=self.stopwords,
+                    stopwords_cutoff=self.param["stopwords_cutoff"],
+                    cond_check_badwords=self.param["cond_check_badwords"],
+                    badwords=self.badwords,
+                    badwords_cutoff=self.param["badwords_cutoff"],
+                    cond_check_lang_id=self.param["cond_check_lang_id"],
+                    model_lang_id=self.model_lang_id,
+                    lang_id_cutoff=self.param["lang_id_cutoff"],
+                )
             )
 
             # save Dataset with conditions for analysis
-            self.ds_debug = self.ds.map(debug_func_basic_filtering, num_proc=self.num_proc)
+            self.ds_debug = self.ds.map(
+                debug_func_basic_filtering, num_proc=self.num_proc
+            )
 
         self.ds = self.ds.filter(func_basic_filtering, num_proc=self.num_proc)
 
