@@ -21,6 +21,7 @@ from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from badwords import badwords
 
+import functools
 
 class ModifyingSentences:
     @staticmethod
@@ -29,8 +30,10 @@ class ModifyingSentences:
         return sent
 
     @staticmethod
+    @functools.lru_cache
     def get_words_from_sentence(sentence, strip_characters):
         sent = ModifyingSentences.lower_strip_sentence(sentence)
+        # TODO switch to proper tokenization per languages
         words = [word.strip(strip_characters) for word in sent.split(" ")]
         return words
 
@@ -39,7 +42,7 @@ class ModifyingSentences:
         sentence,
         incorrect_word_substrings,
     ):
-        words = sentence.split(" ")
+        words = ModifyingSentences.get_words_from_sentence(sentence, None)
         words = [
             word
             for word in words
@@ -53,7 +56,7 @@ class ModifyingSentences:
         sentence,
         length_word_cutoff,
     ):
-        words = sentence.split(" ")
+        words = ModifyingSentences.get_words_from_sentence(sentence, None)
         words = [word for word in words if len(word) < length_word_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
