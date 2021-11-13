@@ -23,6 +23,7 @@ from badwords import badwords
 
 import functools
 
+
 class ModifyingSentences:
     @staticmethod
     def lower_strip_sentence(sentence):
