@@ -1,5 +1,5 @@
 # Data Tooling and Governance
-Tools for managing datasets for governance and training.
+Tools for managing datasets for governance and training large language models.
 
 ## Issues we aim to address
 - How do we automatically curate data to create datasets that are performant and comply with BigScience ethical values?
