@@ -2,6 +2,7 @@ import logging
 from functools import partial
 from typing import Optional
 
+import pandas as pd
 import typer
 from bokeh.plotting import output_file as bokeh_output_file
 from bokeh.plotting import save
@@ -80,7 +81,7 @@ def main(
     kenlm_model = KenlmModel.from_pretrained(language)
     logger.info("Loading dataset...")
     if dataset.endswith(".csv") or dataset.endswith(".tsv"):
-        df = uploaded_file_to_dataframe(dataset)
+        df = pd.read_csv(dataset, sep="\t" if dataset.endswith(".tsv") else ",")
         if doc_type.lower() == "sentence":
             df = documents_df_to_sentences_df(df, text_column, sample, seed=SEED)
         df["perplexity"] = df[text_column].map(kenlm_model.get_perplexity)
@@ -95,24 +96,24 @@ def main(
             seed=SEED,
             doc_type=doc_type,
         )
-        # Round perplexity
-        df["perplexity"] = df["perplexity"].round().astype(int)
-        logger.info(
-            f"Perplexity range: {df['perplexity'].min()} - {df['perplexity'].max()}"
-        )
-        plot = generate_plot(
-            df,
-            text_column,
-            "perplexity",
-            None,
-            dimensionality_reduction_function,
-            model,
-            seed=SEED,
-        )
-        logger.info("Saving plot")
-        bokeh_output_file(output_file)
-        save(plot)
-        logger.info("Done")
+    # Round perplexity
+    df["perplexity"] = df["perplexity"].round().astype(int)
+    logger.info(
+        f"Perplexity range: {df['perplexity'].min()} - {df['perplexity'].max()}"
+    )
+    plot = generate_plot(
+        df,
+        text_column,
+        "perplexity",
+        None,
+        dimensionality_reduction_function,
+        model,
+        seed=SEED,
+    )
+    logger.info("Saving plot")
+    bokeh_output_file(output_file)
+    save(plot)
+    logger.info("Done")
 
 
 if __name__ == "__main__":
