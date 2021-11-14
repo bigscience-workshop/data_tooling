@@ -365,7 +365,9 @@ class OscarFiltering:
         self.ds = self.ds.filter(oscar_basic_filtering, num_proc=self.num_proc)
 
     def lang_id_filtering(self):
-        oscar_lang_id_filtering = OscarLangIdFiltering(self.lang_oscar_id, self.path_model_fasttext)
+        oscar_lang_id_filtering = OscarLangIdFiltering(
+            self.lang_oscar_id, self.path_model_fasttext
+        )
         self.ds = self.ds.filter(oscar_lang_id_filtering, num_proc=self.num_proc)
 
     def save_dataset(self):
@@ -378,9 +380,7 @@ class OscarFiltering:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Filtering for OSCAR v1."
-    )
+    parser = argparse.ArgumentParser(description="Filtering for OSCAR v1.")
     parser.add_argument(
         "--lang_oscar_id",
         type=str,
