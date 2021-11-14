@@ -103,7 +103,7 @@ class OscarModifyingSentences:
         return (self.__class__, (self.lang_oscar_id,))
 
 
-class BasicFiltering:
+class Filtering:
     @staticmethod
     def check_empty(sentence, strip_characters):
         sent = ModifyingSentences.lower_strip_sentence(sentence)
@@ -165,97 +165,6 @@ class BasicFiltering:
         return cond
 
     @staticmethod
-    def basic_filtering(
-        sentence,
-        cond_check_empty,
-        strip_characters,
-        cond_check_special_characters,
-        special_characters,
-        special_characters_cutoff,
-        cond_check_stopwords,
-        stopwords,
-        stopwords_min_cutoff,
-        stopwords_max_cutoff,
-        cond_check_badwords,
-        badwords,
-        badwords_cutoff,
-    ):
-        if cond_check_empty:
-            if not BasicFiltering.check_empty(sentence, strip_characters):
-                return False
-        if cond_check_special_characters:
-            if not BasicFiltering.check_special_characters(
-                sentence,
-                special_characters,
-                special_characters_cutoff,
-            ):
-                return False
-        if cond_check_stopwords:
-            if not BasicFiltering.check_stopwords(
-                sentence,
-                strip_characters,
-                stopwords,
-                stopwords_min_cutoff,
-                stopwords_max_cutoff,
-            ):
-                return False
-        if cond_check_badwords:
-            if not BasicFiltering.check_badwords(
-                sentence,
-                strip_characters,
-                badwords,
-                badwords_cutoff,
-            ):
-                return False
-        return True
-
-
-class OscarBasicFiltering:
-    def __init__(self, lang_oscar_id):
-        self.lang_oscar_id = lang_oscar_id
-
-        nltk_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
-        ].iloc[0]
-        if nltk_lang_id:
-            self.stopwords = set(stopwords[nltk_lang_id])
-        else:
-            self.stopwords = None
-
-        badwords_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
-        ].iloc[0]
-        if badwords_lang_id:
-            self.badwords = set(badwords[badwords_lang_id])
-        else:
-            self.badwords = None
-
-        self.param = load_parameters(lang_oscar_id)
-
-    def __call__(self, example):
-        keep_example = BasicFiltering.basic_filtering(
-            sentence=example["text"].strip(),
-            cond_check_empty=self.param["cond_check_empty"],
-            strip_characters=self.param["strip_characters"],
-            cond_check_special_characters=self.param["cond_check_special_characters"],
-            special_characters=self.param["special_characters"],
-            special_characters_cutoff=self.param["special_characters_cutoff"],
-            cond_check_stopwords=self.param["cond_check_stopwords"],
-            stopwords=self.stopwords,
-            stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
-            stopwords_max_cutoff=self.param["stopwords_max_cutoff"],
-            cond_check_badwords=self.param["cond_check_badwords"],
-            badwords=self.badwords,
-            badwords_cutoff=self.param["badwords_cutoff"],
-        )
-        return keep_example
-
-    def __reduce__(self):
-        return (self.__class__, (self.lang_oscar_id,))
-
-
-class LangIdFiltering:
-    @staticmethod
     def check_lang_id(
         sentence,
         strip_characters,
@@ -281,58 +190,6 @@ class LangIdFiltering:
         return cond
 
     @staticmethod
-    def lang_id_filtering(
-        sentence,
-        cond_check_lang_id,
-        strip_characters,
-        lang_oscar_id,
-        model_lang_id,
-        lang_id_cutoff,
-    ):
-        if cond_check_lang_id:
-            if not LangIdFiltering.check_lang_id(
-                sentence,
-                strip_characters,
-                lang_oscar_id,
-                model_lang_id,
-                lang_id_cutoff,
-            ):
-                return False
-        return True
-
-
-class OscarLangIdFiltering:
-    def __init__(self, lang_oscar_id, path_fasttext_model):
-        self.lang_oscar_id = lang_oscar_id
-        self.path_fasttext_model = path_fasttext_model
-
-        fasttext_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
-        ].iloc[0]
-        if fasttext_lang_id:
-            self.model_lang_id = fasttext.load_model(path_fasttext_model)
-        else:
-            self.model_lang_id = None
-
-        self.param = load_parameters(lang_oscar_id)
-
-    def __call__(self, example):
-        keep_example = LangIdFiltering.lang_id_filtering(
-            sentence=example["text"].strip(),
-            cond_check_lang_id=self.param["cond_check_lang_id"],
-            strip_characters=self.param["strip_characters"],
-            lang_oscar_id=self.lang_oscar_id,
-            model_lang_id=self.model_lang_id,
-            lang_id_cutoff=self.param["lang_id_cutoff"],
-        )
-        return keep_example
-
-    def __reduce__(self):
-        return (self.__class__, (self.lang_oscar_id, self.path_fasttext_model))
-
-
-class PerplexityFiltering:
-    @staticmethod
     def get_perplexity_score(sentence, kenlm_model):
         doc_log_score, doc_length = 0, 0
         for line in sentence.split("\n"):
@@ -350,21 +207,71 @@ class PerplexityFiltering:
     ):
         cond = True
         if kenlm_model:
-            score = PerplexityFiltering.get_perplexity_score(
-                sentence, kenlm_model
-            )
+            score = Filtering.get_perplexity_score(sentence, kenlm_model)
             cond = score < perplexity_cutoff
         return cond
 
     @staticmethod
-    def perplexity_filtering(
+    def filtering(
         sentence,
+        cond_check_empty,
+        strip_characters,
+        cond_check_special_characters,
+        special_characters,
+        special_characters_cutoff,
+        cond_check_stopwords,
+        stopwords,
+        stopwords_min_cutoff,
+        stopwords_max_cutoff,
+        cond_check_badwords,
+        badwords,
+        badwords_cutoff,
+        cond_check_lang_id,
+        lang_oscar_id,
+        model_lang_id,
+        lang_id_cutoff,
         cond_check_perplexity,
         kenlm_model,
         perplexity_cutoff,
     ):
+        if cond_check_empty:
+            if not Filtering.check_empty(sentence, strip_characters):
+                return False
+        if cond_check_special_characters:
+            if not Filtering.check_special_characters(
+                sentence,
+                special_characters,
+                special_characters_cutoff,
+            ):
+                return False
+        if cond_check_stopwords:
+            if not Filtering.check_stopwords(
+                sentence,
+                strip_characters,
+                stopwords,
+                stopwords_min_cutoff,
+                stopwords_max_cutoff,
+            ):
+                return False
+        if cond_check_badwords:
+            if not Filtering.check_badwords(
+                sentence,
+                strip_characters,
+                badwords,
+                badwords_cutoff,
+            ):
+                return False
+        if cond_check_lang_id:
+            if not Filtering.check_lang_id(
+                sentence,
+                strip_characters,
+                lang_oscar_id,
+                model_lang_id,
+                lang_id_cutoff,
+            ):
+                return False
         if cond_check_perplexity:
-            if not PerplexityFiltering.check_perplexity(
+            if not Filtering.check_perplexity(
                 sentence,
                 kenlm_model,
                 perplexity_cutoff,
@@ -373,10 +280,35 @@ class PerplexityFiltering:
         return True
 
 
-class OscarPerplexityFiltering:
-    def __init__(self, lang_oscar_id, path_kenlm_model):
+class FuncOscarFiltering:
+    def __init__(self, lang_oscar_id, path_fasttext_model, path_kenlm_model):
         self.lang_oscar_id = lang_oscar_id
+        self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
+
+        nltk_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
+        ].iloc[0]
+        if nltk_lang_id:
+            self.stopwords = set(stopwords[nltk_lang_id])
+        else:
+            self.stopwords = None
+
+        badwords_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
+        ].iloc[0]
+        if badwords_lang_id:
+            self.badwords = set(badwords[badwords_lang_id])
+        else:
+            self.badwords = None
+
+        fasttext_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
+        ].iloc[0]
+        if fasttext_lang_id:
+            self.model_lang_id = fasttext.load_model(path_fasttext_model)
+        else:
+            self.model_lang_id = None
 
         kenlm_lang_id = langs_id.loc[
             langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
@@ -389,8 +321,24 @@ class OscarPerplexityFiltering:
         self.param = load_parameters(lang_oscar_id)
 
     def __call__(self, example):
-        keep_example = PerplexityFiltering.perplexity_filtering(
+        keep_example = Filtering.filtering(
             sentence=example["text"].strip(),
+            cond_check_empty=self.param["cond_check_empty"],
+            strip_characters=self.param["strip_characters"],
+            cond_check_special_characters=self.param["cond_check_special_characters"],
+            special_characters=self.param["special_characters"],
+            special_characters_cutoff=self.param["special_characters_cutoff"],
+            cond_check_stopwords=self.param["cond_check_stopwords"],
+            stopwords=self.stopwords,
+            stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
+            stopwords_max_cutoff=self.param["stopwords_max_cutoff"],
+            cond_check_badwords=self.param["cond_check_badwords"],
+            badwords=self.badwords,
+            badwords_cutoff=self.param["badwords_cutoff"],
+            cond_check_lang_id=self.param["cond_check_lang_id"],
+            lang_oscar_id=self.lang_oscar_id,
+            model_lang_id=self.model_lang_id,
+            lang_id_cutoff=self.param["lang_id_cutoff"],
             cond_check_perplexity=self.param["cond_check_perplexity"],
             kenlm_model=self.kenlm_model,
             perplexity_cutoff=self.param["perplexity_cutoff"],
@@ -398,7 +346,10 @@ class OscarPerplexityFiltering:
         return keep_example
 
     def __reduce__(self):
-        return (self.__class__, (self.lang_oscar_id, self.path_kenlm_model))
+        return (
+            self.__class__,
+            (self.lang_oscar_id, self.path_fasttext_model, self.path_kenlm_model),
+        )
 
 
 class OscarFiltering:
@@ -423,21 +374,11 @@ class OscarFiltering:
         oscar_modifying_sentences = OscarModifyingSentences(self.lang_oscar_id)
         self.ds = self.ds.map(oscar_modifying_sentences, num_proc=self.num_proc)
 
-    def basic_filtering(self):
-        oscar_basic_filtering = OscarBasicFiltering(self.lang_oscar_id)
-        self.ds = self.ds.filter(oscar_basic_filtering, num_proc=self.num_proc)
-
-    def lang_id_filtering(self):
-        oscar_lang_id_filtering = OscarLangIdFiltering(
-            self.lang_oscar_id, self.path_fasttext_model
+    def filtering(self):
+        func_oscar_filtering = FuncOscarFiltering(
+            self.lang_oscar_id, self.path_fasttext_model, self.path_kenlm_model
         )
-        self.ds = self.ds.filter(oscar_lang_id_filtering, num_proc=self.num_proc)
-
-    def perplexity_filtering(self):
-        oscar_perplexity_filtering = OscarPerplexityFiltering(
-            self.lang_oscar_id, self.path_kenlm_model
-        )
-        self.ds = self.ds.filter(oscar_perplexity_filtering, num_proc=self.num_proc)
+        self.ds = self.ds.filter(func_oscar_filtering, num_proc=self.num_proc)
 
     def save_dataset(self):
         pathlib.Path(self.path_dir_save_oscar).mkdir(parents=True, exist_ok=True)
@@ -490,7 +431,5 @@ if __name__ == "__main__":
         path_dir_save_oscar=args.path_dir_save_oscar,
     )
     oscar_filtering.modifying_sentences()
-    oscar_filtering.basic_filtering()
-    oscar_filtering.lang_id_filtering()
-    oscar_filtering.perplexity_filtering()
+    oscar_filtering.filtering()
     oscar_filtering.save_dataset()
