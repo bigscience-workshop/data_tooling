@@ -23,8 +23,11 @@ from badwords import badwords
 
 import functools
 
+
 class ModifyingSentences:
+    
     @staticmethod
+    @functools.lru_cache
     def lower_strip_sentence(sentence):
         sent = sentence.lower().strip()
         return sent
@@ -33,16 +36,21 @@ class ModifyingSentences:
     @functools.lru_cache
     def get_words_from_sentence(sentence, strip_characters):
         sent = ModifyingSentences.lower_strip_sentence(sentence)
-        # TODO switch to proper tokenization per languages
-        words = [word.strip(strip_characters) for word in sent.split(" ")]
+        words = [word.strip(strip_characters) for word in ModifyingSentences.tokenize(sent)]
         return words
+
+    @staticmethod
+    @functools.lru_cache
+    def tokenize(sentence):
+        # TODO switch to proper tokenization per languages
+        return sentence.split(" ")
 
     @staticmethod
     def remove_words_with_incorrect_substrings(
         sentence,
         incorrect_word_substrings,
     ):
-        words = ModifyingSentences.get_words_from_sentence(sentence, None)
+        words = ModifyingSentences.tokenize(sentence)
         words = [
             word
             for word in words
@@ -56,7 +64,7 @@ class ModifyingSentences:
         sentence,
         length_word_cutoff,
     ):
-        words = ModifyingSentences.get_words_from_sentence(sentence, None)
+        words = ModifyingSentences.tokenize(sentence)
         words = [word for word in words if len(word) < length_word_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
