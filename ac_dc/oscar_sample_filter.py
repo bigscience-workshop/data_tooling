@@ -126,7 +126,8 @@ class BasicFiltering:
         sentence,
         strip_characters,
         stopwords,
-        stopwords_cutoff,
+        stopwords_min_cutoff,
+        stopwords_max_cutoff,
     ):
         cond = True
         if stopwords:
@@ -136,7 +137,9 @@ class BasicFiltering:
             stopwords_ratio = len([word for word in words if word in stopwords]) / len(
                 words
             )
-            cond = stopwords_ratio < stopwords_cutoff
+            cond = (stopwords_ratio > stopwords_min_cutoff) and (
+                stopwords_ratio < stopwords_max_cutoff
+            )
         return cond
 
     @staticmethod
@@ -167,7 +170,8 @@ class BasicFiltering:
         special_characters_cutoff,
         cond_check_stopwords,
         stopwords,
-        stopwords_cutoff,
+        stopwords_min_cutoff,
+        stopwords_max_cutoff,
         cond_check_badwords,
         badwords,
         badwords_cutoff,
@@ -187,7 +191,8 @@ class BasicFiltering:
                 sentence,
                 strip_characters,
                 stopwords,
-                stopwords_cutoff,
+                stopwords_min_cutoff,
+                stopwords_max_cutoff,
             ):
                 return False
         if cond_check_badwords:
@@ -236,7 +241,8 @@ class OscarBasicFiltering:
             special_characters_cutoff=self.param["special_characters_cutoff"],
             cond_check_stopwords=self.param["cond_check_stopwords"],
             stopwords=self.stopwords,
-            stopwords_cutoff=self.param["stopwords_cutoff"],
+            stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
+            stopwords_max_cutoff=self.param["stopwords_max_cutoff"],
             cond_check_badwords=self.param["cond_check_badwords"],
             badwords=self.badwords,
             badwords_cutoff=self.param["badwords_cutoff"],
