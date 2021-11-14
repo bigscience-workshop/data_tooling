@@ -10,7 +10,7 @@ import fasttext
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
-# import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
+import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
@@ -302,15 +302,15 @@ class LangIdFiltering:
 
 
 class OscarLangIdFiltering:
-    def __init__(self, lang_oscar_id, path_model_fasttext):
+    def __init__(self, lang_oscar_id, path_fasttext_model):
         self.lang_oscar_id = lang_oscar_id
-        self.path_model_fasttext = path_model_fasttext
+        self.path_fasttext_model = path_fasttext_model
 
         fasttext_lang_id = langs_id.loc[
             langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
         ].iloc[0]
         if fasttext_lang_id:
-            self.model_lang_id = fasttext.load_model(path_model_fasttext)
+            self.model_lang_id = fasttext.load_model(path_fasttext_model)
         else:
             self.model_lang_id = None
 
@@ -328,32 +328,91 @@ class OscarLangIdFiltering:
         return keep_example
 
     def __reduce__(self):
-        return (self.__class__, (self.lang_oscar_id, self.path_model_fasttext))
+        return (self.__class__, (self.lang_oscar_id, self.path_fasttext_model))
 
 
 class PerplexityFiltering:
     @staticmethod
-    def get_perplexity(pp_model, doc):
-        # To open a model: pp_model = kenlm.Model(path_model)
+    def get_perplexity_score(sentence, kenlm_model):
         doc_log_score, doc_length = 0, 0
-        for line in doc.split("\n"):
-            log_score = pp_model.score(line)
+        for line in sentence.split("\n"):
+            log_score = kenlm_model.score(line)
             length = len(line.split()) + 1
             doc_log_score += log_score
             doc_length += length
         return 10.0 ** (-doc_log_score / doc_length)
+
+    @staticmethod
+    def check_perplexity(
+        sentence,
+        kenlm_model,
+        perplexity_cutoff,
+    ):
+        cond = True
+        if kenlm_model:
+            score = PerplexityFiltering.get_perplexity_score(
+                sentence, kenlm_model
+            )
+            cond = score < perplexity_cutoff
+        return cond
+
+    @staticmethod
+    def perplexity_filtering(
+        sentence,
+        cond_check_perplexity,
+        kenlm_model,
+        perplexity_cutoff,
+    ):
+        if cond_check_perplexity:
+            if not PerplexityFiltering.check_perplexity(
+                sentence,
+                kenlm_model,
+                perplexity_cutoff,
+            ):
+                return False
+        return True
+
+
+class OscarPerplexityFiltering:
+    def __init__(self, lang_oscar_id, path_kenlm_model):
+        self.lang_oscar_id = lang_oscar_id
+        self.path_kenlm_model = path_kenlm_model
+
+        kenlm_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
+        ].iloc[0]
+        if kenlm_lang_id:
+            self.kenlm_model = kenlm.Model(path_kenlm_model)
+        else:
+            self.kenlm_model = None
+
+        self.param = load_parameters(lang_oscar_id)
+
+    def __call__(self, example):
+        keep_example = PerplexityFiltering.perplexity_filtering(
+            sentence=example["text"].strip(),
+            cond_check_perplexity=self.param["cond_check_perplexity"],
+            kenlm_model=self.kenlm_model,
+            perplexity_cutoff=self.param["perplexity_cutoff"],
+        )
+        return keep_example
+
+    def __reduce__(self):
+        return (self.__class__, (self.lang_oscar_id, self.path_kenlm_model))
 
 
 class OscarFiltering:
     def __init__(
         self,
         lang_oscar_id,
-        path_model_fasttext,
+        path_fasttext_model,
+        path_kenlm_model,
         num_proc,
         path_dir_save_oscar,
     ):
         self.lang_oscar_id = lang_oscar_id
-        self.path_model_fasttext = path_model_fasttext
+        self.path_fasttext_model = path_fasttext_model
+        self.path_kenlm_model = path_kenlm_model
         self.ds = load_dataset(
             "oscar", f"unshuffled_deduplicated_{self.lang_oscar_id}"
         )["train"]
@@ -370,9 +429,15 @@ class OscarFiltering:
 
     def lang_id_filtering(self):
         oscar_lang_id_filtering = OscarLangIdFiltering(
-            self.lang_oscar_id, self.path_model_fasttext
+            self.lang_oscar_id, self.path_fasttext_model
         )
         self.ds = self.ds.filter(oscar_lang_id_filtering, num_proc=self.num_proc)
+
+    def perplexity_filtering(self):
+        oscar_perplexity_filtering = OscarPerplexityFiltering(
+            self.lang_oscar_id, self.path_kenlm_model
+        )
+        self.ds = self.ds.filter(oscar_perplexity_filtering, num_proc=self.num_proc)
 
     def save_dataset(self):
         pathlib.Path(self.path_dir_save_oscar).mkdir(parents=True, exist_ok=True)
@@ -392,10 +457,16 @@ if __name__ == "__main__":
         help="ID of the language Oscar is filtered on.",
     )
     parser.add_argument(
-        "--path_model_fasttext",
+        "--path_fasttext_model",
         type=str,
         default="/tmp/lid.176.bin",
         help="Path to the Fasttext model used for language identification.",
+    )
+    parser.add_argument(
+        "--path_kenlm_model",
+        type=str,
+        default="ac_dc/af.arpa.bin",
+        help="Path to the KenLM model used to compute perplexity scores.",
     )
     parser.add_argument(
         "--num_proc",
@@ -413,11 +484,13 @@ if __name__ == "__main__":
 
     oscar_filtering = OscarFiltering(
         lang_oscar_id=args.lang_oscar_id,
-        path_model_fasttext=args.path_model_fasttext,
+        path_fasttext_model=args.path_fasttext_model,
+        path_kenlm_model=args.path_kenlm_model,
         num_proc=args.num_proc,
         path_dir_save_oscar=args.path_dir_save_oscar,
     )
     oscar_filtering.modifying_sentences()
     oscar_filtering.basic_filtering()
     oscar_filtering.lang_id_filtering()
+    oscar_filtering.perplexity_filtering()
     oscar_filtering.save_dataset()

@@ -22,6 +22,8 @@ parameters_filtering_default = {
     "badwords_cutoff": 0.4,
     "cond_check_lang_id": True,
     "lang_id_cutoff": 0.8,
+    "cond_check_perplexity": False,
+    "perplexity_cutoff": 1000000,
 }
 
 parameters_filtering_en = parameters_filtering_default
