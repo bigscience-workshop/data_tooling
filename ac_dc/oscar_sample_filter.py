@@ -18,6 +18,14 @@ from stopwords import stopwords
 from badwords import badwords
 
 
+def load_parameters(lang_oscar_id):
+    if lang_oscar_id in parameters_filtering:
+        param = parameters_filtering[lang_oscar_id]
+    else:
+        param = parameters_filtering["default"]
+    return param
+
+
 class ModifyingSentences:
     @staticmethod
     def lower_strip_sentence(sentence):
@@ -77,11 +85,7 @@ class ModifyingSentences:
 class OscarModifyingSentences:
     def __init__(self, lang_oscar_id):
         self.lang_oscar_id = lang_oscar_id
-
-        if lang_oscar_id in parameters_filtering:
-            self.param = parameters_filtering[lang_oscar_id]
-        else:
-            self.param = parameters_filtering["default"]
+        self.param = load_parameters(lang_oscar_id)
 
     def __call__(self, example):
         example["text"] = ModifyingSentences.modifying_sentences(
@@ -226,10 +230,7 @@ class OscarBasicFiltering:
         else:
             self.badwords = None
 
-        if lang_oscar_id in parameters_filtering:
-            self.param = parameters_filtering[lang_oscar_id]
-        else:
-            self.param = parameters_filtering["default"]
+        self.param = load_parameters(lang_oscar_id)
 
     def __call__(self, example):
         keep_example = BasicFiltering.basic_filtering(
@@ -313,10 +314,7 @@ class OscarLangIdFiltering:
         else:
             self.model_lang_id = None
 
-        if lang_oscar_id in parameters_filtering:
-            self.param = parameters_filtering[lang_oscar_id]
-        else:
-            self.param = parameters_filtering["default"]
+        self.param = load_parameters(lang_oscar_id)
 
     def __call__(self, example):
         keep_example = LangIdFiltering.lang_id_filtering(
