@@ -109,18 +109,33 @@ class Filtering:
         return cond
 
     @staticmethod
-    def check_special_characters(
-        sentence,
-        special_characters,
-        special_characters_cutoff,
-    ):
+    def compute_special_characters_ratio(sentence, special_characters):
         sent = ModifyingSentences.lower_strip_sentence(sentence)
         set_special_characters = {char for char in special_characters}
         special_characters_ratio = len(
             [char for char in sent if char in set_special_characters]
         ) / len(sent)
+        return special_characters_ratio
+
+    @staticmethod
+    def check_special_characters(
+        sentence,
+        special_characters,
+        special_characters_cutoff,
+    ):
+        special_characters_ratio = Filtering.compute_special_characters_ratio(
+            sentence, special_characters
+        )
         cond = special_characters_ratio < special_characters_cutoff
         return cond
+
+    @staticmethod
+    def compute_stopwords_ratio(sentence, strip_characters, stopwords):
+        words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        stopwords_ratio = len([word for word in words if word in stopwords]) / len(
+            words
+        )
+        return stopwords_ratio
 
     @staticmethod
     def check_stopwords(
@@ -132,16 +147,19 @@ class Filtering:
     ):
         cond = True
         if stopwords:
-            words = ModifyingSentences.get_words_from_sentence(
-                sentence, strip_characters
-            )
-            stopwords_ratio = len([word for word in words if word in stopwords]) / len(
-                words
+            stopwords_ratio = Filtering.compute_stopwords_ratio(
+                sentence, strip_characters, stopwords
             )
             cond = (stopwords_ratio > stopwords_min_cutoff) and (
                 stopwords_ratio < stopwords_max_cutoff
             )
         return cond
+
+    @staticmethod
+    def compute_badwords_ratio(sentence, strip_characters, badwords):
+        words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        badwords_ratio = len([word for word in words if word in badwords]) / len(words)
+        return badwords_ratio
 
     @staticmethod
     def check_badwords(
@@ -152,14 +170,23 @@ class Filtering:
     ):
         cond = True
         if badwords:
-            words = ModifyingSentences.get_words_from_sentence(
-                sentence, strip_characters
-            )
-            badwords_ratio = len([word for word in words if word in badwords]) / len(
-                words
+            badwords_ratio = Filtering.compute_badwords_ratio(
+                sentence, strip_characters, badwords
             )
             cond = badwords_ratio < badwords_cutoff
         return cond
+
+    @staticmethod
+    def compute_lang_id_pred_score(sentence, strip_characters, model_lang_id):
+        words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        sent = " ".join(words).replace("\n", " ")
+        pred = model_lang_id.predict(sent)
+        lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
+        score_pred = pred[1][0]
+        lang_pred_oscar_id = langs_id.loc[
+            langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
+        ].iloc[0]
+        return lang_pred_oscar_id, score_pred
 
     @staticmethod
     def check_lang_id(
@@ -171,23 +198,16 @@ class Filtering:
     ):
         cond = True
         if model_lang_id:
-            words = ModifyingSentences.get_words_from_sentence(
-                sentence, strip_characters
+            lang_pred_oscar_id, score_pred = Filtering.compute_lang_id_pred_score(
+                sentence, strip_characters, model_lang_id
             )
-            sent = " ".join(words).replace("\n", " ")
-            pred = model_lang_id.predict(sent)
-            lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
-            score_pred = pred[1][0]
-            lang_pred_oscar_id = langs_id.loc[
-                langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
-            ].iloc[0]
             cond = (lang_pred_oscar_id == lang_oscar_id) and (
                 score_pred > lang_id_cutoff
             )
         return cond
 
     @staticmethod
-    def get_perplexity_score(sentence, kenlm_model):
+    def compute_perplexity_score(sentence, kenlm_model):
         doc_log_score, doc_length = 0, 0
         for line in sentence.split("\n"):
             log_score = kenlm_model.score(line)
@@ -204,7 +224,7 @@ class Filtering:
     ):
         cond = True
         if kenlm_model:
-            score = Filtering.get_perplexity_score(sentence, kenlm_model)
+            score = Filtering.compute_perplexity_score(sentence, kenlm_model)
             cond = score < perplexity_cutoff
         return cond
 
@@ -384,4 +404,3 @@ class OscarFiltering:
         )
         pathlib.Path(path_dir_save_dataset).mkdir(parents=True, exist_ok=True)
         self.ds.save_to_disk(path_dir_save_dataset)
-
