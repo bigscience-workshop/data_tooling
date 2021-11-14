@@ -25,7 +25,6 @@ import functools
 
 
 class ModifyingSentences:
-    
     @staticmethod
     @functools.lru_cache
     def lower_strip_sentence(sentence):
@@ -36,7 +35,9 @@ class ModifyingSentences:
     @functools.lru_cache
     def get_words_from_sentence(sentence, strip_characters):
         sent = ModifyingSentences.lower_strip_sentence(sentence)
-        words = [word.strip(strip_characters) for word in ModifyingSentences.tokenize(sent)]
+        words = [
+            word.strip(strip_characters) for word in ModifyingSentences.tokenize(sent)
+        ]
         return words
 
     @staticmethod
