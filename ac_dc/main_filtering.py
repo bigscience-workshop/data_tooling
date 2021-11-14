@@ -40,6 +40,7 @@ def parseArgs():
     args = parser.parse_args()
     return args
 
+
 def main():
     args = parseArgs()
     oscar_filtering = OscarFiltering(

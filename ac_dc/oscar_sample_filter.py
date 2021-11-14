@@ -1,5 +1,3 @@
-import pathlib
-
 from datasets import load_dataset
 
 import fasttext
@@ -9,18 +7,66 @@ import fasttext
 
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
+import pathlib
+
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from stopwords import stopwords
 from badwords import badwords
 
 
-def load_parameters(lang_oscar_id):
-    if lang_oscar_id in parameters_filtering:
-        param = parameters_filtering[lang_oscar_id]
-    else:
-        param = parameters_filtering["default"]
-    return param
+class LoadParameters:
+    @staticmethod
+    def load_stopwords(lang_oscar_id):
+        nltk_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
+        ].iloc[0]
+        if nltk_lang_id:
+            stopwords_lang = set(stopwords[nltk_lang_id])
+        else:
+            stopwords_lang = None
+        return stopwords_lang
+
+    @staticmethod
+    def load_badwords(lang_oscar_id):
+        badwords_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
+        ].iloc[0]
+        if badwords_lang_id:
+            badwords_lang = set(badwords[badwords_lang_id])
+        else:
+            badwords_lang = None
+        return badwords_lang
+
+    @staticmethod
+    def load_model_lang_id(lang_oscar_id, path_fasttext_model):
+        fasttext_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
+        ].iloc[0]
+        if fasttext_lang_id:
+            model_lang_id = fasttext.load_model(path_fasttext_model)
+        else:
+            model_lang_id = None
+        return model_lang_id
+
+    @staticmethod
+    def load_kenlm_model(lang_oscar_id, path_kenlm_model):
+        kenlm_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
+        ].iloc[0]
+        if kenlm_lang_id:
+            kenlm_model = kenlm.Model(path_kenlm_model)
+        else:
+            kenlm_model = None
+        return kenlm_model
+
+    @staticmethod
+    def load_parameters(lang_oscar_id):
+        if lang_oscar_id in parameters_filtering:
+            param = parameters_filtering[lang_oscar_id]
+        else:
+            param = parameters_filtering["default"]
+        return param
 
 
 class ModifyingSentences:
@@ -82,7 +128,7 @@ class ModifyingSentences:
 class OscarModifyingSentences:
     def __init__(self, lang_oscar_id):
         self.lang_oscar_id = lang_oscar_id
-        self.param = load_parameters(lang_oscar_id)
+        self.param = LoadParameters.load_parameters(lang_oscar_id)
 
     def __call__(self, example):
         example["text"] = ModifyingSentences.modifying_sentences(
@@ -303,39 +349,15 @@ class FuncOscarFiltering:
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
 
-        nltk_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
-        ].iloc[0]
-        if nltk_lang_id:
-            self.stopwords = set(stopwords[nltk_lang_id])
-        else:
-            self.stopwords = None
-
-        badwords_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
-        ].iloc[0]
-        if badwords_lang_id:
-            self.badwords = set(badwords[badwords_lang_id])
-        else:
-            self.badwords = None
-
-        fasttext_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
-        ].iloc[0]
-        if fasttext_lang_id:
-            self.model_lang_id = fasttext.load_model(path_fasttext_model)
-        else:
-            self.model_lang_id = None
-
-        kenlm_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
-        ].iloc[0]
-        if kenlm_lang_id:
-            self.kenlm_model = kenlm.Model(path_kenlm_model)
-        else:
-            self.kenlm_model = None
-
-        self.param = load_parameters(lang_oscar_id)
+        self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
+        self.badwords = LoadParameters.load_badwords(lang_oscar_id)
+        self.model_lang_id = LoadParameters.load_model_lang_id(
+            lang_oscar_id, path_fasttext_model
+        )
+        self.kenlm_model = LoadParameters.load_kenlm_model(
+            lang_oscar_id, path_kenlm_model
+        )
+        self.param = LoadParameters.load_parameters(lang_oscar_id)
 
     def __call__(self, example):
         keep_example = Filtering.filtering(
