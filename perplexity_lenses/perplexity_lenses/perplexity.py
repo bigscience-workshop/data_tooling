@@ -3,9 +3,9 @@ import re
 import unicodedata
 import urllib.request
 from typing import Dict
-import sentencepiece
 
 import kenlm
+import sentencepiece
 
 
 class SentencePiece:
