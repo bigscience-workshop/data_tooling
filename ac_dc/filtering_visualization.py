@@ -32,7 +32,8 @@ class FilteringVisualization:
             "oscar",
             f"unshuffled_deduplicated_{lang_oscar_id}",
             split="train",
-        )
+            streaming=True,
+        ).shuffle(buffer_size=num_iter, seed=42)
         self.num_iter = num_iter
         self.path_dir_save_visu = path_dir_save_visu
 
@@ -46,8 +47,9 @@ class FilteringVisualization:
         }
 
     def compute_stats(self):
+        dataset = iter(self.ds)
         for i in tqdm(range(self.num_iter)):
-            sentence = self.ds[i]["text"]
+            sentence = next(dataset)["sentence"]
 
             len_words = [len(word) for word in sentence.split(" ")]
             self.stats["len_words"] += len_words
