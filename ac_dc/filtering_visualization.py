@@ -49,7 +49,7 @@ class FilteringVisualization:
     def compute_stats(self):
         dataset = iter(self.ds)
         for i in tqdm(range(self.num_iter)):
-            sentence = next(dataset)["sentence"]
+            sentence = next(dataset)["text"]
 
             len_words = [len(word) for word in sentence.split(" ")]
             self.stats["len_words"] += len_words
