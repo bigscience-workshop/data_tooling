@@ -231,7 +231,11 @@ class Filtering:
         score_pred = pred[1][0]
         lang_pred_oscar_id = langs_id.loc[
             langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
-        ].iloc[0]
+        ]
+        if len(lang_pred_oscar_id) > 0:
+            lang_pred_oscar_id = lang_pred_oscar_id.iloc[0]
+        else:
+            lang_pred_oscar_id = "unknown"
         return lang_pred_oscar_id, score_pred
 
     @staticmethod
