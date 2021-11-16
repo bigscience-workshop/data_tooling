@@ -37,6 +37,18 @@ def parseArgs():
         default="../Oscar_filtered/",
         help="Path to the directory where the filtered version of Oscar will be saved.",
     )
+    parser.add_argument(
+        "--use_registry",
+        type=bool,
+        default=False,
+        help="Whether to use the Oscar dataset containing registry information.",
+    )
+    parser.add_argument(
+        "--registry_data_files",
+        type=str,
+        default=None,
+        help="Data files from the Hugging Face hub to load.",
+    )
     args = parser.parse_args()
     return args
 
@@ -49,6 +61,8 @@ def main():
         path_kenlm_model=args.path_kenlm_model,
         num_proc=args.num_proc,
         path_dir_save_oscar=args.path_dir_save_oscar,
+        use_registry=args.use_registry,
+        registry_data_files=args.registry_data_files,
     )
     oscar_filtering.modifying_sentences()
     oscar_filtering.filtering()

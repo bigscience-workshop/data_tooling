@@ -403,13 +403,21 @@ class OscarFiltering:
         path_kenlm_model,
         num_proc,
         path_dir_save_oscar,
+        use_registry,
+        registry_data_files,
     ):
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
-        self.ds = load_dataset(
-            "oscar", f"unshuffled_deduplicated_{self.lang_oscar_id}"
-        )["train"]
+        if use_registry:
+            data_files = registry_data_files if registry_data_files else f"{lang_oscar_id}/*.jsonl.gz"
+            self.ds = load_dataset(
+                "mhtoin/register_oscar", data_files=data_files,
+            )["train"]
+        else:
+            self.ds = load_dataset(
+                "oscar", f"unshuffled_deduplicated_{self.lang_oscar_id}"
+            )["train"]
         self.num_proc = num_proc
         self.path_dir_save_oscar = path_dir_save_oscar
 
