@@ -38,7 +38,7 @@ class FilteringVisualization:
 
         self.keys_stats = [
             "len_words",
-            "special_character_ratio",
+            "special_characters_ratio",
             "stopwords_ratio",
             "badwords_ratio",
             "lang_id_score",
@@ -58,7 +58,7 @@ class FilteringVisualization:
             special_characters_ratio = Filtering.compute_special_characters_ratio(
                 sentence, self.param["special_characters"]
             )
-            stats_sentence["special_character_ratio"] = special_characters_ratio
+            stats_sentence["special_characters_ratio"] = special_characters_ratio
 
             if self.stopwords:
                 stopwords_ratio = Filtering.compute_stopwords_ratio(
@@ -121,6 +121,24 @@ class FilteringVisualization:
                 )
                 plot_histogram(data, xlabel, ylabel, title, path_save)
 
+    def get_examples_above_cutoff(self, key, cutoff):
+        if key not in self.keys_stats:
+            raise ValueError("Specified key unknown.")
+        if key == "len_words":
+            examples = []
+            for i in range(self.num_iter):
+                words = [
+                    word for word in self.ds[i]["text"].split(" ") if len(word) > cutoff
+                ]
+                examples += words
+        else:
+            examples = [
+                self.ds[i]["text"]
+                for i in range(self.num_iter)
+                if self.stats[i][key] and (self.stats[i][key] > cutoff)
+            ]
+        return examples
+
 
 if __name__ == "__main__":
     lang_oscar_id = "af"
@@ -138,3 +156,9 @@ if __name__ == "__main__":
     )
     filtering_visualization.compute_stats()
     filtering_visualization.plot()
+    print(filtering_visualization.get_examples_above_cutoff("len_words", 25))
+    print(
+        filtering_visualization.get_examples_above_cutoff(
+            "special_characters_ratio", 0.5
+        )
+    )
