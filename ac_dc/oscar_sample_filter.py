@@ -91,7 +91,7 @@ class ModifyingSentences:
             "zh_TW_govt_id": re.compile(r"[1-9]\d{9}"),
         },
         "es": {
-            "es_ES_govt_id": re.compile(r"ES[1-9]\d{8}|ES\d{8}[1-9]|ES[1-9]\d{7}[1-9]"),
+            "es_ES_govt_id": re.compile(r"(?:ES)?\d{6-8}-?[A-Z]"),
             "es_CO_govt_id": re.compile(
                 r"[1-9]\d?\d{6}|8\d{8}|9\d{8}|10\d{8}|11\d{8}|12\d{8}|"
             ),
