@@ -410,9 +410,14 @@ class OscarFiltering:
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
         if use_registry:
-            data_files = registry_data_files if registry_data_files else f"{lang_oscar_id}/*.jsonl.gz"
+            data_files = (
+                registry_data_files
+                if registry_data_files
+                else f"{lang_oscar_id}/*.jsonl.gz"
+            )
             self.ds = load_dataset(
-                "mhtoin/register_oscar", data_files=data_files,
+                "mhtoin/register_oscar",
+                data_files=data_files,
             )["train"]
         else:
             self.ds = load_dataset(
