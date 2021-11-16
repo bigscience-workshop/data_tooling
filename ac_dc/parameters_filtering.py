@@ -30,7 +30,13 @@ parameters_filtering_en = parameters_filtering_default
 parameters_filtering_en["cond_remove_long_words"] = True
 parameters_filtering_en["length_word_cutoff"] = 25
 
+parameters_filtering_vi = parameters_filtering_default
+parameters_filtering_vi["cond_remove_long_words"] = True
+parameters_filtering_vi["length_word_cutoff"] = 20
+parameters_filtering_vi["special_characters_cutoff"] = 0.35
+
 parameters_filtering = {
     "default": parameters_filtering_default,
     "en": parameters_filtering_en,
+    "vi": parameters_filtering_vi,
 }
