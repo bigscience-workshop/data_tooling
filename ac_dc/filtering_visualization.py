@@ -33,53 +33,59 @@ class FilteringVisualization:
             f"unshuffled_deduplicated_{lang_oscar_id}",
             split="train",
         )
-        self.num_iter = num_iter
+        self.num_iter = min(num_iter, self.ds.num_rows)
         self.path_dir_save_visu = path_dir_save_visu
 
-        self.stats = {
-            "len_words": [],
-            "special_characters_ratios": [],
-            "stopwords_ratios": [],
-            "badwords_ratios": [],
-            "lang_id_scores": [],
-            "perplexity_scores": [],
-        }
+        self.keys_stats = [
+            "len_words",
+            "special_character_ratio",
+            "stopwords_ratio",
+            "badwords_ratio",
+            "lang_id_score",
+            "perplexity_score",
+        ]
 
     def compute_stats(self):
+        stats = []
         for i in tqdm(range(self.num_iter)):
+            stats_sentence = {key_stats: None for key_stats in self.keys_stats}
+
             sentence = self.ds[i]["text"]
 
             len_words = [len(word) for word in sentence.split(" ")]
-            self.stats["len_words"] += len_words
+            stats_sentence["len_words"] = len_words
 
             special_characters_ratio = Filtering.compute_special_characters_ratio(
                 sentence, self.param["special_characters"]
             )
-            self.stats["special_characters_ratios"].append(special_characters_ratio)
+            stats_sentence["special_character_ratio"] = special_characters_ratio
 
             if self.stopwords:
                 stopwords_ratio = Filtering.compute_stopwords_ratio(
                     sentence, self.param["strip_characters"], self.stopwords
                 )
-                self.stats["stopwords_ratios"].append(stopwords_ratio)
+                stats_sentence["stopwords_ratio"] = stopwords_ratio
 
             if self.badwords:
                 badwords_ratio = Filtering.compute_badwords_ratio(
                     sentence, self.param["strip_characters"], self.badwords
                 )
-                self.stats["badwords_ratios"].append(badwords_ratio)
+                stats_sentence["badwords_ratio"] = badwords_ratio
 
             if self.model_lang_id:
                 _, lang_id_score = Filtering.compute_lang_id_pred_score(
                     sentence, self.param["strip_characters"], self.model_lang_id
                 )
-                self.stats["lang_id_scores"].append(lang_id_score)
+                stats_sentence["lang_id_score"] = lang_id_score
 
             if self.kenlm_model:
                 perplexity_score = Filtering.compute_perplexity_score(
                     sentence, self.kenlm_model
                 )
-                self.stats["perplexity_scores"].append(perplexity_score)
+                stats_sentence["perplexity_score"] = perplexity_score
+
+            stats.append(stats_sentence)
+        self.stats = stats
 
     def plot(self):
         pathlib.Path(self.path_dir_save_visu).mkdir(parents=True, exist_ok=True)
@@ -98,9 +104,11 @@ class FilteringVisualization:
             plt.savefig(path_save)
             plt.close(fig)
 
-        for key in self.stats:
-            if len(self.stats[key]) > 0:
-                data = self.stats[key]
+        for key in self.keys_stats:
+            data = [sent[key] for sent in self.stats if sent[key]]
+            if key == "len_words":
+                data = [el for list_ in data for el in list_]
+            if len(data) > 0:
                 if key == "len_words":
                     quantile = np.quantile(data, 0.99)
                     data = np.array(data)
