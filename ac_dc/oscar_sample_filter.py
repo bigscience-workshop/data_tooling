@@ -8,7 +8,7 @@ import fasttext
 import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
 
 import pathlib
-
+import re
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from stopwords import stopwords
@@ -70,6 +70,26 @@ class LoadParameters:
 
 
 class ModifyingSentences:
+    # patterns from https://github.com/joke2k/faker/tree/master/faker/providers/ssn
+    govt_id_regex = \
+    {'en': {'en_US_govt_id': re.compile('(?!000|666|333)0*(?:[0-6][0-9][0-9]|[0-7][0-6][0-9]|[0-7][0-7][0-2])[- ](?!00)[0-9]{2}[- ](?!0000)[0-9]{4}'),
+        'en_CA_govt_id': re.compile('\d{3}\s\d{3}\s\d{3}'),
+        'en_GB_govt_id': re.compile('\w{2}\s?\d{2}\s?\d{2}\s?\w|GB\s?\d{6}\s?\w|GB\d{3}\s\d{3}\s\d{2}\s\d{3}|GBGD\d{3}|GBHA\d{3}}|GB\d{3} \d{4} \d{2}(?: \d{3})?|GB(?:GD|HA)\d{3}'),
+        'en_IE_govt_id': re.compile('IE\d[1-9]\d{5}\d[1-9]|IE\d{7}[1-9][1-9]?'),
+        'en_IN_govt_id': re.compile('[1-9]\d{10}'),
+        'en_PH_govt_id': re.compile("\d{2}-\d{7}-\d|\d{11}|\d{2}-\d{9}-\d|\d{4}-\d{4}-\d{4}|\d{4}-\d{7}-\d")},
+    'zh': {'zh_CN_govt_id': re.compile("\d{18}"),
+        'zh_TW_govt_id': re.compile("[1-9]\d{9}")},
+    'es': {'es_ES_govt_id': re.compile("ES[1-9]\d{8}|ES\d{8}[1-9]|ES[1-9]\d{7}[1-9]"),
+        'es_CO_govt_id': re.compile("[1-9]\d?\d{6}|8\d{8}|9\d{8}|10\d{8}|11\d{8}|12\d{8}|")},
+    'pt': {'pt_BR_govt_id': re.compile("\d{3}\.d{3}\.d{3}-\d{2}|\d{11}"),
+        'pt_PT_govt_id': re.compile("PT\d{9}")},
+    'any': {'any_govt_id': re.compile("\d{8}|\d{9}|\d{10}|\d{11}")}
+    }
+    #TODO: https://github.com/joke2k/faker/tree/master/faker/providers/ssn/es_MX
+
+    trannum = str.maketrans("0123456789", "1111111111")
+
     @staticmethod
     def lower_strip_sentence(sentence):
         sent = sentence.lower().strip()
@@ -106,12 +126,29 @@ class ModifyingSentences:
         return filtered_sentence
 
     @staticmethod
+    def apply_regex_govt_id_anonymization(
+      sentence,
+      lang_id
+    ):
+      for regex in list(ModifyingSentences.govt_id_regex.get(lang_id, ModifyingSentences.govt_id_regex['any']).values()):
+        matched=False
+        for ent in regex.findall(sentence):
+            if type(ent) != str: continue
+            ent2 = ent.translate(ModifyingSentences.trannum)
+            text = text.replace(ent, ent2)
+            matched=True
+        if matched: break
+      return text
+            
+    @staticmethod
     def modifying_sentences(
         sentence,
         cond_remove_words_with_incorrect_substrings,
         incorrect_word_substrings,
         cond_remove_long_words,
         length_word_cutoff,
+        cond_govt_id_regex,
+        lang_id
     ):
         if cond_remove_words_with_incorrect_substrings:
             sentence = ModifyingSentences.remove_words_with_incorrect_substrings(
@@ -121,6 +158,10 @@ class ModifyingSentences:
         if cond_remove_long_words:
             sentence = ModifyingSentences.remove_long_words(
                 sentence, length_word_cutoff
+            )
+        if cond_govt_id_regex:
+            sentence = ModifyingSentences.apply_regex_govt_id_anonymization(
+                sentence, lang_id
             )
         return sentence
 
@@ -233,7 +274,7 @@ class Filtering:
             langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
         ].iloc[0]
         return lang_pred_oscar_id, score_pred
-
+        
     @staticmethod
     def check_lang_id(
         sentence,
