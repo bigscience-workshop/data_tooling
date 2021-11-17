@@ -341,7 +341,13 @@ class Filtering:
 
 
 class FuncOscarFiltering:
-    def __init__(self, lang_oscar_id, path_fasttext_model, path_kenlm_model, path_sentence_piece_model):
+    def __init__(
+        self,
+        lang_oscar_id,
+        path_fasttext_model,
+        path_kenlm_model,
+        path_sentence_piece_model,
+    ):
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
