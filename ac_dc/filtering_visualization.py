@@ -13,6 +13,7 @@ class FilteringVisualization:
         lang_oscar_id,
         path_fasttext_model,
         path_kenlm_model,
+        path_sentence_piece_model,
         num_iter,
         path_dir_save_visu,
     ):
@@ -24,7 +25,7 @@ class FilteringVisualization:
             lang_oscar_id, path_fasttext_model
         )
         self.kenlm_model = LoadParameters.load_kenlm_model(
-            lang_oscar_id, path_kenlm_model
+            lang_oscar_id, path_kenlm_model, path_sentence_piece_model
         )
         self.param = LoadParameters.load_parameters(lang_oscar_id)
 
@@ -144,6 +145,7 @@ if __name__ == "__main__":
     lang_oscar_id = "af"
     path_fasttext_model = "/tmp/lid.176.bin"
     path_kenlm_model = "ac_dc/af.arpa.bin"
+    path_sentence_piece_model = "ac_dc/af.sp.model"
     num_iter = 10000
     path_dir_save_visu = "../Oscar_filtering_visualization/"
 
@@ -151,6 +153,7 @@ if __name__ == "__main__":
         lang_oscar_id,
         path_fasttext_model,
         path_kenlm_model,
+        path_sentence_piece_model,
         num_iter,
         path_dir_save_visu,
     )
