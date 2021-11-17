@@ -97,7 +97,7 @@ class ModifyingSentences:
             "pt_BR_govt_id": re.compile(r"\d{3}\.d{3}\.d{3}-\d{2}|\d{11}"),
             "pt_PT_govt_id": re.compile(r"PT\d{9}"),
         },
-        "any": {"any_govt_id": re.compile(r"\d{8}|\d{9}|\d{10}|\d{11}")},
+        "default": {"any_govt_id": re.compile(r"\d{8}|\d{9}|\d{10}|\d{11}")},
     }
     # TODO: https://github.com/joke2k/faker/tree/master/faker/providers/ssn/es_MX
 
@@ -140,14 +140,11 @@ class ModifyingSentences:
 
     @staticmethod
     def apply_regex_govt_id_anonymization(sentence, lang_id):
-        for regex in list(
-            ModifyingSentences.govt_id_regex.get(
-                lang_id, ModifyingSentences.govt_id_regex["any"]
-            ).values()
-        ):
+        regex_lang_id = lang_id if lang_id in ModifyingSentences.govt_id_regex else "default"
+        for regex in list(ModifyingSentences.govt_id_regex[regex_lang_id].values()):
             matched = False
             for ent in regex.findall(sentence):
-                if type(ent) != str:
+                if not isinstance(ent, str):
                     continue
                 ent2 = ent.translate(ModifyingSentences.trannum)
                 sentence = sentence.replace(ent, ent2)
@@ -196,6 +193,8 @@ class OscarModifyingSentences:
             incorrect_word_substrings=self.param["incorrect_word_substrings"],
             cond_remove_long_words=self.param["cond_remove_long_words"],
             length_word_cutoff=self.param["length_word_cutoff"],
+            cond_govt_id_regex=self.param.get("cond_govt_id_regex", False),
+            lang_id=self.lang_oscar_id,
         )
         return example
 
