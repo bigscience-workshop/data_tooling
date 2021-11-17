@@ -2,8 +2,9 @@
 
 import argparse
 
-from oscar_sample_filter import OscarFiltering
 from datasets import load_dataset
+
+from oscar_sample_filter import OscarFiltering
 
 
 def parseArgs():
@@ -17,20 +18,20 @@ def parseArgs():
     parser.add_argument(
         "--config_name",
         type=str,
-        default="default",
+        default="unshuffled_deduplicated_af",
         help="Name of the dataset config to pass.",
     )
     parser.add_argument(
         "--data_files",
         type=str,
         default=None,
-        help="`load_dataset` returns all files that match the Unix style pattern passed by `data_files`",
+        help="'load_dataset' returns all files that match the Unix style pattern passed by 'data_files'",
     )
     parser.add_argument(
         "--lang_oscar_id",
         type=str,
         default="af",
-        help="ID of the language Oscar is filtered on.",
+        help="ID of the language in which the dataset is written.",
     )
     parser.add_argument(
         "--path_fasttext_model",
@@ -62,20 +63,16 @@ def parseArgs():
 
 def main():
     args = parseArgs()
-    if args.dataset_name == "oscar":
-        config_name = f"unshuffled_deduplicated_{args.lang_oscar_id}"
-    else:
-        config_name = args.config_name
 
-    ds = load_dataset(
+    dataset = load_dataset(
         args.dataset_name,
-        config_name,
+        args.config_name,
         data_files=args.data_files,
         split="train",
     )
 
     oscar_filtering = OscarFiltering(
-        dataset=ds,
+        dataset=dataset,
         lang_oscar_id=args.lang_oscar_id,
         path_fasttext_model=args.path_fasttext_model,
         path_kenlm_model=args.path_kenlm_model,

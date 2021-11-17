@@ -1,5 +1,3 @@
-from datasets import load_dataset
-
 import fasttext
 
 # To download the fasttext model:
