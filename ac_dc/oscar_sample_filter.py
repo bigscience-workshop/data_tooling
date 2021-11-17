@@ -150,11 +150,11 @@ class ModifyingSentences:
                 if type(ent) != str:
                     continue
                 ent2 = ent.translate(ModifyingSentences.trannum)
-                text = text.replace(ent, ent2)
+                sentence = sentence.replace(ent, ent2)
                 matched = True
             if matched:
                 break
-        return text
+        return sentence
 
     @staticmethod
     def modifying_sentences(
