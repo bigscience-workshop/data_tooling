@@ -18,13 +18,13 @@ def parseArgs():
         "--config_name",
         type=str,
         default="default",
-        help="Name of the dataset config to used.",
+        help="Name of the dataset config to pass.",
     )
     parser.add_argument(
         "--data_files",
         type=str,
         default=None,
-        help="String to specify files that match the Unix style pattern passed.",
+        help="`load_dataset` returns all files that match the Unix style pattern passed by `data_files`",
     )
     parser.add_argument(
         "--lang_oscar_id",
