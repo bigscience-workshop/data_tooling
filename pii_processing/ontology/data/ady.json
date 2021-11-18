@@ -1,0 +1,35 @@
+{
+ "FOOD": [
+  "\u0434\u0436\u044d\u0434\u044b\u043a\u04cf\u044d"
+ ],
+ "PERSON_PRONOUN": [
+  "\u0432\u044b"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u043d\u044b": "\u0430\u0434\u044d",
+  "\u0448\u044b\u043f\u0445\u044a\u0443": "\u0448\u044b"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "\u0431\u0437\u044b\u043b\u044a\u0444\u044b\u0433\u044a"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "they": [
+   "\u0430\u0445\u044d\u0440"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

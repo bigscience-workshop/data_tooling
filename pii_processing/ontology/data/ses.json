@@ -1,0 +1,58 @@
+{
+ "RELIGION": [
+  "zen"
+ ],
+ "PUBLIC_FIGURE": [
+  "berra",
+  "a"
+ ],
+ "LOCATION": [
+  "jiji"
+ ],
+ "JOB": [
+  "minister"
+ ],
+ "DISEASE": [
+  "gandu"
+ ],
+ "PLANT": [
+  "bananku",
+  "yew"
+ ],
+ "PERSON_PRONOUN": [
+  "gure"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "yaha": "iddu"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "woy"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "iddu",
+   "yaha"
+  ],
+  "she": [
+   "yaha"
+  ],
+  "it": [
+   "yaha"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

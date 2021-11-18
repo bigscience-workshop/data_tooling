@@ -1,0 +1,61 @@
+{
+ "ANIMAL": [
+  "brant",
+  "ketta",
+  "korpr"
+ ],
+ "PLANT": [
+  "reynir"
+ ],
+ "DATE": [
+  "palmasunnudagr",
+  "palmadr\u00f3ttinsdagr"
+ ],
+ "LOCATION": [
+  "svartahaf",
+  "innbyr\u00f0is"
+ ],
+ "DISEASE": [
+  "hungr"
+ ],
+ "LANGUAGE": [
+  "finnskr"
+ ],
+ "PUBLIC_FIGURE": [
+  "pedr",
+  "lafranz"
+ ],
+ "JOB": [
+  "kongr"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "dr\u00f3ttning": "kongr",
+  "systir": "br\u00f3\u00f0ir"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "hann"
+  ],
+  "she": [
+   "kvinna"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "hann"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

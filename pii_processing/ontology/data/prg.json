@@ -1,0 +1,36 @@
+{
+ "ANIMAL": [
+  "zambrus",
+  "gabawo",
+  "wissambris"
+ ],
+ "PUBLIC_FIGURE": [
+  "nadruw\u012bsn\u0101"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "swestro": "br\u0101ti"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "w\u012brs"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "it": [
+   "stas"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

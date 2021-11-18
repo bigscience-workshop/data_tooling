@@ -1,0 +1,221 @@
+{
+ "JOB": [
+  "translatura",
+  "mariner",
+  "litinent",
+  "schuldo",
+  "sriptura",
+  "translatur",
+  "leder",
+  "schuldau",
+  "cuschinier",
+  "schuld\u00e0",
+  "marangun",
+  "ratun",
+  "tenent",
+  "cuschinar",
+  "barbier",
+  "barber",
+  "giugadur",
+  "lainari",
+  "giovader",
+  "turner"
+ ],
+ "PLANT": [
+  "paloja",
+  "chastagner",
+  "rischmelna",
+  "artist",
+  "ischi",
+  "carotta",
+  "plum",
+  "papaver",
+  "baguos",
+  "tscharescha",
+  "prem",
+  "rischcotschna",
+  "cardifiol",
+  "primbla",
+  "paloga",
+  "cavazza",
+  "tschariescha",
+  "tscherescha",
+  "br\u00fcmbla",
+  "tschirescha",
+  "riebla"
+ ],
+ "ANIMAL": [
+  "castur",
+  "tschierv",
+  "pignouler",
+  "sprer",
+  "merlotscha",
+  "passer",
+  "merl",
+  "mustaila",
+  "tschess",
+  "tschuetta",
+  "fiergna",
+  "pulschain",
+  "pirol",
+  "chavriel",
+  "stambutg",
+  "durmigliet"
+ ],
+ "DISEASE": [
+  "sanglut",
+  "caleira",
+  "singlut",
+  "gumma",
+  "starn\u00fcder",
+  "dular",
+  "calira",
+  "furuncel",
+  "dolair",
+  "furuncul",
+  "singluot",
+  "ed",
+  "crappagls",
+  "stirnidar",
+  "furunchel",
+  "sangluot",
+  "bignun",
+  "biergna",
+  "starn\u00fcdar",
+  "chalur",
+  "mi",
+  "sturnidar",
+  "aura",
+  "dulair",
+  "dolur",
+  "mieur",
+  "starnidar"
+ ],
+ "LANGUAGE": [
+  "germanais",
+  "grecca",
+  "polac",
+  "germanaisa"
+ ],
+ "FOOD": [
+  "desert",
+  "limunada",
+  "farina",
+  "ensolver",
+  "dasiert",
+  "chile",
+  "desiert"
+ ],
+ "QUANTITY": [
+  "franc_svizzer"
+ ],
+ "PUBLIC_FIGURE": [
+  "spraunza",
+  "speronza",
+  "jesus",
+  "e",
+  "sperar",
+  "sperer",
+  "bulsaun",
+  "peider",
+  "putin",
+  "gesu"
+ ],
+ "GENDER": [
+  "mastgel",
+  "mascal",
+  "buob",
+  "mas_cel",
+  "mascel",
+  "mes_cel"
+ ],
+ "SOC_ECO_CLASS": [
+  "sozietad",
+  "societed",
+  "societad"
+ ],
+ "RACE": [
+  "latin",
+  "american"
+ ],
+ "POLITICAL_PARTY_MEMBER": [
+  "camarad"
+ ],
+ "LOCATION": [
+  "buna_saira",
+  "buna_notg"
+ ],
+ "PERSON_PRONOUN": [
+  "our",
+  "her",
+  "noss"
+ ],
+ "ORG": [
+  "armeda",
+  "furmaziun",
+  "baselgia_catolica_romana",
+  "disa",
+  "mi",
+  "baselgia_catolica",
+  "scola"
+ ],
+ "PRODUCT": [
+  "portg_da_mar"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "femella": "mascel",
+  "ra\u00efna": "retg",
+  "rigegna": "retg",
+  "sour": "camerata",
+  "duonna": "human",
+  "femna": "human"
+ },
+ "other_gender_swap": {
+  "ellas": "sun",
+  "sun": "ellas"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "mastgel",
+   "mascal",
+   "mas_cel",
+   "buob",
+   "giuven",
+   "mascel",
+   "mes_cel",
+   "human"
+  ],
+  "she": [
+   "femna",
+   "duonna",
+   "femella"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "she": [
+   "sun",
+   "her"
+  ],
+  "they": [
+   "ellas"
+  ],
+  "it": [
+   "chista",
+   "ova",
+   "quest",
+   "questa"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

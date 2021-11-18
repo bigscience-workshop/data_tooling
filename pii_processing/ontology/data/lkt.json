@@ -1,0 +1,49 @@
+{
+ "PERSON_PRONOUN": [
+  "he"
+ ],
+ "LOCATION": [
+  "phil\u00e1mayayapi",
+  "phil\u00e1mayaye"
+ ],
+ "PLANT": [
+  "cansapa"
+ ],
+ "DISEASE": [
+  "mi",
+  "le"
+ ],
+ "ORG": [
+  "mi"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {
+  "he": "iyepi"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "w\u00ed\u014bya\u014b"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "he"
+  ],
+  "they": [
+   "iyepi",
+   "epi"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

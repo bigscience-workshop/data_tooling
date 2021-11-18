@@ -1,0 +1,203 @@
+{
+ "ANIMAL": [
+  "mear\u00fe",
+  "catt",
+  "wuduculfre",
+  "cicen",
+  "brocc",
+  "frosc",
+  "grighund",
+  "beomodor",
+  "wrenna",
+  "fealca",
+  "wesle",
+  "cycen",
+  "otor",
+  "seolcwyrm",
+  "crawe"
+ ],
+ "GPE": [
+  "sweartweald",
+  "halig_gast"
+ ],
+ "ORG": [
+  "scol",
+  "rihtwisnes",
+  "wicca",
+  "nerung",
+  "anweald",
+  "geberg",
+  "leodweard",
+  "gerec"
+ ],
+ "PLANT": [
+  "pintreow",
+  "leahtric",
+  "holm",
+  "gearwe",
+  "ciris",
+  "cierr"
+ ],
+ "DISEASE": [
+  "wedenheortnes",
+  "wen",
+  "wearte",
+  "tintreg",
+  "gewed",
+  "pinung",
+  "birnan",
+  "geris",
+  "corn",
+  "bitan",
+  "hathyge",
+  "brecan",
+  "hungor",
+  "benn",
+  "sawan",
+  "wedenheort"
+ ],
+ "JOB": [
+  "hand",
+  "scieppend",
+  "sceaphierde",
+  "don",
+  "scipwyrhta",
+  "gefera",
+  "hoppere",
+  "treowwyrhta",
+  "landbuend",
+  "land",
+  "regolsticca",
+  "biscop",
+  "tumbere",
+  "landhlaford",
+  "sta\u00feoliend",
+  "gesi\u00fe",
+  "smeagend",
+  "seamere",
+  "man",
+  "metere",
+  "weard",
+  "wuduheawere",
+  "bidan"
+ ],
+ "PRODUCT": [
+  "ga_onweg"
+ ],
+ "QUANTITY": [
+  "frumt\u00e6l"
+ ],
+ "PERSON_PRONOUN": [
+  "he",
+  "her",
+  "him",
+  "we",
+  "us"
+ ],
+ "FOOD": [
+  "underngereord",
+  "morgenmete",
+  "undernmete",
+  "treowteoru",
+  "nongereord"
+ ],
+ "PUBLIC_FIGURE": [
+  "a",
+  "ford",
+  "and_swa_for\u00fe",
+  "wrenna"
+ ],
+ "LOCATION": [
+  "land"
+ ],
+ "GENDER": [
+  "cnapa",
+  "man",
+  "gal"
+ ],
+ "LANGUAGE": [
+  "frencisc",
+  "islendisc"
+ ],
+ "RELIGION": [
+  "wicca"
+ ],
+ "RELIGION_MEMBER": [
+  "cristen"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "nift": "sunsunu",
+  "nefene": "sunsunu",
+  "hl\u00e6fdige": "hlafweard",
+  "cwen": "cyning",
+  "heo": "he",
+  "sweoster": "bro\u00feor",
+  "sweostor": "blod",
+  "steopdohtor": "steopsunu",
+  "steopmodor": "steopf\u00e6der",
+  "bean": "man",
+  "wif": "menn",
+  "wifmann": "man",
+  "cnapa": "m\u00e6gdencild",
+  "cnafa": "m\u00e6g\u00fe",
+  "cniht": "m\u00e6g\u00fe"
+ },
+ "other_gender_swap": {
+  "has": "her",
+  "hwy": "heo",
+  "he": "hwy",
+  "bera": "hwy",
+  "him": "has",
+  "heo": "hwy"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "cnafa",
+   "cniht",
+   "menn",
+   "man",
+   "cnapa"
+  ],
+  "she": [
+   "m\u00e6g\u00fe",
+   "hl\u00e6fdige",
+   "wif",
+   "bean",
+   "wifmann",
+   "m\u00e6gden",
+   "m\u00e6gdencild",
+   "gal"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "bera",
+   "he",
+   "him"
+  ],
+  "she": [
+   "heo",
+   "her"
+  ],
+  "they": [
+   "has",
+   "hwy"
+  ],
+  "it": [
+   "cest",
+   "\u00fe\u00e6t"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

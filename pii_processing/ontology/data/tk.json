@@ -1,0 +1,166 @@
+{
+ "DISEASE": [
+  "isleg",
+  "hassalyk",
+  "hastal\u0131k",
+  "hasylsyzlyk",
+  "para",
+  "sakawlamak"
+ ],
+ "JOB": [
+  "tans\u00e7y",
+  "kitaphana\u00e7y",
+  "terjime\u00e7i",
+  "sazanda",
+  "serdar",
+  "dellal",
+  "grip",
+  "para",
+  "mugallym",
+  "hekim",
+  "korol",
+  "dellek",
+  "gara\u015fsyz",
+  "hukuk\u00e7y",
+  "line\u00fdka",
+  "ruhany",
+  "sazandar"
+ ],
+ "ANIMAL": [
+  "torsuk",
+  "gurlawuk",
+  "garga",
+  "sugun",
+  "gurbaa\u011fa",
+  "mercen",
+  "gurbaga",
+  "tarakan",
+  "gunduz"
+ ],
+ "ORG": [
+  "profso\u00fduz",
+  "oba_hojalygy",
+  "un",
+  "terbi\u00fdele\u00fdi\u015f",
+  "sakgy\u00e7",
+  "ekeran\u00e7ylyk",
+  "g\u00fcmr\u00fck",
+  "magaryf",
+  "razwedka",
+  "po\u00e7ta"
+ ],
+ "PLANT": [
+  "surat\u00e7y",
+  "\u015feker\u00e7i\u0148rik",
+  "kellem",
+  "hudo\u017enik",
+  "kelem"
+ ],
+ "PERSON": [
+  "ha_ha"
+ ],
+ "LOCATION": [
+  "allah_akbar",
+  "ab\u015f",
+  "\u00fdedigen"
+ ],
+ "FOOD": [
+  "dongdurma",
+  "gamburger"
+ ],
+ "PUBLIC_FIGURE": [
+  "hal",
+  "don_kihot"
+ ],
+ "PRODUCT": [
+  "ynsan_hukuklary"
+ ],
+ "GENDER": [
+  "boy",
+  "hele\u00fd",
+  "oglan",
+  "zenaan"
+ ],
+ "UNION": [
+  "profso\u00fduz"
+ ],
+ "PERSON_PRONOUN": [
+  "her",
+  "meni\u0148",
+  "we"
+ ],
+ "SOC_ECO_CLASS": [
+  "oba_hojalygy",
+  "proletariat",
+  "ekeran\u00e7ylyk"
+ ],
+ "GPE": [
+  "kot_d_iwuar",
+  "gyzyl_ha\u00e7"
+ ],
+ "FAC": [
+  "basse\u00fdn"
+ ],
+ "POLITICAL_PARTY": [
+  "parti\u00fda"
+ ],
+ "RELIGION_MEMBER": [
+  "musa\u00fdy",
+  "hristian"
+ ],
+ "OTHER_PRONOUN": [
+  "it"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "gyz_agtyk": "ogul_agtyk",
+  "agtyk": "ogul_agtyk",
+  "\u0435\u0497\u0435": "bap",
+  "\u015fa_a\u00fdal": "pa\u015fa",
+  "u\u00fda": "a\u011fa",
+  "ejeke": "dogan",
+  "a\u00fdal": "\u00e4r",
+  "boy": "gyz",
+  "oglan": "gyz"
+ },
+ "other_gender_swap": {
+  "elli": "olar"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "oglan",
+   "boy"
+  ],
+  "she": [
+   "a\u00fdaal",
+   "hele\u00fd",
+   "gyz",
+   "zenaan"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "elli"
+  ],
+  "she": [
+   "her"
+  ],
+  "they": [
+   "olar"
+  ],
+  "it": [
+   "it"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

@@ -1,0 +1,55 @@
+{
+ "JOB": [
+  "creator",
+  "messatger",
+  "coadjutor",
+  "pastor",
+  "bisbe"
+ ],
+ "DISEASE": [
+  "cremadura",
+  "corn"
+ ],
+ "ANIMAL": [
+  "duc",
+  "cavec"
+ ],
+ "LANGUAGE": [
+  "engles"
+ ],
+ "PUBLIC_FIGURE": [
+  "speran\u00e7a"
+ ],
+ "RELIGION_MEMBER": [
+  "frayre"
+ ],
+ "GPE": [
+  "novel_testament"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "domna": "human"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "human"
+  ],
+  "she": [
+   "donzella",
+   "domna"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

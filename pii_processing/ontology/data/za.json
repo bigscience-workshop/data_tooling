@@ -1,0 +1,91 @@
+{
+ "ORG": [
+  "hagdangz",
+  "dahvangzhoz",
+  "va",
+  "sawfuengz",
+  "gozminzdangj",
+  "sa"
+ ],
+ "PLANT": [
+  "maenzfaex",
+  "lauxbaeghoengz",
+  "goliux",
+  "moegsawz",
+  "maklangz",
+  "makmaenj"
+ ],
+ "FOOD": [
+  "ciengqyouz"
+ ],
+ "PUBLIC_FIGURE": [
+  "a"
+ ],
+ "SOC_ECO_CLASS": [
+  "sevei"
+ ],
+ "FAC": [
+  "guengjciengz"
+ ],
+ "JOB": [
+  "lauxsae",
+  "canghyw",
+  "gingjcaz"
+ ],
+ "DISEASE": [
+  "bingh",
+  "haeb"
+ ],
+ "LOCATION": [
+  "meijgoz",
+  "meijcouh"
+ ],
+ "EVENT": [
+  "singj"
+ ],
+ "RELIGION_MEMBER": [
+  "beixneungx"
+ ],
+ "OTHER_PRONOUN": [
+  "it"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "beixmbwk": "nuengx",
+  "dahnuengx": "beix",
+  "nuengx": "beix",
+  "beixsau": "nuengx",
+  "beix": "beixneungx"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "caeuzyah",
+   "dihmeh",
+   "dozyah"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "they": [
+   "vajde",
+   "dohde",
+   "gyoengqde",
+   "hongminz",
+   "mbongmiz"
+  ],
+  "it": [
+   "it"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

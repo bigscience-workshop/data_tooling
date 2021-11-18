@@ -1,0 +1,128 @@
+{
+ "DISEASE": [
+  "kalor",
+  "ki",
+  "para",
+  "seif",
+  "straik",
+  "mi",
+  "malaria"
+ ],
+ "PLANT": [
+  "peper",
+  "preimu"
+ ],
+ "PERSON_PRONOUN": [
+  "hers",
+  "i"
+ ],
+ "JOB": [
+  "obispu",
+  "para",
+  "kahero",
+  "master",
+  "partera",
+  "straik",
+  "rabino",
+  "ingeniero",
+  "man",
+  "barbero",
+  "hardinero",
+  "regular",
+  "autor"
+ ],
+ "RELIGION_MEMBER": [
+  "budista"
+ ],
+ "SOC_ECO_CLASS": [
+  "labor"
+ ],
+ "RACE": [
+  "latino",
+  "latin",
+  "blanko",
+  "negro"
+ ],
+ "PUBLIC_FIGURE": [
+  "spera",
+  "bari",
+  "hal",
+  "parker",
+  "o",
+  "i",
+  "lars",
+  "speransa"
+ ],
+ "LOCATION": [
+  "park",
+  "usa",
+  "arena"
+ ],
+ "FOOD": [
+  "aperitivo",
+  "desayuno"
+ ],
+ "GENDER": [
+  "muher",
+  "man"
+ ],
+ "LANGUAGE": [
+  "rumano"
+ ],
+ "POLITICAL_PARTY": [
+  "labor"
+ ],
+ "ORG": [
+  "testigunan_di_yehova",
+  "dia",
+  "mi",
+  "domi"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "heroina": "hero",
+  "eroina": "hero",
+  "abla": "bruder",
+  "bini": "esposo",
+  "esposa": "esposo",
+  "duna": "esposo",
+  "muh\u00e9": "man",
+  "muher": "man"
+ },
+ "other_gender_swap": {
+  "ilu": "huma"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "man"
+  ],
+  "she": [
+   "muher",
+   "se\u00f1ora",
+   "muh\u00e9",
+   "abla"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "ilu"
+  ],
+  "she": [
+   "hers"
+  ],
+  "they": [
+   "huma"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

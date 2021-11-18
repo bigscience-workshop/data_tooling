@@ -1,0 +1,133 @@
+{
+ "JOB": [
+  "mace",
+  "masa\u0199i",
+  "masinja",
+  "cadi",
+  "kuyanga"
+ ],
+ "DISEASE": [
+  "hakiya",
+  "hangum",
+  "juwa",
+  "azabtarwa",
+  "noma"
+ ],
+ "FAC": [
+  "firamare"
+ ],
+ "ANIMAL": [
+  "namakiri",
+  "hankaka",
+  "karkandan",
+  "mujiya"
+ ],
+ "LOCATION": [
+  "na_gode",
+  "fatakwal"
+ ],
+ "LANGUAGE": [
+  "kongo",
+  "bahaushe",
+  "bahaushiya",
+  "barbarci",
+  "hausawa",
+  "hausa",
+  "turanci",
+  "faransanci"
+ ],
+ "FOOD": [
+  "barkono"
+ ],
+ "ORG": [
+  "firamare",
+  "gwamnati",
+  "fasa_ofis",
+  "kuzari",
+  "midil",
+  "sa",
+  "mulki"
+ ],
+ "PRODUCT": [
+  "linjila"
+ ],
+ "PUBLIC_FIGURE": [
+  "a",
+  "husaini",
+  "dauda",
+  "biyu"
+ ],
+ "SOC_ECO_CLASS": [
+  "kasuwar_shunku"
+ ],
+ "RELIGION_MEMBER": [
+  "mormon"
+ ],
+ "PLANT": [
+  "zaitun"
+ ],
+ "RELIGION": [
+  "islam"
+ ],
+ "LAW": [
+  "kotun_\u0199oli"
+ ],
+ "GENDER": [
+  "yarinya"
+ ],
+ "POLITICAL_PARTY": [
+  "jam_iyya"
+ ],
+ "GPE": [
+  "linjila"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "sarauniya": "sarki",
+  "\u00edt\u00e1": "sh\u00edi",
+  "agoliya": "agola",
+  "matar_aure": "miji",
+  "yaro": "yarinya"
+ },
+ "other_gender_swap": {
+  "s\u00fau": "\u00edt\u00e1",
+  "sh\u00edi": "s\u00fau",
+  "\u00edt\u00e1": "s\u00fau"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "yaro"
+  ],
+  "she": [
+   "mace",
+   "yarinya"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "iya",
+   "sh\u00edi"
+  ],
+  "she": [
+   "iya",
+   "\u00edt\u00e1"
+  ],
+  "they": [
+   "s\u00fau"
+  ],
+  "it": [
+   "wannan"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

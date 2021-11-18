@@ -1,0 +1,40 @@
+{
+ "GENDER": [
+  "moller"
+ ],
+ "JOB": [
+  "marinneiro",
+  "celorgi\u00e3o"
+ ],
+ "PUBLIC_FIGURE": [
+  "muller"
+ ],
+ "RELIGION_MEMBER": [
+  "crisch\u00e3o"
+ ],
+ "RACE": [
+  "negro"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "abadessa": "abade"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "moller"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}
