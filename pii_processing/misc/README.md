@@ -1,7 +1,7 @@
 To test your regex, first install the package and spacy models:
 ```
-git clone https://github.com/bigscience-workshop/pii_processing
-cd pii_processing
+git clone https://github.com/bigscience-workshop/data_tooling
+cd data_tooling
 pip install spacy==3.1  transformers datasets langid faker nltk sentencepiece fsspec tqdm
 pip install -r requirements.txt
 pip install datasets
@@ -22,7 +22,7 @@ Currently: edit the file test_regex.py to add your regex directly under ``__main
 Then test your regex on a file of the form ``<target_lang>.jsonl`` which will create a file ``predicted_<target_lang>.jsonl``
 
 ```
-python test_regex.py -target_lang <target_lang>
+python data_tooling/pii_processing/misc/test_regex.py -target_lang <target_lang>
 ```
 
 OR you can import apply_rules from test_regex into your own code
