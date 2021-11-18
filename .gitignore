@@ -130,6 +130,7 @@ dmypy.json
 
 # Kenlm models
 *.arpa.bin
+*sp.model
 
 # Filtering outputs
 *filtered.txt

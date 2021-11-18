@@ -3,14 +3,13 @@ import fasttext
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
-import kenlm  # pip install https://github.com/kpu/kenlm/archive/master.zip
-
 import pathlib
 
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from stopwords import stopwords
 from badwords import badwords
+from perplexity import KenlmModel
 
 
 class LoadParameters:
@@ -48,12 +47,12 @@ class LoadParameters:
         return model_lang_id
 
     @staticmethod
-    def load_kenlm_model(lang_oscar_id, path_kenlm_model):
+    def load_kenlm_model(lang_oscar_id, path_kenlm_model, path_sentence_piece_model):
         kenlm_lang_id = langs_id.loc[
             langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
         ].iloc[0]
         if kenlm_lang_id:
-            kenlm_model = kenlm.Model(path_kenlm_model)
+            kenlm_model = KenlmModel(path_kenlm_model, path_sentence_piece_model)
         else:
             kenlm_model = None
         return kenlm_model
@@ -256,13 +255,7 @@ class Filtering:
 
     @staticmethod
     def compute_perplexity_score(sentence, kenlm_model):
-        doc_log_score, doc_length = 0, 0
-        for line in sentence.split("\n"):
-            log_score = kenlm_model.score(line)
-            length = len(line.split()) + 1
-            doc_log_score += log_score
-            doc_length += length
-        return 10.0 ** (-doc_log_score / doc_length)
+        return kenlm_model.get_perplexity(sentence)
 
     @staticmethod
     def check_perplexity(
@@ -346,10 +339,17 @@ class Filtering:
 
 
 class FuncOscarFiltering:
-    def __init__(self, lang_oscar_id, path_fasttext_model, path_kenlm_model):
+    def __init__(
+        self,
+        lang_oscar_id,
+        path_fasttext_model,
+        path_kenlm_model,
+        path_sentence_piece_model,
+    ):
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
+        self.path_sentence_piece_model = path_sentence_piece_model
 
         self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
         self.badwords = LoadParameters.load_badwords(lang_oscar_id)
@@ -357,7 +357,7 @@ class FuncOscarFiltering:
             lang_oscar_id, path_fasttext_model
         )
         self.kenlm_model = LoadParameters.load_kenlm_model(
-            lang_oscar_id, path_kenlm_model
+            lang_oscar_id, path_kenlm_model, path_sentence_piece_model
         )
         self.param = LoadParameters.load_parameters(lang_oscar_id)
 
@@ -389,7 +389,12 @@ class FuncOscarFiltering:
     def __reduce__(self):
         return (
             self.__class__,
-            (self.lang_oscar_id, self.path_fasttext_model, self.path_kenlm_model),
+            (
+                self.lang_oscar_id,
+                self.path_fasttext_model,
+                self.path_kenlm_model,
+                self.path_sentence_piece_model,
+            ),
         )
 
 
@@ -400,6 +405,7 @@ class OscarFiltering:
         lang_oscar_id,
         path_fasttext_model,
         path_kenlm_model,
+        path_sentence_piece_model,
         num_proc,
         path_dir_save_oscar,
     ):
@@ -407,6 +413,7 @@ class OscarFiltering:
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
+        self.path_sentence_piece_model = path_sentence_piece_model
         self.num_proc = num_proc
         self.path_dir_save_oscar = path_dir_save_oscar
 
@@ -416,7 +423,10 @@ class OscarFiltering:
 
     def filtering(self):
         func_oscar_filtering = FuncOscarFiltering(
-            self.lang_oscar_id, self.path_fasttext_model, self.path_kenlm_model
+            self.lang_oscar_id,
+            self.path_fasttext_model,
+            self.path_kenlm_model,
+            self.path_sentence_piece_model,
         )
         self.ds = self.ds.filter(func_oscar_filtering, num_proc=self.num_proc)
 

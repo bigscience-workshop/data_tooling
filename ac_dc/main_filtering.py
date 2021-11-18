@@ -46,6 +46,12 @@ def parseArgs():
         help="Path to the KenLM model used to compute perplexity scores.",
     )
     parser.add_argument(
+        "--path_sentence_piece_model",
+        type=str,
+        default="ac_dc/af.sp.model",
+        help="Path to the Sentence Piece model used to tokenize text for perplexity scores.",
+    )
+    parser.add_argument(
         "--num_proc",
         type=int,
         default=2,
@@ -76,6 +82,7 @@ def main():
         lang_oscar_id=args.lang_oscar_id,
         path_fasttext_model=args.path_fasttext_model,
         path_kenlm_model=args.path_kenlm_model,
+        path_sentence_piece_model=args.path_sentence_piece_model,
         num_proc=args.num_proc,
         path_dir_save_oscar=args.path_dir_save_oscar,
     )
