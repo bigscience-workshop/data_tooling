@@ -1,0 +1,42 @@
+{
+ "PERSON_PRONOUN": [
+  "\u043e\u043b"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u044d\u043d\u0435": "\u0430\u0447\u0430",
+  "\u0438\u0447\u0435": "\u0430\u0447\u0430"
+ },
+ "other_gender_swap": {
+  "\u044b\u043b\u0430\u0440": "\u043e\u043b",
+  "\u043e\u043b": "\u044b\u043b\u0430\u0440"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "\u0430\u0447\u0430",
+   "\u043e\u043e\u043b"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "\u043e\u043b"
+  ],
+  "she": [
+   "\u043e\u043b"
+  ],
+  "they": [
+   "\u044b\u043b\u0430\u0440"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

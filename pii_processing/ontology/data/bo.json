@@ -1,0 +1,61 @@
+{
+ "ORG": [
+  "\u0f53\u0f42_\u0f5a\u0f7c\u0f44",
+  "\u0f66\u0fa6\u0fb2\u0f42_\u0f41\u0f44",
+  "\u0f42\u0f7c\u0f60\u0f7c_\u0f58\u0f72\u0f53_\u0f4f\u0f44",
+  "\u0f62\u0fa8_\u0f46\u0f74",
+  "\u0f66\u0fa8\u0fb1\u0f7c\u0f53_\u0f54\u0f60\u0f72_\u0f66\u0fa8\u0f53_\u0f41\u0f44",
+  "\u0f5a\u0f7c\u0f42\u0f66_\u0f54"
+ ],
+ "PUBLIC_FIGURE": [
+  "\u0f58\u0f42_\u0f51\u0f63_\u0f58_\u0f58\u0f72\u0f62_\u0f61\u0f58"
+ ],
+ "SOC_ECO_CLASS": [
+  "\u0f66\u0f7c_\u0f53\u0f58"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u0f42\u0f53\u0f66_\u0f58\u0f7c": "\u0f41\u0f44_\u0f56\u0f51\u0f42",
+  "\u0f42\u0f61\u0f7c\u0f42_\u0f58\u0f7c": "\u0f42\u0f61\u0f7c\u0f42_\u0f54\u0f7c",
+  "\u0f68_\u0f58": "\u0f55_\u0f63\u0f42\u0f66",
+  "\u0f68_\u0f58_\u0f63\u0f42\u0f66": "\u0f55_\u0f63\u0f42\u0f66",
+  "\u0f66\u0fb2\u0f66_\u0f58\u0f7c": "\u0f62\u0f92\u0fb1\u0f63_\u0f66\u0fb2\u0f66",
+  "\u0f62\u0f92\u0fb1\u0f63_\u0f58\u0f7c": "\u0f62\u0f92\u0fb1\u0f63_\u0f54\u0f7c",
+  "\u0f68_\u0f45\u0f42": "\u0f53\u0f74_\u0f56\u0f7c",
+  "\u0f53\u0f74_\u0f58\u0f7c": "\u0f47\u0f7c_\u0f47\u0f7c",
+  "\u0f66\u0f90\u0fb1\u0f7a_\u0f51\u0f58\u0f53": "\u0f41\u0fb1\u0f7c_\u0f42"
+ },
+ "other_gender_swap": {
+  "\u0f41\u0f7c_\u0f62\u0f44": "\u0f41\u0f7c\u0f44_\u0f5a\u0f7c",
+  "\u0f41\u0f7c\u0f44": "\u0f41\u0f7c\u0f44_\u0f5a\u0f7c"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "\u0f56\u0f74\u0f51_\u0f58\u0f7a\u0f51",
+   "\u0f66\u0f90\u0fb1\u0f7a\u0f66_\u0f51\u0f58\u0f53",
+   "\u0f56\u0f74_\u0f58\u0f7c"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "\u0f41\u0f7c\u0f44",
+   "\u0f41\u0f7c_\u0f62\u0f44"
+  ],
+  "they": [
+   "\u0f41\u0f7c_\u0f62\u0f44_\u0f5a\u0f7c",
+   "\u0f41\u0f7c\u0f44_\u0f5a\u0f7c",
+   "\u0f58\u0f7c_\u0f62\u0f44_\u0f5a\u0f7c"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

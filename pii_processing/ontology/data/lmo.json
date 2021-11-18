@@ -1,0 +1,195 @@
+{
+ "PUBLIC_FIGURE": [
+  "akira_kurosawa",
+  "che_guevara",
+  "abelard",
+  "mary_shelley",
+  "giorgiu",
+  "terry_pratchett",
+  "isaac_newton",
+  "joseph_smith",
+  "saint_louis",
+  "marie_curie",
+  "michael_jackson",
+  "galileo_galilei",
+  "john_donne",
+  "vincent_van_gogh",
+  "robert_burns",
+  "henri_matisse",
+  "louis_pasteur",
+  "john_ford",
+  "sarah_bernhardt",
+  "f",
+  "nicol\u00e0us_cop\u00e8rnich",
+  "charles_baudelaire",
+  "johannes_kepler",
+  "max_planck",
+  "canberra",
+  "niels_bohr",
+  "tom\u00e0s",
+  "michael_faraday",
+  "marco_polo",
+  "allen_ginsberg",
+  "gottfried_leibniz",
+  "pablo_picasso",
+  "karl_marx",
+  "i",
+  "nikola_tesla",
+  "le_corbusier",
+  "john_locke",
+  "adolf_hitler",
+  "rosa_parks",
+  "g",
+  "crist\u00f2foro_col\u00f3mbo",
+  "johann_gutenberg",
+  "giusep_verdi",
+  "mahatma_gandhi",
+  "charlie_chaplin",
+  "d_h_lawrence",
+  "ronald_reagan",
+  "lorenz",
+  "nelson_mandela",
+  "roald_amundsen",
+  "don_quijote_de_la_mancha",
+  "federico_fellini",
+  "bulsan",
+  "francisco_franco",
+  "johnny_cash",
+  "michelangelo_merisi",
+  "albert_einstein",
+  "thomas_edison"
+ ],
+ "PRODUCT": [
+  "pozz",
+  "el_scior_di_anei",
+  "sas\u00f2nia_anhalt"
+ ],
+ "PLANT": [
+  "lilium_martagon",
+  "viola_arvensis",
+  "viola_reichenbachiana",
+  "helleborus_niger",
+  "solanaceae",
+  "viola_cornuta",
+  "cyclamen_purpurascens",
+  "bidens_tripartita",
+  "ranunculus_ficaria",
+  "prunus_armeniaca",
+  "stellaria_media",
+  "helianthus_tuberosus",
+  "verbena_officinalis",
+  "gymnadenia_conopsea",
+  "sorbus_aucuparia",
+  "saxifraga_stellaris",
+  "fagus_sylvatica",
+  "saccharomyces_cerevisiae",
+  "campanula_trachelium",
+  "taraxacum_officinale",
+  "stellaria_holostea",
+  "cardamine_pratensis",
+  "viola_odorata"
+ ],
+ "ANIMAL": [
+  "bissa",
+  "donald_duck",
+  "pirol",
+  "primula_vulgaris"
+ ],
+ "FOOD": [
+  "desert",
+  "juglans_regia"
+ ],
+ "DISEASE": [
+  "presb\u00edzzia",
+  "corn"
+ ],
+ "GPE": [
+  "dar_es_salaam",
+  "san_lureenz",
+  "sint_maarten",
+  "mar_russ",
+  "mar_egee",
+  "s\u00e3o_tom\u00e9",
+  "san_peder",
+  "n\u00f6v_testament"
+ ],
+ "PERSON_PRONOUN": [
+  "i"
+ ],
+ "ORG": [
+  "san_francisco",
+  "sant_elena",
+  "can_tho",
+  "chiang_mai",
+  "gatt",
+  "cap_verd",
+  "los_angeles",
+  "stat_\u00fcn\u00ec_d_america",
+  "al_ain",
+  "mar_russ",
+  "hirundo_rustica",
+  "s\u00e3o_tom\u00e9"
+ ],
+ "RACE": [
+  "latin"
+ ],
+ "LOCATION": [
+  "sint_maarten",
+  "mar_negher",
+  "sri_lanka",
+  "al_ain"
+ ],
+ "RELIGION": [
+  "jainism",
+  "islam"
+ ],
+ "DATE": [
+  "in_time"
+ ],
+ "JOB": [
+  "paisan",
+  "barb\u00e9",
+  "man",
+  "trevir"
+ ],
+ "QUANTITY": [
+  "g"
+ ],
+ "FAC": [
+  "santa_l\u00fczia"
+ ],
+ "POLITICAL_PARTY": [
+  "partito_democratico"
+ ],
+ "GENDER": [
+  "man"
+ ],
+ "LANGUAGE": [
+  "tonga"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "femna": "man"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "man"
+  ],
+  "she": [
+   "femna"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

@@ -1,0 +1,72 @@
+{
+ "ANIMAL": [
+  "ghiro",
+  "castour",
+  "gialina",
+  "passer",
+  "stambech",
+  "lustrel",
+  "falcon",
+  "capriol",
+  "schirata",
+  "valtoi",
+  "belora"
+ ],
+ "ORG": [
+  "doi",
+  "aa",
+  "l\u00ebur",
+  "scola"
+ ],
+ "DISEASE": [
+  "pontes",
+  "mania",
+  "ronia",
+  "parpaiola"
+ ],
+ "JOB": [
+  "saud\u00e9",
+  "laurant"
+ ],
+ "PUBLIC_FIGURE": [
+  "laur\u00ebnz",
+  "n",
+  "bulsan",
+  "l"
+ ],
+ "DATE": [
+  "vedleza"
+ ],
+ "LANGUAGE": [
+  "spanuel",
+  "franz\u00ebus"
+ ],
+ "PRODUCT": [
+  "porcel_de_mar"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "\u00ebila",
+   "femena"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "it": [
+   "chest"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

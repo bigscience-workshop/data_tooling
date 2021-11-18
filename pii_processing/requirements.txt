@@ -1,0 +1,6 @@
+spacy
+cython>=0.25
+pytest
+transformers 
+faker 
+sentencepiece

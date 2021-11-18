@@ -1,0 +1,66 @@
+{
+ "DISEASE": [
+  "robala",
+  "tlhokofatso"
+ ],
+ "JOB": [
+  "molemi",
+  "moeletsi",
+  "lepolesa",
+  "rameriana",
+  "molepi",
+  "moruti",
+  "sebini",
+  "modulasetulo"
+ ],
+ "RELIGION_MEMBER": [
+  "moselamose"
+ ],
+ "GENDER": [
+  "moshemane",
+  "mosadi"
+ ],
+ "ANIMAL": [
+  "ho_tsamaea_thupa"
+ ],
+ "PLANT": [
+  "khabetjhe",
+  "kholifolawa"
+ ],
+ "ORG": [
+  "ke_a_go_rata"
+ ],
+ "LANGUAGE": [
+  "seburu",
+  "se_french"
+ ],
+ "FOOD": [
+  "mofihlolo"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "lefetwa": "lesoha"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "moshemane"
+  ],
+  "she": [
+   "mosadi",
+   "ausi"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

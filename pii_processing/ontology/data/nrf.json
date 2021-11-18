@@ -1,0 +1,240 @@
+{
+ "PLANT": [
+  "reunellyi",
+  "grand_suthelle",
+  "coquelicot",
+  "lianne",
+  "ch\u00e8rfi",
+  "preunelle",
+  "preune",
+  "betterave",
+  "moutarde",
+  "tchoeuryi",
+  "bantchie",
+  "caboche",
+  "fossa\u00ef",
+  "tourn\u00e9sol",
+  "meuthe_en_c'm\u00een",
+  "tch\u00e8rpentchi\u00e9the",
+  "tchoeur",
+  "magnolia"
+ ],
+ "ANIMAL": [
+  "martre",
+  "cat",
+  "alicracq",
+  "cahouain",
+  "maoue",
+  "con_d'rotchi",
+  "mille_pids",
+  "duc",
+  "caqu'ter",
+  "gra\u00efve",
+  "brotchet",
+  "mataud",
+  "cardrinnette",
+  "pourpais"
+ ],
+ "DISEASE": [
+  "addiction",
+  "rage",
+  "stchinnancie",
+  "bliesse\u00fbthe",
+  "m\u00e9lie",
+  "turb\u00e9",
+  "conseunmtion",
+  "boursoufliuthe",
+  "courte_haleine",
+  "traler",
+  "constip\u00e2tion",
+  "plieur\u00easie",
+  "chancre",
+  "roui",
+  "crache",
+  "pain",
+  "meurdri",
+  "pliainte",
+  "roussi",
+  "br\u00fbleuse",
+  "bouaissonn'nie",
+  "coqueluche"
+ ],
+ "LANGUAGE": [
+  "gudgiarati",
+  "angliais",
+  "souahili",
+  "bastchais",
+  "angllais",
+  "tonga"
+ ],
+ "LAW": [
+  "parchonn'nie_civile",
+  "protchul\u00e2tion"
+ ],
+ "JOB": [
+  "volontaithe",
+  "seurgien",
+  "tchilieux",
+  "soudard",
+  "corpotha",
+  "acateux",
+  "coutchi",
+  "bantchi",
+  "tch\u00e9thtchi",
+  "chent'nyi",
+  "annonceux",
+  "barbyi",
+  "gardgienne",
+  "tchu\u00eesinnyi",
+  "boulandgi",
+  "fonctionnaithe",
+  "seller",
+  "ramonneux",
+  "monnyi",
+  "travailleux",
+  "faithe",
+  "g\u00e9rant",
+  "diplomate",
+  "fanmilyi",
+  "fraudeux",
+  "maitr\u00easse",
+  "laver\u00easse",
+  "coronel",
+  "arpenteux",
+  "nettisseux",
+  "canonnyi",
+  "portchi",
+  "charron",
+  "douannyi",
+  "d'sabil'r\u00easse",
+  "monniteu",
+  "halaeux",
+  "lanminneux"
+ ],
+ "PUBLIC_FIGURE": [
+  "piteur",
+  "monnyi",
+  "charles",
+  "thonmas",
+  "t\u00e9l\u00e9c'mande",
+  "ramonneux",
+  "suicider",
+  "ra\u00eet\u00e9",
+  "l"
+ ],
+ "FOOD": [
+  "mousse",
+  "desert",
+  "denchive",
+  "chile"
+ ],
+ "RELIGION_MEMBER": [
+  "wesleyen",
+  "chap'lain",
+  "nazar\u00e9tchien"
+ ],
+ "ORG": [
+  "porte",
+  "v\u00e8rt_cap",
+  "transport\u00e2tion",
+  "longue_pi\u00e8rre",
+  "machon'nie",
+  "rouoge_m\u00e9",
+  "marinne",
+  "\u00eatats_unnis",
+  "bataillon",
+  "gouv\u00e8rn\u00e9ment",
+  "pays_bastchais"
+ ],
+ "DATE": [
+  "toussaint"
+ ],
+ "PRODUCT": [
+  "drouaits_d'l'houmme",
+  "papa_nou\u00e9",
+  "couochon_d'la_dginn\u00e9e",
+  "tchu_d'sa",
+  "distchette",
+  "arbre_d'nou\u00e9",
+  "vailyi"
+ ],
+ "SOC_ECO_CLASS": [
+  "agritchulteure",
+  "agritchultuthe",
+  "soci\u00eat\u00e9"
+ ],
+ "GENDER": [
+  "hardelle",
+  "matronne"
+ ],
+ "LOCATION": [
+  "australie_m\u00e9ridionale",
+  "ieau_douoche",
+  "australie_occidentale",
+  "sri_lanka"
+ ],
+ "POLITICAL_PARTY_MEMBER": [
+  "canmathade",
+  "commeuniste"
+ ],
+ "PERSON": [
+  "jean_dor\u00e9"
+ ],
+ "FAC": [
+  "sainte_lucie"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "abb\u00easse": "abb\u00e9",
+  "b\u00e2ronne": "b\u00e2ron",
+  "duch\u00easse": "duc",
+  "hardelle": "bouonhoumme",
+  "p'tite_fil'ye": "p'tit_fis",
+  "maitr\u00easse": "sp\u00e9cialiste",
+  "pr\u00eenc\u00easse": "pr\u00eence",
+  "soeu": "broder",
+  "faume": "bouonhoumme",
+  "bou\u00f4nnefemme": "bouonhoumme"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "they": [
+   "homosexuel",
+   "bisexuel"
+  ],
+  "he": [
+   "coll\u00e8gue",
+   "bouonhoumme"
+  ],
+  "she": [
+   "f\u00e2me",
+   "homosexuel",
+   "faume",
+   "bike",
+   "mantchi",
+   "lesbien",
+   "foume",
+   "hardelle",
+   "fenme"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "seine"
+  ],
+  "it": [
+   "dette"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

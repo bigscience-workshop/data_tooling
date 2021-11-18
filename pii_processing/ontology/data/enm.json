@@ -1,0 +1,51 @@
+{
+ "PLANT": [
+  "cherville",
+  "houndestonge",
+  "wormwode"
+ ],
+ "DISEASE": [
+  "sorenes",
+  "pippe"
+ ],
+ "ANIMAL": [
+  "chike",
+  "chekyn",
+  "faucoun"
+ ],
+ "JOB": [
+  "king",
+  "wever",
+  "sheepherde",
+  "coper"
+ ],
+ "PERSON_PRONOUN": [
+  "his",
+  "we",
+  "us"
+ ],
+ "PUBLIC_FIGURE": [
+  "webster",
+  "elizabeth"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {},
+ "en_pronoun2gender": {},
+ "en_pronoun2pronoun": {
+  "he": [
+   "his"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

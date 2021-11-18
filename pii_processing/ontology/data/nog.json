@@ -1,0 +1,56 @@
+{
+ "RELIGION_MEMBER": [
+  "\u043c\u043e\u043b\u043b\u0430"
+ ],
+ "ANIMAL": [
+  "\u0431\u0430\u043a\u0430",
+  "\u043a\u0430\u0432\u044b\u0441"
+ ],
+ "PERSON_PRONOUN": [
+  "\u043e\u043b"
+ ],
+ "GENDER": [
+  "\u043a\u0430\u0440\u0442"
+ ],
+ "LOCATION": [
+  "\u0435\u0442\u0435\u0433\u0435\u043d"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u0430\u0432\u0430": "\u044d\u043c\u0435\u043d"
+ },
+ "other_gender_swap": {
+  "\u0443\u043b\u0430\u0440": "\u043e\u043b",
+  "\u043e\u043b\u0430\u0440": "\u043e\u043b",
+  "\u043e\u043b": "\u0443\u043b\u0430\u0440"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "\u044f\u0441",
+   "\u043a\u044b\u0441"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "\u043e\u043b"
+  ],
+  "she": [
+   "\u043e\u043b"
+  ],
+  "they": [
+   "\u0443\u043b\u0430\u0440",
+   "\u043e\u043b\u0430\u0440"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

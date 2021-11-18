@@ -1,0 +1,49 @@
+{
+ "PRODUCT": [
+  "varua_maitai"
+ ],
+ "LOCATION": [
+  "ia_ora_na_i_te_matahiti_api"
+ ],
+ "PERSON_PRONOUN": [
+  "i"
+ ],
+ "PUBLIC_FIGURE": [
+  "one",
+  "i",
+  "to_opiti"
+ ],
+ "GENDER": [
+  "vahine"
+ ],
+ "ORG": [
+  "te_ekalesia_a_iesu_mesia_i_te_feia_mo\u2018a_i_te_hau_mahana_hopea_nei"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "fiu"
+  ],
+  "she": [
+   "vahine"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "they": [
+   "one"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

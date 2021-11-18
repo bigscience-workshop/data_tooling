@@ -1,0 +1,176 @@
+{
+ "JOB": [
+  "murar",
+  "furn\u00e3gi",
+  "ciripar",
+  "avigljitor",
+  "andoilu",
+  "grupar",
+  "dugar",
+  "araci",
+  "purcar",
+  "barber",
+  "vigl\u00e3"
+ ],
+ "ORG": [
+  "doi",
+  "c\u00e3prioar\u00e3",
+  "dichii",
+  "addis_ababa",
+  "sculie",
+  "sculii",
+  "lutseafir",
+  "oaste"
+ ],
+ "FOOD": [
+  "pustilii",
+  "pundii"
+ ],
+ "PLANT": [
+  "spal\u00e3",
+  "dhamaskin\u00e3",
+  "cireash\u00e3",
+  "brushtir",
+  "anin",
+  "saltse",
+  "frang\u00e3",
+  "saltsi",
+  "verdzu",
+  "damaschin\u00e3"
+ ],
+ "PUBLIC_FIGURE": [
+  "e",
+  "bush",
+  "murar"
+ ],
+ "DISEASE": [
+  "tushescu",
+  "shuplicat",
+  "pleag\u00e3",
+  "tushedzu",
+  "seate",
+  "urbari",
+  "crud",
+  "ed",
+  "urbeats\u00e3",
+  "aspargu",
+  "shoaric",
+  "nisomn",
+  "aran\u00e3",
+  "heavr\u00e3"
+ ],
+ "ANIMAL": [
+  "njerl\u00e3",
+  "sturdzu",
+  "vivirits\u00e3",
+  "corbu",
+  "strudz",
+  "broatic",
+  "tserbu"
+ ],
+ "QUANTITY": [
+  "balt\u00e3"
+ ],
+ "PERSON_PRONOUN": [
+  "mine",
+  "her"
+ ],
+ "DATE": [
+  "didindi",
+  "bit\u00e3rneats\u00e3",
+  "naparti"
+ ],
+ "GENDER": [
+  "feat\u00e3"
+ ],
+ "LOCATION": [
+  "haristo"
+ ],
+ "RELIGION_MEMBER": [
+  "crishtin",
+  "crishtin\u00e3"
+ ],
+ "LANGUAGE": [
+  "greac\u00e3"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "hilji": "son",
+  "hilje": "son",
+  "amir\u00e3roanji": "ampirat",
+  "v\u00e3siloanji": "b\u00e3sil\u00e3u",
+  "n\u00e3s\u00e3": "n\u00e3su",
+  "n\u00e3sa": "elu",
+  "elu": "n\u00e3s",
+  "sor\u00e3": "frate",
+  "nuearc\u00e3": "nuercu",
+  "nearc\u00e3": "nercu",
+  "vedu\u00e3": "veduv",
+  "veduv\u00e3": "veduv",
+  "\u00e3nveast\u00e3": "b\u00e3rbat",
+  "suts\u00e3lji": "b\u00e3rbat",
+  "duna": "b\u00e3rbat",
+  "nicuchir\u00e3": "b\u00e3rbat",
+  "frut": "feat\u00e3",
+  "hilj": "feat\u00e3"
+ },
+ "other_gender_swap": {
+  "n\u00e3si": "n\u00e3sa",
+  "eali": "n\u00e3sa",
+  "n\u00e3se": "n\u00e3s\u00e3",
+  "elj": "n\u00e3sa",
+  "n\u00e3sh": "n\u00e3s\u00e3",
+  "n\u00e3s": "n\u00e3sh",
+  "n\u00e3su": "n\u00e3sh",
+  "elu": "eali",
+  "n\u00e3s\u00e3": "n\u00e3si",
+  "n\u00e3sa": "n\u00e3sh"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "hilj",
+   "frut"
+  ],
+  "she": [
+   "muljari",
+   "feat\u00e3"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "n\u00e3su",
+   "elu",
+   "n\u00e3s"
+  ],
+  "she": [
+   "elu",
+   "her",
+   "n\u00e3sa",
+   "n\u00e3s\u00e3",
+   "ljei"
+  ],
+  "they": [
+   "n\u00e3sh",
+   "n\u00e3se",
+   "n\u00e3si",
+   "eali",
+   "elj"
+  ],
+  "it": [
+   "disi",
+   "aestu",
+   "aistu"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

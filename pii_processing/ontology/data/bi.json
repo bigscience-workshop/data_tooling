@@ -1,0 +1,48 @@
+{
+ "PERSON_PRONOUN": [
+  "yumi",
+  "mitufala",
+  "yumitu",
+  "yumitri",
+  "we",
+  "mitrifala"
+ ],
+ "GENDER": [
+  "woman",
+  "man"
+ ],
+ "ORG": [
+  "jos_blong_jisas_kraes_blong_ol_lata_dei_sent"
+ ],
+ "JOB": [
+  "man",
+  "woman"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "wuman": "man",
+  "woman": "man"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "man"
+  ],
+  "she": [
+   "woman",
+   "wuman"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

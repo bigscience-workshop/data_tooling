@@ -18,22 +18,35 @@ repos:
   rev: v4.0.1
   hooks:
   - id: check-added-large-files
+    exclude: ^pii_processing/
   - id: check-case-conflict
+    exclude: ^pii_processing/
   - id: check-docstring-first
+    exclude: ^pii_processing/
   - id: check-merge-conflict
+    exclude: ^pii_processing/
   - id: check-symlinks
+    exclude: ^pii_processing/
   - id: check-toml
+    exclude: ^pii_processing/
   - id: check-yaml
+    exclude: ^pii_processing/
   - id: debug-statements
+    exclude: ^pii_processing/
   - id: end-of-file-fixer
+    exclude: ^pii_processing/
   - id: mixed-line-ending
+    exclude: ^pii_processing/
   - id: requirements-txt-fixer
+    exclude: ^pii_processing/
   - id: trailing-whitespace
+    exclude: ^pii_processing/
 
 - repo: https://github.com/asottile/pyupgrade
   rev: v2.29.0
   hooks:
   - id: pyupgrade
+    exclude: ^pii_processing/
 
 #- repo: https://github.com/PyCQA/isort
 #  rev: 5.10.0
@@ -45,14 +58,17 @@ repos:
   rev: 21.10b0 # Keep in sync with blacken-docs
   hooks:
   - id: black
+    exclude: ^pii_processing/
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
   rev: v1.1.10
   hooks:
   - id: remove-tabs
+    exclude: ^pii_processing/
 
 - repo: https://github.com/shellcheck-py/shellcheck-py
-  rev: v0.7.2.1
+  rev: v0.8.0.1
   hooks:
   - id: shellcheck
+    exclude: ^pii_processing/

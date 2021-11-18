@@ -1,0 +1,63 @@
+{
+ "JOB": [
+  "waziri",
+  "upiha"
+ ],
+ "PERSON_PRONOUN": [
+  "she",
+  "angu"
+ ],
+ "DISEASE": [
+  "pasuha",
+  "fusiha"
+ ],
+ "FOOD": [
+  "buni"
+ ],
+ "ORG": [
+  "sa"
+ ],
+ "PUBLIC_FIGURE": [
+  "daud"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "she": "waye"
+ },
+ "other_gender_swap": {
+  "wao": "she",
+  "waye": "wao",
+  "she": "wao"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "she"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "waye"
+  ],
+  "she": [
+   "jeje",
+   "she"
+  ],
+  "they": [
+   "wao"
+  ],
+  "it": [
+   "kia"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}
