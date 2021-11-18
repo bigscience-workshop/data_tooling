@@ -65,8 +65,7 @@ class OntologyManager:
   default_strip_chars="-,~`.?!@#$%^&*(){}[]|\\/-_+=<>;'\""
   stopwords = set(stopwords.words())
   x_lingual_onto_name = "yago_cn_wn"
-  default_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir, "lexicon"))
+  default_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 
   default_label2label = {'SOC_ECO_CLASS':'NORP', 
       'RACE':'NORP', 
