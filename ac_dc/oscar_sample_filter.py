@@ -4,7 +4,6 @@ import fasttext
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
 import pathlib
-import re
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from stopwords import stopwords

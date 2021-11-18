@@ -37,7 +37,7 @@ govt_id_regex = {
 }
 
 
-def apply_regex_govt_id_anonymization(sentence, lang_id):
+def apply_regex_govt_id_anonymization(sentence: str, lang_id: str) -> str:
     regex_lang_id = lang_id if lang_id in govt_id_regex else "default"
     for regex in list(govt_id_regex[regex_lang_id].values()):
         matched = False
