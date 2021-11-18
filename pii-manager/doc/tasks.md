@@ -82,6 +82,16 @@ In other words:
 An example can be seen in the [credit card] detector.
 
 
+## Documentation
+
+All PII Tasks should be documented with a small string that explains what they
+detect. The place to add this documentation is:
+ * For Regex tasks, add the string as the third element in the task descriptor
+   inside `PII_TASKS`
+ * For Callable tasks, use the function docstring to add the documentation.
+ * For Class tasks, add the documentation as the _class level_ docstring.
+
+
 [re.VERBOSE]: https://docs.python.org/3/library/re.html#re.X
 [bitcoin address]: ../src/pii_manager/lang/any/bitcoin_address.py
 [credit card]: ../src/pii_manager/lang/any/credit_card.py

@@ -24,7 +24,9 @@ repository with the following changes:
 ## Task implementation
 
 A task can be implemented with either of three shapes: regex, function or
-class. See [tasks] for a description of how to implement each of these
+class. See [tasks] for a description of how to implement each of these,
+including where to add the required documentation explaining the task.
+
 
 ## Task descriptor
 
