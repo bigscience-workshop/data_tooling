@@ -18,27 +18,19 @@ repos:
   rev: v4.0.1
   hooks:
   - id: check-added-large-files
-    exclude: ^pii_processing/
   - id: check-case-conflict
-    exclude: ^pii_processing/
   - id: check-docstring-first
     exclude: ^pii_processing/
   - id: check-merge-conflict
-    exclude: ^pii_processing/
   - id: check-symlinks
-    exclude: ^pii_processing/
   - id: check-toml
-    exclude: ^pii_processing/
   - id: check-yaml
-    exclude: ^pii_processing/
   - id: debug-statements
     exclude: ^pii_processing/
   - id: end-of-file-fixer
     exclude: ^pii_processing/
   - id: mixed-line-ending
-    exclude: ^pii_processing/
   - id: requirements-txt-fixer
-    exclude: ^pii_processing/
   - id: trailing-whitespace
     exclude: ^pii_processing/
 
@@ -65,7 +57,7 @@ repos:
   rev: v1.1.10
   hooks:
   - id: remove-tabs
-    exclude: ^pii_processing/
+    exclude: ^(pii_processing|Makefile)
 
 - repo: https://github.com/shellcheck-py/shellcheck-py
   rev: v0.8.0.1
