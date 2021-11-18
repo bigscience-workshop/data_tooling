@@ -1,0 +1,1 @@
+python-stdnum >=1.17,<2.0
