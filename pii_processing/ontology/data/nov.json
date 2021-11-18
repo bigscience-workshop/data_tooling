@@ -1,0 +1,95 @@
+{
+ "LANGUAGE": [
+  "katalana",
+  "venda",
+  "spani",
+  "katalane",
+  "katalano",
+  "fransum",
+  "esperanto"
+ ],
+ "DISEASE": [
+  "pasione",
+  "mause",
+  "le"
+ ],
+ "ORG": [
+  "fema",
+  "porte",
+  "un",
+  "po"
+ ],
+ "JOB": [
+  "amindi",
+  "sub"
+ ],
+ "GENDER": [
+  "puera",
+  "men"
+ ],
+ "PUBLIC_FIGURE": [
+  "e",
+  "o",
+  "putin"
+ ],
+ "RELIGION_MEMBER": [
+  "fratro"
+ ],
+ "QUANTITY": [
+  "kalorie",
+  "sinksent"
+ ],
+ "DATE": [
+  "mihore"
+ ],
+ "PERSON_PRONOUN": [
+  "me"
+ ],
+ "ANIMAL": [
+  "herone"
+ ],
+ "LOCATION": [
+  "sri_lanka"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "abata": "abato",
+  "nun": "monako",
+  "fratra": "fratro",
+  "yuno": "puera",
+  "puero": "yuna"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "yuno",
+   "puero"
+  ],
+  "she": [
+   "yuna",
+   "femal",
+   "fema",
+   "puera"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "she": [
+   "de_la"
+  ],
+  "it": [
+   "lum",
+   "disi"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

@@ -1,0 +1,50 @@
+{
+ "JOB": [
+  "guru",
+  "koga"
+ ],
+ "RELIGION_MEMBER": [
+  "guru"
+ ],
+ "LANGUAGE": [
+  "ikinyarwanda"
+ ],
+ "PRODUCT": [
+  "gongo"
+ ],
+ "DISEASE": [
+  "im_beba"
+ ],
+ "PERSON_PRONOUN": [
+  "he"
+ ],
+ "ANIMAL": [
+  "inkoko"
+ ],
+ "PLANT": [
+  "ikaroti"
+ ],
+ "ORG": [
+  "sa"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {},
+ "en_pronoun2gender": {},
+ "en_pronoun2pronoun": {
+  "he": [
+   "he"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

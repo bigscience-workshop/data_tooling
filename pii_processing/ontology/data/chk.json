@@ -1,0 +1,47 @@
+{
+ "LOCATION": [
+  "kinisou"
+ ],
+ "ORG": [
+  "un"
+ ],
+ "GENDER": [
+  "nemin"
+ ],
+ "JOB": [
+  "nakkich"
+ ],
+ "PERSON_PRONOUN": [
+  "we",
+  "me"
+ ],
+ "OTHER_PRONOUN": [
+  "it"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "feefin",
+   "nemin",
+   "awewe"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "it": [
+   "it"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

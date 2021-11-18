@@ -1,0 +1,176 @@
+{
+ "PLANT": [
+  "cazzipocchio",
+  "ardica",
+  "ceraso",
+  "cucuzzigl",
+  "solanaceae",
+  "sammuch",
+  "ramegna",
+  "avrusca",
+  "catiegl",
+  "puocchi\u00eb",
+  "contrerva",
+  "alvaniegl",
+  "matr\u00ebcana",
+  "cierr",
+  "cerasa",
+  "p\u00ebrcacchia",
+  "pastenaca",
+  "caci\u00f2la"
+ ],
+ "LOCATION": [
+  "mar_tirreno"
+ ],
+ "ANIMAL": [
+  "passaro",
+  "russignuolo",
+  "cardillo",
+  "mammifere",
+  "pernice",
+  "surice",
+  "pietterusso",
+  "capreolo",
+  "pizzestuorto",
+  "farcone",
+  "tremmula",
+  "scarraf\u00f3ne"
+ ],
+ "JOB": [
+  "portal\u00e9ttere",
+  "vammana",
+  "pitt\u00f3re",
+  "don",
+  "zoccula",
+  "mammana",
+  "portalettere",
+  "pett\u00f3re"
+ ],
+ "PRODUCT": [
+  "justin_bieber"
+ ],
+ "DISEASE": [
+  "recchiune",
+  "segli\u00f9zzo",
+  "gratt\u00e0",
+  "paposcia",
+  "selluzzo",
+  "guallecchia",
+  "guallara",
+  "cacagli\u00e0",
+  "chi",
+  "scarfatura",
+  "sorece",
+  "suonno",
+  "mengr\u00e0nia",
+  "ruttura"
+ ],
+ "PUBLIC_FIGURE": [
+  "winston_churchill",
+  "giambattista_marini",
+  "michael_jackson",
+  "grev\u00f2rio",
+  "vincent_van_gogh",
+  "marco_aurelio",
+  "e",
+  "sarah_bernhardt",
+  "stalin",
+  "dante_alighieri",
+  "nicolas_poussin",
+  "bened\u00e8tt\u00eb",
+  "a",
+  "caravaggio",
+  "o",
+  "william_james",
+  "sandro_botticelli",
+  "al_capone",
+  "le_corbusier",
+  "adolf_hitler",
+  "giuseppe_garibaldi",
+  "ant\u00f9one",
+  "gaetano_donizetti",
+  "charlie_chaplin",
+  "ronald_reagan",
+  "ernest_hemingway",
+  "nelson_mandela",
+  "san_giorgio"
+ ],
+ "DATE": [
+  "calannario_greguriano",
+  "medioevo"
+ ],
+ "ORG": [
+  "nasa",
+  "alessandro_magno",
+  "mar_ruosso",
+  "core",
+  "state_aunite_d_amereca",
+  "los_angeles",
+  "nato",
+  "chiesia_cattoleca",
+  "scola",
+  "san_nicola_e_mira"
+ ],
+ "FOOD": [
+  "attisena",
+  "sciavecaria",
+  "patanella"
+ ],
+ "EVENT": [
+  "se_scet\u00e0"
+ ],
+ "FAC": [
+  "san_giuseppe"
+ ],
+ "RELIGION": [
+  "islam"
+ ],
+ "LANGUAGE": [
+  "hindjan",
+  "taliano",
+  "franzese"
+ ],
+ "GENDER": [
+  "peccerella"
+ ],
+ "GPE": [
+  "mar_ruosso",
+  "novo_testamiento"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "riggina": "rr\u00e9",
+  "femmena": "ommo",
+  "guaglione": "peccerella"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "guaglione",
+   "ommo"
+  ],
+  "she": [
+   "femmena",
+   "nenna",
+   "peccerella"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "it": [
+   "isso",
+   "chist",
+   "stu"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

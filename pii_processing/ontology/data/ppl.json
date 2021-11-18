@@ -1,0 +1,81 @@
+{
+ "ANIMAL": [
+  "mistun",
+  "masat",
+  "mututzin"
+ ],
+ "GENDER": [
+  "siwat"
+ ],
+ "PERSON_PRONOUN": [
+  "i",
+  "tehemet",
+  "tejemet",
+  "nech",
+  "metzin",
+  "tech"
+ ],
+ "GPE": [
+  "shiktal"
+ ],
+ "PUBLIC_FIGURE": [
+  "a",
+  "i"
+ ],
+ "DISEASE": [
+  "cucua",
+  "kukua"
+ ],
+ "ORG": [
+  "nimetztasujta"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "yaja": "yaha",
+  "yaha": "yaja"
+ },
+ "other_gender_swap": {
+  "yejemet": "yaha",
+  "yehemet": "yaja",
+  "yaja": "yehemet",
+  "yaha": "yehemet"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "cihuat",
+   "kak",
+   "siwat"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "yaja",
+   "yaha",
+   "neki"
+  ],
+  "she": [
+   "yaja",
+   "yaha"
+  ],
+  "they": [
+   "yehemet",
+   "yejemet"
+  ],
+  "it": [
+   "yaja",
+   "esti",
+   "yaha"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

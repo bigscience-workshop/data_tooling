@@ -1,0 +1,72 @@
+{
+ "PRODUCT": [
+  "ma_alob_k_iin"
+ ],
+ "DISEASE": [
+  "ki",
+  "k_iinam",
+  "wale",
+  "chi",
+  "ta_pool",
+  "le"
+ ],
+ "GENDER": [
+  "ko_olel"
+ ],
+ "LANGUAGE": [
+  "akan"
+ ],
+ "RELIGION_MEMBER": [
+  "j_jaajkunaj_j\u00e9eoba"
+ ],
+ "LOCATION": [
+  "ma_alob_aak_ab"
+ ],
+ "ORG": [
+  "in_k_aaba_e"
+ ],
+ "FOOD": [
+  "e_el"
+ ],
+ "PERSON_PRONOUN": [
+  "us"
+ ],
+ "OTHER_PRONOUN": [
+  "it",
+  "its"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "atan": "\u00edicham"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "manik"
+  ],
+  "she": [
+   "ko_olel",
+   "xba_al"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "waye"
+  ],
+  "it": [
+   "it",
+   "its"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

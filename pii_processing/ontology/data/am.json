@@ -1,0 +1,92 @@
+{
+ "FAC": [
+  "\u1356\u1235\u1273_\u1264\u1275",
+  "\u12e8\u122e\u121b_\u12ab\u1276\u120a\u12ad_\u1264\u1270_\u12ad\u122d\u1235\u1272\u12eb\u1295"
+ ],
+ "PUBLIC_FIGURE": [
+  "\u12ad\u122a\u1235\u1276\u134e\u122d_\u12ae\u120e\u121d\u1260\u1235",
+  "f",
+  "g",
+  "\u1273\u1278\u122d",
+  "\u1245\u12f1\u1235_\u130a\u12ee\u122d\u130a\u1235"
+ ],
+ "PRODUCT": [
+  "\u1230\u1265\u12a0\u12ca_\u1218\u1265\u1276\u127d",
+  "\u12a0\u12f2\u1235_\u12aa\u12f3\u1295"
+ ],
+ "ORG": [
+  "\u1230\u12ed\u1295\u1275_\u1209\u123b",
+  "\u1240\u12ed_\u1218\u1235\u1240\u120d",
+  "\u12ab\u1276\u120a\u12ad_\u1264\u1270_\u12ad\u122d\u1235\u1272\u12eb\u1295",
+  "\u12ab\u1266_\u1268\u122d\u12f4",
+  "\u12cb\u12ed\u1275_\u1203\u12cd\u1235",
+  "\u1234\u12ed\u1295\u1275_\u1205\u120a\u1293_\u12f0\u1234\u1275",
+  "\u12e8\u122d\u123b_\u1270\u130d\u1263\u122d",
+  "\u1262\u132b\u12cd_\u12c8\u1295\u12dd"
+ ],
+ "POLITICAL_PARTY": [
+  "\u122a\u1350\u1265\u120a\u12ab\u1295_\u1353\u122d\u1272",
+  "\u12f4\u121e\u12ad\u122b\u1272\u12ad_\u1353\u122d\u1272"
+ ],
+ "GPE": [
+  "\u1233\u1295_\u1276\u121c",
+  "\u1240\u12ed_\u1263\u1215\u122d"
+ ],
+ "DISEASE": [
+  "\u12a2\u1266\u120b"
+ ],
+ "QUANTITY": [
+  "g"
+ ],
+ "LOCATION": [
+  "\u12ac\u1355_\u1268\u122d\u12f5",
+  "\u1323\u1293_\u1210\u12ed\u1245"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u12a5\u1293\u1275": "\u12a5\u1263\u1275",
+  "\u1295\u130d\u1225\u1275": "\u1295\u1309\u1235",
+  "\u12a5\u1237": "\u12a5\u1231",
+  "\u12a5\u1205\u1275": "\u12c8\u1295\u12f5\u121d",
+  "\u12a5\u1285\u1275": "\u12c8\u1295\u12f5\u121d",
+  "\u121a\u1235\u1275": "\u1263\u120d"
+ },
+ "other_gender_swap": {
+  "\u12a5\u1290\u1231": "\u12a5\u1237",
+  "\u12a5\u1231": "\u12a5\u1290\u1231",
+  "\u12a5\u1237": "\u12a5\u1290\u1231"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "\u1230\u1260\u12ed\u1272",
+   "\u1234\u1275_\u120d\u1305",
+   "\u120d\u1303\u1308\u1228\u12f5",
+   "\u1234\u1275"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "\u12a5\u1231"
+  ],
+  "she": [
+   "\u12a5\u1237"
+  ],
+  "they": [
+   "\u12a5\u1290\u1231"
+  ],
+  "it": [
+   "\u12a5\u1231"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

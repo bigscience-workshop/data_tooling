@@ -1,0 +1,148 @@
+{
+ "RELIGION_MEMBER": [
+  "kristones",
+  "sarsyn",
+  "kristyon"
+ ],
+ "LANGUAGE": [
+  "frenkek",
+  "polonek",
+  "kembrek",
+  "kernowek",
+  "kernewek"
+ ],
+ "JOB": [
+  "kreswas",
+  "mytern",
+  "bughwas",
+  "latimores",
+  "brysonydhes",
+  "brysonydh",
+  "latimer"
+ ],
+ "FOOD": [
+  "pastes",
+  "chile"
+ ],
+ "ORG": [
+  "jan_mayen",
+  "my_a'th_kar",
+  "nos_kwestyon",
+  "sodhva_an_post",
+  "po",
+  "lytherva"
+ ],
+ "PLANT": [
+  "karetys",
+  "keresen",
+  "howlvleujen",
+  "kesten"
+ ],
+ "ANIMAL": [
+  "cronek",
+  "lostledan",
+  "goolan",
+  "an_puskes",
+  "tresklenn",
+  "karow",
+  "melldrosek",
+  "piesen",
+  "kath",
+  "goelann",
+  "hogh_gyni",
+  "cowan",
+  "brogh"
+ ],
+ "LOCATION": [
+  "park",
+  "kala_me",
+  "tas_nadelik",
+  "an_para_oll_du"
+ ],
+ "PRODUCT": [
+  "s\u00e3o_tom\u00e9_ha_pr\u00edncipe"
+ ],
+ "DISEASE": [
+  "anger",
+  "logosen",
+  "brath",
+  "chi",
+  "glow",
+  "gossen",
+  "an_kanker",
+  "tan",
+  "le",
+  "bratha"
+ ],
+ "PERSON_PRONOUN": [
+  "i",
+  "my"
+ ],
+ "PUBLIC_FIGURE": [
+  "frenk",
+  "m",
+  "i"
+ ],
+ "SOC_ECO_CLASS": [
+  "dehen"
+ ],
+ "GENDER": [
+  "men",
+  "maghteth"
+ ],
+ "FAC": [
+  "lytherva"
+ ],
+ "GPE": [
+  "testament_nowyth"
+ ],
+ "DATE": [
+  "de_halan_gw\u00e2v"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "abases": "abas",
+  "mam": "peder",
+  "mamm": "sira",
+  "pystriores": "pystrier",
+  "gwreg": "gour",
+  "gwragh": "pystrier"
+ },
+ "other_gender_swap": {
+  "anjei": "jei"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "frut",
+   "gwas"
+  ],
+  "she": [
+   "benyn",
+   "maghteth"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "she": [
+   "jei"
+  ],
+  "they": [
+   "jei",
+   "anjei",
+   "leur"
+  ],
+  "it": [
+   "ky"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

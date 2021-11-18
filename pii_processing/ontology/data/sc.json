@@ -1,0 +1,202 @@
+{
+ "DISEASE": [
+  "trumentu",
+  "ammaladiai",
+  "medrona",
+  "callantura",
+  "rubinzu",
+  "sturridai",
+  "calori",
+  "maladi\u00e0re",
+  "arroinu",
+  "pica",
+  "addu",
+  "ruinu",
+  "gobbo",
+  "arroina",
+  "tizola",
+  "achichiadura",
+  "annanghere",
+  "runza",
+  "nesigare"
+ ],
+ "ANIMAL": [
+  "crabiolu",
+  "schirrittu",
+  "bettu",
+  "caboni",
+  "bentruxu",
+  "ghesp\u00e0rju",
+  "venturzu",
+  "colbu",
+  "castoro",
+  "schirrimatta",
+  "crabriolu",
+  "colvu",
+  "tilibriu",
+  "giacu",
+  "linci",
+  "bucchemeli",
+  "malabiga",
+  "corbu",
+  "bentruxiu",
+  "tapp\u00e0iu",
+  "castorru",
+  "schirri",
+  "crabolu",
+  "curturzu",
+  "furittu",
+  "intulzu",
+  "boiamericanu",
+  "sulone",
+  "cirolitta",
+  "intruxu",
+  "iscoj\u00e0ttulu",
+  "gattu",
+  "caboniscu",
+  "gard\u00f9bbulu",
+  "corronca",
+  "istr\u00eca",
+  "porcrabu",
+  "card\u00f9bbulu",
+  "guntorzu",
+  "magliocchina",
+  "chervu",
+  "guntruxu",
+  "crebu",
+  "picchiaranzu",
+  "cherbu",
+  "lintze",
+  "isbirru",
+  "astoreddu",
+  "istambeccu",
+  "corrancra",
+  "meurra"
+ ],
+ "PUBLIC_FIGURE": [
+  "sperai",
+  "pedru",
+  "e",
+  "citiri",
+  "o",
+  "gregoriu",
+  "predu"
+ ],
+ "TITLE": [
+  "sannori",
+  "sennore"
+ ],
+ "JOB": [
+  "cabraxu",
+  "datori",
+  "crabarzu",
+  "crab\u00e0giu",
+  "crabalzu",
+  "isclavu",
+  "cabr\u00e0rgiu",
+  "sciau",
+  "cardareri"
+ ],
+ "PLANT": [
+  "frustinaca",
+  "saliche",
+  "saighi",
+  "fostinaja",
+  "sagili",
+  "sabixi",
+  "lattuca"
+ ],
+ "PERSON_PRONOUN": [
+  "noltru",
+  "noso"
+ ],
+ "ORG": [
+  "studai",
+  "ai",
+  "guvernu",
+  "cuverrinu",
+  "cabu_birde",
+  "i_ching",
+  "cuberru",
+  "isciola",
+  "scola"
+ ],
+ "LANGUAGE": [
+  "atzentu"
+ ],
+ "FOOD": [
+  "benz\u00eda",
+  "ghingh\u00eda"
+ ],
+ "LOCATION": [
+  "campile",
+  "arena",
+  "campu"
+ ],
+ "PERSON": [
+  "i_ching"
+ ],
+ "GENDER": [
+  "male",
+  "mascu",
+  "mascru"
+ ],
+ "RELIGION": [
+  "islam"
+ ],
+ "PRODUCT": [
+  "c\u00e0via"
+ ],
+ "FAC": [
+  "isparadorzu"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "sorre": "fr\u00e0de",
+  "umbu": "fr\u00e0de",
+  "sorri": "fr\u00e0de",
+  "mutzere": "madiru",
+  "mulleri": "madiru",
+  "mugere": "madiru",
+  "mullei": "madiru",
+  "muzere": "madiru"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "male",
+   "mascru",
+   "mascu",
+   "m\u00e0sciu",
+   "m\u00e0schiu"
+  ],
+  "she": [
+   "d\u00f2na",
+   "perdere"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "sese"
+  ],
+  "she": [
+   "sese"
+  ],
+  "it": [
+   "issu",
+   "chistu",
+   "sese"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

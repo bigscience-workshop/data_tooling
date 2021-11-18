@@ -1,0 +1,28 @@
+{
+ "PLANT": [
+  "\u043b\u0430\u043c\u0430\u0434\u0443\u0440"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u044d\u0431\u0435\u043b": "\u044d\u043c\u0435\u043d",
+  "\u0431\u0443\u0431\u0430": "\u044d\u043c\u0435\u043d"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "\u044f\u0441"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

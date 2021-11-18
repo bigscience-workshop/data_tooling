@@ -1,0 +1,76 @@
+{
+ "RELIGION_MEMBER": [
+  "yudat\u0254"
+ ],
+ "LANGUAGE": [
+  "helat\u0254",
+  "fransegbe"
+ ],
+ "JOB": [
+  "atikew\u0254la",
+  "avul\u00e9la"
+ ],
+ "DISEASE": [
+  "nyatsu",
+  "mi"
+ ],
+ "PUBLIC_FIGURE": [
+  "yakob"
+ ],
+ "ANIMAL": [
+  "afia",
+  "koklo",
+  "koklovi"
+ ],
+ "LOCATION": [
+  "ga_wuieve",
+  "eden_b\u0254"
+ ],
+ "PLANT": [
+  "ga_wui\u0256eka",
+  "ga_ene"
+ ],
+ "FOOD": [
+  "ga_at\u0254\u0303"
+ ],
+ "ORG": [
+  "mi",
+  "ga_adre",
+  "ga_ewo"
+ ],
+ "PRODUCT": [
+  "nubabla_yeye"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "t\u0254gbuiy\u0254viny\u0254nu": "t\u0254gbuiy\u0254vi\u014butsu",
+  "kpovit\u0254ny\u0254nu": "kpovit\u0254\u014butsu",
+  "n\u0254viny\u0254nu": "n\u0254vi\u014butsu"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "ny\u0254nuvi",
+   "ny\u0254nu"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "eya"
+  ],
+  "she": [
+   "eya"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

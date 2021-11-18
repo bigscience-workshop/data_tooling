@@ -1,0 +1,24 @@
+{
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\ud800\udf80\ud800\udf83\ud800\udf9a": "\ud800\udf80\ud800\udf83"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {},
+ "en_pronoun2pronoun": {
+  "she": [
+   "\ud800\udf85\ud800\udf8a"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

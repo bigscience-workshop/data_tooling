@@ -1,0 +1,66 @@
+{
+ "GENDER": [
+  "kungka",
+  "minyma"
+ ],
+ "PERSON_PRONOUN": [
+  "palunyanya",
+  "palanya",
+  "nyaranya"
+ ],
+ "PRODUCT": [
+  "ma_pitja"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "palunya": "ngaanya",
+  "nyara": "palunyanya"
+ },
+ "other_gender_swap": {
+  "palunya": "nyara",
+  "nyara": "palunya",
+  "palanya": "nyara",
+  "ngaanya": "nyara",
+  "palunyanya": "nyara",
+  "nyaranya": "palunya"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "kungka",
+   "minyma"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "nyara",
+   "palunya",
+   "palanya",
+   "ngaanya",
+   "palunyanya",
+   "nyaranya"
+  ],
+  "she": [
+   "nyara",
+   "palunya"
+  ],
+  "they": [
+   "nyara",
+   "palunya"
+  ],
+  "it": [
+   "nyara",
+   "palunya"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

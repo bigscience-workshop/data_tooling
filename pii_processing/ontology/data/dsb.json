@@ -1,0 +1,163 @@
+{
+ "ANIMAL": [
+  "karwona",
+  "rapak",
+  "\u0161krodawa",
+  "kohlica",
+  "grampak",
+  "morska_swinka",
+  "kanja",
+  "pa\u0161turlica",
+  "rybornik",
+  "ryborak",
+  "rybarnik",
+  "burunduk"
+ ],
+ "LANGUAGE": [
+  "hindi\u0161\u0107ina",
+  "esperanto"
+ ],
+ "DISEASE": [
+  "zarz",
+  "hungor"
+ ],
+ "PUBLIC_FIGURE": [
+  "sherry",
+  "w",
+  "jurij",
+  "a",
+  "steward",
+  "o",
+  "jaden",
+  "putin",
+  "frank"
+ ],
+ "RELIGION_MEMBER": [
+  "protestant",
+  "brat\u0161"
+ ],
+ "JOB": [
+  "stewardes",
+  "kral",
+  "leutnant",
+  "stewardesa",
+  "samostatny",
+  "ch\u00f3rgojnik",
+  "radny",
+  "duchta\u0155",
+  "man",
+  "stotnik",
+  "kralik",
+  "steward"
+ ],
+ "SOC_ECO_CLASS": [
+  "ma\u0142o"
+ ],
+ "RACE": [
+  "turk"
+ ],
+ "PERSON_PRONOUN": [
+  "na\u0161",
+  "we",
+  "naju",
+  "my"
+ ],
+ "FAC": [
+  "dw\u00f3rni\u0161\u0107o"
+ ],
+ "PRODUCT": [
+  "nowoseelandska"
+ ],
+ "GENDER": [
+  "samica",
+  "man"
+ ],
+ "FOOD": [
+  "limonada"
+ ],
+ "PLANT": [
+  "jawor",
+  "serbowka",
+  "marchwej",
+  "rotwica"
+ ],
+ "ORG": [
+  "cerwjene_m\u00f3rjo",
+  "nordrhein_westfalska"
+ ],
+ "LOCATION": [
+  "za_kulisami"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u017aowka": "son",
+  "policistka": "policaj",
+  "w\u00f3na": "w\u00f3n",
+  "sot\u0161a": "brat\u0161",
+  "stewardesa": "steward",
+  "\u017eona": "c\u0142owjek",
+  "\u017ee\u0144ska": "mu\u017e",
+  "g\u00f3lc": "\u017aow\u0107o"
+ },
+ "other_gender_swap": {
+  "jeju": "jej",
+  "jich": "jeje",
+  "nich": "jeje",
+  "n\u011b": "jeje",
+  "w\u00f3ni": "w\u00f3na",
+  "w\u00f3n": "w\u00f3ni",
+  "jomu": "nich",
+  "w\u00f3na": "w\u00f3ni",
+  "jej": "jeju",
+  "jeje": "jeju"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "c\u0142owjek",
+   "mu\u017e",
+   "g\u00f3lc",
+   "man"
+  ],
+  "she": [
+   "\u017aow\u0107o",
+   "samica",
+   "kn\u011b\u017ena",
+   "\u017eona",
+   "\u017ee\u0144ska"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "jomu",
+   "w\u00f3n"
+  ],
+  "she": [
+   "w\u00f3na",
+   "jej",
+   "jeje"
+  ],
+  "they": [
+   "n\u011b",
+   "jeju",
+   "jej",
+   "nich",
+   "jich",
+   "w\u00f3ni"
+  ],
+  "it": [
+   "a\u017e",
+   "w\u00f3no"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

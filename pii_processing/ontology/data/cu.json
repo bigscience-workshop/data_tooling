@@ -1,0 +1,51 @@
+{
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\u2c3f\u2c30\u2c45\u2c39": "\u043e\u0442\u044c\u0446\u044c",
+  "\u043e\u043d\u0430": "\u043e\u043d\u044a",
+  "\u0441\u0435\u0441\u0442\u0440\u0430": "\u2c31\u2c43\u2c30\u2c45\u2c43\u2c4f",
+  "\u2c44\u2c35\u2c44\u2c45\u2c43\u2c30": "\u0431\u0440\u0430\u0442\u0440\u044a",
+  "\u2c36\u2c35\u2c40\u2c30": "\u2c3f\u2c58\u2c36\u2c50",
+  "\u0436\u0435\u043d\u0430": "\u043c\u046b\u0436\u044c"
+ },
+ "other_gender_swap": {
+  "\u043e\u043d\u0438": "\u043e\u043d\u0430",
+  "\u043e\u043d\u044a": "\u043e\u043d\u0438",
+  "\u043e\u043d\u0430": "\u043e\u043d\u0438"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "\u0434\u0463\u0432\u0430",
+   "\u2c36\u2c35\u2c40\u2c30",
+   "\u0436\u0435\u043d\u0430",
+   "\u0434\u0463\u0432\u0438\u0446\u0430"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "\u043e\u043d\u044a"
+  ],
+  "she": [
+   "\u043e\u043d\u0430"
+  ],
+  "they": [
+   "\u043e\u043d\u0438"
+  ],
+  "it": [
+   "\u0442\u044a",
+   "\u043e\u043d\u043e",
+   "\u043e\u043d\u0430"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

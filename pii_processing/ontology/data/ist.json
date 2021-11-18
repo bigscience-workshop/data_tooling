@@ -1,0 +1,61 @@
+{
+ "FOOD": [
+  "dazierto"
+ ],
+ "PLANT": [
+  "sareza"
+ ],
+ "DISEASE": [
+  "mursag\u00e0"
+ ],
+ "GENDER": [
+  "mas'cio"
+ ],
+ "JOB": [
+  "mare\u00eetimo",
+  "cunpagno"
+ ],
+ "ORG": [
+  "nato"
+ ],
+ "LANGUAGE": [
+  "abrieo"
+ ],
+ "PUBLIC_FIGURE": [
+  "sparansa"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "muier": "mare\u00ee"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "mas'cio"
+  ],
+  "she": [
+   "duona"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "they": [
+   "luri"
+  ],
+  "it": [
+   "quisto",
+   "stu",
+   "quista"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}
