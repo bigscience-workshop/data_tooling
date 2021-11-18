@@ -57,7 +57,7 @@ repos:
   rev: v1.1.10
   hooks:
   - id: remove-tabs
-    exclude: ^(pii_processing|Makefile)
+    exclude: ^(pii_processing|.*Makefile)
 
 - repo: https://github.com/shellcheck-py/shellcheck-py
   rev: v0.8.0.1
