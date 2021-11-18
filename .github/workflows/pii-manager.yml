@@ -6,6 +6,8 @@ on:
       - 'pii-manager/src/**'
       - 'pii-manager/test/**'
       - 'pii-manager/setup.py'
+      - 'pii-manager/Makefile'
+      - 'pii-manager/requirements.txt'
 
 jobs:
   build:

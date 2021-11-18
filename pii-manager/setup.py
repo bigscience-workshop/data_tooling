@@ -11,13 +11,14 @@ from typing import Dict, List
 
 from src.pii_manager import VERSION
 
-PKGNAME = 'pii-manager'
-GITHUB_URL = ''
-DESC = '''
+PKGNAME = "pii-manager"
+GITHUB_URL = ""
+DESC = """
 Process PII fragments contained in text, for different languages & countries
-'''
+"""
 
 # --------------------------------------------------------------------
+
 
 def requirements(filename='requirements.txt'):
     '''Read the requirements file'''
@@ -41,9 +42,9 @@ setup_args = dict(
     # Metadata
     name=PKGNAME,
     version=VERSION,
-    description='Text Anonymization of PII',
+    description="Text Anonymization of PII",
     long_description=DESC,
-    license='Apache',
+    license="Apache",
     url=GITHUB_URL,
     download_url=GITHUB_URL + '/tarball/v' + VERSION,
 

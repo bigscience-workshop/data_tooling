@@ -20,7 +20,7 @@ PYTHON ?= python3
 
 # Package version: taken from the __init__.py file
 VERSION_FILE := src/pii_manager/__init__.py
-VERSION	     := $(shell grep VERSION $(VERSION_FILE) | sed -r "s/VERSION = '(.*)'/\1/")
+VERSION	     := $(shell grep VERSION $(VERSION_FILE) | sed -r "s/VERSION = \"(.*)\"/\1/")
 
 PKGFILE := dist/$(NAME)-$(VERSION).tar.gz
 
@@ -41,7 +41,7 @@ version:
 venv: $(VENV)
 
 unit: venv pytest
-	PYTHONPATH=src:test $(VENV)/bin/pytest $(ARGS) test/unit 
+	PYTHONPATH=src:test $(VENV)/bin/pytest $(ARGS) test/unit
 
 pytest: $(VENV)/bin/pytest
 

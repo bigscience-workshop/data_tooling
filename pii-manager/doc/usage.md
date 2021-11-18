@@ -23,11 +23,11 @@ Usage of the object-based package API goes like this:
 
  # Process a text buffer
  text_out = proc(text_in)
- 
+
 ```
 
 ... this will load and execute anonymization tasks for English that will
-anonymize credit card numbers, disease information, and Government IDs for US 
+anonymize credit card numbers, disease information, and Government IDs for US
 and UK (assuming all these tasks are implemented in the package).
 
 
@@ -41,7 +41,7 @@ It is also possible to load all possible tasks for a language:
  proc = PiiManager('en', 'all', all_tasks=True)
 
  text_out = proc(text_in)
- 
+
 ```
 
 ...this will load all anonymization tasks available for English, including:
@@ -69,7 +69,7 @@ executed as:
  # Process the file
  process_file(infilename, outfilename, lang, 
               country=country, tasks=tasklist)
- 
+
 ```
 
 The file-based API accepts also the `all_tasks` argument to add all suitable
@@ -82,12 +82,12 @@ Installing the package provides also a command-line script, `pii-manage`,
 that can be used to process files through PII tasks:
 
     pii-manage <infile> <outfile> --lang es --country es ar mx \
-	  --tasks CREDIT_CARD BITCOIN_ADDRESS BANK_ACCOUNT
+       --tasks CREDIT_CARD BITCOIN_ADDRESS BANK_ACCOUNT
 	
 or, to add all possible tasks for a given language:
 
     pii-manage <infile> <outfile> --lang es --country all \
-	   --all-tasks 
+       --all-tasks 
 
 
 ## Processing mode
@@ -115,7 +115,7 @@ with this input, the output for each of the three processing modes will be:
 > {"name": "CREDIT_CARD", "value": "4273 9666 4581 5642", "pos": 25, "line": 1}
 
 
-By default in _replace_ mode all PII items found will be substituted with 
+By default in _replace_ mode all PII items found will be substituted with
 a `<PIINAME>` string. If another placeholder is preferred, the `PiiManager`
 constructor can be called with an additional `template` argument, containing
 a string that will be processed through the Python string `format()` method,

@@ -1,25 +1,25 @@
 # Adding PII tasks
 
 To add a new PII processing task to the package, prepare a Pull Request on the
-repository with the folloginw changes:
+repository with the following changes:
 
  1. If the task type is a new one, add an identifier for it in [PiiEnum]
  2. If it is for a language not yet covered, add a new language subfolder
     undder the [lang] folder, using the [ISO 639-1] code for the language
  3. Then
     * If it is a country-independent PII, it goes into the `any` subdir 
-	  (create that dieectory if it is not present)
+      (create that directory if it is not present)
     * if it is country-dependent, create a country subdir if not present, 
-	  using a **lowercased version** of its [ISO 3166-1] country code
+      using a **lowercased version** of its [ISO 3166-1] country code
  4. Under the final chosen subfolder, add the task as a Python `mytaskname.py`
     module (the name of the file is not relevant). The module must contain:
-	* The task implementation, which can have any of three flavours (regex,
-	  function or class), see below
+    * The task implementation, which can have any of three flavours (regex,
+      function or class), see below
     * The task descriptor, a list with the (compulsory) name `PII_TASKS` (see
-	  below)
+      below)
  5. Finally, add a unit test to check the validity for the task code, in the
     proper place under [test/unit/lang]. There should be at least a positive
-	and a negative test
+    and a negative test
 
 ## Task implementation
 
@@ -41,7 +41,6 @@ implements more than one PII).
    - (only if the implementation is of regex type) a text description of the 
      task (for documentation purposes)
 
- 
 
 
 [task implementation]: #task-implementation
