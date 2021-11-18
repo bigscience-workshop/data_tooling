@@ -65,7 +65,7 @@ Expected: CEAFm=8/13=0.61538 [common=4, recall=4/6=0.66667, Prec=4/7=0.57143]
 Expected: CEAFe=4.14/7=0.62857 [common=1+4/5+2/5=2.2, recall=2.2/3=0.73333, Prec=2.2/4=0.55]
 Expected: BLANC=0.30 [recall_c=1/4, prec_c=1/4, recall_n=5/11, prec_n=5/17]
 
-if No de-dup: 
+if No de-dup:
 Expected: CEAFm=8/14=0.57 [common=4 recall=4/6=0.67 prec=4/8=.5]
 Expected: CEAFe=4.14/7=0.59 [common=1+4/6+2/5=2.07, recall=2.07/3=0.69, Prec=2.07/4=0.52]
 
@@ -74,14 +74,14 @@ TC-A-8 -- response with both missing and false-alarm mentions/entities, and dupl
 Key/Ref: {a} {bc} {def}
 Rsp/Sys: {a} {bcx} {dy} {Bz}
 
-De-dup: 
+De-dup:
 Expected: BCUB=.4683 [recall=5/9, prec=17/42]
 Expected: MUC=1/3=.33333 [recall=1/3, prec=1/3]
 Expected: CEAFm=8/13=0.61538 [common=4 recall=4/6=0.67 prec=4/7=.57143]
 Expected: CEAFe=4.14/7=0.63 [common=1+4/5+2/5=2.2, recall=2.2/3=0.73, Prec=2.2/4=0.55]
 Expected: BLANC=0.30 [recall_c=1/4, prec_c=1/4, recall_n=5/11, prec_n=5/17]
 
-If no de-dup: 
+If no de-dup:
 Expected: CEAFm=8/14=0.57 [common=4 recall=4/6=0.67 prec=4/8=.5]
 Expected: CEAFe=4.14/7=0.63 [common=1+4/5+2/5=2.2, recall=2.2/3=0.73, Prec=2.2/4=0.55]
 
@@ -90,7 +90,7 @@ Key/Ref: {a} {bc} {def}
 Rsp/Sys: {a} {bcx} {dy} {Bx10z}
 de-dup Rsp/Sys: {a} {bcx} {dy} {z}
 
-De-dup: 
+De-dup:
 Expected: BCUB=.4683 [recall=5/9, prec=17/42]
 Expected: MUC=1/3=.33333 [recall=1/3, prec=1/3]
 Expected: CEAFm=8/14=0.57 [common=4 recall=4/6=0.67 prec=4/7=.57143]
@@ -135,7 +135,7 @@ Expected: BLANC=0.04 [recall_c=1/4, prec_c=1/21, recall_n=0/11, prec_n=0/0, f_n=
 
 TC-B-1 -- spurious mention (x) and missing mention (a) in response; link (bc) is a key non-coref link and is an incorrect response coref link.
 
-    Keys: {ab} {cde} 
+    Keys: {ab} {cde}
 Response: {bcx} {de}
 
     key coref links: C_k = {(ab), (cd), (de), (ce)}
@@ -153,12 +153,12 @@ BLANC = 1/2 (F_c + F_n) = 7/24.
 
 
 
-	TC-C-1 -- same as TC14 plus a new entity and its correct prediction shown. this was for testing the more than two entity case.
+    TC-C-1 -- same as TC14 plus a new entity and its correct prediction shown. this was for testing the more than two entity case.
 
     Keys: {ab} {cde} {fg}
 Response: {bcx} {de} {fg}
 
-         key coref links: C_k = {(ab), (cd), (de), (ce), (fg)}} 
+         key coref links: C_k = {(ab), (cd), (de), (ce), (fg)}}
      key non-coref links: N_k = {(ac), (ad), (ae), (bc), (bd), (be), (af), (ag), (bf), (bg), (cf), (cg), (df), (dg), (ef), (eg)}
 
     response coref links: C_r = {(bc), (bx), (cx), (de), (fg)}
@@ -181,7 +181,7 @@ key: {12345} {67} {89ABC}
 
 1-2-3-4-5
 
-6-7     
+6-7
 
 8-9-A-B-C
 
@@ -192,7 +192,7 @@ response: {12345} {6789ABC}
 
 1-2-3-4-5
 
-6-7     
+6-7
   |
   8-9-A-B-C
 
@@ -210,7 +210,7 @@ key: {12345} {67} {89ABC}
 
 1-2-3-4-5
 
-6-7     
+6-7
 
 8-9-A-B-C
 
@@ -232,7 +232,7 @@ Expected:  MUC [r=9/9, p=9/10, f=0.947368421]
 
 # ---------- examples from the MUC paper
 
-TC-F-1 -- 
+TC-F-1 --
 
      key: {ABCD}    ---- Links: A-B; B-C; C-D
 response: {AB} {CD} ---- Links: A-B; C-D
@@ -305,7 +305,7 @@ Expected: CEAFe=1
 Expected: BLANC=1 [recall_c=15/15=1, prec_c=15/15=1]
 
 
-TC-M-2 - Only coreferent mentions in the key. Gold mentions. Response contains only non-coreference links. 
+TC-M-2 - Only coreferent mentions in the key. Gold mentions. Response contains only non-coreference links.
 Key/Ref: {abcdef}
 Rsp/Sys: {a} {b} {c} {d} {e} {f}
 
@@ -313,7 +313,7 @@ Expected: MUC=0
 Expected: BLANC=0 [recall_c=0/15=0, prec_c=0/0=0]
 
 
-TC-M-3 - Only coreferent mentions in the key. Gold mentions. Response contains coreference and non-coreference links. 
+TC-M-3 - Only coreferent mentions in the key. Gold mentions. Response contains coreference and non-coreference links.
 Key/Ref: {abcdef}
 Rsp/Sys: {ab} {cde} {f}
 
@@ -335,7 +335,7 @@ Expected: MUC=0
 Expected: BLANC=0 [recall_c=0/15=0, prec_c=0/0=0]
 
 
-TC-M-6 - Only coreferent mentions in the key. System mentions: coreference and non-coreference links. 
+TC-M-6 - Only coreferent mentions in the key. System mentions: coreference and non-coreference links.
 Key/Ref: {abcdef}
 Rsp/Sys: {ab} {cxy} {z}
 
@@ -353,14 +353,14 @@ Expected: CEAFe=1
 Expected: BLANC=1 [recall_n=15/15=1, prec_n=15/15=1]
 
 
-TC-N-2 - Only singletons in the key. Gold mentions. Response contains only coreference links. 
+TC-N-2 - Only singletons in the key. Gold mentions. Response contains only coreference links.
 Key/Ref: {a} {b} {c} {d} {e} {f}
 Rsp/Sys: {abcdef}
 
 Expected: BLANC=0 [recall_n=0/15=0, prec_n=0/0=0]
 
 
-TC-N-3 - Only singletons in the key. Gold mentions. Response contains coreference and non-coreference links. 
+TC-N-3 - Only singletons in the key. Gold mentions. Response contains coreference and non-coreference links.
 Key/Ref: {a} {b} {c} {d} {e} {f}
 Rsp/Sys: {ab} {cde} {f}
 
@@ -375,16 +375,15 @@ Expected: MUC=0
 Expected: BLANC=0.20 [recall_n=3/15, prec_n=3/15]
 
 
-TC-N-5 - Only singletons in the key. System mentions: only coreference links. 
+TC-N-5 - Only singletons in the key. System mentions: only coreference links.
 Key/Ref: {a} {b} {c} {d} {e} {f}
 Rsp/Sys: {abcxyz}
 
 Expected: BLANC=0 [recall_n=0/15=0, prec_n=0/0=0]
 
 
-TC-N-6 - Only singletons in the key. Only coreferent mentions in the key. System mentions: coreference and non-coreference links. 
+TC-N-6 - Only singletons in the key. Only coreferent mentions in the key. System mentions: coreference and non-coreference links.
 Key/Ref: {a} {b} {c} {d} {e} {f}
 Rsp/Sys: {ab} {cxy} {z}
 
 Expected: BLANC=0.15 [recall_n=2/15, prec_n=2/11]
-

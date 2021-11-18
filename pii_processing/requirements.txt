@@ -1,6 +1,6 @@
-spacy
 cython>=0.25
+faker
 pytest
-transformers 
-faker 
 sentencepiece
+spacy
+transformers

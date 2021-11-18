@@ -89,9 +89,16 @@ class Model(nn.Module):
     def forward(self, inputs, concat_axis=1):
         pairs = len(inputs) == 8
         if pairs:
-            spans, words, single_features, ant_spans, ant_words, ana_spans, ana_words, pair_features = (
-                inputs
-            )
+            (
+                spans,
+                words,
+                single_features,
+                ant_spans,
+                ant_words,
+                ana_spans,
+                ana_words,
+                pair_features,
+            ) = inputs
         else:
             spans, words, single_features = inputs
         words = words.type(torch.LongTensor)

@@ -2372,4 +2372,3 @@ thread.  The hook should be written to be reentrant, if it performs
 operations that might cause new allocation events (such as the
 creation/descruction numpy objects, or creating/destroying Python
 objects which might cause a gc)
-

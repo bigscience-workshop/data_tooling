@@ -100,6 +100,3 @@ CUDA_VISIBLE_DEVICES=3 python3 train_ner_freezedBERT.py --data_dir data/yor/ \
 --do_eval \
 --do_predict
 ```
-
-
-

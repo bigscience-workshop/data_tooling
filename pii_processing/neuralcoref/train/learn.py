@@ -37,8 +37,7 @@ def clipped_sigmoid(inputs):
 
 def get_all_pairs_loss(n):
     def all_pair_loss(scores, targets):
-        """ All pairs and single mentions probabilistic loss
-        """
+        """All pairs and single mentions probabilistic loss"""
         labels = targets[0]
         weights = targets[4].data if len(targets) == 5 else None
         loss_op = nn.BCEWithLogitsLoss(weight=weights, reduction="sum")
@@ -50,8 +49,7 @@ def get_all_pairs_loss(n):
 
 def get_top_pair_loss(n):
     def top_pair_loss(scores, targets, debug=False):
-        """ Top pairs (best true and best mistaken) and single mention probabilistic loss
-        """
+        """Top pairs (best true and best mistaken) and single mention probabilistic loss"""
         true_ants = targets[2]
         false_ants = targets[3] if len(targets) == 5 else None
         s_scores = clipped_sigmoid(scores)
@@ -79,8 +77,7 @@ def get_top_pair_loss(n):
 
 def get_ranking_loss(n):
     def ranking_loss(scores, targets):
-        """ Slack-rescaled max margin loss
-        """
+        """Slack-rescaled max margin loss"""
         costs = targets[1]
         true_ants = targets[2]
         weights = targets[4] if len(targets) == 5 else None
@@ -216,7 +213,7 @@ def run_model(args):
         best_f1_conll = 0
         lower_eval = 0
         for epoch in range(start_epoch, end_epoch):
-            """ Run an epoch """
+            """Run an epoch"""
             print(f"🚘 {save_name} Epoch {epoch:d}")
             model.train()
             start_time_log = time.time()

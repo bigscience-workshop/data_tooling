@@ -111,7 +111,7 @@ class Coref(object):
         Clean up and prepare one cluster for each mention
         """
         self.mention_to_cluster = list(range(len(self.data.mentions)))
-        self.clusters = dict((i, [i]) for i in self.mention_to_cluster)
+        self.clusters = {i: [i] for i in self.mention_to_cluster}
         self.mentions_single_scores = {}
         self.mentions_pairs_scores = {}
         for mention in self.mention_to_cluster:
@@ -205,7 +205,7 @@ class Coref(object):
     def run_coref_on_utterances(
         self, last_utterances_added=False, follow_chains=True, debug=False
     ):
-        """ Run the coreference model on some utterances
+        """Run the coreference model on some utterances
 
         Arg:
             last_utterances_added: run the coreference model over the last utterances added to the data
@@ -244,7 +244,7 @@ class Coref(object):
         context_speakers_id=None,
         speakers_names=None,
     ):
-        """ Clear history, load a list of utterances and an optional context and run the coreference model on them
+        """Clear history, load a list of utterances and an optional context and run the coreference model on them
 
         Arg:
         - `utterances` : iterator or list of string corresponding to successive utterances (in a dialogue) or sentences.
@@ -253,7 +253,7 @@ class Coref(object):
             - if not provided, assume two speakers speaking alternatively.
             - if utterances and utterances_speaker are not of the same length padded with None
         - `context=None` : iterator or list of string corresponding to additionnal utterances/sentences sent prior to `utterances`. Coreferences are not computed for the mentions identified in `context`. The mentions in `context` are only used as possible antecedents to mentions in `uterrance`. Reduce the computations when we are only interested in resolving coreference in the last sentences/utterances.
-        - `context_speakers_id=None` : same as `utterances_speakers_id` for `context`. 
+        - `context_speakers_id=None` : same as `utterances_speakers_id` for `context`.
         - `speakers_names=None` : dictionnary of list of acceptable speaker names (strings) for speaker_id in `utterances_speakers_id` and `context_speakers_id`
         Return:
             clusters of entities with coreference resolved
@@ -286,7 +286,7 @@ class Coref(object):
     ###################################
 
     def get_utterances(self, last_utterances_added=True):
-        """ Retrieve the list of parsed uterrances"""
+        """Retrieve the list of parsed uterrances"""
         if last_utterances_added and len(self.data.last_utterances_loaded):
             return [
                 self.data.utterances[idx] for idx in self.data.last_utterances_loaded
@@ -295,7 +295,7 @@ class Coref(object):
             return self.data.utterances
 
     def get_resolved_utterances(self, last_utterances_added=True, blacklist=True):
-        """ Return a list of utterrances text where the """
+        """Return a list of utterrances text where the"""
         coreferences = self.get_most_representative(last_utterances_added, blacklist)
         resolved_utterances = []
         for utt in self.get_utterances(last_utterances_added=last_utterances_added):
@@ -312,25 +312,25 @@ class Coref(object):
                         resolved_utt += token.text_with_ws
                 if in_coref is not None and token == in_coref[-1]:
                     resolved_utt += (
-                        " " if token.whitespace_ and resolved_utt[-1] is not " " else ""
+                        " " if token.whitespace_ and resolved_utt[-1] != " " else ""
                     )
                     in_coref = None
             resolved_utterances.append(resolved_utt)
         return resolved_utterances
 
     def get_mentions(self):
-        """ Retrieve the list of mentions"""
+        """Retrieve the list of mentions"""
         return self.data.mentions
 
     def get_scores(self):
-        """ Retrieve scores for single mentions and pair of mentions"""
+        """Retrieve scores for single mentions and pair of mentions"""
         return {
             "single_scores": self.mentions_single_scores,
             "pair_scores": self.mentions_pairs_scores,
         }
 
     def get_clusters(self, remove_singletons=False, blacklist=False):
-        """ Retrieve cleaned clusters"""
+        """Retrieve cleaned clusters"""
         clusters = self.clusters
         mention_to_cluster = self.mention_to_cluster
         remove_id = []

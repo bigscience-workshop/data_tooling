@@ -309,4 +309,3 @@ the input types, and the output types can be cast to
 the output operands where provided.
 
 Returns 0 on success, -1 (with exception raised) on validation failure.
-

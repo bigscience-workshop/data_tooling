@@ -16,8 +16,8 @@ SIZE_WORD = 8  # number of words in a mention (tuned embeddings)
 SIZE_EMBEDDING = 50  # size of the words embeddings
 SIZE_FP = 70  # number of features for a pair of mention
 SIZE_FP_COMPRESSED = (
-    9
-)  # size of the features for a pair of mentions as stored in numpy arrays
+    9  # size of the features for a pair of mentions as stored in numpy arrays
+)
 SIZE_FS = 24  # number of features of a single mention
 SIZE_FS_COMPRESSED = 6  # size of the features for a mention as stored in numpy arrays
 SIZE_GENRE = 7  # Size of the genre one-hot array
@@ -42,10 +42,10 @@ MAX_BINS = DISTANCE_BINS[-1] + 1
 
 
 def encode_distance(x):
-    """ Encode an integer or an array of integers as a (bined) one-hot numpy array """
+    """Encode an integer or an array of integers as a (bined) one-hot numpy array"""
 
     def _encode_distance(d):
-        """ Encode an integer as a (bined) one-hot numpy array """
+        """Encode an integer as a (bined) one-hot numpy array"""
         dist_vect = np.zeros((11,), dtype="float32")
         if d < 64:
             dist_vect[DISTANCE_BINS[d]] = 1
@@ -64,18 +64,18 @@ def encode_distance(x):
 
 def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=10):
     """
-        A parallel version of the map function with a progress bar. 
+    A parallel version of the map function with a progress bar.
 
-        Args:
-            array (array-like): An array to iterate over.
-            function (function): A python function to apply to the elements of array
-            n_jobs (int, default=16): The number of cores to use
-            use_kwargs (boolean, default=False): Whether to consider the elements of array as dictionaries of 
-                keyword arguments to function 
-            front_num (int, default=3): The number of iterations to run serially before kicking off the parallel job. 
-                Useful for catching bugs
-        Returns:
-            [function(array[0]), function(array[1]), ...]
+    Args:
+        array (array-like): An array to iterate over.
+        function (function): A python function to apply to the elements of array
+        n_jobs (int, default=16): The number of cores to use
+        use_kwargs (boolean, default=False): Whether to consider the elements of array as dictionaries of
+            keyword arguments to function
+        front_num (int, default=3): The number of iterations to run serially before kicking off the parallel job.
+            Useful for catching bugs
+    Returns:
+        [function(array[0]), function(array[1]), ...]
     """
     # We run the first few iterations serially to catch bugs
     if front_num > 0:

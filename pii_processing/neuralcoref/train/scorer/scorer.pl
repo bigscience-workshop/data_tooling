@@ -55,4 +55,3 @@ if ($metric eq 'all') {
 else {
   &CorScorer::Score($metric, @ARGV);
 }
-

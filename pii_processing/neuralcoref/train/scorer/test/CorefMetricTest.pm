@@ -8,27 +8,27 @@ our @EXPORT = qw(ComputeScoreFromCounts DiffExpectedAndActual);
 
 ################################################################################
 # Compute recall, precision and F1.
-# 
+#
 # Input: (numerator_counts_for_recall, denominator_counts_for_recall,
 #         numerator_counts_for_precision, denominator_counts_for_precision)
 # Output: (recall, precision, F1)
 ################################################################################
 sub ComputeScoreFromCounts {
   # The first 4 are also coref link counts when using BLANC.
-  my ($recall_numerator, $recall_denominator, 
+  my ($recall_numerator, $recall_denominator,
       $precision_numerator, $precision_denominator, @noncoref_counts) = @_;
   # The coref recall, precision, and F1 when using BLANC.
-  my ($recall, $precision, $F1) = 
-    RPFFromCounts($recall_numerator, $recall_denominator, 
+  my ($recall, $precision, $F1) =
+    RPFFromCounts($recall_numerator, $recall_denominator,
                   $precision_numerator, $precision_denominator);
 
   # BLANC: @noncoref_counts=
-  #   (noncoref_numerator_recall, noncoref_denominator_recall, 
-  #    noncoref_numerator_precision, noncoref_denominator_precision) 
+  #   (noncoref_numerator_recall, noncoref_denominator_recall,
+  #    noncoref_numerator_precision, noncoref_denominator_precision)
   if (scalar(@noncoref_counts) == 4) {
     ($recall, $precision, $F1) = CorScorer::ComputeBLANCFromCounts(
-	$recall_numerator, $recall_denominator, $precision_denominator,
-	$noncoref_counts[0], $noncoref_counts[1], $noncoref_counts[3]);
+    $recall_numerator, $recall_denominator, $precision_denominator,
+    $noncoref_counts[0], $noncoref_counts[1], $noncoref_counts[3]);
   }
   $recall = ($recall < 0) ? 0 : $recall;
   $precision = ($precision < 0) ? 0 : $precision;
@@ -38,11 +38,11 @@ sub ComputeScoreFromCounts {
 
 sub RPFFromCounts
 {
-  my ($recall_numerator, $recall_denominator, 
+  my ($recall_numerator, $recall_denominator,
       $precision_numerator, $precision_denominator, @nonCorefCounts) = @_;
   my ($recall, $precision, $F1) = (-1, -1, 0);
   if ($recall_denominator > 0) {
-    $recall = $recall_numerator / $recall_denominator; 
+    $recall = $recall_numerator / $recall_denominator;
   }
   if ($precision_denominator > 0) {
     $precision = $precision_numerator / $precision_denominator;
@@ -51,7 +51,7 @@ sub RPFFromCounts
   if (($recall + $precision) > 0) {
     $F1 = 2 * $recall * $precision / ($recall + $precision);
   }
-  
+
   return ($recall, $precision, $F1);
 }
 
@@ -100,8 +100,8 @@ sub ComputeBLANCRPF
 }
 
 ##############################################################################
-# Compute the sum of the duifference between the expected recall, precision, 
-# F1 and the actual one. 
+# Compute the sum of the duifference between the expected recall, precision,
+# F1 and the actual one.
 ##############################################################################
 sub DiffExpectedAndActual {
   my ($expected, $actual) = @_;
@@ -121,4 +121,3 @@ sub DiffExpectedAndActual {
 }
 
 1;
-

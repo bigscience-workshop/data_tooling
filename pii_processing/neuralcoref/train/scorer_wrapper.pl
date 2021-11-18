@@ -25,11 +25,10 @@ if ($metric eq 'all') {
   foreach my $m ('muc', 'bcub', 'ceafm', 'ceafe', 'blanc') {
 #    print "\nMETRIC $m:\n";
     my ($acumNR, $acumDR, $acumNP, $acumDP, $identNR, $identDR, $identNP, $identDP) = &CorScorer::Score($m, @ARGV);
-	print "$acumNR $acumDR $acumNP $acumDP\n$identNR $identDR $identNP $identDP";
+    print "$acumNR $acumDR $acumNP $acumDP\n$identNR $identDR $identNP $identDP";
   }
 }
 else {
   my ($acumNR, $acumDR, $acumNP, $acumDP, $identNR, $identDR, $identNP, $identDP) = &CorScorer::Score($metric, @ARGV);
   print "$acumNR $acumDR $acumNP $acumDP\n$identNR $identDR $identNP $identDP";
 }
-

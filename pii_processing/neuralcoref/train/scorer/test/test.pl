@@ -18,9 +18,9 @@ $script_dir =~ s/\/[^\/][^\/]*$//g;
 
 foreach my $test_case (@CorefMetricTestConfig::TestCases) {
   my $id = $test_case->{'id'};
-  my @key_response_files = ($script_dir . "/" . $test_case->{'key_file'}, 
+  my @key_response_files = ($script_dir . "/" . $test_case->{'key_file'},
                             $script_dir . "/" . $test_case->{'response_file'});
-  print "\nTesting case ($id): keyFile=", $key_response_files[0], 
+  print "\nTesting case ($id): keyFile=", $key_response_files[0],
         " responseFile=", $key_response_files[1], "\n";
   my $expected_metrics = $test_case->{'expected_metrics'};
   foreach my $metric_name (sort keys %$expected_metrics) {
@@ -43,4 +43,3 @@ foreach my $test_case (@CorefMetricTestConfig::TestCases) {
     }
   }
 }
-

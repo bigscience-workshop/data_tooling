@@ -173,9 +173,14 @@ class NCDataset(Dataset):
                     false_ant => (P+1,)
 
         """
-        features_raw, label, pairs_length, pairs_start_index, spans, words = self.mentions[
-            mention_idx
-        ]
+        (
+            features_raw,
+            label,
+            pairs_length,
+            pairs_start_index,
+            spans,
+            words,
+        ) = self.mentions[mention_idx]
         pairs_start_index = pairs_start_index.item()
         pairs_length = pairs_length.item()
 
@@ -310,13 +315,12 @@ class NCDataset(Dataset):
 
 
 class NCBatchSampler(Sampler):
-    """A Batch sampler to group mentions in batches with close number of pairs to be padded together
-    """
+    """A Batch sampler to group mentions in batches with close number of pairs to be padded together"""
 
     def __init__(
         self, mentions_pairs_length, batchsize=600, shuffle=False, debug=False
     ):
-        """ Create and feed batches of mentions having close number of antecedents
+        """Create and feed batches of mentions having close number of antecedents
             The batch are padded and collated by the padder_collate function
 
         # Arguments:
@@ -424,8 +428,8 @@ class NCBatchSampler(Sampler):
 
 
 def padder_collate(batch, debug=False):
-    """ Puts each data field into a tensor with outer dimension batch size
-        Pad variable length input tensors and add a weight tensor to the target
+    """Puts each data field into a tensor with outer dimension batch size
+    Pad variable length input tensors and add a weight tensor to the target
     """
     transposed_inputs = tuple(zip(*batch))
     if len(transposed_inputs) == 2:

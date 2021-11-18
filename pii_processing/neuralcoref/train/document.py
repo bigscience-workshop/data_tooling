@@ -72,7 +72,7 @@ def extract_mentions_spans(doc, blacklist, debug=False):
     mentions_spans = list(ent for ent in doc.ents if ent.label_ in ACCEPTED_ENTS)
 
     if debug:
-        print("==-- ents:", list(((ent, ent.label_) for ent in mentions_spans)))
+        print("==-- ents:", list((ent, ent.label_) for ent in mentions_spans))
     for spans in parallel_process(
         [{"doc": doc, "span": sent, "blacklist": blacklist} for sent in doc.sents],
         _extract_from_sent,
@@ -117,9 +117,7 @@ def _extract_from_sent(doc, span, blacklist=True, debug=False):
                     doc[maxchild_idx].lower_,
                     doc[maxchild_idx].tag_,
                 )
-            maxchild_idx -= (
-                1
-            )  # We don't want mentions finishing with 's or conjunctions/punctuation
+            maxchild_idx -= 1  # We don't want mentions finishing with 's or conjunctions/punctuation
         while minchild_idx <= maxchild_idx and (
             doc[minchild_idx].pos_ in remove_pos
             or doc[minchild_idx].lower_ in lower_not_end
@@ -131,8 +129,8 @@ def _extract_from_sent(doc, span, blacklist=True, debug=False):
                     doc[minchild_idx].tag_,
                 )
             minchild_idx += (
-                1
-            )  # We don't want mentions starting with 's or conjunctions/punctuation
+                1  # We don't want mentions starting with 's or conjunctions/punctuation
+            )
         return minchild_idx, maxchild_idx + 1
 
     mentions_spans = []
@@ -354,18 +352,18 @@ class Mention(spacy.tokens.Span):
         self.in_entities = self._get_in_entities()
 
     def _get_entity_label(self):
-        """ Label of a detected named entity the Mention is nested in if any"""
+        """Label of a detected named entity the Mention is nested in if any"""
         for ent in self.doc.ents:
             if ent.start <= self.start and self.end <= ent.end:
                 return ent.label
         return None
 
     def _get_in_entities(self):
-        """ Is the Mention nested in a detected named entity"""
+        """Is the Mention nested in a detected named entity"""
         return self.entity_label is not None
 
     def _get_type(self):
-        """ Find the type of the Span """
+        """Find the type of the Span"""
         conj = ["CC", ","]
         prp = ["PRP", "PRP$"]
         proper = ["NNP", "NNPS"]
@@ -380,7 +378,7 @@ class Mention(spacy.tokens.Span):
         return mention_type
 
     def _get_doc_sent_number(self):
-        """ Index of the sentence of the Mention in the current utterance"""
+        """Index of the sentence of the Mention in the current utterance"""
         for i, s in enumerate(self.doc.sents):
             if s == self.sent:
                 return i
@@ -388,7 +386,7 @@ class Mention(spacy.tokens.Span):
 
     @property
     def content_words(self):
-        """ Returns an iterator of nouns/proper nouns in the Mention """
+        """Returns an iterator of nouns/proper nouns in the Mention"""
         return (tok.lower_ for tok in self if tok.tag_ in PROPERS_TAGS)
 
     @property
@@ -396,7 +394,7 @@ class Mention(spacy.tokens.Span):
         return np.concatenate([self.spans_embeddings, self.words_embeddings], axis=0)
 
     def heads_agree(self, mention2):
-        """ Does the root of the Mention match the root of another Mention/Span"""
+        """Does the root of the Mention match the root of another Mention/Span"""
         # we allow same-type NEs to not match perfectly,
         # but rather one could be included in the other, e.g., "George" -> "George Bush"
         if (
@@ -412,11 +410,11 @@ class Mention(spacy.tokens.Span):
         return self.root.lower_ == mention2.root.lower_
 
     def exact_match(self, mention2):
-        """ Does the Mention lowercase text matches another Mention/Span lowercase text"""
+        """Does the Mention lowercase text matches another Mention/Span lowercase text"""
         return self.lower_ == mention2.lower_
 
     def relaxed_match(self, mention2):
-        """ Does the nouns/proper nous in the Mention match another Mention/Span nouns/propers"""
+        """Does the nouns/proper nous in the Mention match another Mention/Span nouns/propers"""
         return not self.propers.isdisjoint(mention2.propers)
 
     def speaker_match_mention(self, mention2):
@@ -454,15 +452,15 @@ class Speaker(object):
         return f"{self.speaker_id} <names> {self.speaker_names}"
 
     def add_mention(self, mention):
-        """ Add a Mention of the Speaker"""
+        """Add a Mention of the Speaker"""
         self.mentions.append(mention)
 
     def contain_mention(self, mention):
-        """ Does the Speaker contains a Mention"""
+        """Does the Speaker contains a Mention"""
         return mention in self.mentions
 
     def contain_string(self, string):
-        """ Does the Speaker names contains a string"""
+        """Does the Speaker names contains a string"""
         return any(
             re.sub(WHITESPACE_PATTERN, "", string.lower())
             == re.sub(WHITESPACE_PATTERN, "", s.lower())
@@ -470,11 +468,11 @@ class Speaker(object):
         )
 
     def contain_token(self, token):
-        """ Does the Speaker names contains a token (word)"""
+        """Does the Speaker names contains a token (word)"""
         return any(token.lower() == tok.lower() for tok in self.speaker_tokens)
 
     def speaker_matches_mention(self, mention, strict_match=False):
-        """ Does a Mention matches the speaker names"""
+        """Does a Mention matches the speaker names"""
         # Got info about this speaker
         if self.contain_mention(mention):
             return True
@@ -498,12 +496,18 @@ class EmbeddingExtractor:
     """
 
     def __init__(self, pretrained_model_path):
-        _, self.static_embeddings, self.stat_idx, self.stat_voc = self.load_embeddings_from_file(
-            pretrained_model_path + "static_word"
-        )
-        _, self.tuned_embeddings, self.tun_idx, self.tun_voc = self.load_embeddings_from_file(
-            pretrained_model_path + "tuned_word"
-        )
+        (
+            _,
+            self.static_embeddings,
+            self.stat_idx,
+            self.stat_voc,
+        ) = self.load_embeddings_from_file(pretrained_model_path + "static_word")
+        (
+            _,
+            self.tuned_embeddings,
+            self.tun_idx,
+            self.tun_voc,
+        ) = self.load_embeddings_from_file(pretrained_model_path + "tuned_word")
         self.fallback = self.static_embeddings.get(UNKNOWN_WORD)
 
         self.shape = self.static_embeddings[UNKNOWN_WORD].shape
@@ -532,7 +536,7 @@ class EmbeddingExtractor:
         return re.sub(r"\d", "0", w.lower_)
 
     def get_document_embedding(self, utterances_list):
-        """ Embedding for the document """
+        """Embedding for the document"""
         #    We could also use this: embed_vector = np.copy(self.average_mean)#np.zeros(self.shape)
         #    return embed_vector
         embed_vector = np.zeros(self.shape)
@@ -548,7 +552,7 @@ class EmbeddingExtractor:
             return UNKNOWN_WORD, self.fallback
 
     def get_word_embedding(self, word, static=False):
-        """ Embedding for a single word (tuned if possible, otherwise static) """
+        """Embedding for a single word (tuned if possible, otherwise static)"""
         norm_word = self.normalize_word(word)
         if static:
             return self.get_stat_word(norm_word)
@@ -559,13 +563,13 @@ class EmbeddingExtractor:
                 return self.get_stat_word(norm_word)
 
     def get_word_in_sentence(self, word_idx, sentence):
-        """ Embedding for a word in a sentence """
+        """Embedding for a word in a sentence"""
         if word_idx < sentence.start or word_idx >= sentence.end:
             return self.get_word_embedding(None)
         return self.get_word_embedding(sentence.doc[word_idx])
 
     def get_average_embedding(self, token_list):
-        """ Embedding for a list of words """
+        """Embedding for a list of words"""
         embed_vector = np.zeros(
             self.shape
         )  # We could also use np.copy(self.average_mean)
@@ -578,7 +582,7 @@ class EmbeddingExtractor:
         return word_list, (embed_vector / max(len(word_list), 1))
 
     def get_mention_embeddings(self, mention, doc_embedding):
-        """ Get span (averaged) and word (single) embeddings of a mention """
+        """Get span (averaged) and word (single) embeddings of a mention"""
         st = mention.sent
         mention_lefts = mention.doc[max(mention.start - 5, st.start) : mention.start]
         mention_rights = mention.doc[mention.end : min(mention.end + 5, st.end)]
@@ -699,15 +703,15 @@ class Document(object):
         return f"<utterances, speakers> \n {formatted}\n<mentions> \n {mentions}"
 
     def __len__(self):
-        """ Return the number of mentions (not utterances) since it is what we really care about """
+        """Return the number of mentions (not utterances) since it is what we really care about"""
         return len(self.mentions)
 
     def __getitem__(self, key):
-        """ Return a specific mention (not utterance) """
+        """Return a specific mention (not utterance)"""
         return self.mentions[key]
 
     def __iter__(self):
-        """ Iterate over mentions (not utterances) """
+        """Iterate over mentions (not utterances)"""
         for mention in self.mentions:
             yield mention
 
@@ -845,13 +849,13 @@ class Document(object):
             mention.words_embeddings_ = words_embeddings_
 
     def get_single_mention_features(self, mention):
-        """ Features for anaphoricity test (single mention features + genre if conll)"""
+        """Features for anaphoricity test (single mention features + genre if conll)"""
         features_ = mention.features_
         features_["DocGenre"] = self.genre_
         return (features_, np.concatenate([mention.features, self.genre], axis=0))
 
     def get_pair_mentions_features(self, m1, m2):
-        """ Features for pair of mentions (same speakers, speaker mentioned, string match)"""
+        """Features for pair of mentions (same speakers, speaker mentioned, string match)"""
         features_ = {
             "00_SameSpeaker": 1
             if self.consider_speakers and m1.speaker == m2.speaker

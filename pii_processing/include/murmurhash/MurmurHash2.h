@@ -19,4 +19,3 @@ uint32_t MurmurHashAligned2 ( const void * key, int len, uint32_t seed );
 //-----------------------------------------------------------------------------
 
 #endif // _MURMURHASH2_H_
-

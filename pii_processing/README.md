@@ -1,6 +1,6 @@
 # Personally Identifiable Information Processing
 
-This is code for a multi-lingual Named Entity Recognition and PII processor used to remediate PII in web scale large language datasets for training large langauge models. This code is not meant to be used for general purpose PII remediation. 
+This is code for a multi-lingual Named Entity Recognition and PII processor used to remediate PII in web scale large language datasets for training large langauge models. This code is not meant to be used for general purpose PII remediation.
 
 ## Organization of Repo
 
@@ -19,7 +19,7 @@ This repo is also home for reference implementation for the PII Hackathon, run b
 - The code under the directory ontology and misc will be used for Module 2.
 - The code under the directory masakhane-ner will be used for Module 3.
 - TODO: Module 4, We will provide a reference implementation for an ensemble semi-supervised learning training of a transformer model
- 
+
 ## Requirements and Building
 
 - git clone  https://github.com/bigscience-workshop/pii_processing
@@ -29,7 +29,7 @@ This repo is also home for reference implementation for the PII Hackathon, run b
 - python -m spacy download en_core_web_lg
 
 TODO:
-For module 3, we will be using neuralcoref to preprocess data, and we will want to change the requirements.txt to use spacy==2.1.8 and 
+For module 3, we will be using neuralcoref to preprocess data, and we will want to change the requirements.txt to use spacy==2.1.8 and
 - python setup.py install
 
 
@@ -38,10 +38,8 @@ TODO
 
 ## Credits
 
-This code is based on original code by Ontocord, LLC (https://github.com/ontocord), Hugginface's Nueralcoref (https://github.com/huggingface/neuralcoref) and MasakhaNER (https://github.com/masakhane-io/masakhane-ner) which is in turn based on HF Transfromers (https://github.com/huggingface/transformers/) and Faker (https://github.com/joke2k/faker) and includes inspiration from Presidio (https://github.com/microsoft/presidio) . 
+This code is based on original code by Ontocord, LLC (https://github.com/ontocord), Hugginface's Nueralcoref (https://github.com/huggingface/neuralcoref) and MasakhaNER (https://github.com/masakhane-io/masakhane-ner) which is in turn based on HF Transfromers (https://github.com/huggingface/transformers/) and Faker (https://github.com/joke2k/faker) and includes inspiration from Presidio (https://github.com/microsoft/presidio) .
 
 All code is released under Apache 2.0, except Neuralcoref which is under the MIT License.
 
 Data is licensed as specified in the various data folders.
-
-

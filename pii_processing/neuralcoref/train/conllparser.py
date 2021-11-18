@@ -245,9 +245,7 @@ def load_file(full_name, debug=False):
                             "Error parsing coref " + tok + " in " + line
                         )
                         num = match.group(2)
-                        assert num is not "", (
-                            "Error parsing coref " + tok + " in " + line
-                        )
+                        assert num != "", "Error parsing coref " + tok + " in " + line
                         if match.group(1) == "(":
                             if debug:
                                 print("New coref", num)
@@ -348,10 +346,24 @@ class ConllDoc(Document):
         # Convert conll tokens coref index in spacy tokens indexes
         identified_gold = [False] * len(corefs)
         for coref in corefs:
-            missing_values = [key for key in ['label', 'start', 'end', ] if coref.get(key, None) is None]
+            missing_values = [
+                key
+                for key in [
+                    "label",
+                    "start",
+                    "end",
+                ]
+                if coref.get(key, None) is None
+            ]
             if missing_values:
-                found_values = {key: coref[key] for key in ['label', 'start', 'end'] if coref.get(key, None) is not None}
-                raise Exception(f"Coref {self.name} with fields {found_values} has empty values for the keys {missing_values}.")
+                found_values = {
+                    key: coref[key]
+                    for key in ["label", "start", "end"]
+                    if coref.get(key, None) is not None
+                }
+                raise Exception(
+                    f"Coref {self.name} with fields {found_values} has empty values for the keys {missing_values}."
+                )
 
             coref["start"] = conll_lookup[coref["start"]][0]
             coref["end"] = conll_lookup[coref["end"]][-1]
@@ -421,7 +433,7 @@ class ConllDoc(Document):
         self.n_sents += len(list(parsed.sents))
 
     def get_single_mention_features_conll(self, mention, compressed=True):
-        """ Compressed or not single mention features"""
+        """Compressed or not single mention features"""
         if not compressed:
             _, features = self.get_single_mention_features(mention)
             return features[np.newaxis, :]
@@ -436,7 +448,7 @@ class ConllDoc(Document):
         return feat_l
 
     def get_pair_mentions_features_conll(self, m1, m2, compressed=True):
-        """ Compressed or not single mention features"""
+        """Compressed or not single mention features"""
         if not compressed:
             _, features = self.get_pair_mentions_features(m1, m2)
             return features[np.newaxis, :]
@@ -808,7 +820,7 @@ class ConllCorpus(object):
         arrays_dicts = parallel_process(
             arr, get_feats, use_kwargs=True, n_jobs=self.n_jobs
         )
-        gathering_dict = dict((feat, None) for feat in FEATURES_NAMES)
+        gathering_dict = {feat: None for feat in FEATURES_NAMES}
         n_mentions_list = []
         pairs_ant_index = 0
         pairs_start_index = 0

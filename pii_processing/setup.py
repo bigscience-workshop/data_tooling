@@ -44,6 +44,7 @@ import distutils.util
 from distutils import ccompiler, msvccompiler
 from setuptools import Extension, setup, find_packages
 
+
 def is_new_osx():
     """Check whether we're on OSX >= 10.10"""
     name = distutils.util.get_platform()
@@ -59,15 +60,16 @@ def is_new_osx():
         return False
 
 
-PACKAGE_DATA = {'': ['*.pyx', '*.pxd'],
-                '': ['*.h'],}
+PACKAGE_DATA = {
+    "": ["*.pyx", "*.pxd"],
+    "": ["*.h"],
+}
 
 
 PACKAGES = find_packages()
 
 
-MOD_NAMES = ['neuralcoref.neuralcoref']
-
+MOD_NAMES = ["neuralcoref.neuralcoref"]
 
 
 COMPILE_OPTIONS = {
@@ -142,6 +144,7 @@ class build_ext_subclass(build_ext, build_ext_options):
 #             """), file=sys.stderr)
 #     exit(1)
 
+
 @contextlib.contextmanager
 def chdir(new_dir):
     old_dir = os.getcwd()
@@ -155,60 +158,72 @@ def chdir(new_dir):
 
 
 def generate_cython(root, source):
-    print('Cythonizing sources')
-    p = subprocess.call([sys.executable,
-                         os.path.join(root, 'bin', 'cythonize.py'),
-                         source], env=os.environ)
+    print("Cythonizing sources")
+    p = subprocess.call(
+        [sys.executable, os.path.join(root, "bin", "cythonize.py"), source],
+        env=os.environ,
+    )
     if p != 0:
-        raise RuntimeError('Running cythonize failed')
+        raise RuntimeError("Running cythonize failed")
 
 
 def is_source_release(path):
-    return os.path.exists(os.path.join(path, 'PKG-INFO'))
+    return os.path.exists(os.path.join(path, "PKG-INFO"))
 
 
 def setup_package():
     root = os.path.abspath(os.path.dirname(__file__))
     with chdir(root):
         if not is_source_release(root):
-            generate_cython(root, 'neuralcoref')
+            generate_cython(root, "neuralcoref")
 
         include_dirs = [
             get_python_inc(plat_specific=True),
-            os.path.join(root, 'include')]
+            os.path.join(root, "include"),
+        ]
 
-        if (ccompiler.new_compiler().compiler_type == 'msvc'
-            and msvccompiler.get_build_version() == 9):
-            include_dirs.append(os.path.join(root, 'include', 'msvc9'))
+        if (
+            ccompiler.new_compiler().compiler_type == "msvc"
+            and msvccompiler.get_build_version() == 9
+        ):
+            include_dirs.append(os.path.join(root, "include", "msvc9"))
 
         ext_modules = []
         for mod_name in MOD_NAMES:
-            mod_path = mod_name.replace('.', '/') + '.cpp'
+            mod_path = mod_name.replace(".", "/") + ".cpp"
             extra_link_args = []
             # ???
             # Imported from patch from @mikepb
             # See Issue #267. Running blind here...
-            if sys.platform == 'darwin':
-                dylib_path = ['..' for _ in range(mod_name.count('.'))]
-                dylib_path = '/'.join(dylib_path)
-                dylib_path = '@loader_path/%s/neuralcoref/platform/darwin/lib' % dylib_path
-                extra_link_args.append('-Wl,-rpath,%s' % dylib_path)
+            if sys.platform == "darwin":
+                dylib_path = [".." for _ in range(mod_name.count("."))]
+                dylib_path = "/".join(dylib_path)
+                dylib_path = (
+                    "@loader_path/%s/neuralcoref/platform/darwin/lib" % dylib_path
+                )
+                extra_link_args.append("-Wl,-rpath,%s" % dylib_path)
             ext_modules.append(
-                Extension(mod_name, [mod_path],
-                    language='c++', include_dirs=include_dirs,
-                    extra_link_args=extra_link_args))
+                Extension(
+                    mod_name,
+                    [mod_path],
+                    language="c++",
+                    include_dirs=include_dirs,
+                    extra_link_args=extra_link_args,
+                )
+            )
 
-        setup(name='neuralcoref',
-            version='4.0',
+        setup(
+            name="neuralcoref",
+            version="4.0",
             description="Coreference Resolution in spaCy with Neural Networks",
-            url='https://github.com/huggingface/neuralcoref',
-            author='Thomas Wolf',
-            author_email='thomwolf@gmail.com',
+            url="https://github.com/huggingface/neuralcoref",
+            author="Thomas Wolf",
+            author_email="thomwolf@gmail.com",
             ext_modules=ext_modules,
             classifiers=[
-                'Development Status :: 3 - Alpha',
-                'Environment :: Console',
-                'Intended Audience :: Developers',
+                "Development Status :: 3 - Alpha",
+                "Environment :: Console",
+                "Intended Audience :: Developers",
                 "Intended Audience :: Science/Research",
                 "License :: OSI Approved :: MIT License",
                 "Operating System :: POSIX :: Linux",
@@ -224,16 +239,19 @@ def setup_package():
                 "numpy>=1.15.0",
                 "boto3",
                 "requests>=2.13.0,<3.0.0",
-                "spacy>=2.1.0,<3.0.0"],
-            setup_requires=['wheel', 'spacy>=2.1.0,<3.0.0'],
+                "spacy>=2.1.0,<3.0.0",
+            ],
+            setup_requires=["wheel", "spacy>=2.1.0,<3.0.0"],
             python_requires=">=3.6",
             packages=PACKAGES,
             package_data=PACKAGE_DATA,
-            keywords='NLP chatbots coreference resolution',
-            license='MIT',
+            keywords="NLP chatbots coreference resolution",
+            license="MIT",
             zip_safe=False,
-            platforms='any',
-            cmdclass={"build_ext": build_ext_subclass})
+            platforms="any",
+            cmdclass={"build_ext": build_ext_subclass},
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     setup_package()

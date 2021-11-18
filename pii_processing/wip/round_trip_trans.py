@@ -25,84 +25,106 @@ from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
 import random
 import torch
 from collections import Counter, OrderedDict
+
 trannum = str.maketrans("0123456789", "1111111111")
 import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir, os.path.pardir, os.path.pardir)))
 
-class RoundTripTranslate:  
-  """
-  A class for translating text from English to another language, and vice versa. Uses M2M100.  
-  Can be used to create paraphrases in various languages, and manipulating the text in English and then back to the target langauge
-  to provide multi-lingual capabilities to English only text processing.
-  """
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), os.path.pardir, os.path.pardir, os.path.pardir
+        )
+    )
+)
 
-  def __init__(self, target_lang='fr'):
+
+class RoundTripTranslate:
     """
-    Create a translation engine from English to the target_lang, and
-    vice versa.  Useful for round trip translation, paraphrase
-    generation and manipulation and extraction in English and
-    translation back to target_lang.
+    A class for translating text from English to another language, and vice versa. Uses M2M100.
+    Can be used to create paraphrases in various languages, and manipulating the text in English and then back to the target langauge
+    to provide multi-lingual capabilities to English only text processing.
     """
-    self.target_lang = target_lang
-    self.model = M2M100ForConditionalGeneration.from_pretrained("facebook/m2m100_418M")
-    # we assume we are working only in CPU mode
-    self.model =  torch.quantization.quantize_dynamic(self.model, {torch.nn.Linear}, dtype=torch.qint8)
-    self.tokenizer = M2M100Tokenizer.from_pretrained("facebook/m2m100_418M")
-    #todo, check if target_lang in the 100 lang list
 
-  #TODO: We can vary the probabilties and sampling used to generate in order to get multiple paraphrases
-  def translate_to_en(self, text):
-    self.tokenizer.src_lang = self.target_lang
-    encoded = self.tokenizer(text, return_tensors="pt")
-    generated_tokens = self.model.generate(**encoded, forced_bos_token_id=self.tokenizer.get_lang_id("en"))
-    return self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+    def __init__(self, target_lang="fr"):
+        """
+        Create a translation engine from English to the target_lang, and
+        vice versa.  Useful for round trip translation, paraphrase
+        generation and manipulation and extraction in English and
+        translation back to target_lang.
+        """
+        self.target_lang = target_lang
+        self.model = M2M100ForConditionalGeneration.from_pretrained(
+            "facebook/m2m100_418M"
+        )
+        # we assume we are working only in CPU mode
+        self.model = torch.quantization.quantize_dynamic(
+            self.model, {torch.nn.Linear}, dtype=torch.qint8
+        )
+        self.tokenizer = M2M100Tokenizer.from_pretrained("facebook/m2m100_418M")
+        # todo, check if target_lang in the 100 lang list
 
-  def translate_from_en(self, text):
-    self.tokenizer.src_lang = "en"
-    encoded = self.tokenizer(text, return_tensors="pt")
-    generated_tokens = self.model.generate(**encoded, forced_bos_token_id=self.tokenizer.get_lang_id(self.target_lang))
-    return self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-     
-  def translate(self, sentence, fr='en', to=None):
-    if fr == self.target_lang:
-      to = 'en'
-    if to == self.target_lang:
-      fr = 'en'
-    if fr == 'en':
-      if to == None:
-        to = self.target_lang
-      if to != self.target_lang:
-        raise RuntimeError("one of 'from' or 'to' must be in the target lang")
-    if to == 'en':
-      if fr == None:
-        fr = self.target_lang
-      if fr != self.target_lang:
-        raise RuntimeError("one of 'from' or 'to' must be in the target lang")
-    if fr != "en" and to != "en":
-      raise RuntimeError("one of 'from' or 'to' must be in english")
-    if fr == to:
-      return sentence
-    if fr == "en":
-      return self.translate_from_en(sentence)[0]
-    return self.translate_to_en(sentence)[0]
+    # TODO: We can vary the probabilties and sampling used to generate in order to get multiple paraphrases
+    def translate_to_en(self, text):
+        self.tokenizer.src_lang = self.target_lang
+        encoded = self.tokenizer(text, return_tensors="pt")
+        generated_tokens = self.model.generate(
+            **encoded, forced_bos_token_id=self.tokenizer.get_lang_id("en")
+        )
+        return self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
-  def round_trip_translate(self, sentence, lang='en'): 
-    if lang not in ('en', self.target_lang):
-      raise RuntimeError("lang must be in english or the target_lang")
-    if lang == self.target_lang:
-      return self.translate(self.translate(sentence, fr=lang, to='en'), fr='en', to=lang)
-    return self.translate(self.translate(sentence, fr=lang, to=self.target_lang), fr=self.target_lang, to=lang)
+    def translate_from_en(self, text):
+        self.tokenizer.src_lang = "en"
+        encoded = self.tokenizer(text, return_tensors="pt")
+        generated_tokens = self.model.generate(
+            **encoded, forced_bos_token_id=self.tokenizer.get_lang_id(self.target_lang)
+        )
+        return self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
-if __name__ == "__main__":  
-  if "-t" in sys.argv:
-    target_lang = sys.argv[sys.argv.index("-t")+1]    
-    sentence = sys.argv[sys.argv.index("-t")+2]    
-    rt = RoundTripTranslate(target_lang=target_lang)
-    print (rt.translate(sentence, fr="en", to=target_lang))
-  elif "-f" in sys.argv:
-    target_lang = sys.argv[sys.argv.index("-f")+1]    
-    sentence = sys.argv[sys.argv.index("-f")+2]    
-    rt = RoundTripTranslate(target_lang=target_lang)
-    print (rt.translate(sentence, fr=target_lang, to="en"))
+    def translate(self, sentence, fr="en", to=None):
+        if fr == self.target_lang:
+            to = "en"
+        if to == self.target_lang:
+            fr = "en"
+        if fr == "en":
+            if to == None:
+                to = self.target_lang
+            if to != self.target_lang:
+                raise RuntimeError("one of 'from' or 'to' must be in the target lang")
+        if to == "en":
+            if fr == None:
+                fr = self.target_lang
+            if fr != self.target_lang:
+                raise RuntimeError("one of 'from' or 'to' must be in the target lang")
+        if fr != "en" and to != "en":
+            raise RuntimeError("one of 'from' or 'to' must be in english")
+        if fr == to:
+            return sentence
+        if fr == "en":
+            return self.translate_from_en(sentence)[0]
+        return self.translate_to_en(sentence)[0]
 
+    def round_trip_translate(self, sentence, lang="en"):
+        if lang not in ("en", self.target_lang):
+            raise RuntimeError("lang must be in english or the target_lang")
+        if lang == self.target_lang:
+            return self.translate(
+                self.translate(sentence, fr=lang, to="en"), fr="en", to=lang
+            )
+        return self.translate(
+            self.translate(sentence, fr=lang, to=self.target_lang),
+            fr=self.target_lang,
+            to=lang,
+        )
+
+
+if __name__ == "__main__":
+    if "-t" in sys.argv:
+        target_lang = sys.argv[sys.argv.index("-t") + 1]
+        sentence = sys.argv[sys.argv.index("-t") + 2]
+        rt = RoundTripTranslate(target_lang=target_lang)
+        print(rt.translate(sentence, fr="en", to=target_lang))
+    elif "-f" in sys.argv:
+        target_lang = sys.argv[sys.argv.index("-f") + 1]
+        sentence = sys.argv[sys.argv.index("-f") + 2]
+        rt = RoundTripTranslate(target_lang=target_lang)
+        print(rt.translate(sentence, fr=target_lang, to="en"))

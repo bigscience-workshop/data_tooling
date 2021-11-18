@@ -25,8 +25,8 @@ CONLL_METRICS = ["muc", "bcub", "ceafe"]
 
 class ConllEvaluator(object):
     def __init__(self, model, dataset, test_data_path, test_key_file, embed_path, args):
-        """ Evaluate the pytorch model that is currently being build
-            We take the embedding vocabulary currently being trained
+        """Evaluate the pytorch model that is currently being build
+        We take the embedding vocabulary currently being trained
         """
         self.test_key_file = test_key_file
         self.cuda = args.cuda
@@ -81,8 +81,7 @@ class ConllEvaluator(object):
             list(range(len(doc_mentions))) for doc_mentions in self.m_loc
         )
         self.clusters = list(
-            dict((i, [i]) for i in doc_mentions)
-            for doc_mentions in self.mention_to_cluster
+            {i: [i] for i in doc_mentions} for doc_mentions in self.mention_to_cluster
         )
 
     def _merge_coreference_clusters(self, ant_flat_idx, mention_flat_idx):
@@ -186,8 +185,7 @@ class ConllEvaluator(object):
         print_all_mentions=False,
         debug=None,
     ):
-        """ Build a test file to supply to the coreference scoring perl script
-        """
+        """Build a test file to supply to the coreference scoring perl script"""
         print("🌋 Building test file")
         self._prepare_clusters()
         self.dataloader.dataset.no_targets = True
@@ -271,8 +269,7 @@ class ConllEvaluator(object):
             out_file.write(out_str)
 
     def get_score(self, file_path=OUT_PATH, debug=False):
-        """ Call the coreference scoring perl script on the created test file
-        """
+        """Call the coreference scoring perl script on the created test file"""
         print("🌋 Computing score")
         score = {}
         ident = None
@@ -329,7 +326,7 @@ class ConllEvaluator(object):
                 ident_NP,
                 ident_DP,
             )
-        F1_conll = sum([score[metric][2] for metric in CONLL_METRICS]) / len(
+        F1_conll = sum(score[metric][2] for metric in CONLL_METRICS) / len(
             CONLL_METRICS
         )
         print(
