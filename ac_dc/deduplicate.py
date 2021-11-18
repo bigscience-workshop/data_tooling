@@ -1,19 +1,20 @@
-"""Build hashes from given documents."""
+"""Creating simhashes and removing near duplicates."""
 
-import glob
+import os
 import logging
-import multiprocessing
 import re
 from collections import defaultdict
 from typing import List, Tuple, Optional
+from multiprocessing import Manager, Queue, Process, cpu_count
 
 import cloudpickle
 import networkx as nx
 import typer
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, DatasetDict, concatenate_datasets
 from simhash import Simhash, SimhashIndex
 
 app = typer.Typer()
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +48,7 @@ def create_shingles(text: str, window: int = 4) -> List[str]:
 
 def check_num_proc(num_proc: int = -1):
 
-    maximum: int = multiprocessing.cpu_count()
+    maximum: int = cpu_count()
     if num_proc > maximum:
         raise ValueError(
             f"{num_proc} exceeds the maximum number ({maximum}) of processors"
@@ -59,6 +60,71 @@ def check_num_proc(num_proc: int = -1):
         logger.warning(f"Using {num_proc} out of {maximum} can be slow")
 
     return num_proc
+
+
+def shard(
+    ds: DatasetDict,
+    split: str,
+    num_shards: int,
+    idx: int,
+    output_dir: str,
+):
+    ds[split].shard(num_shards=num_shards, index=idx).to_json(
+        os.path.join(output_dir, f"sharded_{idx:05d}.jsonl"),
+        orient="records",
+        lines=True,
+        force_ascii=False,
+    )
+
+
+@app.command()
+def create_shards(
+    output_dir: str,
+    num_shards: int,
+    path: str = typer.Option(
+        "mhtoin/register_oscar", help="Path or name of the dataset"
+    ),
+    name: Optional[str] = typer.Option(
+        None, help="Defining the name of the dataset configuration"
+    ),
+    data_dir: Optional[str] = typer.Option(
+        None, help="Defining the data_dir of the dataset configuration"
+    ),
+    split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
+):
+    """
+    Shard a dataset into multiple parts.
+
+    Parameters
+    ----------
+    output_dir : str
+        Directory path for all the subset files
+    num_shards : int
+        Number of shards to use
+    path : str, optional
+        Path to the dataset configuration, by default typer.Option( "mhtoin/register_oscar", help="Path or name of the dataset" )
+    name : Optional[str], optional
+        Name of the dataset configuration, by default typer.Option( None, help="Defining the name of the dataset configuration" )
+    data_dir : Optional[str], optional
+        Local data directory, by default typer.Option( None, help="Defining the datadata_dir of the dataset configuration" )
+    split : Optional[str], optional
+        The split of the dataset configuration, by default typer.Option(None, help="Which split of the data to load")
+    """
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
+    ds = load_dataset(path, name, data_dir=data_dir)
+
+    queue = Queue()
+    processes = [
+        Process(target=shard, args=(ds, split, num_shards, idx, output_dir))
+        for idx in range(num_shards)
+    ]
+    for p in processes:
+        p.start()
+    for p in processes:
+        p.join()
 
 
 @app.command()
@@ -173,20 +239,23 @@ def build_index(
     """
     num_proc = check_num_proc(num_proc)
 
-    hashes: List[Tuple[str, Simhash]] = []
+    # Shared object
+    manager = Manager()
+    hashes: List[Tuple[str, Simhash]] = manager.list()
+
+    def process(record):
+        hashes.append((record["id"], Simhash(int(record["hash"]))))
+        return
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
-        if split is not None:
+        if split is None:
             logger.warning(
                 f"Using all splits to build the index, please make sure the `id` is unique globally"
             )
         for s in splits:
-            ds[s].map(
-                lambda x: hashes.append((x["id"], Simhash(int(x["hash"])))),
-                num_proc=num_proc,
-            )
+            ds[s].map(process, num_proc=num_proc)
 
     index = SimhashIndex(hashes, k=threshold, log=logger)
     with open(output_file, "wb") as o:
@@ -244,6 +313,9 @@ def find_duplicates(
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
             ds[s] = ds[s].map(process, num_proc=num_proc)
+            logger.info(
+                f"Found {len(ds[s].filter(lambda x: len(x['duplicates']) > 1))} duplicates in {dir}"
+            )
         ds.save_to_disk(dir.rstrip("/") + "_duplicates")
 
 
@@ -278,13 +350,14 @@ def remove_duplicates(
 
     # a and b are connected if they are duplicates
     G = nx.Graph()
+    manager = Manager()
+    edges = manager.list()
 
     def process(record):
-        nonlocal G
         for dup in record["duplicates"]:
             if str(record["id"]) == dup:
                 continue
-            G.add_edge(str(record["id"]), dup)
+            edges.append((str(record["id"]), dup))
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
@@ -293,17 +366,35 @@ def remove_duplicates(
             ds[s].map(process, num_proc=num_proc)
 
     flags = defaultdict(lambda: False)
+    for x, y in edges:
+        G.add_edge(x, y)
+
     for c in nx.connected_components(G):
         for n in c:
-            flags[n] = True
-            break
+            flags[n] = False
+        flags[c.pop()] = True
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            ds[s] = ds[s].filter(lambda x: flags.get(str(x["id"]), False))
+            ds[s] = ds[s].filter(lambda x: flags.get(str(x["id"]), True))
         ds.save_to_disk(dir.rstrip("/").replace("_duplicates", "_deduplicated"))
+
+
+@app.command()
+def merge_shards(
+    output_dir: str,
+    data_dirs: list[str],
+    split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
+):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+    ds = []
+    for dir in data_dirs:
+        ds.append(load_from_disk(dir)[split])
+
+    DatasetDict({split: concatenate_datasets(ds)}).save_to_disk(output_dir)
 
 
 if __name__ == "__main__":
