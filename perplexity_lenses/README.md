@@ -11,7 +11,11 @@ pinned: false
 # Installation:
 Requires Python >= 3.7 and < 3.10
 ```
-pip install -r requirements.txt
+pip install .
+```
+Or with [poetry](https://python-poetry.org/)
+```
+poetry install
 ```
 
 # Web App:
