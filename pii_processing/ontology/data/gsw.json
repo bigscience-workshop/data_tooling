@@ -1,0 +1,113 @@
+{
+ "FOOD": [
+  "glasse",
+  "billere",
+  "hanewasser",
+  "chile",
+  "glassee"
+ ],
+ "GENDER": [
+  "maidle",
+  "maitli",
+  "meidschi",
+  "meiki",
+  "meetle"
+ ],
+ "PERSON": [
+  "hans_trapp",
+  "sit_ewig"
+ ],
+ "PUBLIC_FIGURE": [
+  "maria_magdalena",
+  "e",
+  "a",
+  "maria_vo_magdala"
+ ],
+ "ANIMAL": [
+  "alebock",
+  "chrott",
+  "chats",
+  "haselmuus",
+  "h\u00e0",
+  "vole"
+ ],
+ "PLANT": [
+  "christbaum",
+  "farechruut"
+ ],
+ "DISEASE": [
+  "schlaaffe",
+  "chranket"
+ ],
+ "ORG": [
+  "en_guete",
+  "orthodoxi_chille",
+  "en_guet\u00e4"
+ ],
+ "DATE": [
+  "mittelalter"
+ ],
+ "PRODUCT": [
+  "christbaum"
+ ],
+ "QUANTITY": [
+  "schweizer_franken",
+  "quadratmeter"
+ ],
+ "JOB": [
+  "pfischter",
+  "brootler"
+ ],
+ "RELIGION_MEMBER": [
+  "br\u00fceder"
+ ],
+ "LOCATION": [
+  "sri_lanka"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "mueter": "vatter",
+  "schw\u00f6schter": "br\u00fceder",
+  "bueb": "modi"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "they": [
+   "gej"
+  ],
+  "he": [
+   "bueb"
+  ],
+  "she": [
+   "goof",
+   "meitji",
+   "maidle",
+   "moadle",
+   "meiki",
+   "modi",
+   "meetle",
+   "meidschi",
+   "maitli",
+   "meitle"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "siin",
+   "sini",
+   "siis",
+   "egli"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

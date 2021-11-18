@@ -1,0 +1,159 @@
+{
+ "PUBLIC_FIGURE": [
+  "anthoin",
+  "moirrey_malaine",
+  "shorys",
+  "antoin",
+  "davy",
+  "peddyr",
+  "frank",
+  "ard_harjant"
+ ],
+ "DISEASE": [
+  "cramp",
+  "carbuncle",
+  "paays",
+  "kanghyr",
+  "cuddym",
+  "meshtallys",
+  "neustiuraght",
+  "bloom",
+  "askaid",
+  "goll",
+  "brishey"
+ ],
+ "PLANT": [
+  "castan",
+  "plumbis",
+  "shellagh",
+  "noo_moirrey",
+  "carradje",
+  "shillish"
+ ],
+ "JOB": [
+  "ben_lhee",
+  "fuinneyder",
+  "ard_earrooagh",
+  "derrey",
+  "jeshaghteyr",
+  "shawkeyr",
+  "ben_uinnee",
+  "roddan",
+  "sidoor",
+  "aspick",
+  "bochil",
+  "poleenyn",
+  "lioarlannee",
+  "thalhear",
+  "shenndaalee",
+  "neustholkeyr",
+  "baylee",
+  "gareyder",
+  "sharmaneagh"
+ ],
+ "RACE": [
+  "turkagh",
+  "injinagh"
+ ],
+ "PERSON_PRONOUN": [
+  "shinyn",
+  "mayd",
+  "she",
+  "shiuish"
+ ],
+ "ANIMAL": [
+  "fannag",
+  "fiorag",
+  "hullad",
+  "mink",
+  "rannag",
+  "shawk"
+ ],
+ "LOCATION": [
+  "marranys",
+  "sri_lanka"
+ ],
+ "ORG": [
+  "un",
+  "keird_chummyn",
+  "cochionneeaght",
+  "keird_heshaght",
+  "erbee",
+  "covargey",
+  "mooir_ruy"
+ ],
+ "RELIGION_MEMBER": [
+  "oranjagh",
+  "creestee",
+  "braar"
+ ],
+ "LANGUAGE": [
+  "sheckagh",
+  "walloonish",
+  "corsickagh",
+  "yernish",
+  "cornish",
+  "frangish",
+  "rooshagh"
+ ],
+ "SOC_ECO_CLASS": [
+  "braaraghys"
+ ],
+ "QUANTITY": [
+  "tree_towshanagh"
+ ],
+ "PRODUCT": [
+  "tree_howshanagh",
+  "tree_towshanagh"
+ ],
+ "GPE": [
+  "spyrryd_noo"
+ ],
+ "UNION": [
+  "sheshaght_cheirdee"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "ard_chaillagh": "fer_reill_abban",
+  "ben_abb": "abb",
+  "moir_abb": "fer_reill_abban",
+  "ard_chaillagh_ghoo": "abb",
+  "ard_ven_reill": "fer_reill_abban",
+  "bendiuic": "duic",
+  "ard_venrein": "ard_ree",
+  "ard_venainshtyr": "ard_ynseyder",
+  "ard_ven_ynsee": "ard_er_ynsee",
+  "mamm": "ayr"
+ },
+ "other_gender_swap": {
+  "adsyn": "she",
+  "she": "adsyn"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "cronnaghey",
+   "bwoirrin",
+   "she"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "she": [
+   "she"
+  ],
+  "they": [
+   "teim",
+   "adsyn"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

@@ -1,0 +1,49 @@
+{
+ "GENDER": [
+  "babaye"
+ ],
+ "DISEASE": [
+  "lap_ok",
+  "hangga",
+  "alikdik"
+ ],
+ "ANIMAL": [
+  "bukaw",
+  "karabaw"
+ ],
+ "ORG": [
+  "saradhi",
+  "sin_o"
+ ],
+ "LOCATION": [
+  "balatas"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {},
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "she": [
+   "dalaga",
+   "babaye"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "siya"
+  ],
+  "she": [
+   "siya"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

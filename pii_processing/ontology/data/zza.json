@@ -1,0 +1,98 @@
+{
+ "PLANT": [
+  "pine"
+ ],
+ "GENDER": [
+  "ceni",
+  "boy"
+ ],
+ "PUBLIC_FIGURE": [
+  "bari",
+  "e",
+  "a",
+  "most",
+  "o"
+ ],
+ "ORG": [
+  "nara",
+  "va",
+  "ez_to_sinena",
+  "mektev",
+  "mi",
+  "sa",
+  "cond"
+ ],
+ "TITLE": [
+  "sir"
+ ],
+ "PERSON_PRONOUN": [
+  "emara",
+  "m\u0131",
+  "her"
+ ],
+ "ANIMAL": [
+  "hermu\u015f\u0131k"
+ ],
+ "DISEASE": [
+  "gharm",
+  "surani",
+  "zerdani",
+  "gherm",
+  "mi",
+  "cengar",
+  "helpeze",
+  "merre"
+ ],
+ "LANGUAGE": [
+  "franski"
+ ],
+ "JOB": [
+  "degme",
+  "ma'lim",
+  "resber"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "c\u0131n\u00e9k": "m\u00ear",
+  "khatun": "m\u00earde",
+  "xatun": "m\u00earde",
+  "cen\u00ee": "m\u00ear",
+  "c\u0131ni": "m\u00ear",
+  "ceni": "m\u00ear"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "m\u00ear",
+   "boy"
+  ],
+  "she": [
+   "cen\u00ee",
+   "ceni",
+   "c\u0131ni"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "eyr\u00ea",
+   "siya",
+   "eyeri",
+   "ayr\u00ea"
+  ],
+  "she": [
+   "siya",
+   "her"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

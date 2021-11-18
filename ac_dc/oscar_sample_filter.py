@@ -1,5 +1,3 @@
-from datasets import load_dataset
-
 import fasttext
 
 # To download the fasttext model:
@@ -391,25 +389,31 @@ class FuncOscarFiltering:
     def __reduce__(self):
         return (
             self.__class__,
-            (self.lang_oscar_id, self.path_fasttext_model, self.path_kenlm_model),
+            (
+                self.lang_oscar_id,
+                self.path_fasttext_model,
+                self.path_kenlm_model,
+                self.path_sentence_piece_model,
+            ),
         )
 
 
 class OscarFiltering:
     def __init__(
         self,
+        dataset,
         lang_oscar_id,
         path_fasttext_model,
         path_kenlm_model,
+        path_sentence_piece_model,
         num_proc,
         path_dir_save_oscar,
     ):
+        self.ds = dataset
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
         self.path_kenlm_model = path_kenlm_model
-        self.ds = load_dataset(
-            "oscar", f"unshuffled_deduplicated_{self.lang_oscar_id}"
-        )["train"]
+        self.path_sentence_piece_model = path_sentence_piece_model
         self.num_proc = num_proc
         self.path_dir_save_oscar = path_dir_save_oscar
 
@@ -419,7 +423,10 @@ class OscarFiltering:
 
     def filtering(self):
         func_oscar_filtering = FuncOscarFiltering(
-            self.lang_oscar_id, self.path_fasttext_model, self.path_kenlm_model
+            self.lang_oscar_id,
+            self.path_fasttext_model,
+            self.path_kenlm_model,
+            self.path_sentence_piece_model,
         )
         self.ds = self.ds.filter(func_oscar_filtering, num_proc=self.num_proc)
 

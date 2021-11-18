@@ -1,0 +1,11 @@
+bokeh==2.2.2
+https://files.pythonhosted.org/packages/2f/58/e00d2495b54f4ba97ca31a11aa7e636f80183ccf9b616f7eaa5518d050bb/embedding_lenses-0.5.0-py3-none-any.whl
+https://github.com/kpu/kenlm/archive/master.zip
+huggingface-hub==0.0.19
+numpy==1.20.0
+sentence-transformers==2.0.0
+streamlit==1.1.0
+transformers==4.11.3
+typer==0.4.0
+umap-learn==0.5.2
+watchdog==2.1.3

@@ -1,0 +1,91 @@
+{
+ "RELIGION_MEMBER": [
+  "phral"
+ ],
+ "JOB": [
+  "raji",
+  "duramaj\u030c\u00eds",
+  "durama\u017e\u00eds",
+  "ratun"
+ ],
+ "ANIMAL": [
+  "cauro",
+  "balo_koro",
+  "kainiori",
+  "chayka",
+  "kakarachka",
+  "bali_kori",
+  "kakarachi",
+  "korung",
+  "fiergna",
+  "boriori",
+  "falkono",
+  "cherbo",
+  "chavriel",
+  "worla",
+  "kaini",
+  "kaperiwara"
+ ],
+ "PUBLIC_FIGURE": [
+  "bari"
+ ],
+ "TITLE": [
+  "sir"
+ ],
+ "LANGUAGE": [
+  "anglojka"
+ ],
+ "RELIGION": [
+  "islam"
+ ],
+ "LOCATION": [
+  "parikerav"
+ ],
+ "PERSON_PRONOUN": [
+  "her",
+  "tumaro"
+ ],
+ "GENDER": [
+  "zhulyi",
+  "raklyi"
+ ],
+ "OTHER_PRONOUN": [
+  "them"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "mom": "dad",
+  "pheny": "phral"
+ },
+ "other_gender_swap": {
+  "them": "her"
+ },
+ "en_pronoun2gender": {
+  "she": [
+   "romnyi",
+   "gazhi",
+   "raklyi",
+   "shej",
+   "zhulyi"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "she": [
+   "her"
+  ],
+  "they": [
+   "them"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

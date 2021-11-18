@@ -1,0 +1,82 @@
+{
+ "ORG": [
+  "doi"
+ ],
+ "LOCATION": [
+  "cuomp"
+ ],
+ "JOB": [
+  "depentaur",
+  "pentaur",
+  "burbur",
+  "pascu"
+ ],
+ "EVENT": [
+  "desmissur"
+ ],
+ "ANIMAL": [
+  "miarla"
+ ],
+ "PUBLIC_FIGURE": [
+  "e"
+ ],
+ "DISEASE": [
+  "morscuor",
+  "moscuar",
+  "aura",
+  "tormiant"
+ ],
+ "TITLE": [
+  "sinaur"
+ ],
+ "FAC": [
+  "plaza"
+ ],
+ "PLANT": [
+  "nochiera"
+ ],
+ "RELIGION_MEMBER": [
+  "jain",
+  "frutro"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "femia": "muosclo",
+  "saur": "frutro",
+  "seraur": "frutro",
+  "mulir": "marait",
+  "molier": "marait",
+  "mojer": "marait"
+ },
+ "other_gender_swap": {
+  "jal": "jale"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "muosclo"
+  ],
+  "she": [
+   "femia"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "jal"
+  ],
+  "they": [
+   "jale",
+   "jali"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

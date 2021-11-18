@@ -1,0 +1,78 @@
+{
+ "ANIMAL": [
+  "drean",
+  "catt",
+  "brocc"
+ ],
+ "ORG": [
+  "scol",
+  "cid"
+ ],
+ "DISEASE": [
+  "gaethmairecht",
+  "gaethamlacht",
+  "brath",
+  "luch",
+  "ed",
+  "benn",
+  "moirtchenn"
+ ],
+ "PUBLIC_FIGURE": [
+  "b",
+  "e",
+  "erlam",
+  "a",
+  "n",
+  "m",
+  "i",
+  "drean",
+  "s"
+ ],
+ "PERSON_PRONOUN": [
+  "i",
+  "me",
+  "tech",
+  "us"
+ ],
+ "JOB": [
+  "don",
+  "muccaid",
+  "cerd",
+  "guide",
+  "danaim"
+ ],
+ "SOC_ECO_CLASS": [
+  "terc"
+ ],
+ "LANGUAGE": [
+  "laiten"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "mathir": "athair"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "firend",
+   "firennach",
+   "menn"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "it": [
+   "issu"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

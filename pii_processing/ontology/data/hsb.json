@@ -1,0 +1,130 @@
+{
+ "LANGUAGE": [
+  "hindi\u0161\u0107ina",
+  "danski",
+  "manx",
+  "japanski",
+  "esperanto",
+  "jend\u017aelski",
+  "franco\u0161\u0107ina",
+  "portugalski"
+ ],
+ "ANIMAL": [
+  "rapak",
+  "kohlica",
+  "kozor\u00f3\u017ek",
+  "paskulica",
+  "kuli\u0161k",
+  "parlawa",
+  "pa\u0161turlica",
+  "kwikawa",
+  "pardal",
+  "burunduk",
+  "\u0161kraholc",
+  "kraholc"
+ ],
+ "PUBLIC_FIGURE": [
+  "sherry",
+  "w",
+  "jurij",
+  "a",
+  "toma\u0161",
+  "katarina",
+  "putin",
+  "frank"
+ ],
+ "JOB": [
+  "kral",
+  "propst",
+  "kralik"
+ ],
+ "RACE": [
+  "turk",
+  "francoz"
+ ],
+ "PERSON_PRONOUN": [
+  "na\u0161",
+  "we",
+  "naju"
+ ],
+ "DISEASE": [
+  "jakota\u0107"
+ ],
+ "FAC": [
+  "dw\u00f3rni\u0161\u0107o"
+ ],
+ "PRODUCT": [
+  "njezapomni\u010dak",
+  "wulkobritaniska",
+  "nowoseelandska",
+  "wujk"
+ ],
+ "RELIGION_MEMBER": [
+  "bratr"
+ ],
+ "PLANT": [
+  "fija\u0142ka",
+  "jejku\u0161",
+  "serbowka"
+ ],
+ "FOOD": [
+  "chile",
+  "limonada"
+ ],
+ "SOC_ECO_CLASS": [
+  "ratarstwo"
+ ],
+ "ORG": [
+  "ratarstwo",
+  "\u010derwjene_morjo"
+ ],
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "jeje": "jeho",
+  "sotra": "bratr",
+  "\u017eona": "mu\u017e",
+  "\u017e\u00f3nska": "mu\u017e"
+ },
+ "other_gender_swap": {
+  "n\u011b": "jeje"
+ },
+ "en_pronoun2gender": {
+  "he": [
+   "mu\u017e"
+  ],
+  "she": [
+   "\u017eona",
+   "\u017e\u00f3nska",
+   "d\u017aow\u0107o"
+  ]
+ },
+ "en_pronoun2pronoun": {
+  "he": [
+   "hij",
+   "w\u00f3n",
+   "jeho"
+  ],
+  "she": [
+   "jeje"
+  ],
+  "they": [
+   "n\u011b"
+  ],
+  "it": [
+   "esta",
+   "hij",
+   "jeho"
+  ]
+ },
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}

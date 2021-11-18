@@ -1,0 +1,25 @@
+{
+ "FIRST_NAME_MALE": [],
+ "LAST_NAME_MALE": [],
+ "FIRST_NAME_FEMALE": [],
+ "LAST_NAME_FEMALE": [],
+ "FIRST_NAME": [],
+ "LAST_NAME": [],
+ "SUFIX_MALE": [],
+ "SUFIX_FEMALE": [],
+ "binary_gender_swap": {
+  "\ud808\udc2d\ud808\ude3e\ud808\udc38": "\ud808\udc1c\ud808\udeeb\ud808\udc38",
+  "\ud808\udcbc": "\ud808\udc1c\ud808\udeeb"
+ },
+ "other_gender_swap": {},
+ "en_pronoun2gender": {
+  "he": [
+   "antuhsa"
+  ]
+ },
+ "en_pronoun2pronoun": {},
+ "en_pronoun2title": {},
+ "PREFIX_MALE": [],
+ "PREFIX_FEMALE": [],
+ "person2religion": {}
+}
