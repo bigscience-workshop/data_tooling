@@ -7,8 +7,6 @@ import sys
 
 from setuptools import setup, find_packages
 
-from typing import Dict, List
-
 from src.pii_manager import VERSION
 
 PKGNAME = "pii-manager"
@@ -46,26 +44,26 @@ setup_args = dict(
     long_description=DESC,
     license="Apache",
     url=GITHUB_URL,
-    download_url=GITHUB_URL + '/tarball/v' + VERSION,
+    download_url=GITHUB_URL + "/tarball/v" + VERSION,
 
     # Locate packages
-    packages=find_packages('src'),  # [ PKGNAME ],
-    package_dir={'': 'src'},
+    packages=find_packages("src"),  # [ PKGNAME ],
+    package_dir={"": "src"},
 
     # Requirements
-    python_requires='>=3.6',
-    #install_requires=requirements(),
+    python_requires=">=3.8",
 
     # Optional requirements
     extras_require={
-        'test': ['pytest', 'nose', 'coverage'],
+        "test": ["pytest", "nose", "coverage"],
     },
 
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest"],
 
-    entry_points={'console_scripts': [
-        'pii-manage = pii_manager.app.manage:main'
+    entry_points={"console_scripts": [
+        "pii-manage = pii_manager.app.manage:main",
+        "pii-task-info = pii_manager.app.task_info:main"
     ]},
 
     include_package_data=False,
@@ -75,17 +73,17 @@ setup_args = dict(
     # Post-install hooks
     cmdclass={},
 
-    keywords=['AURA', '4th Platform', 'Cognitive Computing'],
+    keywords=["Big Science Workshop, PII"],
     classifiers=[
-        'Programming Language :: Python :: 3 :: Only',
-        'License :: Other/Proprietary License',
-        'Development Status :: 4 - Beta',
-        'Topic :: Software Development :: Libraries :: Application Frameworks',
+        "Programming Language :: Python :: 3 :: Only",
+        "License :: Apache",
+        "Development Status :: 4 - Beta",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
     ],
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Add requirements
-    setup_args['install_requires'] = requirements()
+    setup_args["install_requires"] = requirements()
     # Setup
     setup(**setup_args)

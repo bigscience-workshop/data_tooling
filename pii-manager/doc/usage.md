@@ -31,7 +31,8 @@ anonymize credit card numbers, disease information, and Government IDs for US
 and UK (assuming all these tasks are implemented in the package).
 
 
-It is also possible to load all possible tasks for a language:
+It is also possible to load all possible tasks for a language, by specifying
+country as `all` and using the `all_tasks` argument.
 
 ```Python
 
@@ -88,6 +89,10 @@ or, to add all possible tasks for a given language:
 
     pii-manage <infile> <outfile> --lang es --country all \
        --all-tasks 
+
+
+There is an additional command-line script, `pii-task-info`, that does not
+process text; it is only used to show the available tasks for a given language.
 
 
 ## Processing mode

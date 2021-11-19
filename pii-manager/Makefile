@@ -61,6 +61,7 @@ reinstall: uninstall clean pkg install
 
 
 $(VENV):
+	BASE=$$(basename "$@"); test -d "$$BASE" || mkdir -p "$$BASE"
 	$(PYTHON) -m venv $@
 	$@/bin/pip install -r requirements.txt
 

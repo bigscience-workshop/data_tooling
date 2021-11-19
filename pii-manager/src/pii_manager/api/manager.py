@@ -62,6 +62,8 @@ def fetch_task(taskname: str, lang: str,
     if langdict:
         # First try: language & country
         if country:
+            if country[0] == 'all':
+                country = country_list(lang)
             for c in country:
                 task = langdict.get(c, {}).get(taskname)
                 if task:
@@ -134,9 +136,7 @@ class PiiManager:
                 tasks = [tasks]
             tasklist = (fetch_task(name, self.lang, self.country)
                         for name in tasks)
-            tasklist = list(filter(None, chain.from_iterable(tasklist)))
-
-        tasklist = list(tasklist)
+            tasklist = filter(None, chain.from_iterable(tasklist))
 
         # Build an ordered array of tasks processors
         taskproc = (build_task(t, mode, template) for t in tasklist)

@@ -46,7 +46,7 @@ def import_processor(lang: str, country: str = None,
     Import all task processors available for a given lang & country
     '''
     if debug:
-        print('.. IMPORT FROM:', lang, country, file=sys.stderr)
+        print('.. IMPORT FROM:', lang, '/', country, file=sys.stderr)
     if lang == TASK_ANY:
         name = TASK_ANY
         path = _LANG / TASK_ANY
@@ -87,7 +87,7 @@ def _gather_all_tasks(debug: bool = False):
     global _TASKS
 
     if debug:
-        print(".. LANGUAGES:", ','.join(sorted(language_list())))
+        print(".. DEFINED LANGUAGES:", ' '.join(sorted(language_list())))
 
     _TASKS = {}
     for lang in language_list():
