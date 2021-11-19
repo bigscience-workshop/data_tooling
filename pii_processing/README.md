@@ -6,9 +6,8 @@ This is code for a multi-lingual Named Entity Recognition and PII processor used
 
 - The repo is a clone of the neuralcoref repo in order to more easily modify the base neuralcoref code and to take advantage of its great organization
 - The code in the ontology folder is for building and tokenizing text for words in the ontology
-- The code in the misc folder includes code to perform basic dataset creation and basic ner processing
+- The code in the misc folder includes code to perform basic dataset creation and basic regex ner processing
 - The code in the masakhane-ner folder is code for training transfomrer based NER models (BERT, Roberta, etc.)
-- The data folder contains the data needed by the other modules to operate
 - The contrib folder will contain code from the community which will draw from the PII hackathon
 - The code under the wip folder is work in progress and not meant to be used in processing
 
