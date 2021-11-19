@@ -1,10 +1,10 @@
-'''
+"""
 Find valid credit card numbers:
 1. Obtain candidates, by using a generic regex expression
 2. Validate candidates by
     - using a more exact regex
     - validating the number through the Luhn algorithm
-'''
+"""
 
 import re
 
@@ -43,7 +43,6 @@ class CreditCard(BasePiiTask):
         if _REGEX_CC_FULL is None:
             _REGEX_CC_BASE = re.compile(_CREDIT_PATTERN_BASE, flags=re.VERBOSE)
             _REGEX_CC_FULL = re.compile(_CREDIT_PATTERN, flags=re.VERBOSE)
-
 
     def find(self, doc: str):
         # First find candidates

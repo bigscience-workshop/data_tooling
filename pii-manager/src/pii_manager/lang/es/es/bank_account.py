@@ -1,8 +1,8 @@
-'''
+"""
 Spanish bank account numbers (CCC - código cuenta cliente)
 
 Note: **NOT** IBAN numbers, those are country (& language) independent
-'''
+"""
 
 import re
 
@@ -15,7 +15,7 @@ from pii_manager import PiiEnum
 # ----------------------------------------------------------------------------
 
 # regex for a Código Cuenta Cliente, with optional spaces separating the pieces
-_CCC_PATTERN = r'\d{4}\s?\d{4}\s?\d{2}\s?\d{10}'
+_CCC_PATTERN = r"\d{4}\s?\d{4}\s?\d{2}\s?\d{10}"
 
 # compiled regex
 _REGEX_CCC = None
@@ -37,6 +37,4 @@ def get_spanish_bank_account(text: str) -> Iterable[str]:
 
 # ---------------------------------------------------------------------
 
-PII_TASKS = [
-    (PiiEnum.BANK_ACCOUNT, get_spanish_bank_account)
-]
+PII_TASKS = [(PiiEnum.BANK_ACCOUNT, get_spanish_bank_account)]

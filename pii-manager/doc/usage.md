@@ -68,7 +68,7 @@ executed as:
  tasklist = (PiiEnum.CREDIT_CARD, PiiEnum.GOVID, PiiEnum.DISEASE)
 
  # Process the file
- process_file(infilename, outfilename, lang, 
+ process_file(infilename, outfilename, lang,
               country=country, tasks=tasklist)
 
 ```
@@ -84,11 +84,11 @@ that can be used to process files through PII tasks:
 
     pii-manage <infile> <outfile> --lang es --country es ar mx \
        --tasks CREDIT_CARD BITCOIN_ADDRESS BANK_ACCOUNT
-	
+
 or, to add all possible tasks for a given language:
 
     pii-manage <infile> <outfile> --lang es --country all \
-       --all-tasks 
+       --all-tasks
 
 
 There is an additional command-line script, `pii-task-info`, that does not

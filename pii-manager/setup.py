@@ -18,10 +18,10 @@ Process PII fragments contained in text, for different languages & countries
 # --------------------------------------------------------------------
 
 
-def requirements(filename='requirements.txt'):
-    '''Read the requirements file'''
-    with io.open(filename, 'r') as f:
-        return [line.strip() for line in f if line and line[0] != '#']
+def requirements(filename="requirements.txt"):
+    """Read the requirements file"""
+    with io.open(filename, "r") as f:
+        return [line.strip() for line in f if line and line[0] != "#"]
 
 
 # --------------------------------------------------------------------
@@ -29,8 +29,11 @@ def requirements(filename='requirements.txt'):
 PYTHON_VERSION = (3, 8)
 
 if sys.version_info < PYTHON_VERSION:
-    sys.exit('**** Sorry, {} {} needs at least Python {}'.format(
-        PKGNAME, VERSION, '.'.join(map(str, PYTHON_VERSION))))
+    sys.exit(
+        "**** Sorry, {} {} needs at least Python {}".format(
+            PKGNAME, VERSION, ".".join(map(str, PYTHON_VERSION))
+        )
+    )
 
 
 # --------------------------------------------------------------------
@@ -45,34 +48,27 @@ setup_args = dict(
     license="Apache",
     url=GITHUB_URL,
     download_url=GITHUB_URL + "/tarball/v" + VERSION,
-
     # Locate packages
     packages=find_packages("src"),  # [ PKGNAME ],
     package_dir={"": "src"},
-
     # Requirements
     python_requires=">=3.8",
-
     # Optional requirements
     extras_require={
         "test": ["pytest", "nose", "coverage"],
     },
-
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
-
-    entry_points={"console_scripts": [
-        "pii-manage = pii_manager.app.manage:main",
-        "pii-task-info = pii_manager.app.task_info:main"
-    ]},
-
-    include_package_data=False,
-    package_data={
+    entry_points={
+        "console_scripts": [
+            "pii-manage = pii_manager.app.manage:main",
+            "pii-task-info = pii_manager.app.task_info:main",
+        ]
     },
-
+    include_package_data=False,
+    package_data={},
     # Post-install hooks
     cmdclass={},
-
     keywords=["Big Science Workshop, PII"],
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",

@@ -1,5 +1,3 @@
-
-
 from pii_manager import PiiEnum
 from pii_manager.helper import TASK_ANY
 
@@ -16,4 +14,4 @@ def test_lang_all():
 
 def test_lang_es():
     taskdict = mod.get_taskdict()
-    assert 'es' in taskdict
+    assert "es" in taskdict

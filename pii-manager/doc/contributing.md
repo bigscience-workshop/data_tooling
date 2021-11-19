@@ -7,9 +7,9 @@ repository with the following changes:
  2. If it is for a language not yet covered, add a new language subfolder
     undder the [lang] folder, using the [ISO 639-1] code for the language
  3. Then
-    * If it is a country-independent PII, it goes into the `any` subdir 
+    * If it is a country-independent PII, it goes into the `any` subdir
       (create that directory if it is not present)
-    * if it is country-dependent, create a country subdir if not present, 
+    * if it is country-dependent, create a country subdir if not present,
       using a **lowercased version** of its [ISO 3166-1] country code
  4. Under the final chosen subfolder, add the task as a Python `mytaskname.py`
     module (the name of the file is not relevant). The module must contain:
@@ -40,7 +40,7 @@ implements more than one PII).
    - the PII identifier for the task: a member of [PiiEnum]
    - the [task implementation]: the regex, function or class implementing the
      PII extractor
-   - (only if the implementation is of regex type) a text description of the 
+   - (only if the implementation is of regex type) a text description of the
      task (for documentation purposes)
 
 

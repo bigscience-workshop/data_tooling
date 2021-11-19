@@ -40,7 +40,7 @@ The function name itself is not relevant, since it will be referenced in the
  * accept a string: the document to analyze
  * return an iterable of strings: the string fragments corresponding to the
    PII entities identified in the document
-   
+
 An example can be seen in the [bitcoin address] detector.
 
 **Note**: in case the same entity appears more than once in the passed

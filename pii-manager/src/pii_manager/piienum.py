@@ -1,10 +1,10 @@
-'''
+"""
 Enumeration that contains all defined PII elements
 
 Order is significant, in the sense that, on an processing job, tasks coming
 earlier in the enum will be tried first. Hence the more generic tasks (tasks
 that might collide with more specific ones) should come last
-'''
+"""
 
 from enum import Enum, auto
 
