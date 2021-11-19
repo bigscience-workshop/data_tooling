@@ -1,0 +1,38 @@
+on:
+   pull_request:
+     branches:
+      - master
+     paths:
+      - 'pii-manager/src/**'
+      - 'pii-manager/test/**'
+      - 'pii-manager/setup.py'
+      - 'pii-manager/Makefile'
+      - 'pii-manager/requirements.txt'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Checkout main repository
+      uses: actions/checkout@v2
+    - name: Create venv
+      run: |
+        cd pii-manager
+        VENV="$GITHUB_WORKSPACE/venv" make venv
+    - name: Install package
+      run: |
+        cd pii-manager
+        VENV="$GITHUB_WORKSPACE/venv" make install
+    - name: Test with pytest
+      run: |
+        cd pii-manager
+        VENV="$GITHUB_WORKSPACE/venv" make unit
