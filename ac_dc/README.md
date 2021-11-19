@@ -64,3 +64,8 @@ This removes all duplicates from the given datasets and outputs `cache/en_hashes
 python ac_dc/deduplicate.py merge-shards "cache/simhash_deduplicated_af" "cache/deduplicated_af_hashes_00001_deduplicated" "cache/deduplicated_af_hashes_00002_deduplicated" "cache/deduplicated_af_hashes_00003_deduplicated" --split "train"
 ```
 This merges all shards back into one dataset.
+
+
+### Merge metadata from OSCAR 21.09 to OSCAR
+
+Similar to the deduplication step, you can find an example script under `ac_dc/examples/merge.sh`

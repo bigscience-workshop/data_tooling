@@ -3,6 +3,7 @@
 import os
 import logging
 import re
+import datetime
 from collections import defaultdict
 from typing import List, Tuple, Optional
 from multiprocessing import Manager, Queue, Process, cpu_count
@@ -114,7 +115,7 @@ def create_shards(
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
 
-    ds = load_dataset(path, name, data_dir=data_dir)
+    ds = load_dataset(path, name, data_dir=data_dir, use_auth_token=True)
 
     queue = Queue()
     processes = [
@@ -302,11 +303,11 @@ def find_duplicates(
 
     def process(record):
         nonlocal index
-        return {
-            "duplicates": list(
-                map(str, index.get_near_dups(Simhash(int(record["hash"]))))
-            )
-        }
+        duplicates = list(map(str, index.get_near_dups(Simhash(int(record["hash"])))))
+        # arrow forces the features to be the same data type list<item: string>>
+        # so add a dummy string here when this is used on two different datasets
+        duplicates = duplicates if duplicates else [""]
+        return {"duplicates": duplicates}
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
@@ -380,6 +381,83 @@ def remove_duplicates(
         for s in splits:
             ds[s] = ds[s].filter(lambda x: flags.get(str(x["id"]), True))
         ds.save_to_disk(dir.rstrip("/").replace("_duplicates", "_deduplicated"))
+
+
+@app.command()
+def merge_meta(
+    data_dirs: List[str] = typer.Option(None, help="Source data to add metadata in"),
+    meta_data_dirs: List[str] = typer.Option(
+        None, help="Reference data to extract metadata from"
+    ),
+    split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
+    num_proc: int = typer.Option(-1, help="Number of processes to use"),
+):
+    """
+    Extracting metadata feature from `meta_data_dirs` and merging into data in `data_dirs`
+    For each data directory `d`, it outputs a `d_with_meta` directory.
+
+    see examples/merge.sh for an example
+
+    Parameters
+    ----------
+    data_dirs : List[str]
+        List of data directories to add metadata to
+    meta_data_dirs : List[str]
+        List of data directories to extract metadata from
+    split : Optional[str], optional
+        Which split of the data to load
+    num_proc : int, optional
+        Number of processes to use
+    """
+    num_proc = check_num_proc(num_proc)
+    manager = Manager()
+    meta_data = manager.dict()
+
+    # Collect all metadata
+    def process_meta(record):
+        meta_data[str(record["id"])] = record["meta"]
+
+    for dir in meta_data_dirs:
+        ds = load_from_disk(dir)
+        splits = [split] if split is not None else list(ds.keys())
+        for s in splits:
+            ds[s].map(process_meta, num_proc=num_proc)
+
+    # add meta into the record
+    def merge(record):
+
+        metadata = {
+            "headers": {
+                "warc-record-id": "",
+                "warc-date": datetime.datetime(1970, 1, 1),
+                "content-type": "",
+                "content-length": -1,
+                "warc-type": "",
+                "warc-identified-content-language": "",
+                "warc-refers-to": "",
+                "warc-target-uri": "",
+                "warc-block-digest": "",
+            },
+            "offset": -1,
+            "nb_sentences": -1,
+        }
+
+        if not record["duplicates"]:
+            return {"meta": metadata}
+
+        for dup in record["duplicates"]:
+            if dup in meta_data:
+                metadata = meta_data[dup]
+                break
+
+        return {"meta": metadata}
+
+    for dir in data_dirs:
+        ds = load_from_disk(dir)
+        splits = [split] if split is not None else list(ds.keys())
+        for s in splits:
+            ds[s] = ds[s].map(merge, num_proc=num_proc)
+        ds.save_to_disk(dir.rstrip("/").replace("_duplicates", "_with_meta"))
 
 
 @app.command()
