@@ -125,7 +125,8 @@ a `<PIINAME>` string. If another placeholder is preferred, the `PiiManager`
 constructor can be called with an additional `template` argument, containing
 a string that will be processed through the Python string `format()` method,
 and called with a `(name=PIINAME)` argument. In _tag_ mode, the template is
-called with `(name=PIINAME, value=VALUE)` argument.
+called with `(country=COUNTRY, name=PIINAME, value=VALUE)` arguments,
+which the template can use as it sees fit.
 
 The file-based API has an additional option: how the file is splitted when
 calling the PII tasks:

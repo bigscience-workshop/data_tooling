@@ -40,7 +40,8 @@ class RegexPiiTask(BasePiiTask):
 
     def find(self, doc: str) -> Iterable[str]:
         for cc in self.regex.finditer(doc):
-            yield PiiEntity(self.pii, cc.start(), cc.group())
+            yield PiiEntity(self.pii, cc.start(), cc.group(),
+                            country=self.country)
 
 
 class CallablePiiTask(BasePiiTask):
@@ -60,5 +61,5 @@ class CallablePiiTask(BasePiiTask):
                 pos = doc.find(cc, start)
                 if pos < 0:
                     break
-                yield PiiEntity(self.pii, pos, cc)
+                yield PiiEntity(self.pii, pos, cc, country=self.country)
                 start = pos + len(cc)

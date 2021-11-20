@@ -4,25 +4,14 @@ Create pii-manager as a Python package
 
 import io
 import sys
+import re
 
 from setuptools import setup, find_packages
 
 from src.pii_manager import VERSION
 
 PKGNAME = "pii-manager"
-GITHUB_URL = ""
-DESC = """
-Process PII fragments contained in text, for different languages & countries
-"""
-
-# --------------------------------------------------------------------
-
-
-def requirements(filename="requirements.txt"):
-    """Read the requirements file"""
-    with io.open(filename, "r") as f:
-        return [line.strip() for line in f if line and line[0] != "#"]
-
+GITHUB_URL = "https://github.com/bigscience-workshop/pii-manager"
 
 # --------------------------------------------------------------------
 
@@ -36,6 +25,19 @@ if sys.version_info < PYTHON_VERSION:
     )
 
 
+def requirements(filename="requirements.txt"):
+    """Read the requirements file"""
+    with io.open(filename, "r") as f:
+        return [line.strip() for line in f if line and line[0] != "#"]
+
+
+def long_description():
+    with open('README.md', "rt", encoding='utf-8') as f:
+        desc = f.read()
+        desc = re.sub(r'^\[ ([^\]]+) \]: \s+ \S.*\n', r'', desc, flags=re.X | re.M)
+        return re.sub(r'\[ ([^\]]+) \]', r'\1', desc, flags=re.X)
+
+
 # --------------------------------------------------------------------
 
 
@@ -44,7 +46,8 @@ setup_args = dict(
     name=PKGNAME,
     version=VERSION,
     description="Text Anonymization of PII",
-    long_description=DESC,
+    long_description=long_description(),
+    logn_description_content_type='text/markdown',
     license="Apache",
     url=GITHUB_URL,
     download_url=GITHUB_URL + "/tarball/v" + VERSION,

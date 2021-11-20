@@ -50,7 +50,7 @@ def fetch_task(
 ) -> Iterable[Tuple]:
     """
     Return a specific task for a given language & country
-    (find the most specific task available)
+    (try to find the most specific task available)
     """
     found = 0
     taskdict = get_taskdict()
@@ -87,15 +87,10 @@ def fetch_task(
 # --------------------------------------------------------------------------
 
 
-def build_task(
-    task,
-    lang: str = None,
-    country: str = None,
-) -> BasePiiTask:
+def build_task(task) -> BasePiiTask:
     if len(task) < 2:
         InvArgException("invalid task object: {}", task)
-    pii = task[0]
-    obj = task[1]
+    lang, country, pii, obj = task[0:4]
     if isinstance(obj, type(BasePiiTask)):
         proc = obj(pii=pii, lang=lang, country=country)
     elif isinstance(obj, Callable):
@@ -103,7 +98,7 @@ def build_task(
     elif isinstance(obj, str):
         proc = RegexPiiTask(
             obj,
-            task[2] if len(task) > 2 else pii.name,
+            task[-1] if len(task) > 4 else pii.name,
             pii=pii,
             lang=lang,
             country=country,
@@ -151,9 +146,16 @@ class PiiManager:
             tasklist = filter(None, chain.from_iterable(tasklist))
 
         # Build an ordered array of tasks processors
-        taskproc = (build_task(t, mode, template) for t in tasklist)
+        taskproc = (build_task(t) for t in tasklist)
         self.tasks = sorted(taskproc, key=lambda e: e.pii.value)
         self.stats = defaultdict(int)
+
+    def task_info(self) -> Dict:
+        """
+        Return a dictionary with all defined tasks
+        """
+        return {(task.pii, task.country): (task.doc or task.__doc__).strip()
+                for task in self.tasks}
 
     def __call__(self, doc: str) -> Union[str, Iterable[PiiEntity]]:
         """
@@ -173,13 +175,17 @@ class PiiManager:
         for task_proc in self.tasks:
             output = []
             pos = 0
+            # Call all tasks
             for pii in task_proc(doc):
+                # Add all a pair (text-prefix, transformed-pii)
                 output += [
-                    doc[pos : pii.pos],
-                    self.template.format(name=pii.elem.name, value=pii.value),
+                    doc[pos:pii.pos],
+                    self.template.format(name=pii.elem.name, value=pii.value,
+                                         country=pii.country),
                 ]
                 self.stats[pii.elem.name] += 1
                 pos = pii.pos + len(pii)
+            # Reconstruct the document (including the last suffix)
             doc = "".join(output) + doc[pos:]
         return doc
 
@@ -194,9 +200,3 @@ class PiiManager:
             for pii in elem_list:
                 yield pii
                 self.stats[pii.elem.name] += 1
-
-    def task_info(self) -> Dict:
-        """
-        Return a dictionary with all defined tasks
-        """
-        return {task.pii: (task.doc or task.__doc__).strip() for task in self.tasks}
