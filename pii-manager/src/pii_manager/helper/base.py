@@ -40,8 +40,7 @@ class RegexPiiTask(BasePiiTask):
 
     def find(self, doc: str) -> Iterable[str]:
         for cc in self.regex.finditer(doc):
-            yield PiiEntity(self.pii, cc.start(), cc.group(),
-                            country=self.country)
+            yield PiiEntity(self.pii, cc.start(), cc.group(), country=self.country)
 
 
 class CallablePiiTask(BasePiiTask):

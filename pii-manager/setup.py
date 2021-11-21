@@ -32,10 +32,10 @@ def requirements(filename="requirements.txt"):
 
 
 def long_description():
-    with open('README.md', "rt", encoding='utf-8') as f:
+    with open("README.md", "rt", encoding="utf-8") as f:
         desc = f.read()
-        desc = re.sub(r'^\[ ([^\]]+) \]: \s+ \S.*\n', r'', desc, flags=re.X | re.M)
-        return re.sub(r'\[ ([^\]]+) \]', r'\1', desc, flags=re.X)
+        desc = re.sub(r"^\[ ([^\]]+) \]: \s+ \S.*\n", r"", desc, flags=re.X | re.M)
+        return re.sub(r"\[ ([^\]]+) \]", r"\1", desc, flags=re.X)
 
 
 # --------------------------------------------------------------------
@@ -47,7 +47,7 @@ setup_args = dict(
     version=VERSION,
     description="Text Anonymization of PII",
     long_description=long_description(),
-    logn_description_content_type='text/markdown',
+    logn_description_content_type="text/markdown",
     license="Apache",
     url=GITHUB_URL,
     download_url=GITHUB_URL + "/tarball/v" + VERSION,

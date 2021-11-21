@@ -154,8 +154,10 @@ class PiiManager:
         """
         Return a dictionary with all defined tasks
         """
-        return {(task.pii, task.country): (task.doc or task.__doc__).strip()
-                for task in self.tasks}
+        return {
+            (task.pii, task.country): (task.doc or task.__doc__).strip()
+            for task in self.tasks
+        }
 
     def __call__(self, doc: str) -> Union[str, Iterable[PiiEntity]]:
         """
@@ -179,9 +181,10 @@ class PiiManager:
             for pii in task_proc(doc):
                 # Add all a pair (text-prefix, transformed-pii)
                 output += [
-                    doc[pos:pii.pos],
-                    self.template.format(name=pii.elem.name, value=pii.value,
-                                         country=pii.country),
+                    doc[pos : pii.pos],
+                    self.template.format(
+                        name=pii.elem.name, value=pii.value, country=pii.country
+                    ),
                 ]
                 self.stats[pii.elem.name] += 1
                 pos = pii.pos + len(pii)

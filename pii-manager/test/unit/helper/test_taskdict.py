@@ -1,4 +1,3 @@
-
 import pytest
 
 from pii_manager import PiiEnum
@@ -50,8 +49,10 @@ def test32_subdict():
     """
     Check the function parsing a PII_TASKS list, multiple entries
     """
-    PII_TASKS = [(PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample"),
-                 (PiiEnum.BITCOIN_ADDRESS, lambda x: x)]
+    PII_TASKS = [
+        (PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample"),
+        (PiiEnum.BITCOIN_ADDRESS, lambda x: x),
+    ]
     subdict = mod.build_subdict(PII_TASKS)
     assert len(subdict) == 2
     exp1 = (None, None, PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample")
@@ -64,12 +65,14 @@ def test33_subdict():
     """
     Check the function parsing a PII_TASKS list, w/ language & country
     """
-    PII_TASKS = [(PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample"),
-                 (PiiEnum.BITCOIN_ADDRESS, lambda x: x)]
-    subdict = mod.build_subdict(PII_TASKS, 'en', 'in')
+    PII_TASKS = [
+        (PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample"),
+        (PiiEnum.BITCOIN_ADDRESS, lambda x: x),
+    ]
+    subdict = mod.build_subdict(PII_TASKS, "en", "in")
     assert len(subdict) == 2
-    exp1 = ('en', 'in', PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample")
-    exp2 = ('en', 'in', PiiEnum.BITCOIN_ADDRESS, PII_TASKS[1][1])
+    exp1 = ("en", "in", PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample")
+    exp2 = ("en", "in", PiiEnum.BITCOIN_ADDRESS, PII_TASKS[1][1])
     assert subdict[PiiEnum.CREDIT_CARD.name] == exp1
     assert subdict[PiiEnum.BITCOIN_ADDRESS.name] == exp2
 
@@ -82,8 +85,7 @@ def test34_subdict_err():
     with pytest.raises(InvArgException):
         mod.build_subdict(PII_TASKS)
 
-    PII_TASKS = [(PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample"),
-                 r"\d16"]
+    PII_TASKS = [(PiiEnum.CREDIT_CARD, r"\d16", "a toy Credit Card esample"), r"\d16"]
     with pytest.raises(InvArgException):
         mod.build_subdict(PII_TASKS)
 

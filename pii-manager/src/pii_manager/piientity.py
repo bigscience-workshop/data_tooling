@@ -14,8 +14,7 @@ class PiiEntity:
 
     __slots__ = "elem", "pos", "value", "country"
 
-    def __init__(self, elem: PiiEnum, pos: int, value: str,
-                 country: str = None):
+    def __init__(self, elem: PiiEnum, pos: int, value: str, country: str = None):
         self.elem = elem
         self.pos = pos
         self.value = value
@@ -28,7 +27,6 @@ class PiiEntity:
         return f"<PiiEntity {self.elem.name}:{self.pos}:{self.value}:{self.country}>"
 
 
-
 def piientity_asdict(pii: PiiEntity, country: bool = None) -> Dict:
     """
     Create a dictionary from a PiiEntity object
@@ -37,5 +35,5 @@ def piientity_asdict(pii: PiiEntity, country: bool = None) -> Dict:
     """
     d = {"name": pii.elem.name, "value": pii.value, "pos": pii.pos}
     if country or country is None and pii.country:
-        d['country'] = pii.country
+        d["country"] = pii.country
     return d

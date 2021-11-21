@@ -7,20 +7,11 @@ from pii_manager.api import PiiManager
 
 TEST = [
     # A valid SSN
-    (
-        "SSN: 536-90-4399",
-        "SSN: <GOV_ID>"
-    ),
+    ("SSN: 536-90-4399", "SSN: <GOV_ID>"),
     # SSN with spaces
-    (
-        "SSN: 536 90 4399",
-        "SSN: <GOV_ID>"
-    ),
+    ("SSN: 536 90 4399", "SSN: <GOV_ID>"),
     # An invalid SSN
-    (
-        "not a SSN: 666-90-4399",
-        "not a SSN: 666-90-4399"
-    ),
+    ("not a SSN: 666-90-4399", "not a SSN: 666-90-4399"),
 ]
 
 

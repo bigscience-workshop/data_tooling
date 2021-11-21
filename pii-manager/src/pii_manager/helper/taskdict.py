@@ -32,8 +32,9 @@ _LISTNAME = "PII_TASKS"
 _LANG = Path(__file__).parents[1] / "lang"
 
 
-def build_subdict(task_list: List[Tuple], lang: str = None,
-                  country: str = None) -> Dict:
+def build_subdict(
+    task_list: List[Tuple], lang: str = None, country: str = None
+) -> Dict:
     """
     Given a list of task tuples, build the task dict for them
     """
@@ -41,16 +42,25 @@ def build_subdict(task_list: List[Tuple], lang: str = None,
     for task in task_list:
         # Checks
         if not isinstance(task, tuple):
-            raise InvArgException("Error in tasklist for lang={}, country={}: element is not a tuple", lang, country)
+            raise InvArgException(
+                "Error in tasklist for lang={}, country={}: element is not a tuple",
+                lang,
+                country,
+            )
         if not isinstance(task[0], PiiEnum):
-            raise InvArgException("Error in tasklist for lang={}, country={}: need a PiiEnum in the first tuple element", lang, country)
+            raise InvArgException(
+                "Error in tasklist for lang={}, country={}: need a PiiEnum in the first tuple element",
+                lang,
+                country,
+            )
         # Add to dict
         subdict[task[0].name] = (lang, country, *task)
     return subdict
 
 
-def _gather_piitasks(pkg: ModuleType, path: str, lang: str, country: str,
-                     debug: bool = False) -> List[Tuple]:
+def _gather_piitasks(
+    pkg: ModuleType, path: str, lang: str, country: str, debug: bool = False
+) -> List[Tuple]:
     """
     Import and load all tasks defined in a module
     """
@@ -94,24 +104,25 @@ def import_processor(lang: str, country: str = None, debug: bool = False) -> Dic
     else:
         if country is None:
             country_elem = TASK_ANY
-        elif country in ('in', 'is'):
-            country_elem = country + '_'
+        elif country in ("in", "is"):
+            country_elem = country + "_"
         else:
             country_elem = country
-        lang_elem = lang if lang not in ('is',) else lang + '_'
+        lang_elem = lang if lang not in ("is",) else lang + "_"
         name = f"{lang_elem}.{country_elem}"
         path = _LANG / lang_elem / country_elem
 
     # mod = importlib.import_module('...lang.' + name, __name__)
-    return _gather_piitasks("pii_manager.lang." + name, path,
-                            lang, country, debug=debug)
+    return _gather_piitasks(
+        "pii_manager.lang." + name, path, lang, country, debug=debug
+    )
 
 
 def _norm(elem: str) -> str:
     """
     Strip away underscores used to avoid reserved Python words
     """
-    return elem[:-1] if elem.endswith('_') else elem
+    return elem[:-1] if elem.endswith("_") else elem
 
 
 def country_list(lang: str) -> List[str]:
@@ -119,11 +130,15 @@ def country_list(lang: str) -> List[str]:
     Return all countries for a given language
     """
     p = _LANG / lang
-    return [_norm(d.name) for d in p.iterdir() if d.is_dir() and d.name != "__pycache__"]
+    return [
+        _norm(d.name) for d in p.iterdir() if d.is_dir() and d.name != "__pycache__"
+    ]
 
 
 def language_list() -> List[str]:
-    return [_norm(d.name) for d in _LANG.iterdir() if d.is_dir() and d.name != "__pycache__"]
+    return [
+        _norm(d.name) for d in _LANG.iterdir() if d.is_dir() and d.name != "__pycache__"
+    ]
 
 
 # --------------------------------------------------------------------------

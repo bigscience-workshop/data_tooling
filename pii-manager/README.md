@@ -32,7 +32,7 @@ The provided [Makefile] can be used to process the package:
      - the one defined in the `VENV` environment variable, if it is defined
      - if there is a virtualenv activated in the shell, it will be used
      - otherwise, a default is chosen as `/opt/venv/bigscience` (it will be
-	   created if it does not exist)
+       created if it does not exist)
 
 
 ## Contributing
