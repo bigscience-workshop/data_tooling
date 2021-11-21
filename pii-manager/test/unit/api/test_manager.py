@@ -20,7 +20,10 @@ def test20_info():
     info = obj.task_info()
 
     exp = {
-        PiiEnum.CREDIT_CARD: "Credit card numbers for most international credit cards (recognize & validate)"
+        (
+            PiiEnum.CREDIT_CARD,
+            None,
+        ): "Credit card numbers for most international credit cards (detect & validate)"
     }
     assert info == exp
 

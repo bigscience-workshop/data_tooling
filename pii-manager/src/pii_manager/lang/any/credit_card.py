@@ -34,11 +34,13 @@ _REGEX_CC_FULL = None
 
 
 class CreditCard(BasePiiTask):
-    """Credit card numbers for most international credit cards (recognize & validate)"""
+    """
+    Credit card numbers for most international credit cards (detect & validate)
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Compile the big credit card regex
+        # Compile the credit card regexes
         global _REGEX_CC_FULL, _REGEX_CC_BASE
         if _REGEX_CC_FULL is None:
             _REGEX_CC_BASE = re.compile(_CREDIT_PATTERN_BASE, flags=re.VERBOSE)

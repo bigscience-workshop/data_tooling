@@ -23,6 +23,7 @@ Rules for the implementation of such regex are:
   part of the regular expression needs to included as a category i.e. `\s` or
   escaped)
 
+An example can be seen in the [US Social Security Number] detector.
 
 ## Callable implementation
 
@@ -44,13 +45,15 @@ The function name itself is not relevant, since it will be referenced in the
 An example can be seen in the [bitcoin address] detector.
 
 **Note**: in case the same entity appears more than once in the passed
-document, it might be possible to return repeated strings. This is not a
-problem. Conversely, if a given string in the document is a PII some of the
-times but it also appears in a non-PII role in the document, this
-implementation type will ot be able to differentiate among them, and the
-package will label *all* ocurrences of the string as PII. If this is likely to
-happen, and the code *can* separate both uses, then it is better to
-use the class implementation type.
+document, it might be possible that the callable returns repeated strings.
+This is not a problem; all of them will be reported.
+
+Conversely, if a given string in the document is a PII some of the time but
+it also appears in a non-PII role in the same document, the wrapper that uses
+the result of a callable implementation type will not be able to differentiate
+among them, and the package will label *all* ocurrences of the string as PII.
+If this is likely to happen, and there is code that *can* separate both uses,
+then it is better to use the class implementation type below.
 
 
 ## Class implementation
@@ -92,7 +95,8 @@ detect. The place to add this documentation is:
  * For Class tasks, add the documentation as the _class level_ docstring.
 
 
-[re.VERBOSE]: https://docs.python.org/3/library/re.html#re.X
+[US Social Security Number]: ../src/pii_manager/lang/en/us/social_security_number.py
 [bitcoin address]: ../src/pii_manager/lang/any/bitcoin_address.py
 [credit card]: ../src/pii_manager/lang/any/credit_card.py
 [PiiEntity]: ../src/pii_manager/piientity.py
+[re.VERBOSE]: https://docs.python.org/3/library/re.html#re.X
