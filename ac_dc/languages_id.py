@@ -1221,7 +1221,7 @@ langs_id = [
     {
         "lang": "Urdu",
         "oscar_id": "ur",
-        "stopwords_id": None,
+        "stopwords_id": "ur",
         "kenlm_id": None,
         "fasttext_id": "ur",
         "badwords_id": None,
@@ -1245,7 +1245,7 @@ langs_id = [
     {
         "lang": "Vietnamese",
         "oscar_id": "vi",
-        "stopwords_id": None,
+        "stopwords_id": "vi",
         "kenlm_id": None,
         "fasttext_id": "vi",
         "badwords_id": "vi",
