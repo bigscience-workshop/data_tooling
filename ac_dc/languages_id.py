@@ -40,7 +40,7 @@ langs_id = [
         "stopwords_id": "ar",
         "kenlm_id": "ar",
         "fasttext_id": "ar",
-        "badwords_id": None,
+        "badwords_id": "ar",
     },
     {
         "lang": "Egyptian Arabic",
@@ -320,7 +320,7 @@ langs_id = [
         "stopwords_id": "eo",
         "kenlm_id": None,
         "fasttext_id": "eo",
-        "badwords_id": None,
+        "badwords_id": "eo",
     },
     {
         "lang": "Spanish",
@@ -904,7 +904,7 @@ langs_id = [
         "stopwords_id": "no",
         "kenlm_id": "no",
         "fasttext_id": "no",
-        "badwords_id": None,
+        "badwords_id": "no",
     },
     {
         "lang": "Occitan",
@@ -1328,7 +1328,7 @@ langs_id = [
         "stopwords_id": "zh",
         "kenlm_id": "zh",
         "fasttext_id": "zh",
-        "badwords_id": None,
+        "badwords_id": "zh",
     },
 ]
 langs_id = pd.DataFrame(langs_id)
