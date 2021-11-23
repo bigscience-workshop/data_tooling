@@ -19,4 +19,3 @@ for lang in "${LANGUAGES[@]}"; do
     --meta-data-dirs "cache/sharded_deduplicated_${lang}_v2/hashes_00001" --split "train") |& tee "cache/sharded_deduplicated_${lang}_v1/4-log.txt"
 
 done
-
