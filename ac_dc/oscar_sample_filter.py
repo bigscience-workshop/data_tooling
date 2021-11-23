@@ -15,11 +15,11 @@ from perplexity import KenlmModel
 class LoadParameters:
     @staticmethod
     def load_stopwords(lang_oscar_id):
-        nltk_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "nltk_id"
+        stopwords_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "stopwords_id"
         ].iloc[0]
-        if nltk_lang_id:
-            stopwords_lang = set(stopwords[nltk_lang_id])
+        if stopwords_lang_id:
+            stopwords_lang = set(stopwords[stopwords_lang_id])
         else:
             stopwords_lang = None
         return stopwords_lang

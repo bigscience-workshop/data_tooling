@@ -13,7 +13,10 @@ from itertools import zip_longest
 from typing import Dict, List, TextIO, Iterable, Optional, Union
 
 from pii_manager.api import PiiManager
+from pii_manager.piientity import PiiEntity, piientity_asdict
 from pii_manager.helper.exception import PiiManagerException
+
+TYPE_RESULT = Union[str, Iterable[PiiEntity]]
 
 
 def openfile(name: str, mode: str) -> TextIO:
@@ -46,21 +49,22 @@ def sentence_splitter(doc: str) -> Iterable[str]:
             yield sentence + sep
 
 
-def write_extract(result: Iterable[Dict], index: Dict, out: TextIO):
+def write_extract(result: Iterable[PiiEntity], index: Dict, out: TextIO):
     """
     Write output for "extract" mode as NDJSON
+      :param result: iterable of result PiiEntity objects
+      :param index: indexing information to be added to each PII_TASKS
+      :param out: destination to write the NDJSON lines to
     """
     for pii in result:
-        elem = {"name": pii.elem.name, "value": pii.value, "pos": pii.pos}
+        elem = piientity_asdict(pii)
         if index:
             elem.update(index)
         json.dump(elem, out, ensure_ascii=False)
         print(file=out)
 
 
-def write(
-    result: Union[str, Iterable[Dict]], mode: str, index: Optional[Dict], out: TextIO
-):
+def write(result: TYPE_RESULT, mode: str, index: Optional[Dict], out: TextIO):
     """
     Write processing result to output
     """
@@ -72,8 +76,8 @@ def write(
 
 def print_tasks(proc: PiiManager, out: TextIO):
     print("\n. Installed tasks:", file=out)
-    for pii, doc in proc.task_info().items():
-        print(" ", pii.name, "\n   ", doc, file=out)
+    for (pii, country), doc in proc.task_info().items():
+        print(f" {pii.name}  [country={country}]\n   ", doc, file=out)
 
 
 # ----------------------------------------------------------------------
