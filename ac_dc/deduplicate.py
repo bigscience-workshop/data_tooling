@@ -53,7 +53,7 @@ def check_num_proc(num_proc: int = -1):
 
     maximum: int = cpu_count()
     if num_proc > maximum:
-        logger.warning(
+        raise ValueError(
             f"{num_proc} exceeds the maximum number ({maximum}) of processors"
         )
 
