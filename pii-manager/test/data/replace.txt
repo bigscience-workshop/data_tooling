@@ -1,0 +1,3 @@
+My credit card number is <CREDIT_CARD> and I have used it to buy BTCs
+stored at <BITCOIN_ADDRESS>. This one, however, is not a
+credit card number: 4273 9666 4581 5643
