@@ -6,7 +6,6 @@ import pandas as pd
 import typer
 from bokeh.plotting import output_file as bokeh_output_file
 from bokeh.plotting import save
-from embedding_lenses.data import uploaded_file_to_dataframe
 from embedding_lenses.dimensionality_reduction import (
     get_tsne_embeddings,
     get_umap_embeddings,
@@ -26,6 +25,7 @@ from perplexity_lenses.engine import (
     generate_plot,
 )
 from perplexity_lenses.perplexity import KenlmModel
+from perplexity_lenses.visualization import draw_histogram
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def main(
         help=f"The sentence embedding model to use. Options: {EMBEDDING_MODELS}",
     ),
     output_file: str = typer.Option(
-        "perplexity.html", help="The name of the output visualization HTML file."
+        "perplexity", help="The name of the output visualization files."
     ),
 ):
     """
@@ -110,9 +110,11 @@ def main(
         model,
         seed=SEED,
     )
-    logger.info("Saving plot")
-    bokeh_output_file(output_file)
+    logger.info("Saving plots")
+    bokeh_output_file(f"{output_file}.html")
     save(plot)
+    fig = draw_histogram(df["perplexity"].values)
+    fig.savefig(f"{output_file}_histogram.png")
     logger.info("Done")
 
 

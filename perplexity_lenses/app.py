@@ -22,6 +22,7 @@ from perplexity_lenses.engine import (
     generate_plot,
 )
 from perplexity_lenses.perplexity import KenlmModel
+from perplexity_lenses.visualization import draw_histogram
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -103,6 +104,8 @@ if uploaded_file or hub_dataset:
         seed=SEED,
         context_logger=st.spinner,
     )
-    logger.info("Displaying plot")
+    logger.info("Displaying plots")
     st.bokeh_chart(plot)
+    fig = draw_histogram(df["perplexity"].values)
+    st.pyplot(fig)
     logger.info("Done")
