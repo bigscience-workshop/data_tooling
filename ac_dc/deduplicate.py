@@ -1,22 +1,24 @@
 """Creating simhashes and removing near duplicates."""
-
-import os
-import logging
-import re
 import datetime
+import logging
+import os
+import re
 from collections import defaultdict
-from typing import List, Tuple, Optional
-from multiprocessing import Manager, Queue, Process, cpu_count
+from multiprocessing import Manager, Process, Queue, cpu_count
+from multiprocessing.managers import BaseManager
+from typing import List, Optional, Tuple
 
 import cloudpickle
 import networkx as nx
 import typer
-from datasets import load_dataset, load_from_disk, DatasetDict, concatenate_datasets
+from datasets import DatasetDict, concatenate_datasets, load_dataset, load_from_disk
 from simhash import Simhash, SimhashIndex
 
 app = typer.Typer()
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
+
+BaseManager.register("SimhashIndex", SimhashIndex)
 
 
 def create_shingles(text: str, window: int = 4) -> List[str]:
@@ -207,10 +209,6 @@ def build_index(
     output_file: str,
     data_dirs: List[str],
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
-    threshold: int = typer.Option(
-        4,
-        help="Hamming fingerprint distance threshold, below which data are considered to be duplicates",
-    ),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
 ):
     """
@@ -245,7 +243,7 @@ def build_index(
     hashes: List[Tuple[str, Simhash]] = manager.list()
 
     def process(record):
-        hashes.append((record["id"], Simhash(int(record["hash"]))))
+        hashes.append((str(record["id"]), Simhash(int(record["hash"]))))
         return
 
     for dir in data_dirs:
@@ -258,15 +256,19 @@ def build_index(
         for s in splits:
             ds[s].map(process, num_proc=num_proc)
 
-    index = SimhashIndex(hashes, k=threshold, log=logger)
+    # index = SimhashIndex(hashes, k=threshold, log=logger)
     with open(output_file, "wb") as o:
-        o.write(cloudpickle.dumps(index))
+        o.write(cloudpickle.dumps(list(hashes)))
 
 
 @app.command()
 def find_duplicates(
     data_dirs: List[str],
     index_file: str,
+    threshold: int = typer.Option(
+        2,
+        help="Hamming fingerprint distance threshold, below which data are considered to be duplicates",
+    ),
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
 ):
@@ -279,7 +281,7 @@ def find_duplicates(
     Example:
 
     ```bash
-    python deduplicate.py find-duplicates "cache/en_hashes_00001" "cache/en_simhash_index.pkl" --split "train"
+    python deduplicate.py find-duplicates "cache/en_hashes_00001" "cache/en_simhash_index.pkl" --split "train" --threshold 3
     ```
 
     This finds all duplicates in `cache/en_hashes_00001` with `cache/en_simhash_index.pkl`. It should outputs a directory named
@@ -299,10 +301,18 @@ def find_duplicates(
     num_proc = check_num_proc(num_proc)
 
     with open(index_file, "rb") as i:
-        index = cloudpickle.loads(i.read())
+        data = cloudpickle.loads(i.read())
 
-    def process(record):
-        nonlocal index
+    # Create an index using shared memory
+    manager = BaseManager()
+    manager.start()
+    index = manager.SimhashIndex(data, k=threshold, log=logger)
+
+    # This is fine for small indices, but it will eats up your memory
+    # if it gets too large
+    # index = SimhashIndex(data, k=threshold, log=logger)
+
+    def process(record, index):
         duplicates = list(map(str, index.get_near_dups(Simhash(int(record["hash"])))))
         # arrow forces the features to be the same data type list<item: string>>
         # so add a dummy string here when this is used on two different datasets
@@ -313,7 +323,7 @@ def find_duplicates(
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            ds[s] = ds[s].map(process, num_proc=num_proc)
+            ds[s] = ds[s].map(process, num_proc=num_proc, fn_kwargs={"index": index})
             logger.info(
                 f"Found {len(ds[s].filter(lambda x: len(x['duplicates']) > 1))} duplicates in {dir}"
             )

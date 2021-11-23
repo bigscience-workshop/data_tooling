@@ -47,9 +47,9 @@ This creates the index file based on ALL the hashed datasets. This is a merge st
 #### 3. Find Duplicates
 ```bash
 # run each command on each node
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_simhash_index.pkl" --split "train"
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_simhash_index.pkl" --split "train"
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00003" "cache/deduplicated_af_simhash_index.pkl" --split "train"
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_simhash_index.pkl" --split "train" --threshold 2
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_simhash_index.pkl" --split "train" --threshold 2
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00003" "cache/deduplicated_af_simhash_index.pkl" --split "train" --threshold 2
 ```
 This adds another column `duplicates` into the data with the index and outputs them into `cache/en_hashes_0000{1,2,3}_duplicates`.
 
