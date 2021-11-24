@@ -94,7 +94,7 @@ if uploaded_file or hub_dataset:
     logger.info(
         f"Perplexity range: {df['perplexity'].min()} - {df['perplexity'].max()}"
     )
-    plot = generate_plot(
+    plot, plot_registry = generate_plot(
         df,
         text_column,
         "perplexity",
@@ -103,9 +103,12 @@ if uploaded_file or hub_dataset:
         model,
         seed=SEED,
         context_logger=st.spinner,
+        hub_dataset=hub_dataset,
     )
     logger.info("Displaying plots")
     st.bokeh_chart(plot)
+    if hub_dataset == "mhtoin/register_oscar":
+        st.bokeh_chart(plot_registry)
     fig = draw_histogram(df["perplexity"].values)
     st.pyplot(fig)
     logger.info("Done")

@@ -21,13 +21,22 @@ def hub_dataset_to_dataframe(
     load_dataset_fn = partial(load_dataset, path=path)
     if name:
         load_dataset_fn = partial(load_dataset_fn, name=name)
+        # Special case for the registry dataset
+        if path == "mhtoin/register_oscar":
+            load_dataset_fn = partial(load_dataset_fn, data_files=f"{name}/*")
     if split:
         load_dataset_fn = partial(load_dataset_fn, split=split)
     dataset = load_dataset_fn(streaming=True).shuffle(buffer_size=10000, seed=seed)
     if doc_type.lower() == "sentence":
         dataset = dataset.map(
             lambda x: [
-                {text_column: sentence, "perplexity": model.get_perplexity(sentence)}
+                {
+                    text_column: sentence,
+                    "perplexity": model.get_perplexity(sentence),
+                    "label": x.get("labels", [])[0]
+                    if len(x.get("labels", [])) > 0
+                    else "NONE",  # Special case for registry dataset
+                }
                 for sentence in x[text_column].split("\n")
             ]
         )
@@ -36,6 +45,9 @@ def hub_dataset_to_dataframe(
             lambda x: {
                 text_column: x[text_column],
                 "perplexity": model.get_perplexity(x[text_column]),
+                "label": x.get("labels", [])[0]
+                if len(x.get("labels", [])) > 0
+                else "NONE",  # Special case for registry dataset
             }
         )
     instances = []

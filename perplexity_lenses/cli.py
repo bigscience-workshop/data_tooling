@@ -101,7 +101,7 @@ def main(
     logger.info(
         f"Perplexity range: {df['perplexity'].min()} - {df['perplexity'].max()}"
     )
-    plot = generate_plot(
+    plot, plot_registry = generate_plot(
         df,
         text_column,
         "perplexity",
@@ -109,10 +109,14 @@ def main(
         dimensionality_reduction_function,
         model,
         seed=SEED,
+        hub_dataset=dataset
     )
     logger.info("Saving plots")
     bokeh_output_file(f"{output_file}.html")
     save(plot)
+    if dataset == "mhtoin/register_oscar":
+        bokeh_output_file(f"{output_file}_registry.html")
+        save(plot_registry)
     fig = draw_histogram(df["perplexity"].values)
     fig.savefig(f"{output_file}_histogram.png")
     logger.info("Done")
