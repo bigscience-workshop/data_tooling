@@ -12,6 +12,8 @@ from embedding_lenses.utils import encode_labels
 from embedding_lenses.visualization import draw_interactive_scatter_plot
 from sentence_transformers import SentenceTransformer
 
+from perplexity_lenses import REGISTRY_DATASET
+
 logger = logging.getLogger(__name__)
 EMBEDDING_MODELS = [
     "distiluse-base-multilingual-cased-v1",
@@ -127,7 +129,7 @@ def generate_plot(
     )
     # Special case for the registry dataset
     plot_registry = None
-    if hub_dataset == "mhtoin/register_oscar":
+    if hub_dataset == REGISTRY_DATASET:
         encoded_labels = encode_labels(df["label"])
         hover_data = {
             text_column: df[text_column].values,

@@ -5,6 +5,7 @@ import pandas as pd
 from datasets import load_dataset
 from tqdm import tqdm
 
+from perplexity_lenses import REGISTRY_DATASET
 from perplexity_lenses.perplexity import KenlmModel
 
 
@@ -22,7 +23,7 @@ def hub_dataset_to_dataframe(
     if name:
         load_dataset_fn = partial(load_dataset_fn, name=name)
         # Special case for the registry dataset
-        if path == "mhtoin/register_oscar":
+        if path == REGISTRY_DATASET:
             load_dataset_fn = partial(load_dataset_fn, data_files=f"{name}/*")
     if split:
         load_dataset_fn = partial(load_dataset_fn, split=split)

@@ -12,6 +12,7 @@ from embedding_lenses.dimensionality_reduction import (
 )
 from embedding_lenses.embedding import load_model
 
+from perplexity_lenses import REGISTRY_DATASET
 from perplexity_lenses.data import (
     documents_df_to_sentences_df,
     hub_dataset_to_dataframe,
@@ -114,7 +115,7 @@ def main(
     logger.info("Saving plots")
     bokeh_output_file(f"{output_file}.html")
     save(plot)
-    if dataset == "mhtoin/register_oscar":
+    if dataset == REGISTRY_DATASET:
         bokeh_output_file(f"{output_file}_registry.html")
         save(plot_registry)
     fig = draw_histogram(df["perplexity"].values)

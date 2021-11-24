@@ -9,6 +9,7 @@ from embedding_lenses.dimensionality_reduction import (
 )
 from embedding_lenses.embedding import load_model
 
+from perplexity_lenses import REGISTRY_DATASET
 from perplexity_lenses.data import (
     documents_df_to_sentences_df,
     hub_dataset_to_dataframe,
@@ -107,7 +108,7 @@ if uploaded_file or hub_dataset:
     )
     logger.info("Displaying plots")
     st.bokeh_chart(plot)
-    if hub_dataset == "mhtoin/register_oscar":
+    if hub_dataset == REGISTRY_DATASET:
         st.bokeh_chart(plot_registry)
     fig = draw_histogram(df["perplexity"].values)
     st.pyplot(fig)
