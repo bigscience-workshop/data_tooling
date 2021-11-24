@@ -9,6 +9,7 @@ from embedding_lenses.dimensionality_reduction import (
 )
 from embedding_lenses.embedding import load_model
 
+from perplexity_lenses import REGISTRY_DATASET
 from perplexity_lenses.data import (
     documents_df_to_sentences_df,
     hub_dataset_to_dataframe,
@@ -22,6 +23,7 @@ from perplexity_lenses.engine import (
     generate_plot,
 )
 from perplexity_lenses.perplexity import KenlmModel
+from perplexity_lenses.visualization import draw_histogram
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -93,7 +95,7 @@ if uploaded_file or hub_dataset:
     logger.info(
         f"Perplexity range: {df['perplexity'].min()} - {df['perplexity'].max()}"
     )
-    plot = generate_plot(
+    plot, plot_registry = generate_plot(
         df,
         text_column,
         "perplexity",
@@ -102,7 +104,12 @@ if uploaded_file or hub_dataset:
         model,
         seed=SEED,
         context_logger=st.spinner,
+        hub_dataset=hub_dataset,
     )
-    logger.info("Displaying plot")
+    logger.info("Displaying plots")
     st.bokeh_chart(plot)
+    if hub_dataset == REGISTRY_DATASET:
+        st.bokeh_chart(plot_registry)
+    fig = draw_histogram(df["perplexity"].values)
+    st.pyplot(fig)
     logger.info("Done")
