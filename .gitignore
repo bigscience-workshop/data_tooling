@@ -142,3 +142,6 @@ dmypy.json
 # Profiler
 *.lprof
 **/*.lprof
+
+# Visualization json files
+**/*examples_with_stats.json

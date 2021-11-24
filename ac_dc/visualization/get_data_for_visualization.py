@@ -4,7 +4,8 @@ import json
 
 import os
 import sys
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 from oscar_sample_filter import LoadParameters, Filtering
 
@@ -85,12 +86,12 @@ class GetDataForVisualization:
                     stats_sentence["perplexity_score"] = perplexity_score
 
                 stats_sentence["text"] = sentence
-                
+
                 stats.append(stats_sentence)
 
             except:
                 num_iter_examples = False
-        
+
         if not num_iter_examples:
             print("Warning: num_iter is greater than the size of the dataset.")
 
@@ -120,7 +121,7 @@ if __name__ == "__main__":
     path_fasttext_model = "/tmp/lid.176.bin"
     path_kenlm_model = f"ac_dc/af.arpa.bin"
     path_sentence_piece_model = f"ac_dc/af.sp.model"
-    path_save_stats = f"../af_examples_with_stats.json"
+    path_save_stats = f"./af_examples_with_stats.json"
 
     get_data_for_visualization = GetDataForVisualization(
         dataset,
