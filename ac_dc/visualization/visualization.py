@@ -47,7 +47,9 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
         keys.append(("badwords_ratio", cutoff_badwords_ratio, True))
 
     if "lang_id_score" in columns:
-        cutoff_lang_id_score = st.slider("Min cutoff lang id score", 0.0, 1.0, 0.0, step=0.01)
+        cutoff_lang_id_score = st.slider(
+            "Min cutoff lang id score", 0.0, 1.0, 0.0, step=0.01
+        )
         keys.append(("lang_id_score", cutoff_lang_id_score, False))
 
     if "perplexity_score" in columns:
