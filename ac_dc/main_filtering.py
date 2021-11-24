@@ -8,7 +8,7 @@ from oscar_sample_filter import OscarFiltering
 
 
 def parseArgs():
-    parser = argparse.ArgumentParser(description="Filtering for OSCAR v1.")
+    parser = argparse.ArgumentParser(description="Filtering for OSCAR.")
     parser.add_argument(
         "--dataset_name",
         type=str,
@@ -26,6 +26,12 @@ def parseArgs():
         type=str,
         default=None,
         help="'load_dataset' returns all files that match the Unix style pattern passed by 'data_files'",
+    )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="train",
+        help="Split of the dataset to consider.",
     )
     parser.add_argument(
         "--lang_oscar_id",
@@ -74,7 +80,7 @@ def main():
         args.dataset_name,
         args.config_name,
         data_files=args.data_files,
-        split="train",
+        split=args.split,
     )
 
     oscar_filtering = OscarFiltering(
