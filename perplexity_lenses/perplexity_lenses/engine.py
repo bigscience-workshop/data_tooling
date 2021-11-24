@@ -5,8 +5,8 @@ from typing import Callable, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import streamlit as st
-from bokeh.plotting import Figure
 from bokeh.palettes import Turbo256
+from bokeh.plotting import Figure
 from embedding_lenses.embedding import embed_text
 from embedding_lenses.utils import encode_labels
 from embedding_lenses.visualization import draw_interactive_scatter_plot
@@ -139,6 +139,6 @@ def generate_plot(
             embeddings_2d[:, 0],
             embeddings_2d[:, 1],
             encoded_labels.values,
-            palette=Turbo256
+            palette=Turbo256,
         )
     return plot, plot_registry

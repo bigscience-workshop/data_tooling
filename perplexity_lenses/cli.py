@@ -109,7 +109,7 @@ def main(
         dimensionality_reduction_function,
         model,
         seed=SEED,
-        hub_dataset=dataset
+        hub_dataset=dataset,
     )
     logger.info("Saving plots")
     bokeh_output_file(f"{output_file}.html")
