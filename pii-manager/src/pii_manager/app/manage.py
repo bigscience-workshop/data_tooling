@@ -40,7 +40,7 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     )
     g3.add_argument(
         "--mode",
-        choices=("replace", "tag", "extract"),
+        choices=("replace", "tag", "extract", "full"),
         default="replace",
         help="processing mode (default: %(default)s)",
     )

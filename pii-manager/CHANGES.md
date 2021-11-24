@@ -1,3 +1,8 @@
+v. 0.3.0
+ * new processing mode: `full`
+ * PII detectors for zh-CN
+ * added `regex` as dependency
+ * `regex` used for regular expression tasks instead of `re`
 
 v. 0.2.0
  * Added PII tasks:

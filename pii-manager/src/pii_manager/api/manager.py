@@ -132,7 +132,7 @@ class PiiManager:
             country = [country]
         self.country = [c.lower() for c in country] if country else None
         self.mode = mode if mode is not None else "replace"
-        if template is None and self.mode != "extract":
+        if template is None and self.mode not in ("extract", "full"):
             template = DEFAULT_TEMPLATES[self.mode]
         self.template = template
 
@@ -150,6 +150,12 @@ class PiiManager:
         self.tasks = sorted(taskproc, key=lambda e: e.pii.value)
         self.stats = defaultdict(int)
 
+        # Prepare the method to be called
+        self._process = self.mode_full if self.mode == 'full' else \
+            self.mode_extract if self.mode == 'extract' else \
+            self.mode_subst
+
+
     def task_info(self) -> Dict:
         """
         Return a dictionary with all defined tasks
@@ -159,14 +165,11 @@ class PiiManager:
             for task in self.tasks
         }
 
-    def __call__(self, doc: str) -> Union[str, Iterable[PiiEntity]]:
+    def __call__(self, doc: str) -> Union[Dict, str, Iterable[PiiEntity]]:
         """
         Process a document, calling all defined anonymizers
         """
-        if self.mode == "extract":
-            return self.mode_extract(doc)
-        else:
-            return self.mode_subst(doc)
+        return self._process(doc)
 
     def mode_subst(self, doc: str) -> str:
         """
@@ -181,7 +184,7 @@ class PiiManager:
             for pii in task_proc(doc):
                 # Add all a pair (text-prefix, transformed-pii)
                 output += [
-                    doc[pos : pii.pos],
+                    doc[pos: pii.pos],
                     self.template.format(
                         name=pii.elem.name, value=pii.value, country=pii.country
                     ),
@@ -203,3 +206,18 @@ class PiiManager:
             for pii in elem_list:
                 yield pii
                 self.stats[pii.elem.name] += 1
+
+    def mode_full(self, doc: str) -> Dict:
+        """
+        Process a document, calling all defined processors and performing
+        PII extraction. Return a dict with the original document and the
+        detected PII entities.
+        """
+        self.stats["calls"] += 1
+        pii_list = []
+        for task_proc in self.tasks:
+            elem_list = task_proc(doc)
+            for pii in elem_list:
+                pii_list.append(pii)
+                self.stats[pii.elem.name] += 1
+        return {"text": doc, "entities": pii_list}

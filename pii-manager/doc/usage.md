@@ -97,12 +97,12 @@ process text; it is only used to show the available tasks for a given language.
 
 ## Processing mode
 
-PII processing accetps three modes: _replace_ , _tag_ and _extract_. To show
-an example, let us consider a fragment such as:
+PII processing accetps four modes: _replace_ , _tag_, _extract_ and _full_. To
+show an example, let us consider a fragment such as:
 
 > my credit card number is 4273 9666 4581 5642
 
-with this input, the output for each of the three processing modes will be:
+with this input, the output for each of the processing modes will be:
 
 * for _replace_, the PII will be replaced by a placeholder describing the PII
   name:
@@ -118,6 +118,15 @@ with this input, the output for each of the three processing modes will be:
   buffer-based API, or as a [NDJSON] file for the file-based API
 
 > {"name": "CREDIT_CARD", "value": "4273 9666 4581 5642", "pos": 25, "line": 1}
+
+* for _full_ mode, the API returns a dict or a NDJSON line for each text
+  fragment, containing the fields `text` (the passed text) and `entities`
+  (a list of the recognized PII entities)
+
+> {"text": "my credit card number is 4273 9666 4581 5642",
+>  "entities": [{"name": "CREDIT_CARD", "value": "4273 9666 4581 5642",
+>                "pos": 25, "line": 1}]
+> }
 
 
 By default in _replace_ mode all PII items found will be substituted with
