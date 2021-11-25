@@ -148,8 +148,8 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
         )
 
 
-path_data = "./ac_dc/visualization/af_examples_with_stats.json"
-lang = "Afrikaans"
+path_data = "./ac_dc/visualization/en_examples_with_stats.json"
+lang = "English"
 num_docs = 5000
 num_docs_for_words = 500
 

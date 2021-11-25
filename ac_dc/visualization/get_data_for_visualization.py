@@ -104,7 +104,7 @@ class GetDataForVisualization:
 if __name__ == "__main__":
 
     dataset_name = "oscar"
-    config_name = "unshuffled_deduplicated_af"
+    config_name = "unshuffled_deduplicated_en"
     data_files = None
     split = "train"
     num_iter = 5000
@@ -117,11 +117,11 @@ if __name__ == "__main__":
         streaming=True,
     ).shuffle(buffer_size=num_iter, seed=42)
 
-    lang_oscar_id = "af"
+    lang_oscar_id = "en"
     path_fasttext_model = "/tmp/lid.176.bin"
-    path_kenlm_model = f"ac_dc/af.arpa.bin"
-    path_sentence_piece_model = f"ac_dc/af.sp.model"
-    path_save_stats = f"./af_examples_with_stats.json"
+    path_kenlm_model = f"ac_dc/en.arpa.bin"
+    path_sentence_piece_model = f"ac_dc/en.sp.model"
+    path_save_stats = f"./en_examples_with_stats.json"
 
     get_data_for_visualization = GetDataForVisualization(
         dataset,
