@@ -4,6 +4,7 @@ import streamlit as st
 import json
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def visualization(path_data, lang, num_docs, num_docs_for_words):
@@ -47,7 +48,9 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
         keys.append(("badwords_ratio", cutoff_badwords_ratio, True))
 
     if "lang_id_score" in columns:
-        cutoff_lang_id_score = st.slider("Min cutoff lang id score", 0.0, 1.0, 0.0, step=0.01)
+        cutoff_lang_id_score = st.slider(
+            "Min cutoff lang id score", 0.0, 1.0, 0.0, step=0.01
+        )
         keys.append(("lang_id_score", cutoff_lang_id_score, False))
 
     if "perplexity_score" in columns:
@@ -85,6 +88,36 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
 
     for key, _, _ in keys:
         plot_hist(data, key)
+
+    st.header("Zipf's Law")
+
+    def get_frequency_words(data):
+        freq_words = {}
+        for index, row in data.iterrows():
+            for word in row["text"].split(" "):
+                if word in freq_words:
+                    freq_words[word] += 1
+                else:
+                    freq_words[word] = 1
+        freq_words = np.array(list(freq_words.values()))
+        freq_words = -np.sort(-freq_words)
+        return freq_words
+
+    freq_words_data = get_frequency_words(data)
+    freq_words_data_keep = get_frequency_words(data_keep)
+    freq_words_data_not_keep = get_frequency_words(data_not_keep)
+
+    fig, ax = plt.subplots()
+    ax.loglog(freq_words_data)
+    ax.loglog(freq_words_data_keep)
+    ax.loglog(freq_words_data_not_keep)
+    ax.set_title("Zipf's Law")
+    ax.set_xlabel("$i$-th most frequent word")
+    ax.set_ylabel("frequency in the documents")
+    ax.legend(["All data", "Data that we keep", "Data that is thrown away"])
+    st.pyplot(fig)
+
+    st.markdown("If less than three curves are displayed, it means that there are overlaps.")
 
     st.header("Parameter of the filtering for words")
     max_len_word = int(np.max(words_data["len_word"])) + 1
