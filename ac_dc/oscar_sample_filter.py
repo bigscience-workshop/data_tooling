@@ -4,12 +4,12 @@ import fasttext
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
 import pathlib
+
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from stopwords import stopwords
 from badwords import badwords
 from perplexity import KenlmModel
-import anonymization
 
 
 class LoadParameters:
@@ -109,8 +109,6 @@ class ModifyingSentences:
         incorrect_word_substrings,
         cond_remove_long_words,
         length_word_cutoff,
-        cond_govt_id_regex,
-        lang_id,
     ):
         if cond_remove_words_with_incorrect_substrings:
             sentence = ModifyingSentences.remove_words_with_incorrect_substrings(
@@ -120,10 +118,6 @@ class ModifyingSentences:
         if cond_remove_long_words:
             sentence = ModifyingSentences.remove_long_words(
                 sentence, length_word_cutoff
-            )
-        if cond_govt_id_regex:
-            sentence = anonymization.apply_regex_govt_id_anonymization(
-                sentence, lang_id
             )
         return sentence
 
@@ -142,8 +136,6 @@ class OscarModifyingSentences:
             incorrect_word_substrings=self.param["incorrect_word_substrings"],
             cond_remove_long_words=self.param["cond_remove_long_words"],
             length_word_cutoff=self.param["length_word_cutoff"],
-            cond_govt_id_regex=self.param.get("cond_govt_id_regex", False),
-            lang_id=self.lang_oscar_id,
         )
         return example
 
