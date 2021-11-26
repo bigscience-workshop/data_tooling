@@ -117,7 +117,9 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
     ax.legend(["All data", "Data that we keep", "Data that is thrown away"])
     st.pyplot(fig)
 
-    st.markdown("If less than three curves are displayed, it means that there are overlaps.")
+    st.markdown(
+        "If less than three curves are displayed, it means that there are overlaps."
+    )
 
     st.header("Parameter of the filtering for words")
     max_len_word = int(np.max(words_data["len_word"])) + 1
