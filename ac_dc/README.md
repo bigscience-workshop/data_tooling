@@ -40,16 +40,16 @@ The above commands add an addition column `hash` in the data and outputs two dat
 
 #### 2. Create a Simhash Index
 ```bash
-python ac_dc/deduplicate.py build-index "cache/deduplicated_af_simhash_index.pkl" "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_hashes_00003" --split "train"
+python ac_dc/deduplicate.py build-index "cache/deduplicated_af_simhash_index.pkl" "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_hashes_00003" --split "train" --threshold 2
 ```
 This creates the index file based on ALL the hashed datasets. This is a merge step and takes O(n) time.
 
 #### 3. Find Duplicates
 ```bash
 # run each command on each node
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_simhash_index.pkl" --split "train" --threshold 2
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_simhash_index.pkl" --split "train" --threshold 2
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00003" "cache/deduplicated_af_simhash_index.pkl" --split "train" --threshold 2
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_simhash_index.pkl" --split "train"
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_simhash_index.pkl" --split "train"
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00003" "cache/deduplicated_af_simhash_index.pkl" --split "train"
 ```
 This adds another column `duplicates` into the data with the index and outputs them into `cache/en_hashes_0000{1,2,3}_duplicates`.
 
