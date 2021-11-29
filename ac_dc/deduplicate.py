@@ -325,7 +325,7 @@ def find_duplicates(
         Number of processes to use
     """
     num_proc = check_num_proc(num_proc)
-        
+
     def init(worker_state):
         # Each worker takes a copy of the index instead of using shared memory
         # Deserialize the bucket data to avoid redundant computation later

@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2154
+# shellcheck disable=SC2086
 
 LANGUAGES=('da')
 SHARDS=5
@@ -20,11 +22,11 @@ for lang in "${LANGUAGES[@]}"; do
   for i in ${seq -f "%05g" 0 ${expr $SHARDS - 1} }; do
       $PYTHON $SCRIPT build-hashes "cache/sharded_deduplicated_${lang}_v1/hashes_${i}" --data-files "sharded_${i}.jsonl" --path "cache/sharded_deduplicated_${lang}_v1" --split "train" --shingle-size 4 --text-column-name "text"
   done
-  
+
   # Create the index file
   $PYTHON $SCRIPT build-index "cache/sharded_deduplicated_${lang}_v1/simhash_index.pkl" ${seq -s " " -f "cache/sharded_deduplicated_${lang}_v1/hashes_%05g" 0 ${expr $SHARDS - 1} } --split "train" --threshold $THRESHOLD
   $PYTHON $SCRIPT build-index "cache/sharded_deduplicated_${lang}_v2/simhash_index.pkl" ${seq -s " " -f "cache/sharded_deduplicated_${lang}_v2/hashes_%05g" 0 ${expr $SHARDS - 1} } --split "train" --threshold $THRESHOLD
-  
+
   # merge v2 metadata into v1
   LOG_LEVEL="INFO" $PYTHON $SCRIPT merge-meta \
     ${seq -s " " -f "--data-dirs 'cache/sharded_deduplicated_${lang}_v1/hashes_%05g'" 0 ${expr $SHARDS - 1} } \
