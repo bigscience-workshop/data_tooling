@@ -4,7 +4,7 @@ import logging
 import os
 import re
 from collections import defaultdict
-from multiprocessing import Manager, Process, Queue, cpu_count
+from multiprocessing import Manager, cpu_count
 from typing import List, Optional, Tuple
 
 import dill as pickle
@@ -87,21 +87,6 @@ def check_num_proc(num_proc: int = -1) -> int:
     return num_proc
 
 
-def shard(
-    ds: DatasetDict,
-    split: str,
-    num_shards: int,
-    idx: int,
-    output_dir: str,
-):
-    ds[split].shard(num_shards=num_shards, index=idx).to_json(
-        os.path.join(output_dir, f"sharded_{idx:05d}.jsonl"),
-        orient="records",
-        lines=True,
-        force_ascii=False,
-    )
-
-
 @app.command()
 def create_shards(
     output_dir: str,
@@ -141,15 +126,22 @@ def create_shards(
 
     ds = load_dataset(path, name, data_dir=data_dir, use_auth_token=True)
 
-    queue = Queue()
-    processes = [
-        Process(target=shard, args=(ds, split, num_shards, idx, output_dir))
-        for idx in range(num_shards)
-    ]
-    for p in processes:
-        p.start()
-    for p in processes:
-        p.join()
+    def shard(
+        ds,
+        split: str,
+        num_shards: int,
+        idx: int,
+        output_dir: str,
+    ):
+        ds[split].shard(num_shards=num_shards, index=idx).to_json(
+            os.path.join(output_dir, f"sharded_{idx:05d}.jsonl"),
+            orient="records",
+            lines=True,
+            force_ascii=False,
+        )
+
+    with WorkerPool(n_jobs=min(num_shards, cpu_count()), shared_objects=ds) as pool:
+        pool.map(shard, [{"split": split, "num_shards": num_shards, "idx": i, "output_dir": output_dir} for i in range(num_shards)], progress_bar=True)
 
 
 @app.command()
@@ -320,22 +312,39 @@ def find_duplicates(
         Number of processes to use
     """
     num_proc = check_num_proc(num_proc)
-
+        
     def init(worker_state):
         # Each worker takes a copy of the index instead of using shared memory
+        # Deserialize the bucket data to avoid redundant computation later
         with open(index_file, "rb") as f:
             worker_state["index"] = pickle.loads(f.read())
+            for key in worker_state["index"].bucket:
+                worker_state["index"].bucket[key] = {
+                    candidate.split(',', 1)[1]: Simhash(int(candidate.split(',', 1)[0], 16), worker_state["index"].f) 
+                    for candidate in worker_state["index"].bucket[key]
+                }
 
     def process(worker_state, id, text, meta, hash):
-        duplicates = list(map(str, worker_state["index"].get_near_dups(Simhash(int(hash)))))
-        record = {"duplicates": duplicates if duplicates else [""], "id": id, "text": text, "meta": meta, "hash": hash}
+
+        curr_hash = Simhash(int(hash))
+        index = worker_state["index"]
+
+        dups = set()
+        keys = index.get_keys(curr_hash)
+        for key in keys:
+            for obj_id, sim2 in index.bucket[key].items():
+                d = curr_hash.distance(sim2)
+                if d <= index.k:
+                    dups.add(obj_id)
+
+        record = {"duplicates": list(dups) if dups else [""], "id": id, "text": text, "meta": meta, "hash": hash}
         return record
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            with WorkerPool(n_jobs=num_proc, use_worker_state=True) as pool:
+            with WorkerPool(n_jobs=num_proc, use_worker_state=True, daemon=False) as pool:
                 results = pool.map(process, ds[s], worker_init=init, progress_bar=True)
             ds[s] = Dataset.from_pandas(pd.DataFrame(results))
             logger.info(

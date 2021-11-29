@@ -1,21 +1,34 @@
 #!/bin/bash
-# This script is used to merge oscar v2 meta data into v1 using simhash
 
-# LANGUAGES=('vls' 'diq' 'cbk' 'lrc' 'rue' 'gv' 'ht' 'nap' 'sco' 'bar' 'mwl' 'ie' 'myv' 'pam' 'scn' 'rm' 'frr' 'tyv' 'so' 'dsb' 'bxr' 'eml' 'nah' 'mai' 'gn' 'vec' 'li' 'xal' 'wuu' 'kw' 'yo' 'bh' 'ia' 'bs' 'io' 'qu' 'su' 'av' 'wa' 'mrj' 'kv' 'an' 'jv' 'jbo' 'ilo' 'lmo' 'min' 'mzn' 'gd' 'hsb' 'vo' 'gom' 'krc' 'lez' 'pms' 'war' 'new' 'ast' 'bpy' 'gsw' 'oc' 'os' 'sw' 'la' 'sh' 'mhr' 'xmf' 'nds' 'tk' 'ce' 'arz' 'br' 'mt' 'uz' 'azb' 'lb' 'mg' 'sah' 'cv' 'sa' 'pnb' 'sd' 'fy' 'ceb' 'ms' 'nn' 'ga' 'ba' 'yi' 'as' 'ku' 'dv' 'ug' 'af' 'lo' 'hr' 'cy' 'am' 'ps' 'tg' 'ky' 'or' 'bo' 'ckb' 'tl' 'eo' 'tt' 'pa' 'eu' 'gl' 'si' 'km' 'mn' 'gu')
-LANGUAGES=('min')
+LANGUAGES=('da')
+SHARDS=5
+THRESHOLD=2 # lower -> more strict
+PYTHON=/home/jovyan/conda/envs/data/bin/python
+SCRIPT=/home/jovyan/data_tooling/ac_dc/deduplicate.py
+
 
 for lang in "${LANGUAGES[@]}"; do
   echo "lang: $lang"
-  /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py create-shards "cache/sharded_deduplicated_${lang}_v2" 1 --path "oscar-corpus/OSCAR-2109" --name "deduplicated_${lang}" --split "train"
-  (time /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py build-hashes "cache/sharded_deduplicated_${lang}_v2/hashes_00001" --data-files "sharded_00000.jsonl" --path "cache/sharded_deduplicated_${lang}_v2" --split "train") |& tee "cache/sharded_deduplicated_${lang}_v2/1-log.txt"
-  (time /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py build-index "cache/sharded_deduplicated_${lang}_v2/simhash_index.pkl" "cache/sharded_deduplicated_${lang}_v2/hashes_00001" --split "train" --threshold 1) |& tee "cache/sharded_deduplicated_${lang}_v2/2-log.txt"
+  $PYTHON $SCRIPT create-shards "cache/sharded_deduplicated_${lang}_v2" $SHARDS --path "oscar-corpus/OSCAR-2109" --name "deduplicated_${lang}" --split "train"
+  $PYTHON $SCRIPT create-shards "cache/sharded_deduplicated_${lang}_v1" $SHARDS --path "oscar" --name "unshuffled_deduplicated_${lang}" --split "train"
 
-  /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py create-shards "cache/sharded_deduplicated_${lang}_v1" 1 --path "oscar" --name "unshuffled_deduplicated_${lang}" --split "train"
-  (time /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py build-hashes "cache/sharded_deduplicated_${lang}_v1/hashes_00001" --data-files "sharded_00000.jsonl" --path "cache/sharded_deduplicated_${lang}_v1" --split "train") |& tee "cache/sharded_deduplicated_${lang}_v2/1-log.txt"
-  (time LOG_LEVEL="INFO" /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py find-duplicates "cache/sharded_deduplicated_${lang}_v1/hashes_00001" "cache/sharded_deduplicated_${lang}_v2/simhash_index.pkl" --split "train") |& tee "cache/sharded_deduplicated_${lang}_v2/3-log.txt"
+  # Hash
+  for i in ${seq -f "%05g" 0 ${expr $SHARDS - 1} }; do
+      $PYTHON $SCRIPT build-hashes "cache/sharded_deduplicated_${lang}_v2/hashes_${i}" --data-files "sharded_${i}.jsonl" --path "cache/sharded_deduplicated_${lang}_v2" --split "train" --shingle-size 4 --text-column-name "text"
+  done
 
-  (time LOG_LEVEL="INFO" /home/jovyan/conda/envs/data/bin/python /home/jovyan/data_tooling/ac_dc/deduplicate.py merge-meta \
-    --data-dirs "cache/sharded_deduplicated_${lang}_v1/hashes_00001_duplicates" \
-    --meta-data-dirs "cache/sharded_deduplicated_${lang}_v2/hashes_00001" --split "train") |& tee "cache/sharded_deduplicated_${lang}_v1/4-log.txt"
+  for i in ${seq -f "%05g" 0 ${expr $SHARDS - 1} }; do
+      $PYTHON $SCRIPT build-hashes "cache/sharded_deduplicated_${lang}_v1/hashes_${i}" --data-files "sharded_${i}.jsonl" --path "cache/sharded_deduplicated_${lang}_v1" --split "train" --shingle-size 4 --text-column-name "text"
+  done
+  
+  # Create the index file
+  $PYTHON $SCRIPT build-index "cache/sharded_deduplicated_${lang}_v1/simhash_index.pkl" ${seq -s " " -f "cache/sharded_deduplicated_${lang}_v1/hashes_%05g" 0 ${expr $SHARDS - 1} } --split "train" --threshold $THRESHOLD
+  $PYTHON $SCRIPT build-index "cache/sharded_deduplicated_${lang}_v2/simhash_index.pkl" ${seq -s " " -f "cache/sharded_deduplicated_${lang}_v2/hashes_%05g" 0 ${expr $SHARDS - 1} } --split "train" --threshold $THRESHOLD
+  
+  # merge v2 metadata into v1
+  LOG_LEVEL="INFO" $PYTHON $SCRIPT merge-meta \
+    ${seq -s " " -f "--data-dirs 'cache/sharded_deduplicated_${lang}_v1/hashes_%05g'" 0 ${expr $SHARDS - 1} } \
+    ${seq -s " " -f "--meta-data-dirs 'cache/sharded_deduplicated_${lang}_v2/hashes_%05g'" 0 ${expr $SHARDS - 1} } \
+    --split "train"
 
 done

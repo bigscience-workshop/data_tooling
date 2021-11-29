@@ -9,6 +9,8 @@ https://docs.google.com/document/d/1bx7lzAIWALH2IX5PLAiRfkHr3025dC-ZYkEmq4zB2gI/
 
 ### Deduplication
 
+Runnable script example at `ac_dc/examples/dedup.sh`
+
 #### 0. Sharding a dataset
 
 We want to shard a dataset into multiple shards so that each node on HPC can take a shard and each shard can be further parallelized with CPU cores.
