@@ -8,7 +8,6 @@ jobs:
     if: >-
       (github.event.comment.body == '#help' ||
        github.event.comment.body == '#help-wanted')
-      && !github.event.issue.assignee
     steps:
       - run: |
           echo "Labeling issue ${{ github.event.issue.number }} with 'help wanted'"
