@@ -11,15 +11,15 @@ for lang in "${LANGUAGES[@]}"; do
 
   echo "Creating ${SHARDS} shards"
   $PYTHON $SCRIPT create-shards "cache/sharded_deduplicated_${lang}" $SHARDS --path "oscar-corpus/OSCAR-2109" --name "deduplicated_${lang}" --split "train"
-  
+
   echo "Hashing documents"
   for i in $(seq -f "%05g" 0 $(expr $SHARDS - 1) ); do
       $PYTHON $SCRIPT build-hashes "cache/sharded_deduplicated_${lang}/hashes_${i}" --data-files "sharded_${i}.jsonl" --path "cache/sharded_deduplicated_${lang}" --split "train" --shingle-size 4
   done
-  
+
   echo "Creating index"
   $PYTHON $SCRIPT build-index "cache/sharded_deduplicated_${lang}/simhash_index.pkl" $(seq -s " " -f "cache/sharded_deduplicated_${lang}/hashes_%05g" 0 $(expr $SHARDS - 1) ) --split "train" --threshold $THRESHOLD
-  
+
 
   echo "Finding duplicates"
   for i in $(seq -f "%05g" 0 $(expr $SHARDS - 1) ); do
