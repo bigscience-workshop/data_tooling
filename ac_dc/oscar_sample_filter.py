@@ -95,10 +95,10 @@ class ModifyingSentences:
     @staticmethod
     def remove_long_words(
         sentence,
-        length_word_cutoff,
+        length_word_max_cutoff,
     ):
         words = sentence.split(" ")
-        words = [word for word in words if len(word) < length_word_cutoff]
+        words = [word for word in words if len(word) < length_word_max_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
 
@@ -108,7 +108,7 @@ class ModifyingSentences:
         cond_remove_words_with_incorrect_substrings,
         incorrect_word_substrings,
         cond_remove_long_words,
-        length_word_cutoff,
+        length_word_max_cutoff,
     ):
         if cond_remove_words_with_incorrect_substrings:
             sentence = ModifyingSentences.remove_words_with_incorrect_substrings(
@@ -117,7 +117,7 @@ class ModifyingSentences:
             )
         if cond_remove_long_words:
             sentence = ModifyingSentences.remove_long_words(
-                sentence, length_word_cutoff
+                sentence, length_word_max_cutoff
             )
         return sentence
 
@@ -135,7 +135,7 @@ class OscarModifyingSentences:
             ],
             incorrect_word_substrings=self.param["incorrect_word_substrings"],
             cond_remove_long_words=self.param["cond_remove_long_words"],
-            length_word_cutoff=self.param["length_word_cutoff"],
+            length_word_max_cutoff=self.param["length_word_max_cutoff"],
         )
         return example
 
@@ -164,12 +164,12 @@ class Filtering:
     def check_special_characters(
         sentence,
         special_characters,
-        special_characters_cutoff,
+        special_characters_max_cutoff,
     ):
         special_characters_ratio = Filtering.compute_special_characters_ratio(
             sentence, special_characters
         )
-        cond = special_characters_ratio < special_characters_cutoff
+        cond = special_characters_ratio < special_characters_max_cutoff
         return cond
 
     @staticmethod
@@ -209,14 +209,14 @@ class Filtering:
         sentence,
         strip_characters,
         badwords,
-        badwords_cutoff,
+        badwords_max_cutoff,
     ):
         cond = True
         if badwords:
             badwords_ratio = Filtering.compute_badwords_ratio(
                 sentence, strip_characters, badwords
             )
-            cond = badwords_ratio < badwords_cutoff
+            cond = badwords_ratio < badwords_max_cutoff
         return cond
 
     @staticmethod
@@ -241,7 +241,7 @@ class Filtering:
         strip_characters,
         lang_oscar_id,
         model_lang_id,
-        lang_id_cutoff,
+        lang_id_min_cutoff,
     ):
         cond = True
         if model_lang_id:
@@ -249,7 +249,7 @@ class Filtering:
                 sentence, strip_characters, model_lang_id
             )
             cond = (lang_pred_oscar_id == lang_oscar_id) and (
-                score_pred > lang_id_cutoff
+                score_pred > lang_id_min_cutoff
             )
         return cond
 
@@ -261,12 +261,12 @@ class Filtering:
     def check_perplexity(
         sentence,
         kenlm_model,
-        perplexity_cutoff,
+        perplexity_max_cutoff,
     ):
         cond = True
         if kenlm_model:
             score = Filtering.compute_perplexity_score(sentence, kenlm_model)
-            cond = score < perplexity_cutoff
+            cond = score < perplexity_max_cutoff
         return cond
 
     @staticmethod
@@ -276,21 +276,21 @@ class Filtering:
         strip_characters,
         cond_check_special_characters,
         special_characters,
-        special_characters_cutoff,
+        special_characters_max_cutoff,
         cond_check_stopwords,
         stopwords,
         stopwords_min_cutoff,
         stopwords_max_cutoff,
         cond_check_badwords,
         badwords,
-        badwords_cutoff,
+        badwords_max_cutoff,
         cond_check_lang_id,
         lang_oscar_id,
         model_lang_id,
-        lang_id_cutoff,
+        lang_id_min_cutoff,
         cond_check_perplexity,
         kenlm_model,
-        perplexity_cutoff,
+        perplexity_max_cutoff,
     ):
         if cond_check_empty:
             if not Filtering.check_empty(sentence, strip_characters):
@@ -299,7 +299,7 @@ class Filtering:
             if not Filtering.check_special_characters(
                 sentence,
                 special_characters,
-                special_characters_cutoff,
+                special_characters_max_cutoff,
             ):
                 return False
         if cond_check_stopwords:
@@ -316,7 +316,7 @@ class Filtering:
                 sentence,
                 strip_characters,
                 badwords,
-                badwords_cutoff,
+                badwords_max_cutoff,
             ):
                 return False
         if cond_check_lang_id:
@@ -325,14 +325,14 @@ class Filtering:
                 strip_characters,
                 lang_oscar_id,
                 model_lang_id,
-                lang_id_cutoff,
+                lang_id_min_cutoff,
             ):
                 return False
         if cond_check_perplexity:
             if not Filtering.check_perplexity(
                 sentence,
                 kenlm_model,
-                perplexity_cutoff,
+                perplexity_max_cutoff,
             ):
                 return False
         return True
@@ -368,21 +368,21 @@ class FuncOscarFiltering:
             strip_characters=self.param["strip_characters"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
             special_characters=self.param["special_characters"],
-            special_characters_cutoff=self.param["special_characters_cutoff"],
+            special_characters_max_cutoff=self.param["special_characters_max_cutoff"],
             cond_check_stopwords=self.param["cond_check_stopwords"],
             stopwords=self.stopwords,
             stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
             stopwords_max_cutoff=self.param["stopwords_max_cutoff"],
             cond_check_badwords=self.param["cond_check_badwords"],
             badwords=self.badwords,
-            badwords_cutoff=self.param["badwords_cutoff"],
+            badwords_max_cutoff=self.param["badwords_max_cutoff"],
             cond_check_lang_id=self.param["cond_check_lang_id"],
             lang_oscar_id=self.lang_oscar_id,
             model_lang_id=self.model_lang_id,
-            lang_id_cutoff=self.param["lang_id_cutoff"],
+            lang_id_min_cutoff=self.param["lang_id_min_cutoff"],
             cond_check_perplexity=self.param["cond_check_perplexity"],
             kenlm_model=self.kenlm_model,
-            perplexity_cutoff=self.param["perplexity_cutoff"],
+            perplexity_max_cutoff=self.param["perplexity_max_cutoff"],
         )
         return keep_example
 
