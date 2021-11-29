@@ -141,7 +141,19 @@ def create_shards(
         )
 
     with WorkerPool(n_jobs=min(num_shards, cpu_count()), shared_objects=ds) as pool:
-        pool.map(shard, [{"split": split, "num_shards": num_shards, "idx": i, "output_dir": output_dir} for i in range(num_shards)], progress_bar=True)
+        pool.map(
+            shard,
+            [
+                {
+                    "split": split,
+                    "num_shards": num_shards,
+                    "idx": i,
+                    "output_dir": output_dir,
+                }
+                for i in range(num_shards)
+            ],
+            progress_bar=True,
+        )
 
 
 @app.command()
@@ -278,6 +290,7 @@ def build_index(
     with open(output_file, "wb") as o:
         o.write(pickle.dumps(index))
 
+
 @app.command()
 def find_duplicates(
     data_dirs: List[str],
@@ -320,7 +333,9 @@ def find_duplicates(
             worker_state["index"] = pickle.loads(f.read())
             for key in worker_state["index"].bucket:
                 worker_state["index"].bucket[key] = {
-                    candidate.split(',', 1)[1]: Simhash(int(candidate.split(',', 1)[0], 16), worker_state["index"].f) 
+                    candidate.split(",", 1)[1]: Simhash(
+                        int(candidate.split(",", 1)[0], 16), worker_state["index"].f
+                    )
                     for candidate in worker_state["index"].bucket[key]
                 }
 
@@ -337,20 +352,29 @@ def find_duplicates(
                 if d <= index.k:
                     dups.add(obj_id)
 
-        record = {"duplicates": list(dups) if dups else [""], "id": id, "text": text, "meta": meta, "hash": hash}
+        record = {
+            "duplicates": list(dups) if dups else [""],
+            "id": id,
+            "text": text,
+            "meta": meta,
+            "hash": hash,
+        }
         return record
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            with WorkerPool(n_jobs=num_proc, use_worker_state=True, daemon=False) as pool:
+            with WorkerPool(
+                n_jobs=num_proc, use_worker_state=True, daemon=False
+            ) as pool:
                 results = pool.map(process, ds[s], worker_init=init, progress_bar=True)
             ds[s] = Dataset.from_pandas(pd.DataFrame(results))
             logger.info(
                 f"Found {len(ds[s].filter(lambda x: len(x['duplicates']) > 1))} duplicates in {dir}"
             )
         ds.save_to_disk(dir.rstrip("/") + "_duplicates")
+
 
 @app.command()
 def remove_duplicates(
