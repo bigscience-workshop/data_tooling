@@ -4,21 +4,26 @@ import logging
 import os
 import re
 from collections import defaultdict
-from multiprocessing import Manager, Process, Queue, cpu_count
-from multiprocessing.managers import BaseManager
+from multiprocessing import Manager, cpu_count
 from typing import List, Optional, Tuple
 
-import cloudpickle
+import dill as pickle
 import networkx as nx
+import pandas as pd
 import typer
-from datasets import DatasetDict, concatenate_datasets, load_dataset, load_from_disk
+from datasets import (
+    Dataset,
+    DatasetDict,
+    concatenate_datasets,
+    load_dataset,
+    load_from_disk,
+)
+from mpire import WorkerPool
 from simhash import Simhash, SimhashIndex
 
 app = typer.Typer()
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
-
-BaseManager.register("SimhashIndex", SimhashIndex)
 
 
 def create_shingles(text: str, window: int = 4) -> List[str]:
@@ -49,8 +54,25 @@ def create_shingles(text: str, window: int = 4) -> List[str]:
     return [text[i : i + window] for i in range(len(text) - window + 1)]
 
 
-def check_num_proc(num_proc: int = -1):
+def check_num_proc(num_proc: int = -1) -> int:
+    """
+    Check the number of processors. Return a safe-checked value.
 
+    Parameters
+    ----------
+    num_proc : int, optional
+        Number of processors to use, by default -1
+
+    Returns
+    -------
+    int
+        Number of processors to use
+
+    Raises
+    ------
+    ValueError
+        If the input exceeds the number of processors available
+    """
     maximum: int = cpu_count()
     if num_proc > maximum:
         raise ValueError(
@@ -63,21 +85,6 @@ def check_num_proc(num_proc: int = -1):
         logger.warning(f"Using {num_proc} out of {maximum} can be slow")
 
     return num_proc
-
-
-def shard(
-    ds: DatasetDict,
-    split: str,
-    num_shards: int,
-    idx: int,
-    output_dir: str,
-):
-    ds[split].shard(num_shards=num_shards, index=idx).to_json(
-        os.path.join(output_dir, f"sharded_{idx:05d}.jsonl"),
-        orient="records",
-        lines=True,
-        force_ascii=False,
-    )
 
 
 @app.command()
@@ -119,15 +126,34 @@ def create_shards(
 
     ds = load_dataset(path, name, data_dir=data_dir, use_auth_token=True)
 
-    queue = Queue()
-    processes = [
-        Process(target=shard, args=(ds, split, num_shards, idx, output_dir))
-        for idx in range(num_shards)
-    ]
-    for p in processes:
-        p.start()
-    for p in processes:
-        p.join()
+    def shard(
+        ds,
+        split: str,
+        num_shards: int,
+        idx: int,
+        output_dir: str,
+    ):
+        ds[split].shard(num_shards=num_shards, index=idx).to_json(
+            os.path.join(output_dir, f"sharded_{idx:05d}.jsonl"),
+            orient="records",
+            lines=True,
+            force_ascii=False,
+        )
+
+    with WorkerPool(n_jobs=min(num_shards, cpu_count()), shared_objects=ds) as pool:
+        pool.map(
+            shard,
+            [
+                {
+                    "split": split,
+                    "num_shards": num_shards,
+                    "idx": i,
+                    "output_dir": output_dir,
+                }
+                for i in range(num_shards)
+            ],
+            progress_bar=True,
+        )
 
 
 @app.command()
@@ -209,6 +235,10 @@ def build_index(
     output_file: str,
     data_dirs: List[str],
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
+    threshold: int = typer.Option(
+        2,
+        help="Hamming fingerprint distance threshold, below which data are considered to be duplicates",
+    ),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
 ):
     """
@@ -232,7 +262,7 @@ def build_index(
     split : Optional[str], optional
         Which split of the data to load
     threshold : int, optional
-        Hamming fingerprint distance threshold, below which data are considered to be duplicates, by default 4
+        Hamming fingerprint distance threshold, below which data are considered to be duplicates, by default 2
     num_proc : int, optional
         Number of processes to use
     """
@@ -256,19 +286,15 @@ def build_index(
         for s in splits:
             ds[s].map(process, num_proc=num_proc)
 
-    # index = SimhashIndex(hashes, k=threshold, log=logger)
+    index = SimhashIndex(hashes, k=threshold, log=logger)
     with open(output_file, "wb") as o:
-        o.write(cloudpickle.dumps(list(hashes)))
+        o.write(pickle.dumps(index))
 
 
 @app.command()
 def find_duplicates(
     data_dirs: List[str],
     index_file: str,
-    threshold: int = typer.Option(
-        2,
-        help="Hamming fingerprint distance threshold, below which data are considered to be duplicates",
-    ),
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
 ):
@@ -300,30 +326,50 @@ def find_duplicates(
     """
     num_proc = check_num_proc(num_proc)
 
-    with open(index_file, "rb") as i:
-        data = cloudpickle.loads(i.read())
+    def init(worker_state):
+        # Each worker takes a copy of the index instead of using shared memory
+        # Deserialize the bucket data to avoid redundant computation later
+        with open(index_file, "rb") as f:
+            worker_state["index"] = pickle.loads(f.read())
+            for key in worker_state["index"].bucket:
+                worker_state["index"].bucket[key] = {
+                    candidate.split(",", 1)[1]: Simhash(
+                        int(candidate.split(",", 1)[0], 16), worker_state["index"].f
+                    )
+                    for candidate in worker_state["index"].bucket[key]
+                }
 
-    # Create an index using shared memory
-    manager = BaseManager()
-    manager.start()
-    index = manager.SimhashIndex(data, k=threshold, log=logger)
+    def process(worker_state, id, text, meta, hash):
 
-    # This is fine for small indices, but it will eats up your memory
-    # if it gets too large
-    # index = SimhashIndex(data, k=threshold, log=logger)
+        curr_hash = Simhash(int(hash))
+        index = worker_state["index"]
 
-    def process(record, index):
-        duplicates = list(map(str, index.get_near_dups(Simhash(int(record["hash"])))))
-        # arrow forces the features to be the same data type list<item: string>>
-        # so add a dummy string here when this is used on two different datasets
-        duplicates = duplicates if duplicates else [""]
-        return {"duplicates": duplicates}
+        dups = set()
+        keys = index.get_keys(curr_hash)
+        for key in keys:
+            for obj_id, sim2 in index.bucket[key].items():
+                d = curr_hash.distance(sim2)
+                if d <= index.k:
+                    dups.add(obj_id)
+
+        record = {
+            "duplicates": list(dups) if dups else [""],
+            "id": id,
+            "text": text,
+            "meta": meta,
+            "hash": hash,
+        }
+        return record
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            ds[s] = ds[s].map(process, num_proc=num_proc, fn_kwargs={"index": index})
+            with WorkerPool(
+                n_jobs=num_proc, use_worker_state=True, daemon=False
+            ) as pool:
+                results = pool.map(process, ds[s], worker_init=init, progress_bar=True)
+            ds[s] = Dataset.from_pandas(pd.DataFrame(results))
             logger.info(
                 f"Found {len(ds[s].filter(lambda x: len(x['duplicates']) > 1))} duplicates in {dir}"
             )
