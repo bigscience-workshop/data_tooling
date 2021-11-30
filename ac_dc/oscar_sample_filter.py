@@ -186,16 +186,13 @@ class Filtering:
         strip_characters,
         stopwords,
         stopwords_min_cutoff,
-        stopwords_max_cutoff,
     ):
         cond = True
         if stopwords:
             stopwords_ratio = Filtering.compute_stopwords_ratio(
                 sentence, strip_characters, stopwords
             )
-            cond = (stopwords_ratio > stopwords_min_cutoff) and (
-                stopwords_ratio < stopwords_max_cutoff
-            )
+            cond = stopwords_ratio > stopwords_min_cutoff
         return cond
 
     @staticmethod
@@ -280,7 +277,6 @@ class Filtering:
         cond_check_stopwords,
         stopwords,
         stopwords_min_cutoff,
-        stopwords_max_cutoff,
         cond_check_badwords,
         badwords,
         badwords_max_cutoff,
@@ -308,7 +304,6 @@ class Filtering:
                 strip_characters,
                 stopwords,
                 stopwords_min_cutoff,
-                stopwords_max_cutoff,
             ):
                 return False
         if cond_check_badwords:
@@ -372,7 +367,6 @@ class FuncOscarFiltering:
             cond_check_stopwords=self.param["cond_check_stopwords"],
             stopwords=self.stopwords,
             stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
-            stopwords_max_cutoff=self.param["stopwords_max_cutoff"],
             cond_check_badwords=self.param["cond_check_badwords"],
             badwords=self.badwords,
             badwords_max_cutoff=self.param["badwords_max_cutoff"],
