@@ -51,9 +51,10 @@ import urllib
 import re
 from transformers import AutoTokenizer
 from nltk.corpus import stopwords
-from data_tooling.pii_processing.ontology.stopwords import stopwords as stopwords_ac_dc
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              os.path.pardir, os.path.pardir, os.path.pardir)))
+from data_tooling.pii_processing.ontology.stopwords import stopwords as stopwords_ac_dc
 mt5_underscore= "▁"
 trannum = str.maketrans("0123456789", "1111111111")
 
