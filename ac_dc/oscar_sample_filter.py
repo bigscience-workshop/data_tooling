@@ -98,7 +98,7 @@ class ModifyingSentences:
         length_word_max_cutoff,
     ):
         words = sentence.split(" ")
-        words = [word for word in words if len(word) < length_word_max_cutoff]
+        words = [word for word in words if len(word) <= length_word_max_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
 
@@ -169,7 +169,7 @@ class Filtering:
         special_characters_ratio = Filtering.compute_special_characters_ratio(
             sentence, special_characters
         )
-        cond = special_characters_ratio < special_characters_max_cutoff
+        cond = special_characters_ratio <= special_characters_max_cutoff
         return cond
 
     @staticmethod
@@ -192,7 +192,7 @@ class Filtering:
             stopwords_ratio = Filtering.compute_stopwords_ratio(
                 sentence, strip_characters, stopwords
             )
-            cond = stopwords_ratio > stopwords_min_cutoff
+            cond = stopwords_ratio >= stopwords_min_cutoff
         return cond
 
     @staticmethod
@@ -213,7 +213,7 @@ class Filtering:
             badwords_ratio = Filtering.compute_badwords_ratio(
                 sentence, strip_characters, badwords
             )
-            cond = badwords_ratio < badwords_max_cutoff
+            cond = badwords_ratio <= badwords_max_cutoff
         return cond
 
     @staticmethod
@@ -246,7 +246,7 @@ class Filtering:
                 sentence, strip_characters, model_lang_id
             )
             cond = (lang_pred_oscar_id == lang_oscar_id) and (
-                score_pred > lang_id_min_cutoff
+                score_pred >= lang_id_min_cutoff
             )
         return cond
 
@@ -263,7 +263,7 @@ class Filtering:
         cond = True
         if kenlm_model:
             score = Filtering.compute_perplexity_score(sentence, kenlm_model)
-            cond = score < perplexity_max_cutoff
+            cond = score <= perplexity_max_cutoff
         return cond
 
     @staticmethod
