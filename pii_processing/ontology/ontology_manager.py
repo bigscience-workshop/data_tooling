@@ -538,11 +538,11 @@ class OntologyManager:
     return None
 
 if __name__ == "__main__":  
-  data_dir = tmp = None
+  data_dir = tmp_dir = None
   if "-s" in sys.argv:
-    tmp_dir = sys.argv[sys.argv.indexof("-s")+1]
+    tmp_dir = sys.argv[sys.argv.index("-s")+1]
   if "-t" in sys.argv:
-    sentence = sys.argv[sys.argv.indexof("-t")+1]
+    sentence = sys.argv[sys.argv.index("-t")+1]
     manager = OntologyManager(data_dir=data_dir, tmp_dir=tmp_dir)
     txt = manager.tokenize(sentence)
     print(txt)
