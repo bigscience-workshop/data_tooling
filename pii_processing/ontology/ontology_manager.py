@@ -51,6 +51,8 @@ import urllib
 import re
 from transformers import AutoTokenizer
 from nltk.corpus import stopwords
+from data_tooling.ac_dc.stopwords import stopwords as stopwords_ac_dc
+  
 mt5_underscore= "▁"
 trannum = str.maketrans("0123456789", "1111111111")
 
@@ -63,7 +65,7 @@ class OntologyManager:
   """
 
   default_strip_chars="-,~`.?!@#$%^&*(){}[]|\\/-_+=<>;'\""
-  stopwords = set(stopwords.words())
+  stopwords_wn = set(stopwords.words())
   x_lingual_onto_name = "yago_cn_wn"
   default_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 
@@ -90,10 +92,14 @@ class OntologyManager:
       'EMAIL_ADDRESS': ['EMAIL_ADDRESS', 'ELECTRONIC_ADDRESS'],
       'GOVT_ID': ['GOVT_ID', 'CARDINAL'],
   }  
-  def __init__(self, target_lang="en", data_dir=None,  tmp_dir=None, max_word_len=4, compound_word_step =3,  strip_chars=None,  \
-                 upper_ontology=None,  x_lingual_lexicon_by_prefix_file="lexicon_by_prefix.json.gz", target_lang_config_file=None, x_lingual2ner_file=None, \
+  def __init__(self, target_lang="", data_dir=None,  tmp_dir=None, max_word_len=4, compound_word_step =3,  strip_chars=None,  \
+                 upper_ontology=None,  x_lingual_lexicon_by_prefix_file="lexicon_by_prefix.json.gz", target_lang_data_file=None, x_lingual2ner_file=None, \
                  connector = "_", label2label=None):
+    self.mt5_tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
+    self.target_lang_lexicon = {}
+    self.x_lingual_lexicon_by_prefix = {}
     self.target_lang = target_lang
+    self.stopwords = set(stopwords_ac_dc.get(target_lang,[])+ list(self.stopwords_wn))
     self._max_lexicon = 0
     if data_dir is None: data_dir = self.default_data_dir 
     if tmp_dir is None: tmp_dir = "/tmp/pii_processing/"
@@ -116,13 +122,14 @@ class OntologyManager:
     self.ontology = OrderedDict()
     self.load_upper_ontology(upper_ontology)
     self.load_x_lingual_lexicon_from_prefix_file(x_lingual_lexicon_by_prefix_file)
-    self.load_x_lingual_lexicon_from_x_lingual2ner_file(x_lingual2ner_file)
-    self.load_target_lang_config(target_lang_config_file, target_lang=target_lang)
+    if x_lingual2ner_file is not None:  
+      self.load_x_lingual_lexicon_from_x_lingual2ner_file(x_lingual2ner_file)
+    if target_lang_data_file is None and target_lang:
+      target_lang_data_file = f"{data_dir}/{target_lang}.json"
+    if target_lang_data_file is not None:
+      self.load_target_lang_data(target_lang_data_file, target_lang=target_lang)
     #used for cjk processing
-    self.mt5_tokenizer = None
-    if target_lang in ("zh","ja", "ko"):
-      self.mt5_tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
-
+    
   def load_upper_ontology(self, upper_ontology):
     # TODO: load and save from json file
     if upper_ontology is None: upper_ontology =  {}
@@ -180,7 +187,7 @@ class OntologyManager:
     """ saves the base cross lingual leixcon """
     data_dir = self.data_dir
     tmp_dir = self.tmp_dir
-    print (data_dir, x_lingual_lexicon_by_prefix_file)
+    #print (data_dir, x_lingual_lexicon_by_prefix_file)
     x_lingual_lexicon_by_prefix_file = x_lingual_lexicon_by_prefix_file.replace(".gz", "")
     if not x_lingual_lexicon_by_prefix_file.startswith(data_dir): 
       x_lingual_lexicon_by_prefix_file=f"{data_dir}/{x_lingual_lexicon_by_prefix_file}"  
@@ -188,22 +195,22 @@ class OntologyManager:
     os.system(f"gzip {x_lingual_lexicon_by_prefix_file}")
     os.system(f"rm {x_lingual_lexicon_by_prefix_file}")
 
-  def load_target_lang_config(self,  target_lang_config_file=None, target_lang=None):
+  def load_target_lang_data(self,  target_lang_data_file=None, target_lang=None):
     data_dir = self.data_dir
     tmp_dir = self.tmp_dir
-    if target_lang_config_file is None:
+    if target_lang_data_file is None:
       if os.path.exists(os.path.join(data_dir, f'{target_lang}.json')): 
-        target_lang_config_file=  os.path.join(data_dir, f'{target_lang}.json')
-    if target_lang_config_file is None: return
-    if os.path.exists(target_lang_config_file):
-      self.target_lang_config = json.load(open(target_lang_config_file, "rb"))
+        target_lang_data_file=  os.path.join(data_dir, f'{target_lang}.json')
+    if target_lang_data_file is None: return
+    if os.path.exists(target_lang_data_file):
+      self.target_lang_data = json.load(open(target_lang_data_file, "rb"))
     else:
-      self.target_lang_config = {}
+      self.target_lang_data = {}
     ner_regexes = []
-    if 'ner_regexes' in self.target_lang_config:
+    if 'ner_regexes' in self.target_lang_data:
       # for now we are going to ignore the PERSON rules, becaues the rules don't work yet
       # change this for Module 2 of the Hackathon.
-      ner_regexes = [regex for regex in self.target_lang_config['ner_regexes'] if regex[0] != "PERSON" and regex[0] in self.upper_ontology]
+      ner_regexes = [regex for regex in self.target_lang_data['ner_regexes'] if regex[0] != "PERSON" and regex[0] in self.upper_ontology]
       for regex in ner_regexes:
         if regex[1]:
           regex[1] = re.compile(regex[1], re.IGNORECASE)
@@ -212,39 +219,41 @@ class OntologyManager:
     self.ner_regexes = ner_regexes
 
     #pronouns used for basic coref
-    self.other_pronouns = set(self.target_lang_config.get('OTHER_PRONOUNS',[]))
-    self.person_pronouns = set(self.target_lang_config.get('PERSON_PRONOUNS',[]))
+    self.other_pronouns = set(self.target_lang_data.get('OTHER_PRONOUNS',[]))
+    self.person_pronouns = set(self.target_lang_data.get('PERSON_PRONOUNS',[]))
     self.pronouns = set(list(self.other_pronouns) + list(self.person_pronouns))
 
     #these are used for aonymizing and de-biasing swapping. 
     #TODO: consider whether we want to create shorter/stemmed versions of these.
-    self.binary_gender_swap = self.target_lang_config.get('binary_gender_swap', {})
-    self.other_gender_swap = self.target_lang_config.get('other_gender_swap', {})
-    self.en_pronoun2gender = self.target_lang_config.get('en_pronoun2gender', {})
-    self.en_pronoun2pronoun = self.target_lang_config.get('en_pronoun2pronoun', {}) 
-    self.en_pronoun2title = self.target_lang_config.get('en_pronoun2title', {})
-    self.person2religion = self.target_lang_config.get('person2religion', {})  
+    self.binary_gender_swap = self.target_lang_data.get('binary_gender_swap', {})
+    self.other_gender_swap = self.target_lang_data.get('other_gender_swap', {})
+    self.en_pronoun2gender = self.target_lang_data.get('en_pronoun2gender', {})
+    self.en_pronoun2pronoun = self.target_lang_data.get('en_pronoun2pronoun', {}) 
+    self.en_pronoun2title = self.target_lang_data.get('en_pronoun2title', {})
+    self.person2religion = self.target_lang_data.get('person2religion', {})  
     self.gender2en_pronoun = dict(itertools.chain(*[[(b,a) for b in lst] for a, lst in self.en_pronoun2gender.items()]))
     self.pronoun2en_pronoun = dict(itertools.chain(*[[(b,a) for b in lst] for a, lst in self.en_pronoun2pronoun.items()]))
     self.title2en_pronoun = dict(itertools.chain(*[[(b,a) for b in lst] for a, lst in self.en_pronoun2title.items()]))
     self.religion2person = dict(itertools.chain(*[[(b,a) for b in lst] for a, lst in self.person2religion.items()]))
-    self.coref_window = self.target_lang_config.get('coref_window', [-1, -2, 1, 2])  #maybe this should be a parameter and not in the ontology
+    self.coref_window = self.target_lang_data.get('coref_window', [-1, -2, 1, 2])  #maybe this should be a parameter and not in the ontology
  
     #now specialize the ontology for target_lang and have no limit on the size of the words
-    target_lang_ontology = {}
-    for label, words in self.target_lang_config if type(self.target_lang_config) is list else self.target_lang_config.items():
+    target_lang_lexicon = {}
+    for label, words in self.target_lang_data if type(self.target_lang_data) is list else self.target_lang_data.items():
       if label in self.upper_ontology:
         for word in words:
-          target_lang_ontology[word] = label
-    #print (target_lang_ontology)
-    self.add_to_ontology(target_lang_ontology, max_word_len=100000, onto_name=os.path.split(target_lang_config_file)[-1].split(".")[0])
+          if word not in self.stopwords and (not self.cjk_detect(word) or len(word) > 1):
+            target_lang_lexicon[word] = label
+    #print (target_lang_lexicon)
+    self.add_to_ontology(target_lang_lexicon, max_word_len=100000, onto_name=os.path.split(target_lang_data_file)[-1].split(".")[0])
+    self.target_lang_lexicon = target_lang_lexicon # save away the target lang ontology as a lexicon
 
-  def save_target_lang_config(self, target_lang_config_file):
-    if target_lang_config_file is None: return
+  def save_target_lang_data(self, target_lang_data_file):
+    if target_lang_data_file is None: return
     data_dir = self.data_dir
     tmp_dir = self.tmp_dir
-    json.dump(self.target_lang_config,open(f"{data_dir}/{target_lang_config_file}", "w", encoding="utf8"), indent=1)
-    #os.system(f"gzip {data_dir}/{target_lang_config_file}")
+    json.dump(self.target_lang_data,open(f"{data_dir}/{target_lang_data_file}", "w", encoding="utf8"), indent=1)
+    #os.system(f"gzip {data_dir}/{target_lang_data_file}")
     
   def _has_nonstopword(self, wordArr):
     for word in wordArr:
@@ -294,8 +303,7 @@ class OntologyManager:
     max_word_len. Compound words are connected by a connector.
     Compound words longer than compound_word_step are shortened to
     that length for storage purposes.  All words except upper ontology
-    labels are lower cased.  Assumes cjk tokens have already been
-    parsed by mt5 tokenizer.
+    labels are lower cased.  
     """
     if onto_name is None:
       onto_name = self.x_lingual_onto_name
@@ -315,6 +323,9 @@ class OntologyManager:
       word, label = word_label
       #if word.startswith('geor'): print (word, label)
       label = label.upper()
+      is_cjk = self.cjk_detect(word)
+      if is_cjk:
+        word = "_".join(self.mt5_tokenizer.tokenize(word)).replace(mt5_underscore,"_").replace("__", "_").replace("__", "_").strip("_")
       word = word.strip().lower().translate(trannum).strip(self.strip_chars).replace(" ",connector)
       wordArr = word.split(connector)
       orig_lens = len(word) + len(wordArr)
@@ -384,7 +395,7 @@ class OntologyManager:
       connector = self.connector
     if self.mt5_tokenizer is None:
       self.mt5_tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
-    words = self.mt5_tokenizer.tokenize(text.strip())
+    words = self.mt5_tokenizer.tokenize(text.replace("_", " ").strip())
     words2 = []
     for word in words:
       if not words2: 
@@ -404,20 +415,29 @@ class OntologyManager:
   def in_ontology(self, word, connector=None, supress_cjk_tokenize=False, check_person_org_caps=True):
     """ find whether a word is in the ontology. """
     orig_word = word
+
     max_word_len =self.max_word_len
     compound_word_step = self.compound_word_step
     if connector is None:
       connector = self.connector
-    if not supress_cjk_tokenize and self.cjk_detect(word):
+    is_cjk = self.cjk_detect(word)
+    if not supress_cjk_tokenize and is_cjk:
       word = self.cjk_pre_tokenize(word, connector)
-    word = word.strip().translate(trannum).strip(self.strip_chars) 
-    wordArr = word.replace(" ",connector).split(connector) 
+      
+    word = word.strip().translate(trannum).strip(self.strip_chars).replace(" ",connector)
+    wordArr = word.split(connector) 
+    if word in self.target_lang_lexicon:
+      return orig_word, self.target_lang_lexicon[word]
+    if is_cjk:
+      word = word.replace(connector,"")
+    if word in self.target_lang_lexicon: 
+      return orig_word, self.target_lang_lexicon[word]
     #wordArr = [w2.strip(self.strip_chars) for w2 in wordArr if w2.strip(self.strip_chars)]
     if not wordArr:
       return word, None
     lenWordArr = len(wordArr)
-    all_shingles = self._get_all_word_shingles(wordArr, max_word_len=max_word_len)
-    long_shingles= self._get_all_word_shingles(wordArr, max_word_len=100000, create_suffix_end=False)
+    all_shingles = self._get_all_word_shingles(wordArr, max_word_len=max_word_len, create_suffix_end=not is_cjk)
+    long_shingles= [] if is_cjk else self._get_all_word_shingles(wordArr, max_word_len=100000, create_suffix_end=False)
     for ontology in reversed(list(self.ontology.values())):
       #find patterned variations (shingles)
       for shingleArr in long_shingles + all_shingles: # we can probably dedup to make it faster
@@ -477,6 +497,7 @@ class OntologyManager:
       start_word = start_word.translate(trannum).split(connector)[0]
       start_word = start_word if len(start_word) <=  max_word_len else start_word[:max_word_len]
       ngram_start, ngram_end = self._get_ngram_start_end(start_word)
+      #print (start_word, ngram_start, ngram_end)
       if ngram_start > 0:
         for j in range(ngram_start-1, ngram_end-2, -1):
           if len_sent - i  > j:
