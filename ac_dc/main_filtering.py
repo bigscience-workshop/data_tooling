@@ -42,7 +42,7 @@ def parseArgs():
     parser.add_argument(
         "--path_fasttext_model",
         type=str,
-        default="/tmp/lid.176.bin",
+        default="ac_dc/lid.176.bin",
         help="Path to the Fasttext model used for language identification.",
     )
     parser.add_argument(

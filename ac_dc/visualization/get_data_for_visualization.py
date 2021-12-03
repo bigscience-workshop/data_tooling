@@ -118,7 +118,7 @@ if __name__ == "__main__":
     ).shuffle(buffer_size=num_iter, seed=42)
 
     lang_oscar_id = "en"
-    path_fasttext_model = "/tmp/lid.176.bin"
+    path_fasttext_model = "ac_dc/lid.176.bin"
     path_kenlm_model = f"ac_dc/en.arpa.bin"
     path_sentence_piece_model = f"ac_dc/en.sp.model"
     path_save_stats = f"./en_examples_with_stats.json"
