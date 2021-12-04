@@ -248,7 +248,7 @@ class OntologyManager:
             target_lang_lexicon[word] = label
     #print (target_lang_lexicon)
     self.add_to_ontology(target_lang_lexicon, max_word_len=100000, onto_name=os.path.split(target_lang_data_file)[-1].split(".")[0])
-    self.target_lang_lexicon = target_lang_lexicon # save away the target lang ontology as a lexicon
+    self.target_lang_lexicon = {} # target_lang_lexicon # save away the target lang ontology as a lexicon
 
   def save_target_lang_data(self, target_lang_data_file):
     if target_lang_data_file is None: return
