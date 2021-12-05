@@ -3,13 +3,16 @@ import fasttext
 # To download the fasttext model:
 # wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 
+import sentencepiece
+import kenlm
+
 import pathlib
 
 from languages_id import langs_id
 from parameters_filtering import parameters_filtering
+from normalization import normalization
 from stopwords import stopwords
 from badwords import badwords
-from perplexity import KenlmModel
 
 
 class LoadParameters:
@@ -47,12 +50,24 @@ class LoadParameters:
         return model_lang_id
 
     @staticmethod
-    def load_kenlm_model(lang_oscar_id, path_kenlm_model, path_sentence_piece_model):
+    def load_sentencepiece_model(lang_oscar_id, path_sentencepiece_model):
+        sentencepiece_lang_id = langs_id.loc[
+            langs_id["oscar_id"] == lang_oscar_id, "sentencepiece_id"
+        ].iloc[0]
+        if sentencepiece_lang_id:
+            sentencepiece_model = sentencepiece.SentencePieceProcessor()
+            sentencepiece_model.load(path_sentencepiece_model)
+        else:
+            sentencepiece_model = None
+        return sentencepiece_model
+
+    @staticmethod
+    def load_kenlm_model(lang_oscar_id, path_kenlm_model):
         kenlm_lang_id = langs_id.loc[
             langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
         ].iloc[0]
         if kenlm_lang_id:
-            kenlm_model = KenlmModel(path_kenlm_model, path_sentence_piece_model)
+            kenlm_model = kenlm.Model(path_kenlm_model)
         else:
             kenlm_model = None
         return kenlm_model
@@ -71,6 +86,54 @@ class ModifyingSentences:
     def lower_strip_sentence(sentence):
         sent = sentence.lower().strip()
         return sent
+
+    @staticmethod
+    def remove_non_printing_characters(sentence, non_printing_characters_re):
+        return non_printing_characters_re.sub("", sentence)
+
+    @staticmethod
+    def replace_digits_with_zeros(sentence, digits_re):
+        return digits_re.sub("0", sentence)
+
+    @staticmethod
+    def replace_unicode_punctuation(sentence, unicode_punctuation):
+        return "".join(unicode_punctuation.get(c, c) for c in sentence)
+
+    @staticmethod
+    def normalization(
+        sentence,
+        remove_non_printing_characters,
+        strip,
+        lower_case,
+        replace_digits_with_zeros,
+        replace_unicode_punctuation,
+        non_printing_characters_re=normalization["non_printing_characters_re"],
+        digits_re=normalization["digits_re"],
+        unicode_punctuation=normalization["unicode_punctuation"],
+    ):
+        if remove_non_printing_characters:
+            sentence = ModifyingSentences.remove_non_printing_characters(
+                sentence, non_printing_characters_re
+            )
+        if strip:
+            sentence = sentence.strip()
+        if not sentence:
+            return sentence
+        if lower_case:
+            sentence = sentence.lower()
+        if replace_digits_with_zeros:
+            sentence = ModifyingSentences.replace_digits_with_zeros(sentence, digits_re)
+        if replace_unicode_punctuation:
+            sentence = ModifyingSentences.replace_unicode_punctuation(
+                sentence, unicode_punctuation
+            )
+        return sentence
+
+    @staticmethod
+    def tokenization(sentence, sentencepiece_model):
+        sentence_tokenized = sentencepiece_model.encode_as_pieces(sentence)
+        sentence_tokenized = " ".join(sentence_tokenized)
+        return sentence_tokenized
 
     @staticmethod
     def get_words_from_sentence(sentence, strip_characters):
@@ -251,18 +314,38 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_perplexity_score(sentence, kenlm_model):
-        return kenlm_model.get_perplexity(sentence)
+    def compute_perplexity_score(doc, sentencepiece_model, kenlm_model):
+        doc = ModifyingSentences.normalization(
+            sentence=doc,
+            remove_non_printing_characters=True,
+            strip=True,
+            lower_case=True,
+            replace_digits_with_zeros=True,
+            replace_unicode_punctuation=True,
+        )
+        doc = ModifyingSentences.tokenization(doc, sentencepiece_model)
+        doc_log_score, doc_length = 0, 0
+        for line in doc.split("\n"):
+            log_score = kenlm_model.score(line)
+            length = len(line.split()) + 1
+            doc_log_score += log_score
+            doc_length += length
+        pp_score = 10.0 ** (-doc_log_score / doc_length)
+        pp_score = round(pp_score, 1)
+        return pp_score
 
     @staticmethod
     def check_perplexity(
         sentence,
+        sentencepiece_model,
         kenlm_model,
         perplexity_max_cutoff,
     ):
         cond = True
         if kenlm_model:
-            score = Filtering.compute_perplexity_score(sentence, kenlm_model)
+            score = Filtering.compute_perplexity_score(
+                sentence, sentencepiece_model, kenlm_model
+            )
             cond = score <= perplexity_max_cutoff
         return cond
 
@@ -285,6 +368,7 @@ class Filtering:
         model_lang_id,
         lang_id_min_cutoff,
         cond_check_perplexity,
+        sentencepiece_model,
         kenlm_model,
         perplexity_max_cutoff,
     ):
@@ -326,6 +410,7 @@ class Filtering:
         if cond_check_perplexity:
             if not Filtering.check_perplexity(
                 sentence,
+                sentencepiece_model,
                 kenlm_model,
                 perplexity_max_cutoff,
             ):
@@ -338,21 +423,24 @@ class FuncOscarFiltering:
         self,
         lang_oscar_id,
         path_fasttext_model,
+        path_sentencepiece_model,
         path_kenlm_model,
-        path_sentence_piece_model,
     ):
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
+        self.path_sentencepiece_model = path_sentencepiece_model
         self.path_kenlm_model = path_kenlm_model
-        self.path_sentence_piece_model = path_sentence_piece_model
 
         self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
         self.badwords = LoadParameters.load_badwords(lang_oscar_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
             lang_oscar_id, path_fasttext_model
         )
+        self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
+            lang_oscar_id, path_sentencepiece_model
+        )
         self.kenlm_model = LoadParameters.load_kenlm_model(
-            lang_oscar_id, path_kenlm_model, path_sentence_piece_model
+            lang_oscar_id, path_kenlm_model
         )
         self.param = LoadParameters.load_parameters(lang_oscar_id)
 
@@ -375,6 +463,7 @@ class FuncOscarFiltering:
             model_lang_id=self.model_lang_id,
             lang_id_min_cutoff=self.param["lang_id_min_cutoff"],
             cond_check_perplexity=self.param["cond_check_perplexity"],
+            sentencepiece_model=self.sentencepiece_model,
             kenlm_model=self.kenlm_model,
             perplexity_max_cutoff=self.param["perplexity_max_cutoff"],
         )
@@ -386,8 +475,8 @@ class FuncOscarFiltering:
             (
                 self.lang_oscar_id,
                 self.path_fasttext_model,
+                self.path_sentencepiece_model,
                 self.path_kenlm_model,
-                self.path_sentence_piece_model,
             ),
         )
 
@@ -398,16 +487,16 @@ class OscarFiltering:
         dataset,
         lang_oscar_id,
         path_fasttext_model,
+        path_sentencepiece_model,
         path_kenlm_model,
-        path_sentence_piece_model,
         num_proc,
         path_dir_save_oscar,
     ):
         self.ds = dataset
         self.lang_oscar_id = lang_oscar_id
         self.path_fasttext_model = path_fasttext_model
+        self.path_sentencepiece_model = path_sentencepiece_model
         self.path_kenlm_model = path_kenlm_model
-        self.path_sentence_piece_model = path_sentence_piece_model
         self.num_proc = num_proc
         self.path_dir_save_oscar = path_dir_save_oscar
 
@@ -419,8 +508,8 @@ class OscarFiltering:
         func_oscar_filtering = FuncOscarFiltering(
             self.lang_oscar_id,
             self.path_fasttext_model,
+            self.path_sentencepiece_model,
             self.path_kenlm_model,
-            self.path_sentence_piece_model,
         )
         self.ds = self.ds.filter(func_oscar_filtering, num_proc=self.num_proc)
 
