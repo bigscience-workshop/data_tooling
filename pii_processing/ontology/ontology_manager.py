@@ -96,7 +96,7 @@ class OntologyManager:
   }  
   def __init__(self, target_lang="", data_dir=None,  tmp_dir=None, max_word_len=4, compound_word_step =3,  strip_chars=None,  \
                  upper_ontology=None,  x_lingual_lexicon_by_prefix_file="lexicon_by_prefix.json.gz", target_lang_data_file=None, x_lingual2ner_file=None, \
-                 connector = "_", label2label=None):
+                 connector = "_", label2label=None, min_word_len=5):
     self.mt5_tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
     self.target_lang_lexicon = {}
     self.x_lingual_lexicon_by_prefix = {}
@@ -115,6 +115,7 @@ class OntologyManager:
     self.strip_chars = strip_chars
     self.connector = connector
     self.max_word_len = max_word_len
+    self.min_word_len = min_word_len
     self.compound_word_step = compound_word_step
     if label2label is None:
       label2label = self.default_label2label
@@ -248,7 +249,7 @@ class OntologyManager:
             target_lang_lexicon[word] = label
     #print (target_lang_lexicon)
     self.add_to_ontology(target_lang_lexicon, max_word_len=100000, onto_name=os.path.split(target_lang_data_file)[-1].split(".")[0])
-    self.target_lang_lexicon = target_lang_lexicon # save away the target lang ontology as a lexicon
+    self.target_lang_lexicon = {} # target_lang_lexicon # save away the target lang ontology as a lexicon
 
   def save_target_lang_data(self, target_lang_data_file):
     if target_lang_data_file is None: return
@@ -414,19 +415,22 @@ class OntologyManager:
     text = " ".join(words2).replace(mt5_underscore," ").replace("  ", " ").replace("  ", " ").strip()
     return text
 
-  def in_ontology(self, word, connector=None, supress_cjk_tokenize=False, check_person_org_caps=True):
+  def in_ontology(self, word, connector=None, supress_cjk_tokenize=False, check_person_org_gpe_caps=True):
     """ find whether a word is in the ontology. """
     orig_word = word
 
     max_word_len =self.max_word_len
+    min_word_len =self.min_word_len
     compound_word_step = self.compound_word_step
     if connector is None:
       connector = self.connector
     is_cjk = self.cjk_detect(word)
+    if not is_cjk and len(word) < min_word_len:
+      return word, None
     if not supress_cjk_tokenize and is_cjk:
       word = self.cjk_pre_tokenize(word, connector)
       
-    word = word.strip().translate(trannum).strip(self.strip_chars).replace(" ",connector)
+    word = word.strip().translate(trannum).strip(self.strip_chars+connector).replace(" ",connector)
     wordArr = word.split(connector) 
     if word in self.target_lang_lexicon:
       return orig_word, self.target_lang_lexicon[word]
@@ -435,7 +439,7 @@ class OntologyManager:
     if word in self.target_lang_lexicon: 
       return orig_word, self.target_lang_lexicon[word]
     #wordArr = [w2.strip(self.strip_chars) for w2 in wordArr if w2.strip(self.strip_chars)]
-    if not wordArr:
+    if not wordArr or not wordArr[0] or not wordArr[-1]: 
       return word, None
     lenWordArr = len(wordArr)
     all_shingles = self._get_all_word_shingles(wordArr, max_word_len=max_word_len, create_suffix_end=not is_cjk)
@@ -452,7 +456,7 @@ class OntologyManager:
           label, _ = lexicon2.get(shingle, (None, None))
           #let's return only labels that are in the upper_ontology
           if label is not None and (label[0] in self.upper_ontology or self.label2label.get(label[0]) in self.upper_ontology):
-            if check_person_org_caps and ("PERSON" in label or "ORG" in label):
+            if check_person_org_gpe_caps and ("PUBLIC_FIGURE" in label or "PERSON" in label or "ORG" in label or "GPE" in label):
               #ideally we would keep patterns like AaA as part of the shingle to match. This is a hack.
               if wordArr[0][0] != wordArr[0][0].upper() or  wordArr[-1][0] != wordArr[-1][0].upper(): continue
             label = label[0]
