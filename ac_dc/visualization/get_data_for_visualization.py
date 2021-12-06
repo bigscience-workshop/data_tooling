@@ -110,7 +110,7 @@ if __name__ == "__main__":
     config_name = "unshuffled_deduplicated_en"
     data_files = None
     split = "train"
-    num_iter = 50
+    num_iter = 5000
 
     dataset = load_dataset(
         dataset_name,

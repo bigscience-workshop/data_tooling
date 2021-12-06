@@ -1,3 +1,5 @@
+import re
+
 import fasttext
 
 # To download the fasttext model:
@@ -83,11 +85,6 @@ class LoadParameters:
 
 class ModifyingSentences:
     @staticmethod
-    def lower_strip_sentence(sentence):
-        sent = sentence.lower().strip()
-        return sent
-
-    @staticmethod
     def remove_non_printing_characters(sentence, non_printing_characters_re):
         return non_printing_characters_re.sub("", sentence)
 
@@ -137,8 +134,13 @@ class ModifyingSentences:
 
     @staticmethod
     def get_words_from_sentence(sentence, strip_characters):
-        sent = ModifyingSentences.lower_strip_sentence(sentence)
-        words = [word.strip(strip_characters) for word in sent.split(" ")]
+        """Get words from a sentence. Non reversible since the sentence
+        is split on multiple characters and words are stripped of
+        special characters. Useful to compute ratios, like the
+        stopwords ratio."""
+        sentence = sentence.lower()
+        words = [word.strip(strip_characters) for word in re.split(" |\n|\t", sentence)]
+        words = [word for word in words if word]
         return words
 
     @staticmethod
@@ -168,11 +170,20 @@ class ModifyingSentences:
     @staticmethod
     def modifying_sentences(
         sentence,
+        cond_replace_unicode_punctuation,
         cond_remove_words_with_incorrect_substrings,
         incorrect_word_substrings,
         cond_remove_long_words,
         length_word_max_cutoff,
     ):
+        sentence = ModifyingSentences.normalization(
+            sentence=sentence,
+            remove_non_printing_characters=True,
+            strip=True,
+            lower_case=False,
+            replace_digits_with_zeros=False,
+            replace_unicode_punctuation=cond_replace_unicode_punctuation,
+        )
         if cond_remove_words_with_incorrect_substrings:
             sentence = ModifyingSentences.remove_words_with_incorrect_substrings(
                 sentence,
@@ -193,6 +204,7 @@ class OscarModifyingSentences:
     def __call__(self, example):
         example["text"] = ModifyingSentences.modifying_sentences(
             sentence=example["text"],
+            cond_replace_unicode_punctuation=self.param["cond_replace_unicode_punctuation"],
             cond_remove_words_with_incorrect_substrings=self.param[
                 "cond_remove_words_with_incorrect_substrings"
             ],
@@ -209,18 +221,16 @@ class OscarModifyingSentences:
 class Filtering:
     @staticmethod
     def check_empty(sentence, strip_characters):
-        sent = ModifyingSentences.lower_strip_sentence(sentence)
         words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
-        cond = (len(sent) > 0) and (len(words) > 0)
+        cond = len(words) > 0
         return cond
 
     @staticmethod
     def compute_special_characters_ratio(sentence, special_characters):
-        sent = ModifyingSentences.lower_strip_sentence(sentence)
         set_special_characters = {char for char in special_characters}
         special_characters_ratio = len(
-            [char for char in sent if char in set_special_characters]
-        ) / len(sent)
+            [char for char in sentence if char in set_special_characters]
+        ) / len(sentence)
         return special_characters_ratio
 
     @staticmethod
@@ -280,10 +290,9 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_lang_id_pred_score(sentence, strip_characters, model_lang_id):
-        words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
-        sent = " ".join(words).replace("\n", " ")
-        pred = model_lang_id.predict(sent)
+    def compute_lang_id_pred_score(sentence, model_lang_id):
+        sentence = sentence.lower().replace("\n", " ")
+        pred = model_lang_id.predict(sentence)
         lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
         score_pred = pred[1][0]
         lang_pred_oscar_id = langs_id.loc[
@@ -298,7 +307,6 @@ class Filtering:
     @staticmethod
     def check_lang_id(
         sentence,
-        strip_characters,
         lang_oscar_id,
         model_lang_id,
         lang_id_min_cutoff,
@@ -306,7 +314,7 @@ class Filtering:
         cond = True
         if model_lang_id:
             lang_pred_oscar_id, score_pred = Filtering.compute_lang_id_pred_score(
-                sentence, strip_characters, model_lang_id
+                sentence, model_lang_id
             )
             cond = (lang_pred_oscar_id == lang_oscar_id) and (
                 score_pred >= lang_id_min_cutoff
@@ -401,7 +409,6 @@ class Filtering:
         if cond_check_lang_id:
             if not Filtering.check_lang_id(
                 sentence,
-                strip_characters,
                 lang_oscar_id,
                 model_lang_id,
                 lang_id_min_cutoff,
