@@ -204,7 +204,9 @@ class OscarModifyingSentences:
     def __call__(self, example):
         example["text"] = ModifyingSentences.modifying_sentences(
             sentence=example["text"],
-            cond_replace_unicode_punctuation=self.param["cond_replace_unicode_punctuation"],
+            cond_replace_unicode_punctuation=self.param[
+                "cond_replace_unicode_punctuation"
+            ],
             cond_remove_words_with_incorrect_substrings=self.param[
                 "cond_remove_words_with_incorrect_substrings"
             ],
