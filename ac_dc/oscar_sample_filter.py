@@ -133,13 +133,37 @@ class ModifyingSentences:
         return sentence_tokenized
 
     @staticmethod
+    def strip(sentence, strip_characters):
+        """Way faster than sentence.strip(strip_characters)
+        since strip_characters is now a set instead of a str."""
+        if not sentence:
+            return sentence
+        beg_ind = 0
+        end_ind = len(sentence)
+        for i in range(len(sentence)):
+            if sentence[i] in strip_characters:
+                beg_ind += 1
+            else:
+                break
+        for i in range(1, len(sentence) + 1):
+            if sentence[-i] in strip_characters:
+                end_ind -= 1
+            else:
+                break
+        sentence_stripped = sentence[beg_ind:end_ind]
+        return sentence_stripped
+
+    @staticmethod
     def get_words_from_sentence(sentence, strip_characters):
         """Get words from a sentence. Non reversible since the sentence
         is split on multiple characters and words are stripped of
         special characters. Useful to compute ratios, like the
         stopwords ratio."""
         sentence = sentence.lower()
-        words = [word.strip(strip_characters) for word in re.split(" |\n|\t", sentence)]
+        words = [
+            ModifyingSentences.strip(word, strip_characters)
+            for word in re.split(" |\n|\t", sentence)
+        ]
         words = [word for word in words if word]
         return words
 
@@ -204,7 +228,9 @@ class OscarModifyingSentences:
     def __call__(self, example):
         example["text"] = ModifyingSentences.modifying_sentences(
             sentence=example["text"],
-            cond_replace_unicode_punctuation=self.param["cond_replace_unicode_punctuation"],
+            cond_replace_unicode_punctuation=self.param[
+                "cond_replace_unicode_punctuation"
+            ],
             cond_remove_words_with_incorrect_substrings=self.param[
                 "cond_remove_words_with_incorrect_substrings"
             ],
@@ -227,9 +253,8 @@ class Filtering:
 
     @staticmethod
     def compute_special_characters_ratio(sentence, special_characters):
-        set_special_characters = {char for char in special_characters}
         special_characters_ratio = len(
-            [char for char in sentence if char in set_special_characters]
+            [char for char in sentence if char in special_characters]
         ) / len(sentence)
         return special_characters_ratio
 
@@ -453,7 +478,7 @@ class FuncOscarFiltering:
 
     def __call__(self, example):
         keep_example = Filtering.filtering(
-            sentence=example["text"].strip(),
+            sentence=example["text"],
             cond_check_empty=self.param["cond_check_empty"],
             strip_characters=self.param["strip_characters"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
