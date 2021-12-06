@@ -178,7 +178,7 @@ class ModifyingSentences:
     ):
         sentence = ModifyingSentences.normalization(
             sentence=sentence,
-            remove_non_printing_characters=True,
+            remove_non_printing_characters=False,
             strip=True,
             lower_case=False,
             replace_digits_with_zeros=False,
