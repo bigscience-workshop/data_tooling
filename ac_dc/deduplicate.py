@@ -1,4 +1,4 @@
-"""Creating simhashes and removing near duplicates."""
+"""Creating simhashes and removing near duplicates with annoy."""
 import datetime
 import logging
 import os
@@ -7,10 +7,11 @@ from collections import defaultdict
 from multiprocessing import Manager, cpu_count
 from typing import List, Optional, Tuple
 
-import dill as pickle
 import networkx as nx
+import numpy as np
 import pandas as pd
 import typer
+from annoy import AnnoyIndex
 from datasets import (
     Dataset,
     DatasetDict,
@@ -19,7 +20,8 @@ from datasets import (
     load_from_disk,
 )
 from mpire import WorkerPool
-from simhash import Simhash, SimhashIndex
+from simhash import Simhash
+from tqdm import tqdm
 
 app = typer.Typer()
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 def create_shingles(text: str, window: int = 4) -> List[str]:
     """
-    Create shingles/ngrams from the given text.
+    Create shingles/ngrams from the given text. This uses character-ngrams to be language agnostic.
 
     Parameters
     ----------
@@ -219,9 +221,15 @@ def build_hashes(
 
     def process(record):
         return {
-            "hash": str(
-                Simhash(create_shingles(record[text_column_name], shingle_size)).value
-            )
+            "hash": np.array(
+                list(
+                    np.binary_repr(
+                        Simhash(
+                            create_shingles(record[text_column_name], shingle_size)
+                        ).value
+                    ).zfill(64)
+                )
+            ).astype(np.int8)
         }
 
     splits = [split] if split is not None else list(ds.keys())
@@ -235,11 +243,10 @@ def build_index(
     output_file: str,
     data_dirs: List[str],
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
-    threshold: int = typer.Option(
-        2,
-        help="Hamming fingerprint distance threshold, below which data are considered to be duplicates",
-    ),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
+    num_trees: int = typer.Option(
+        100, help="Number of trees to build in the annoy index"
+    ),
 ):
     """
     Merging all hashes and build an index. The time complexity and space complexity for this function is at least O(N).
@@ -261,19 +268,20 @@ def build_index(
         Dataset directories with hashes to build the index from
     split : Optional[str], optional
         Which split of the data to load
-    threshold : int, optional
-        Hamming fingerprint distance threshold, below which data are considered to be duplicates, by default 2
     num_proc : int, optional
         Number of processes to use
+    num_trees : int, optional
+        Number of trees to build for the annoy index (10 ~ 1024)
     """
     num_proc = check_num_proc(num_proc)
 
-    # Shared object
-    manager = Manager()
-    hashes: List[Tuple[str, Simhash]] = manager.list()
+    t = AnnoyIndex(64, "hamming")
 
-    def process(record):
-        hashes.append((str(record["id"]), Simhash(int(record["hash"]))))
+    manager = Manager()
+    hashes: List[Tuple[int, np.ndarray]] = manager.list()
+
+    def process(id, hash, text=None, meta=None):
+        hashes.append((int(id), hash))
         return
 
     for dir in data_dirs:
@@ -283,12 +291,20 @@ def build_index(
             logger.warning(
                 f"Using all splits to build the index, please make sure the `id` is unique globally"
             )
-        for s in splits:
-            ds[s].map(process, num_proc=num_proc)
+        for split in splits:
+            with WorkerPool(n_jobs=num_proc) as pool:
+                pool.map(
+                    process,
+                    ds[split],
+                    progress_bar=True,
+                )
 
-    index = SimhashIndex(hashes, k=threshold, log=logger)
-    with open(output_file, "wb") as o:
-        o.write(pickle.dumps(index))
+    # Not paralleled
+    for id, hash in tqdm(hashes):
+        t.add_item(id, hash)
+
+    t.build(num_trees)
+    t.save(output_file)
 
 
 @app.command()
@@ -297,17 +313,17 @@ def find_duplicates(
     index_file: str,
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
+    k: int = typer.Option(100, help="Number of nearest neighbors to search for"),
+    threshold: int = typer.Option(3, help="Maximum hamming distance for duplicates"),
 ):
     """
     Find duplicates for given datasets. For each dataset directory `d`, it outputs a `d_duplicates` directory
     with a new `duplicates` column, containing all the duplicate indices.
 
-    The time complexity is O(N * B // C) where B is a large number (the size of a bucket) and C is the number of processes.
-
     Example:
 
     ```bash
-    python deduplicate.py find-duplicates "cache/en_hashes_00001" "cache/en_simhash_index.pkl" --split "train" --threshold 3
+    python deduplicate.py find-duplicates "cache/en_hashes_00001" "cache/en_simhash_index.pkl" --split "train" --k 100 --threshold 3
     ```
 
     This finds all duplicates in `cache/en_hashes_00001` with `cache/en_simhash_index.pkl`. It should outputs a directory named
@@ -323,56 +339,42 @@ def find_duplicates(
         Which split of the data to load
     num_proc : int, optional
         Number of processes to use
+    k : int, optional
+        Number of nearest neighbors to search for, by default 100
+    threshold : int, optional
+        Maximum hamming distance for duplicates, by default 3
     """
     num_proc = check_num_proc(num_proc)
 
-    def init(worker_state):
-        # Each worker takes a copy of the index instead of using shared memory
-        # Deserialize the bucket data to avoid redundant computation later
-        with open(index_file, "rb") as f:
-            worker_state["index"] = pickle.loads(f.read())
-            for key in worker_state["index"].bucket:
-                worker_state["index"].bucket[key] = {
-                    candidate.split(",", 1)[1]: Simhash(
-                        int(candidate.split(",", 1)[0], 16), worker_state["index"].f
-                    )
-                    for candidate in worker_state["index"].bucket[key]
-                }
+    index = AnnoyIndex(64, "hamming")
+    index.load(index_file)
+    logger.info(f"Querying with {index.get_n_items()} records")
 
-    def process(worker_state, id, text, meta, hash):
-
-        curr_hash = Simhash(int(hash))
-        index = worker_state["index"]
-
-        dups = set()
-        keys = index.get_keys(curr_hash)
-        for key in keys:
-            for obj_id, sim2 in index.bucket[key].items():
-                d = curr_hash.distance(sim2)
-                if d <= index.k:
-                    dups.add(obj_id)
-
+    def process(index, id, hash, text=None, meta=None):
+        candidates = index.get_nns_by_item(int(id), k, include_distances=True)
+        dups = {i for i, d in zip(*candidates) if d <= threshold}
         record = {
-            "duplicates": list(dups) if dups else [""],
+            "duplicates": list(dups) if dups else [-1],
             "id": id,
-            "text": text,
-            "meta": meta,
             "hash": hash,
         }
+        if meta is not None:
+            record["meta"] = meta
+        if text is not None:
+            record["text"] = text
         return record
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            with WorkerPool(
-                n_jobs=num_proc, use_worker_state=True, daemon=False
-            ) as pool:
-                results = pool.map(process, ds[s], worker_init=init, progress_bar=True)
+            with WorkerPool(n_jobs=num_proc, shared_objects=index) as pool:
+                results = pool.map(process, ds[s], progress_bar=True)
             ds[s] = Dataset.from_pandas(pd.DataFrame(results))
             logger.info(
                 f"Found {len(ds[s].filter(lambda x: len(x['duplicates']) > 1))} duplicates in {dir}"
             )
+
         ds.save_to_disk(dir.rstrip("/") + "_duplicates")
 
 
@@ -412,9 +414,9 @@ def remove_duplicates(
 
     def process(record):
         for dup in record["duplicates"]:
-            if str(record["id"]) == dup:
+            if int(record["id"]) == dup or dup == -1:
                 continue
-            edges.append((str(record["id"]), dup))
+            edges.append((int(record["id"]), dup))
 
     for dir in data_dirs:
         ds = load_from_disk(dir)
@@ -423,7 +425,7 @@ def remove_duplicates(
             ds[s].map(process, num_proc=num_proc)
 
     flags = defaultdict(lambda: False)
-    for x, y in edges:
+    for x, y in enumerate(edges):
         G.add_edge(x, y)
 
     for c in nx.connected_components(G):
@@ -435,18 +437,21 @@ def remove_duplicates(
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            ds[s] = ds[s].filter(lambda x: flags.get(str(x["id"]), True))
+            ds[s] = ds[s].filter(lambda x: flags.get(int(x["id"]), True))
         ds.save_to_disk(dir.rstrip("/").replace("_duplicates", "_deduplicated"))
 
 
 @app.command()
 def merge_meta(
+    index_file: str,
     data_dirs: List[str] = typer.Option(None, help="Source data to add metadata in"),
     meta_data_dirs: List[str] = typer.Option(
         None, help="Reference data to extract metadata from"
     ),
     split: Optional[str] = typer.Option(None, help="Which split of the data to load"),
     num_proc: int = typer.Option(-1, help="Number of processes to use"),
+    k: int = typer.Option(1, help="Number of nearest neighbors to search for"),
+    threshold: int = typer.Option(1, help="Maximum hamming distance for duplicates"),
 ):
     """
     Extracting metadata feature from `meta_data_dirs` and merging into data in `data_dirs`
@@ -464,14 +469,21 @@ def merge_meta(
         Which split of the data to load
     num_proc : int, optional
         Number of processes to use
+    k : int, optional
+        Number of nearest neighbors to search for, by default 1
+    threshold : int, optional
+        Maximum hamming distance for duplicates, by default 1
     """
     num_proc = check_num_proc(num_proc)
     manager = Manager()
     meta_data = manager.dict()
 
-    # Collect all metadata
+    index = AnnoyIndex(64, "hamming")
+    index.load(index_file)
+    logger.info(f"Querying with {index.get_n_items()} records")
+
     def process_meta(record):
-        meta_data[str(record["id"])] = record["meta"]
+        meta_data[int(record["id"])] = record["meta"]
 
     for dir in meta_data_dirs:
         ds = load_from_disk(dir)
@@ -479,8 +491,7 @@ def merge_meta(
         for s in splits:
             ds[s].map(process_meta, num_proc=num_proc)
 
-    # add meta into the record
-    def merge(record):
+    def merge(index, hash, id=None, text=None, meta=None):
 
         metadata = {
             "headers": {
@@ -498,10 +509,13 @@ def merge_meta(
             "nb_sentences": -1,
         }
 
-        if not record["duplicates"]:
+        candidates = index.get_nns_by_vector(hash, k, include_distances=True)
+        dups = {i for i, d in zip(*candidates) if d <= threshold}
+
+        if not dups:
             return {"meta": metadata}
 
-        for dup in record["duplicates"]:
+        for dup in dups:
             if dup in meta_data:
                 metadata = meta_data[dup]
                 break
@@ -512,7 +526,12 @@ def merge_meta(
         ds = load_from_disk(dir)
         splits = [split] if split is not None else list(ds.keys())
         for s in splits:
-            ds[s] = ds[s].map(merge, num_proc=num_proc)
+            with WorkerPool(n_jobs=num_proc, shared_objects=index) as pool:
+                results = pool.map(merge, ds[s], progress_bar=True)
+            ds[s] = Dataset.from_pandas(pd.DataFrame(results))
+            logger.info(
+                f"Matched {len(ds[s].filter(lambda x: x['meta']['offset'] != -1))}/{len(ds[s])} records in {dir}"
+            )
         ds.save_to_disk(dir.rstrip("/").replace("_duplicates", "_with_meta"))
 
 
