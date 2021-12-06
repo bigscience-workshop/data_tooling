@@ -17,8 +17,8 @@ class GetDataForVisualization:
         num_iter,
         lang_oscar_id,
         path_fasttext_model,
+        path_sentencepiece_model,
         path_kenlm_model,
-        path_sentence_piece_model,
         path_save_stats,
     ):
 
@@ -32,8 +32,11 @@ class GetDataForVisualization:
         self.model_lang_id = LoadParameters.load_model_lang_id(
             lang_oscar_id, path_fasttext_model
         )
+        self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
+            lang_oscar_id, path_sentencepiece_model
+        )
         self.kenlm_model = LoadParameters.load_kenlm_model(
-            lang_oscar_id, path_kenlm_model, path_sentence_piece_model
+            lang_oscar_id, path_kenlm_model
         )
         self.param = LoadParameters.load_parameters(lang_oscar_id)
 
@@ -81,7 +84,7 @@ class GetDataForVisualization:
 
                 if self.kenlm_model:
                     perplexity_score = Filtering.compute_perplexity_score(
-                        sentence, self.kenlm_model
+                        sentence, self.sentencepiece_model, self.kenlm_model
                     )
                     stats_sentence["perplexity_score"] = perplexity_score
 
@@ -107,7 +110,7 @@ if __name__ == "__main__":
     config_name = "unshuffled_deduplicated_en"
     data_files = None
     split = "train"
-    num_iter = 5000
+    num_iter = 50
 
     dataset = load_dataset(
         dataset_name,
@@ -119,8 +122,8 @@ if __name__ == "__main__":
 
     lang_oscar_id = "en"
     path_fasttext_model = "ac_dc/lid.176.bin"
+    path_sentencepiece_model = f"ac_dc/en.sp.model"
     path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_sentence_piece_model = f"ac_dc/en.sp.model"
     path_save_stats = f"./en_examples_with_stats.json"
 
     get_data_for_visualization = GetDataForVisualization(
@@ -128,8 +131,8 @@ if __name__ == "__main__":
         num_iter,
         lang_oscar_id,
         path_fasttext_model,
+        path_sentencepiece_model,
         path_kenlm_model,
-        path_sentence_piece_model,
         path_save_stats,
     )
     get_data_for_visualization.compute_stats()
