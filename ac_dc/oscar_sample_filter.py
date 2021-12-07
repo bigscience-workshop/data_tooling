@@ -135,7 +135,8 @@ class ModifyingSentences:
     @staticmethod
     def strip(sentence, strip_characters):
         """Way faster than sentence.strip(strip_characters)
-        since strip_characters is now a set instead of a str."""
+        since strip_characters is now a set instead of a str,
+        and it contains a lot of elements (all the emojis)."""
         if not sentence:
             return sentence
         beg_ind = 0

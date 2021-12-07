@@ -3,7 +3,13 @@ import emoji
 
 
 main_special_characters = string.punctuation + string.digits + string.whitespace
-other_special_characters = "“”πه☆●¦″．۩۱（☛₨➩°・■↑☻、๑º‹€σ٪’Ø·−♥ıॽ،٥《‘©。¨﴿！★×✱´٬→±x：¹？£―▷ф¡Г♫∟™ª₪®▬「—¯；¼❖․ø•�」٣，٢◦‑←§١ー٤）˚›٩▼٠«¢¸٨³½˜٭ˈ¿¬ι۞⌐¥►†ƒ∙²»¤…﴾⠀》′ا✓"
+other_special_characters = (
+    "    　    ￼’“”–ー一▬…✦�­£​•€«»°·═"
+    "×士＾˘⇓↓↑←→（）§″′´¿−±∈﻿¢ø‚„½¼¾¹²³―⁃，ˌ¸‹›ʺˈʻ¦‐⠀‰‑≤≥‖"
+    "◆●■►▼▲▴∆▻¡★☆✱ːº。¯˜¥ɪ≈†上ン：∼⁄・♡✓⊕․．⋅÷１‟；،、¨ाাी्े◦˚"
+    "゜ʼ≖ʼ¤ッツシ℃√！【】‿∞➤～πه۩☛₨➩☻๑٪♥ıॽ《‘©﴿٬x？▷Г♫∟™ª₪®「—"
+    "❖」﴾》"
+)
 emoji = list(emoji.UNICODE_EMOJI["en"].keys())
 
 special_characters_default = set(main_special_characters + other_special_characters)
