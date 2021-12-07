@@ -3,7 +3,7 @@ import re
 
 trannum = str.maketrans("0123456789", "1111111111")
 
-address_regex: {
+address_regex = {
     "en": {
         "en_US_street": re.compile(r"\d{1,4} [\w\s]{1,20} (?:street|st|avenue|ave|road|rd|highway|hwy|square|sq|trail|trl|drive|dr|court|ct|park|parkway|pkwy|circle|cir|boulevard|blvd)\W?(?=\s|$)"),
         "en_US_POBox": re.compile(r"P\.? ?O\.? Box \d+"),
@@ -12,7 +12,7 @@ address_regex: {
         "en_AU_line_2" re.compile(r"\b(?:(?!\s{2,}).)*)\b(VIC|NSW|ACT|QLD|NT|SA|TAS|WA).?\s*(\b\d{4}")
      }
 }
-age_regex:{
+age_regex = {
     "en": re.compile(r""\S+ years old|\S+\-years\-old|\S+ year old|\S+\-year\-old")
 }
 credit_card_regex = {
@@ -67,11 +67,12 @@ password_regex = {
 phone_regex = {
     "default": re.compile(r"[\d]?[\d]?[ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[\d][\d][\d][\d]")
 }
-SIN_regex: {
+SIN_regex = {
     "defualt": re.compile(r"[\d][\d]+[ -.][\d][\d]+[ -.][\d][\d][\d]")
 }
 web_address_regex = {
     "default": re.compile(r"[https:\/]*[w]?[w]?[w]?[.]?[\da-zA-Z\-]+[.][a-z]+[\/\.a-zA-Z\-\d\?=&]*")
+}
 
 
 # Code below needs to be updated/completed.
