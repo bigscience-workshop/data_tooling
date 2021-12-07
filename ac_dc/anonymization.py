@@ -35,10 +35,10 @@ govt_id_regex = {
         "en_IN_govt_id": re.compile(r"[1-9]\d{10}"),
         "en_PH_govt_id": re.compile(r"\d{2}-\d{7}-\d|\d{11}|\d{2}-\d{9}-\d|\d{4}-\d{4}-\d{4}|\d{4}-\d{7}-\d"),
     },
-    
+
     "id": {
         "id_ID_govt_id": re.compile(r"\d{6}([04][1-9]|[1256][0-9]|[37][01])(0[1-9]|1[0-2])\d{6}")
-    } 
+    }
     "es": {
         "es_ES_govt_id": re.compile(r"(?:ES)?\d{6-8}-?[A-Z]"),
         "es_CO_govt_id": re.compile(
@@ -59,14 +59,14 @@ IP_regex = {
     "default": re.compile(r"\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}")
 }
 NORP_regex = {
-    "en": {re.compile(r"upper class|middle class|working class|lower class")}  
+    "en": {re.compile(r"upper class|middle class|working class|lower class")}
 }
 password_regex = {
     "default": re.compile(r"[\d][\d][\d][\d][\d]+")
-}  
+}
 phone_regex = {
     "default": re.compile(r"[\d]?[\d]?[ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[\d][\d][\d][\d]")
-}                  
+}
 SIN_regex: {
     "defualt": re.compile(r"[\d][\d]+[ -.][\d][\d]+[ -.][\d][\d][\d]")
 }
@@ -75,7 +75,7 @@ web_address_regex = {
 
 
 # Code below needs to be updated/completed.
-    
+
 def apply_regex_govt_id_anonymization(sentence: str, lang_id: str) -> str:
     regex_lang_id = lang_id if lang_id in govt_id_regex else "default"
     for regex in list(govt_id_regex[regex_lang_id].values()):
