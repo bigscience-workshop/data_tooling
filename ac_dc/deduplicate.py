@@ -425,7 +425,7 @@ def remove_duplicates(
             ds[s].map(process, num_proc=num_proc)
 
     flags = defaultdict(lambda: False)
-    for x, y in enumerate(edges):
+    for x, y in tqdm(edges):
         G.add_edge(x, y)
 
     for c in nx.connected_components(G):
