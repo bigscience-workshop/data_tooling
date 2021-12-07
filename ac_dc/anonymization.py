@@ -9,11 +9,11 @@ address_regex = {
         "en_US_POBox": re.compile(r"P\.? ?O\.? Box \d+"),
         # AU adddresses regex: https://gist.github.com/3zzy/ea117b273c36ea62207748d6897bd552
         "en_AU_line_1": re.compile(r"\b(?:(?!\s{2,}|\$|\:|\.\d).)*\s(?:Alley|Ally|Arcade|Arc|Avenue|Ave|Boulevard|Bvd|Bypass|Bypa|Circuit|Cct|Close|Cl|Corner|Crn|Court|Ct|Crescent|Cres|Cul-de-sac|Cds|Drive|Dr|Esplanade|Esp|Green|Grn|Grove|Gr|Highway|Hwy|Junction|Jnc|Lane|Lane|Link|Link|Mews|Mews|Parade|Pde|Place|Pl|Ridge|Rdge|Road|Rd|Square|Sq|Street|St|Terrace|Tce|ALLEY|ALLY|ARCADE|ARC|AVENUE|AVE|BOULEVARD|BVD|BYPASS|BYPA|CIRCUIT|CCT|CLOSE|CL|CORNER|CRN|COURT|CT|CRESCENT|CRES|CUL-DE-SAC|CDS|DRIVE|DR|ESPLANADE|ESP|GREEN|GRN|GROVE|GR|HIGHWAY|HWY|JUNCTION|JNC|LANE|LANE|LINK|LINK|MEWS|MEWS|PARADE|PDE|PLACE|PL|RIDGE|RDGE|ROAD|RD|SQUARE|SQ|STREET|ST|TERRACE|TCE))\s.*?(?=\s{2,}"),
-        "en_AU_line_2" re.compile(r"\b(?:(?!\s{2,}).)*)\b(VIC|NSW|ACT|QLD|NT|SA|TAS|WA).?\s*(\b\d{4}")
+        "en_AU_line_2": re.compile(r"\b(?:(?!\s{2,}).)*)\b(VIC|NSW|ACT|QLD|NT|SA|TAS|WA).?\s*(\b\d{4}")
      }
 }
 age_regex = {
-    "en": re.compile(r""\S+ years old|\S+\-years\-old|\S+ year old|\S+\-year\-old")
+    "en": re.compile(r"\S+ years old|\S+\-years\-old|\S+ year old|\S+\-year\-old")
 }
 credit_card_regex = {
     "amex": re.compile(r"3[47][0-9]{13}"),
@@ -21,7 +21,7 @@ credit_card_regex = {
     "visa": re.compile(r"\b([4]\d{3}[\s]\d{4}[\s]\d{4}[\s]\d{4}|[4]\d{3}[-]\d{4}[-]\d{4}[-]\d{4}|[4]\d{3}[.]\d{4}[.]\d{4}[.]\d{4}|[4]\d{3}\d{4}\d{4}\d{4})\b")
 }
 date_regex = {
-    "default" re.compile(r"[ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+")
+    "default": re.compile(r"[ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+")
 }
 email_regex = {
     "default": re.compile(r"[\w\.=-]+@[\w\.-]+\.[\w]{2,3}")
@@ -38,7 +38,7 @@ govt_id_regex = {
 
     "id": {
         "id_ID_govt_id": re.compile(r"\d{6}([04][1-9]|[1256][0-9]|[37][01])(0[1-9]|1[0-2])\d{6}")
-    }
+    },
     "es": {
         "es_ES_govt_id": re.compile(r"(?:ES)?\d{6-8}-?[A-Z]"),
         "es_CO_govt_id": re.compile(

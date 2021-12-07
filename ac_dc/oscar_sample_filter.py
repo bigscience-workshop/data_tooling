@@ -169,11 +169,49 @@ class ModifyingSentences:
         return words
 
     @staticmethod
+    def split_on_whitespace(
+        sentence,
+        whitespace=[
+            " ",
+            "",
+            " ",
+            "",
+            "",
+            " ",
+            "",
+            "",
+            " ",
+            "",
+            " ",
+            "",
+            "",
+            "",
+            "　",
+            " ",
+            " ",
+            " ",
+            "",
+            "",
+            " ",
+            "",
+            "￼",
+            "",
+            "",
+        ],
+    ):
+        """There are different whitespace characters.
+        This method is more accurate than sentence.split(" ")."""
+        sep = "|".join(whitespace)
+        split_sentence = re.split(sep, sentence)
+        split_sentence = [el for el in split_sentence if el]
+        return split_sentence
+
+    @staticmethod
     def remove_words_with_incorrect_substrings(
         sentence,
         incorrect_word_substrings,
     ):
-        words = sentence.split(" ")
+        words = ModifyingSentences.split_on_whitespace(sentence)
         words = [
             word
             for word in words
@@ -187,7 +225,7 @@ class ModifyingSentences:
         sentence,
         length_word_max_cutoff,
     ):
-        words = sentence.split(" ")
+        words = ModifyingSentences.split_on_whitespace(sentence)
         words = [word for word in words if len(word) <= length_word_max_cutoff]
         filtered_sentence = " ".join(words)
         return filtered_sentence
