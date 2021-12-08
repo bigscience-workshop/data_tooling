@@ -200,10 +200,16 @@ email_regex = {
     "default": [(re.compile(r"[\w\.=-]+@[\w\.-]+\.[\w]{2,3}"), None)]
 }
 
-#see https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/au_abn_recognizer.py which is licensed under MIT                           
+#see https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/au_abn_recognizer.py which is licensed under MIT   
+#see also https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/us_passport_recognizer.py
+#see also https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/medical_license_recognizer.py
+#see also https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/es_nif_recognizer.py
+
 govt_id_regex = {
     "en": {
-        "en_US": [(re.compile(r"(?!000|666|333)0*(?:[0-6][0-9][0-9]|[0-7][0-6][0-9]|[0-7][0-7][0-2])[- ](?!00)[0-9]{2}[- ](?!0000)[0-9]{4}"), None)],
+        "en_US": [(re.compile(r"(?!000|666|333)0*(?:[0-6][0-9][0-9]|[0-7][0-6][0-9]|[0-7][0-7][0-2])[- ](?!00)[0-9]{2}[- ](?!0000)[0-9]{4}"), None),
+                  (re.compile(r"(\b[0-9]{9}\b)"), ("us", "united", "states", "passport", "passport#", "travel", "document")),
+                  (re.compile(r"[a-zA-Z]{2}\d{7}|[a-zA-Z]{1}9\d{7}"), ("medical", "certificate", "DEA")),],
         "en_CA": [(re.compile(r"\d{3}\s\d{3}\s\d{3}"), None)],
         "en_GB": [(re.compile(r"\w{2}\s?\d{2}\s?\d{2}\s?\w|GB\s?\d{6}\s?\w|GB\d{3}\s\d{3}\s\d{2}\s\d{3}|GBGD\d{3}|GBHA\d{3}}|GB\d{3} \d{4} \d{2}(?: \d{3})?|GB(?:GD|HA)\d{3}"), None)],
         "en_IE": [(re.compile(r"IE\d[1-9]\d{5}\d[1-9]|IE\d{7}[1-9][1-9]?"), None)],
@@ -216,7 +222,8 @@ govt_id_regex = {
         "id_ID": [(re.compile(r"\d{6}([04][1-9]|[1256][0-9]|[37][01])(0[1-9]|1[0-2])\d{6}"), None)]
     },
     "es": {
-        "es_ES": [(re.compile(r"(?:ES)?\d{6-8}-?[A-Z]"), None)],
+        "es_ES": [(re.compile(r"(?:ES)?\d{6-8}-?[A-Z]"), None),
+                  (re.compile(r"\b[0-9]?[0-9]{7}[-]?[A-Z]\b"), ("documento nacional de identidad", "DNI", "NIF", "identificación")),],
         "es_CO": [(re.compile(
             r"[1-9]\d?\d{6}|8\d{8}|9\d{8}|10\d{8}|11\d{8}|12\d{8}|"), None)]
     },
