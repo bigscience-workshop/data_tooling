@@ -168,11 +168,8 @@ class ModifyingSentences:
         """There are different whitespace characters, so
         this method is more accurate than sentence.split(" ").
         It also removes concatenated spaces."""
-        if new_line:
-            whitespace.append("\n")
-        if tab:
-            whitespace.append("\t")
-        sep = "|".join(whitespace)
+        sep = whitespace + new_line * ["\n"] + tab * ["\t"]
+        sep = "|".join(sep)
         split_sentence = re.split(sep, sentence)
         split_sentence = [el for el in split_sentence if el]
         return split_sentence
