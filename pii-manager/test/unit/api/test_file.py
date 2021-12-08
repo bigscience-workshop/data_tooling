@@ -13,7 +13,7 @@ def datafile(name: str) -> str:
 
 def readfile(name: str) -> str:
     with open(name, "rt", encoding="utf-8") as f:
-        return f.read()
+        return f.read().strip()
 
 
 @pytest.mark.parametrize("mode", ["replace", "tag", "extract", "full"])
@@ -30,7 +30,7 @@ def test10_line(mode):
         name = mode + (".txt" if mode in ("replace", "tag") else "-line.ndjson")
         exp = readfile(datafile(name))
         got = readfile(f.name)
-        print(got)
+        #print(got)
         assert got == exp
 
 

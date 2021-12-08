@@ -32,6 +32,9 @@ def requirements(filename="requirements.txt"):
 
 
 def long_description():
+    """
+    Take the README and remove markdown hyperlinks
+    """
     with open("README.md", "rt", encoding="utf-8") as f:
         desc = f.read()
         desc = re.sub(r"^\[ ([^\]]+) \]: \s+ \S.*\n", r"", desc, flags=re.X | re.M)
@@ -45,9 +48,11 @@ setup_args = dict(
     # Metadata
     name=PKGNAME,
     version=VERSION,
+    author='Paulo Villegas',
+    author_email='paulo.vllgs@gmail.com',
     description="Text Anonymization of PII",
+    long_description_content_type="text/markdown",
     long_description=long_description(),
-    logn_description_content_type="text/markdown",
     license="Apache",
     url=GITHUB_URL,
     download_url=GITHUB_URL + "/tarball/v" + VERSION,
@@ -75,7 +80,7 @@ setup_args = dict(
     keywords=["Big Science Workshop, PII"],
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
-        "License :: Apache",
+        "License :: OSI Approved :: Apache Software License",
         "Development Status :: 4 - Beta",
         "Topic :: Software Development :: Libraries :: Application Frameworks",
     ],

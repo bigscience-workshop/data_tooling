@@ -1,3 +1,8 @@
+v. 0.4.0
+ * PII GOV_ID task for es-ES and en-AU
+ * PII EMAIL_ADDRESS task
+ * PyPi Makefile targets; fixed setup.py
+
 v. 0.3.0
  * new processing mode: `full`
  * PII detectors for zh-CN
