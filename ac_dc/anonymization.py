@@ -1,4 +1,4 @@
-import re
+import re, regex
 
 
 trannum = str.maketrans("0123456789", "1111111111")
@@ -8,10 +8,13 @@ address_regex = {
         "en_US": [(re.compile(r"P\.? ?O\.? Box \d+|\d{1,4} [\w\s]{1,20} (?:street|st|avenue|ave|road|rd|highway|hwy|square|sq|trail|trl|drive|dr|court|ct|park|parkway|pkwy|circle|cir|boulevard|blvd)\W?(?=\s|$)"), None)],
 # getting an unbalanced paranthesis in en_AU
 #        "en_AU": [(re.compile(r"\b(?:(?!\s{2,}).)*)\b(VIC|NSW|ACT|QLD|NT|SA|TAS|WA).?\s*(\b\d{4}|\b(?:(?!\s{2,}|\$|\:|\.\d).)*\s(?:Alley|Ally|Arcade|Arc|Avenue|Ave|Boulevard|Bvd|Bypass|Bypa|Circuit|Cct|Close|Cl|Corner|Crn|Court|Ct|Crescent|Cres|Cul-de-sac|Cds|Drive|Dr|Esplanade|Esp|Green|Grn|Grove|Gr|Highway|Hwy|Junction|Jnc|Lane|Lane|Link|Link|Mews|Mews|Parade|Pde|Place|Pl|Ridge|Rdge|Road|Rd|Square|Sq|Street|St|Terrace|Tce|ALLEY|ALLY|ARCADE|ARC|AVENUE|AVE|BOULEVARD|BVD|BYPASS|BYPA|CIRCUIT|CCT|CLOSE|CL|CORNER|CRN|COURT|CT|CRESCENT|CRES|CUL-DE-SAC|CDS|DRIVE|DR|ESPLANADE|ESP|GREEN|GRN|GROVE|GR|HIGHWAY|HWY|JUNCTION|JNC|LANE|LANE|LINK|LINK|MEWS|MEWS|PARADE|PDE|PLACE|PL|RIDGE|RDGE|ROAD|RD|SQUARE|SQ|STREET|ST|TERRACE|TCE))\s.*?(?=\s{2,}"), None,)],
-     }
+     },
+    "zh": [(regex.compile('((\p{Han}{1,3}(自治区|省))?\p{Han}{1,4}((?<!集)市|县|州)\p{Han}{1,10}[路|街|道|巷](\d{1,3}[弄|街|巷])?\d{1,4}号)'), None),
+           (regex.compile('(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)'), None),],
 }
 age_regex = {
-    "en": [(re.compile(r"\S+ years old|\S+\-years\-old|\S+ year old|\S+\-year\-old|born [ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+|died [ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+"), None)]
+    "en": [(re.compile(r"\S+ years old|\S+\-years\-old|\S+ year old|\S+\-year\-old|born [ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+|died [ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+"), None)],
+    "zh": [(regex.compile('\d{1,3}歲|岁'), None)],
 }
 
 #IBAN - see https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/iban_patterns.py which is under MIT
@@ -38,6 +41,7 @@ N3 = u"([0-9][ ]?){3}"
 N4 = u"([0-9][ ]?){4}"
 
 #WIP - fix the country codes and group by languages
+#move this to financial record
 iban_regex = {
     # Albania (8n, 16c) ALkk bbbs sssx cccc cccc cccc cccc
     "al_AL": u"(AL)" + CK + N4 + N4 + C4 + C4 + C4 + C4,
@@ -220,12 +224,17 @@ govt_id_regex = {
         "pt_BR": [(re.compile(r"\d{3}\.d{3}\.d{3}-\d{2}|\d{11}"), None)],
         "pt_PT": [(re.compile(r"PT\d{9}"), None)],
     },
-    "zh": {
-        "zh_CN": [(re.compile(r"\d{18}"), None)],
-        "zh_TW": [(re.compile(r"[1-9]\d{9}"), None)],
-    },
+    "zh": [(regex.compile('(?:[16][1-5]|2[1-3]|3[1-7]|4[1-6]|5[0-4])\d{4}(?:19|20)\d{2}(?:(?:0[469]|11)(?:0[1-9]|[12][0-9]|30)|(?:0[13578]|1[02])(?:0[1-9]|[12][0-9]|3[01])|02(?:0[1-9]|[12][0-9]))\d{3}[\dXx]'), None,),
+           (regex.compile('(^[EeKkGgDdSsPpHh]\d{8}$)|(^(([Ee][a-fA-F])|([DdSsPp][Ee])|([Kk][Jj])|([Mm][Aa])|(1[45]))\d{7}$)'), None),
+           (regex.compile('((\d{4}(| )\d{4}(| )\d{4}$)|([a-zA-Z][1-2]{1}[0-9]{8})|([0-3]{1}\d{8}))'), None),],
+           
     "default": [(re.compile(r"\d{8}|\d{9}|\d{10}|\d{11}"), None)]
 }
+
+# should we move license plate to govt_id?
+#("LICENSE_PLATE", regex.compile('^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$'), None, None, None),
+#("LICENSE_PLATE", regex.compile('\b[A-Z]{3}-\d{4}\b'), None, None, None),
+    
 
 # too broad - might need a context word
 IP_regex = {
@@ -242,7 +251,9 @@ password_regex = {
 
 #We will want a context word around it to make it more specific. might be too broad.
 phone_regex = {
-    "default": [(re.compile(r"[\d]?[\d]?[ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[\d][\d][\d][\d]"), ("ph", "phone", "fax"))],
+    "en": [(re.compile(r"[\d]?[\d]?[ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[\d][\d][\d][\d]"), ("ph", "phone", "fax"))],
+    "zh": [(regex.compile('(0?\d{2,4}-[1-9]\d{6,7})|({\+86|086}-| ?1[3-9]\d{9} , ([\+0]?86)?[\-\s]?1[3-9]\d{9})'), None),
+           (regex.compile('((\d{4}(| )\d{4}(| )\d{4}$)|([a-zA-Z][1-2]{1}[0-9]{8})|([0-3]{1}\d{8}))((02|03|037|04|049|05|06|07|08|089|082|0826|0836|886 2|886 3|886 37|886 4|886 49|886 5|886 6|886 7|886 8|886 89|886 82|886 826|886 836|886 9|886-2|886-3|886-37|886-4|886-49|886-5|886-6|886-7|886-8|886-89|886-82|886-826|886-836)(| |-)\d{4}(| |-)\d{4}$)|((09|886 9|886-9)(| |-)\d{2}(|-)\d{2}(|-)\d{1}(|-)\d{3})'), None,),]
 }
 
 # Does this correspond to CA id?
@@ -255,6 +266,8 @@ domain_name_regex = {
     "default": [(re.compile(r"[https:\/]*[w]?[w]?[w]?[.]?[\da-zA-Z\-]+[.][a-z]+[\/\.a-zA-Z\-\d\?=&]*"), None)],
 }
 
+
+
 tag_2_regex = [
     ("DOMAIN_NAME", (domain_name_regex, False)),
     ("PHONE", (phone_regex, True)),
@@ -265,6 +278,7 @@ tag_2_regex = [
     ("EMAIL", (email_regex, True)),
     ("IP_ADDRESS", (IP_regex, True)),
     ("GOVT_ID", (govt_id_regex, True)),
+    ("FIN_ID", (financial_record_regex, True)),
 ]
     
 
