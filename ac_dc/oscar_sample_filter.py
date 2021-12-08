@@ -133,42 +133,6 @@ class ModifyingSentences:
         return sentence_tokenized
 
     @staticmethod
-    def strip(sentence, strip_characters):
-        """Way faster than sentence.strip(strip_characters)
-        since strip_characters is now a set instead of a str,
-        and it contains a lot of elements (all the emojis)."""
-        if not sentence:
-            return sentence
-        beg_ind = 0
-        end_ind = len(sentence)
-        for i in range(len(sentence)):
-            if sentence[i] in strip_characters:
-                beg_ind += 1
-            else:
-                break
-        for i in range(1, len(sentence) + 1):
-            if sentence[-i] in strip_characters:
-                end_ind -= 1
-            else:
-                break
-        sentence_stripped = sentence[beg_ind:end_ind]
-        return sentence_stripped
-
-    @staticmethod
-    def get_words_from_sentence(sentence, strip_characters):
-        """Get words from a sentence. Non reversible since the sentence
-        is split on multiple characters and words are stripped of
-        special characters. Useful to compute ratios, like the
-        stopwords ratio."""
-        sentence = sentence.lower()
-        words = [
-            ModifyingSentences.strip(word, strip_characters)
-            for word in re.split(" |\n|\t", sentence)
-        ]
-        words = [word for word in words if word]
-        return words
-
-    @staticmethod
     def split_on_whitespace(
         sentence,
         whitespace=[
@@ -198,13 +162,57 @@ class ModifyingSentences:
             "",
             "",
         ],
+        new_line = False,
+        tab = False,
     ):
-        """There are different whitespace characters.
-        This method is more accurate than sentence.split(" ")."""
+        """There are different whitespace characters, so
+        this method is more accurate than sentence.split(" ").
+        It also removes concatenated spaces."""
+        if new_line:
+            whitespace.append("\n")
+        if tab:
+            whitespace.append("\t")
         sep = "|".join(whitespace)
         split_sentence = re.split(sep, sentence)
         split_sentence = [el for el in split_sentence if el]
         return split_sentence
+
+    @staticmethod
+    def strip(sentence, strip_characters):
+        """Way faster than sentence.strip(strip_characters)
+        since strip_characters is now a set instead of a str,
+        and it contains a lot of elements (all the emojis)."""
+        if not sentence:
+            return sentence
+        beg_ind = 0
+        end_ind = len(sentence)
+        for i in range(len(sentence)):
+            if sentence[i] in strip_characters:
+                beg_ind += 1
+            else:
+                break
+        for i in range(1, len(sentence) + 1):
+            if sentence[-i] in strip_characters:
+                end_ind -= 1
+            else:
+                break
+        sentence_stripped = sentence[beg_ind:end_ind]
+        return sentence_stripped
+
+    @staticmethod
+    def get_words_from_sentence(sentence, strip_characters):
+        """Get words from a sentence. Non reversible since the sentence
+        is split on multiple characters, words are stripped of
+        special characters and characters are converted to lower case.
+        Useful to compute ratios, like the stopwords ratio."""
+        sentence = sentence.lower()
+        split_sentence = ModifyingSentences.split_on_whitespace(sentence, new_line=True, tab=True)
+        words = [
+            ModifyingSentences.strip(word, strip_characters)
+            for word in split_sentence
+        ]
+        words = [word for word in words if word]
+        return words
 
     @staticmethod
     def remove_words_with_incorrect_substrings(
@@ -312,6 +320,8 @@ class Filtering:
     @staticmethod
     def compute_stopwords_ratio(sentence, strip_characters, stopwords):
         words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        if not words:
+            return 0
         stopwords_ratio = len([word for word in words if word in stopwords]) / len(
             words
         )
@@ -335,6 +345,8 @@ class Filtering:
     @staticmethod
     def compute_badwords_ratio(sentence, strip_characters, badwords):
         words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        if not words:
+            return 0
         badwords_ratio = len([word for word in words if word in badwords]) / len(words)
         return badwords_ratio
 
