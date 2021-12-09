@@ -128,6 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Fasttext model
+lid.176.bin
+
 # Kenlm models
 *.arpa.bin
 *sp.model
@@ -142,3 +145,6 @@ dmypy.json
 # Profiler
 *.lprof
 **/*.lprof
+
+# Visualization json files
+**/*examples_with_stats.json

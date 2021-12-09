@@ -9,6 +9,8 @@ https://docs.google.com/document/d/1bx7lzAIWALH2IX5PLAiRfkHr3025dC-ZYkEmq4zB2gI/
 
 ### Deduplication
 
+Runnable script example at `ac_dc/examples/dedup.sh`
+
 #### 0. Sharding a dataset
 
 We want to shard a dataset into multiple shards so that each node on HPC can take a shard and each shard can be further parallelized with CPU cores.
@@ -40,16 +42,16 @@ The above commands add an addition column `hash` in the data and outputs two dat
 
 #### 2. Create a Simhash Index
 ```bash
-python ac_dc/deduplicate.py build-index "cache/deduplicated_af_simhash_index.pkl" "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_hashes_00003" --split "train"
+python ac_dc/deduplicate.py build-index "cache/deduplicated_af_simhash_index.ann" "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_hashes_00003" --split "train"
 ```
 This creates the index file based on ALL the hashed datasets. This is a merge step and takes O(n) time.
 
 #### 3. Find Duplicates
 ```bash
 # run each command on each node
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_simhash_index.pkl" --split "train"
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_simhash_index.pkl" --split "train"
-LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00003" "cache/deduplicated_af_simhash_index.pkl" --split "train"
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00001" "cache/deduplicated_af_simhash_index.pkl" --split "train" --k 100 --threshold 3
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00002" "cache/deduplicated_af_simhash_index.pkl" --split "train" --k 100 --threshold 3
+LOG_LEVEL="INFO" python ac_dc/deduplicate.py find-duplicates "cache/deduplicated_af_hashes_00003" "cache/deduplicated_af_simhash_index.pkl" --split "train" --k 100 --threshold 3
 ```
 This adds another column `duplicates` into the data with the index and outputs them into `cache/en_hashes_0000{1,2,3}_duplicates`.
 
@@ -64,3 +66,8 @@ This removes all duplicates from the given datasets and outputs `cache/en_hashes
 python ac_dc/deduplicate.py merge-shards "cache/simhash_deduplicated_af" "cache/deduplicated_af_hashes_00001_deduplicated" "cache/deduplicated_af_hashes_00002_deduplicated" "cache/deduplicated_af_hashes_00003_deduplicated" --split "train"
 ```
 This merges all shards back into one dataset.
+
+
+### Merge metadata from OSCAR 21.09 to OSCAR
+
+Runnable script example at `ac_dc/examples/merge.sh`

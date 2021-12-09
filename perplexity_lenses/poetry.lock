@@ -742,7 +742,6 @@ python-versions = "*"
 [package.source]
 type = "url"
 url = "https://github.com/kpu/kenlm/archive/master.zip"
-
 [[package]]
 name = "llvmlite"
 version = "0.37.0"

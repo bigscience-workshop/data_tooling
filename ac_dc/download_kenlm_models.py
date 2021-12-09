@@ -21,7 +21,7 @@ def download_kenlm_models(output_path: str) -> None:
                 f"wget http://dl.fbaipublicfiles.com/cc_net/lm/{lang}.arpa.bin -P {output_path}",
                 shell=True,
             )
-            output_sentence_piece = subprocess.check_output(
+            output_sentencepiece = subprocess.check_output(
                 f"wget http://dl.fbaipublicfiles.com/cc_net/lm/{lang}.sp.model -P {output_path}",
                 shell=True,
             )
