@@ -35,4 +35,4 @@ jobs:
     - name: Test with pytest
       run: |
         cd pii-manager
-        VENV="$GITHUB_WORKSPACE/venv" make unit
+        VENV="$GITHUB_WORKSPACE/venv" make unit-verbose

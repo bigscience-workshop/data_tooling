@@ -15,6 +15,7 @@ from typing import Dict, List, TextIO, Iterable, Optional, Union
 from pii_manager.api import PiiManager
 from pii_manager.piientity import PiiEntity, piientity_asdict
 from pii_manager.helper.exception import PiiManagerException
+from pii_manager.helper.json import CustomJSONEncoder
 
 TYPE_RESULT = Union[str, Iterable[PiiEntity]]
 
@@ -70,6 +71,8 @@ def write(result: TYPE_RESULT, mode: str, index: Optional[Dict], out: TextIO):
     """
     if mode == "extract":
         write_extract(result, index, out)
+    elif mode == "full":
+        json.dump(result, out, ensure_ascii=False, cls=CustomJSONEncoder)
     else:
         out.write(result)
 

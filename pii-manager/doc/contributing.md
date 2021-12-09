@@ -18,8 +18,13 @@ repository with the following changes:
     * The task descriptor, a list with the (compulsory) name `PII_TASKS` (see
       below)
  5. Finally, add a unit test to check the validity for the task code, in the
-    proper place under [test/unit/lang]. There should be at least a positive
-    and a negative test
+    proper place under [test/unit/lang]. There should be at least
+     - a positive test: one valid PII that has to be detected. For the cases
+       in which the PII is validated, the test should pass the validation,
+       so the PII must be a random (fake) one but still valid
+     - and a negative test: one PII-like string that is almost, but not quite
+       the real one, so it should *not* be recognized
+
 
 ## Task implementation
 

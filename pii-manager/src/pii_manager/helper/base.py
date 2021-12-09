@@ -2,7 +2,7 @@
 Define the base classes for Pii Tasks
 """
 
-import re
+import regex
 from typing import Iterable, Callable
 
 from ..piientity import PiiEntity
@@ -30,12 +30,14 @@ class BasePiiTask:
 
 class RegexPiiTask(BasePiiTask):
     """
-    A wrapper for a PII implemented as a regex
+    A wrapper for a PII implemented as a regex pattern
+    Instead of the standard re package it uses the regex package (in
+    backwards-compatible mode)
     """
 
-    def __init__(self, regex: str, doc: str, **kwargs):
+    def __init__(self, pattern: str, doc: str, **kwargs):
         super().__init__(**kwargs)
-        self.regex = re.compile(regex, flags=re.X)
+        self.regex = regex.compile(pattern, flags=regex.X | regex.VERSION0)
         self.doc = doc
 
     def find(self, doc: str) -> Iterable[str]:

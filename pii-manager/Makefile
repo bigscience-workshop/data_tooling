@@ -38,13 +38,20 @@ rebuild: clean build
 version:
 	@echo "$(VERSION)"
 
-venv: $(VENV)
+# --------------------------------------------------------------------------
 
-unit: venv pytest
-	PYTHONPATH=src:test $(VENV)/bin/pytest $(ARGS) test/unit
+TEST ?= test/unit
+
+
+venv: $(VENV)
 
 pytest: $(VENV)/bin/pytest
 
+unit: venv pytest
+	PYTHONPATH=src:test $(VENV)/bin/pytest $(ARGS) $(TEST)
+
+unit-verbose: venv pytest
+	PYTHONPATH=src:test $(VENV)/bin/pytest -vv --capture=no $(ARGS) $(TEST)
 
 # --------------------------------------------------------------------------
 
@@ -67,3 +74,15 @@ $(VENV):
 
 $(VENV)/bin/pytest:
 	$(VENV)/bin/pip install pytest
+
+
+# -----------------------------------------------------------------------
+
+upload-check:
+	twine check $(PKGFILE)
+
+upload-test:
+	twine upload --repository pypitest $(PKGFILE)
+
+upload:
+	twine upload $(PKGFILE)

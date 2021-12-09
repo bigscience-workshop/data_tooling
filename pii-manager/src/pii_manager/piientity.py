@@ -26,6 +26,12 @@ class PiiEntity:
     def __repr__(self):
         return f"<PiiEntity {self.elem.name}:{self.pos}:{self.value}:{self.country}>"
 
+    def to_json(self) -> Dict:
+        """
+        Return the object data as a dict that can then be serialised as JSON
+        """
+        return piientity_asdict(self)
+
 
 def piientity_asdict(pii: PiiEntity, country: bool = None) -> Dict:
     """

@@ -12,18 +12,24 @@ entity to be detected.
 
 Rules for the implementation of such regex are:
 
+* Implement it as a regular expression _string_, **not** as a compiled
+  regular expression (it will be compiled by the `pii-manager` module)
+* The pattern **will be compiled with the [regex] package**, instead of the
+  `re` package in the standard Python library, so you can use the extended
+  features (such as unicode categories) in `regex`. Compilation will be done
+  in backwards-compatible mode (i.e. using the `VERSION0` flag), so it should
+  be fully compatible with `re`
 * Do **not** anchor the regex to either beginning or end (it should be able to
   match anywhere in the passed string, which itself can be any portion of
   a document)
 * Do not include capturing groups (they will be ignored)
-* Implement it as a regular expression _string_, **not** as a compiled
-  regular expression (it will be compiled by the `pii-manager` module)
 * The pattern will be compiled with the [re.VERBOSE] (aka `re.X`) flag, so
-  take that into account (in particular, whitespace is ignored, so if it is
+  take that into account (in particular, **whitespace is ignored**, so if it is
   part of the regular expression needs to included as a category i.e. `\s` or
   escaped)
 
 An example can be seen in the [US Social Security Number] detector.
+
 
 ## Callable implementation
 
@@ -95,6 +101,7 @@ detect. The place to add this documentation is:
  * For Class tasks, add the documentation as the _class level_ docstring.
 
 
+[regex]: https://github.com/mrabarnett/mrab-regex
 [US Social Security Number]: ../src/pii_manager/lang/en/us/social_security_number.py
 [bitcoin address]: ../src/pii_manager/lang/any/bitcoin_address.py
 [credit card]: ../src/pii_manager/lang/any/credit_card.py

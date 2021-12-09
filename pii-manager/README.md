@@ -1,7 +1,8 @@
 # Pii Manager
 
 This repository builds a Python package that performs PII processing for text
-data i.e. replacement/tagging/extraction of PII in the text.
+data i.e. replacement/tagging/extraction of PII (Personally Identifiable
+Information aka [Personal Data]) items existing in the text.
 
 The PII Tasks in the package are structured by language & country, since many
 of the PII elements are language- and/or -country dependent.
@@ -14,10 +15,10 @@ validate identifiers.
 ## Usage
 
 The package can be used:
- * As an API, in two flavors
+ * As an API, in two flavors: function-based API and object-based API
  * As a command-line tool
 
-For details, see the [usage document]
+For details, see the [usage document].
 
 
 ## Building
@@ -37,7 +38,7 @@ The provided [Makefile] can be used to process the package:
 
 ## Contributing
 
-To add a new PII processing task, please see the [contributing instructions]
+To add a new PII processing task, please see the [contributing instructions].
 
 
 [python-stdnum]: https://github.com/arthurdejong/python-stdnum
@@ -45,3 +46,4 @@ To add a new PII processing task, please see the [contributing instructions]
 [pytest]: https://docs.pytest.org
 [contributing instructions]: doc/contributing.md
 [usage document]: doc/usage.md
+[Personal Data]: https://en.wikipedia.org/wiki/Personal_data
