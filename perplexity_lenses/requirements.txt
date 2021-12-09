@@ -1,5 +1,5 @@
 bokeh==2.2.2
-https://files.pythonhosted.org/packages/52/b6/798b1ac755c19cc5a91e5f5068544ed9deda74cb9339e4bb5e2b5f3ff3ec/embedding_lenses-0.8.0-py3-none-any.whl
+embedding-lenses==0.9.0
 https://github.com/kpu/kenlm/archive/master.zip
 huggingface-hub==0.0.19
 numpy==1.20.0
