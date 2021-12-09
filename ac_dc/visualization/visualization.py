@@ -29,6 +29,13 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
 
     st.header("Parameters of the filtering")
 
+    if "number_words" in columns:
+        max_nb_words = int(np.max(data["number_words"])) + 1
+        cutoff_number_words = st.slider(
+            "Min cutoff number words", 0, max_nb_words, 0
+        )
+        keys.append(("number_words", cutoff_number_words, False))
+
     if "special_characters_ratio" in columns:
         cutoff_special_characters_ratio = st.slider(
             "Max cutoff special characters ratio", 0.0, 1.0, 1.0, step=0.01
@@ -67,13 +74,13 @@ def visualization(path_data, lang, num_docs, num_docs_for_words):
     cond = np.all(cond, axis=0)
 
     data_keep = data.loc[cond]
-    st.header("Data that we keep")
+    st.header(f"Data that we keep: {len(data_keep)} docs")
     st.markdown("Click on a column to sort by it.")
     st.markdown("Place the cursor on the text to display it.")
     st.dataframe(data_keep)
 
     data_not_keep = data.loc[np.invert(cond)]
-    st.header("Data that is thrown away")
+    st.header(f"Data that is thrown away: {len(data_not_keep)} docs")
     st.markdown("Click on a column to sort by it.")
     st.markdown("Place the cursor on the text to display it.")
     st.dataframe(data_not_keep)

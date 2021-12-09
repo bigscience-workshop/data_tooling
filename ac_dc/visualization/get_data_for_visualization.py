@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
-from oscar_sample_filter import LoadParameters, Filtering
+from oscar_sample_filter import LoadParameters, ModifyingSentences, Filtering
 
 
 class GetDataForVisualization:
@@ -58,6 +58,11 @@ class GetDataForVisualization:
 
             try:
                 sentence = next(dataset)["text"]
+
+                words = ModifyingSentences.split_on_whitespace(sentence, new_line=True, tab=True)
+                words = [word for word in words if word]
+                number_words = len(words)
+                stats_sentence["number_words"] = number_words
 
                 special_characters_ratio = Filtering.compute_special_characters_ratio(
                     sentence, self.param["special_characters"]

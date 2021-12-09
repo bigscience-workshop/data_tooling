@@ -184,7 +184,7 @@ parameters_filtering_en = {
     "cond_remove_long_words": True,
     "length_word_max_cutoff": 25,
     "cond_check_number_words": True,
-    "number_words_min_cutoff": 1,
+    "number_words_min_cutoff": 20,
     "number_words_max_cutoff": 100000,
     "strip_characters": special_characters_default,
     "cond_check_special_characters": True,
