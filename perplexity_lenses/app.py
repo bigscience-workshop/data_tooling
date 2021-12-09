@@ -19,6 +19,7 @@ from perplexity_lenses.engine import (
     DOCUMENT_TYPES,
     EMBEDDING_MODELS,
     LANGUAGES,
+    PERPLEXITY_MODELS,
     SEED,
     generate_plot,
 )
@@ -54,11 +55,35 @@ with col6:
     doc_type = st.selectbox("Document type", DOCUMENT_TYPES, 1)
 with col7:
     sample = st.number_input("Maximum number of documents to use", 1, 100000, 1000)
+perplexity_model = st.selectbox(
+    "Dataset on which the perplexity model was trained on", PERPLEXITY_MODELS, 0
+).lower()
 
 dimensionality_reduction = st.selectbox(
     "Dimensionality Reduction algorithm", DIMENSIONALITY_REDUCTION_ALGORITHMS, 0
 )
 model_name = st.selectbox("Sentence embedding model", EMBEDDING_MODELS, 0)
+
+advanced_options = st.checkbox(
+    "Advanced options (do not modify if using default KenLM models).", value=False
+)
+lower_case = True
+remove_accents = True
+normalize_numbers = True
+punctuation = 1
+if advanced_options:
+    lower_case = st.checkbox(
+        "Lower case text for KenLM preprocessing (from cc_net)", value=False
+    )
+    remove_accents = st.checkbox(
+        "Remove accents for KenLM preprocessing (from cc_net)", value=False
+    )
+    normalize_numbers = st.checkbox(
+        "Replace numbers with zeros KenLM preprocessing (from cc_net)", value=True
+    )
+    punctuation = st.number_input(
+        "Punctuation mode to use from cc_net KenLM preprocessing", 1, 2, 1
+    )
 
 with st.spinner(text="Loading embedding model..."):
     model = load_model(model_name)
@@ -69,7 +94,14 @@ dimensionality_reduction_function = (
 )
 
 with st.spinner(text="Loading KenLM model..."):
-    kenlm_model = KenlmModel.from_pretrained(language)
+    kenlm_model = KenlmModel.from_pretrained(
+        perplexity_model,
+        language,
+        lower_case,
+        remove_accents,
+        normalize_numbers,
+        punctuation,
+    )
 
 if uploaded_file or hub_dataset:
     with st.spinner("Loading dataset..."):

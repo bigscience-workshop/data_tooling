@@ -2,7 +2,6 @@ import logging
 import time
 from typing import Callable, Optional, Tuple, Union
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 from bokeh.palettes import Turbo256
@@ -74,6 +73,7 @@ LANGUAGES = [
     "uk",
     "zh",
 ]
+PERPLEXITY_MODELS = ["Wikipedia", "OSCAR"]
 
 
 class ContextLogger:
@@ -119,8 +119,8 @@ def generate_plot(
         text_column: df[text_column].values,
         label_column: encoded_labels.values,
     }
-    # Smooth down values for coloring, by taking the entropy = log10(perplexity)
-    values = (np.log10(df[label_column].values)).round().astype(int)
+    # Round perplexity values
+    values = df[label_column].values.round().astype(int)
     plot = draw_interactive_scatter_plot(
         hover_data,
         embeddings_2d[:, 0],

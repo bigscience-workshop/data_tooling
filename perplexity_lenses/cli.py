@@ -22,6 +22,7 @@ from perplexity_lenses.engine import (
     DOCUMENT_TYPES,
     EMBEDDING_MODELS,
     LANGUAGES,
+    PERPLEXITY_MODELS,
     SEED,
     generate_plot,
 )
@@ -56,6 +57,10 @@ def main(
         help=f"Whether to embed at the sentence or document level. Options: {DOCUMENT_TYPES}.",
     ),
     sample: int = typer.Option(1000, help="Maximum number of examples to use."),
+    perplexity_model: str = typer.Option(
+        "wikipedia",
+        help=f"Dataset on which the perplexity model was trained on. Options: {PERPLEXITY_MODELS}",
+    ),
     dimensionality_reduction: str = typer.Option(
         DIMENSIONALITY_REDUCTION_ALGORITHMS[0],
         help=f"Whether to use UMAP or t-SNE for dimensionality reduction. Options: {DIMENSIONALITY_REDUCTION_ALGORITHMS}.",
@@ -79,7 +84,14 @@ def main(
         else partial(get_tsne_embeddings, random_state=SEED)
     )
     logger.info("Loading KenLM model...")
-    kenlm_model = KenlmModel.from_pretrained(language)
+    kenlm_model = KenlmModel.from_pretrained(
+        perplexity_model.lower(),
+        language,
+        lower_case=True,
+        remove_accents=True,
+        normalize_numbers=True,
+        punctuation=1,
+    )
     logger.info("Loading dataset...")
     if dataset.endswith(".csv") or dataset.endswith(".tsv"):
         df = pd.read_csv(dataset, sep="\t" if dataset.endswith(".tsv") else ",")
