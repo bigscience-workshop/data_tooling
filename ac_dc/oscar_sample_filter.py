@@ -162,8 +162,8 @@ class ModifyingSentences:
             "",
             "",
         ],
-        new_line = False,
-        tab = False,
+        new_line=False,
+        tab=False,
     ):
         """There are different whitespace characters, so
         this method is more accurate than sentence.split(" ").
@@ -203,45 +203,131 @@ class ModifyingSentences:
         special characters and characters are converted to lower case.
         Useful to compute ratios, like the stopwords ratio."""
         sentence = sentence.lower()
-        split_sentence = ModifyingSentences.split_on_whitespace(sentence, new_line=True, tab=True)
+        split_sentence = ModifyingSentences.split_on_whitespace(
+            sentence, new_line=True, tab=True
+        )
         words = [
-            ModifyingSentences.strip(word, strip_characters)
-            for word in split_sentence
+            ModifyingSentences.strip(word, strip_characters) for word in split_sentence
         ]
         words = [word for word in words if word]
         return words
 
     @staticmethod
-    def remove_words_with_incorrect_substrings(
-        sentence,
-        incorrect_word_substrings,
-    ):
-        words = ModifyingSentences.split_on_whitespace(sentence)
-        words = [
-            word
-            for word in words
-            if all([(i_substr not in word) for i_substr in incorrect_word_substrings])
+    def split_on_newline_tab_whitespace(sentence):
+        """First split on "\n", then on "\t", then on " "."""
+        sentences = sentence.split("\n")
+        sentences = [sentence.split("\t") for sentence in sentences]
+        sentences = [
+            [
+                ModifyingSentences.split_on_whitespace(subsentence)
+                for subsentence in sentence
+            ]
+            for sentence in sentences
         ]
-        filtered_sentence = " ".join(words)
-        return filtered_sentence
+        return sentences
 
     @staticmethod
+    def merge_on_whitespace_tab_newline(sentences):
+        """Invert the method split_on_newline_tab_whitespace.
+        Removes concatenated separators."""
+        sentences = [
+            [" ".join(subsentence) for subsentence in sentence if subsentence]
+            for sentence in sentences
+        ]
+        sentences = ["\t".join(sentence) for sentence in sentences if sentence]
+        if not sentences:
+            return ""
+        sentence = "\n".join(sentences)
+        return sentence
+
+    @staticmethod
+    def should_keep_word_with_incorrect_substrings(
+        word, strip_characters, incorrect_word_substrings
+    ):
+        word = ModifyingSentences.strip(word, strip_characters)
+        should_keep = all(
+            [(i_substr not in word) for i_substr in incorrect_word_substrings]
+        )
+        return should_keep
+
+    @staticmethod
+    def remove_words_with_incorrect_substrings(
+        sentence,
+        strip_characters,
+        incorrect_word_substrings,
+    ):
+        sentences = ModifyingSentences.split_on_newline_tab_whitespace(sentence)
+        sentences = [
+            [
+                [
+                    word
+                    for word in subsentence
+                    if ModifyingSentences.should_keep_word_with_incorrect_substrings(
+                        word, strip_characters, incorrect_word_substrings
+                    )
+                ]
+                for subsentence in sentence
+            ]
+            for sentence in sentences
+        ]
+        sentence = ModifyingSentences.merge_on_whitespace_tab_newline(sentences)
+        return sentence
+
+    @staticmethod
+    def should_keep_long_word(
+        word, strip_characters, special_characters, length_word_max_cutoff
+    ):
+        """If the word is too long but it contains only one
+        special character, it might be a concatenation of one word,
+        a punctuation, and another word, with no space between them.
+        In this case, we give the word a pass."""
+        if len(word) <= length_word_max_cutoff:
+            return True
+        word = ModifyingSentences.strip(word, strip_characters)
+        if not word:  # The word consisted only of strip characters
+            return False
+        if len(word) <= length_word_max_cutoff:
+            return True
+        num_special_char = len([char for char in word if char in special_characters])
+        if num_special_char == 1:
+            return True
+        return False
+
     def remove_long_words(
         sentence,
+        strip_characters,
+        special_characters,
         length_word_max_cutoff,
     ):
-        words = ModifyingSentences.split_on_whitespace(sentence)
-        words = [word for word in words if len(word) <= length_word_max_cutoff]
-        filtered_sentence = " ".join(words)
-        return filtered_sentence
+        sentences = ModifyingSentences.split_on_newline_tab_whitespace(sentence)
+        sentences = [
+            [
+                [
+                    word
+                    for word in subsentence
+                    if ModifyingSentences.should_keep_long_word(
+                        word,
+                        strip_characters,
+                        special_characters,
+                        length_word_max_cutoff,
+                    )
+                ]
+                for subsentence in sentence
+            ]
+            for sentence in sentences
+        ]
+        sentence = ModifyingSentences.merge_on_whitespace_tab_newline(sentences)
+        return sentence
 
     @staticmethod
     def modifying_sentences(
         sentence,
         cond_replace_unicode_punctuation,
         cond_remove_words_with_incorrect_substrings,
+        strip_characters,
         incorrect_word_substrings,
         cond_remove_long_words,
+        special_characters,
         length_word_max_cutoff,
     ):
         sentence = ModifyingSentences.normalization(
@@ -255,11 +341,15 @@ class ModifyingSentences:
         if cond_remove_words_with_incorrect_substrings:
             sentence = ModifyingSentences.remove_words_with_incorrect_substrings(
                 sentence,
+                strip_characters,
                 incorrect_word_substrings,
             )
         if cond_remove_long_words:
             sentence = ModifyingSentences.remove_long_words(
-                sentence, length_word_max_cutoff
+                sentence,
+                strip_characters,
+                special_characters,
+                length_word_max_cutoff,
             )
         return sentence
 
@@ -278,8 +368,10 @@ class OscarModifyingSentences:
             cond_remove_words_with_incorrect_substrings=self.param[
                 "cond_remove_words_with_incorrect_substrings"
             ],
+            strip_characters=self.param["strip_characters"],
             incorrect_word_substrings=self.param["incorrect_word_substrings"],
             cond_remove_long_words=self.param["cond_remove_long_words"],
+            special_characters=self.param["special_characters"],
             length_word_max_cutoff=self.param["length_word_max_cutoff"],
         )
         return example
