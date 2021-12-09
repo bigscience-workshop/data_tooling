@@ -78,7 +78,7 @@ class GetDataForVisualization:
 
                 if self.model_lang_id:
                     _, lang_id_score = Filtering.compute_lang_id_pred_score(
-                        sentence, self.param["strip_characters"], self.model_lang_id
+                        sentence, self.model_lang_id
                     )
                     stats_sentence["lang_id_score"] = lang_id_score
 
