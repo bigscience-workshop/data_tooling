@@ -14,7 +14,7 @@ def keygetter_set(v):
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    '''
+    """
     A custom JSON encoder that can serialize additional objects:
       - datetime objects (into ISO 8601 strings)
       - sets (as sorted lists)
@@ -23,19 +23,18 @@ class CustomJSONEncoder(json.JSONEncoder):
         a serializable object
 
     Non-serializable objects are converted to plain strings.
-    '''
-
+    """
 
     def default(self, obj):
         """
         Serialize some special types
         """
-        if hasattr(obj, 'to_json'):
+        if hasattr(obj, "to_json"):
             return obj.to_json()
         elif isinstance(obj, datetime.datetime):
-            t = obj.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+            t = obj.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
             if obj.tzinfo is not None:
-                t = t[:-2] + ':' + t[-2:]
+                t = t[:-2] + ":" + t[-2:]
             return t
         elif isinstance(obj, set):
             return sorted(obj, key=keygetter_set)

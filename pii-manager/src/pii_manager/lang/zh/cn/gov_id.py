@@ -19,7 +19,6 @@ _GOV_ID_PATTERN = r"(?<!\d) (?: (\d{18}) | ( (?:G|D|S|P|H|M) \d{8} ) ) (?!\d)"
 _GOV_ID_REGEX = re.compile(_GOV_ID_PATTERN, flags=re.X)
 
 
-
 def gov_id_china(doc: str) -> Iterable[str]:
     """
     Chinese government-issued identifiers:

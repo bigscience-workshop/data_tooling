@@ -16,7 +16,7 @@ TEST = [
     (
         "My email is anyone@whatever.",
         "My email is anyone@whatever.",
-    )
+    ),
 ]
 
 

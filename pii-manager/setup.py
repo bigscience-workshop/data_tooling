@@ -48,8 +48,8 @@ setup_args = dict(
     # Metadata
     name=PKGNAME,
     version=VERSION,
-    author='Paulo Villegas',
-    author_email='paulo.vllgs@gmail.com',
+    author="Paulo Villegas",
+    author_email="paulo.vllgs@gmail.com",
     description="Text Anonymization of PII",
     long_description_content_type="text/markdown",
     long_description=long_description(),

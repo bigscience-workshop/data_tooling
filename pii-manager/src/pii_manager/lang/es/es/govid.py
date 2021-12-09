@@ -1,5 +1,5 @@
 """
-Spanish Goverment-issued IDs: 
+Spanish Goverment-issued IDs:
   - DNI (Documento Nacional de Identidad)
   - NIE (Número de Identificación de Extranjero)
 """

@@ -151,10 +151,13 @@ class PiiManager:
         self.stats = defaultdict(int)
 
         # Prepare the method to be called
-        self._process = self.mode_full if self.mode == 'full' else \
-            self.mode_extract if self.mode == 'extract' else \
-            self.mode_subst
-
+        self._process = (
+            self.mode_full
+            if self.mode == "full"
+            else self.mode_extract
+            if self.mode == "extract"
+            else self.mode_subst
+        )
 
     def task_info(self) -> Dict:
         """
@@ -184,7 +187,7 @@ class PiiManager:
             for pii in task_proc(doc):
                 # Add all a pair (text-prefix, transformed-pii)
                 output += [
-                    doc[pos: pii.pos],
+                    doc[pos : pii.pos],
                     self.template.format(
                         name=pii.elem.name, value=pii.value, country=pii.country
                     ),

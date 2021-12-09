@@ -15,9 +15,9 @@ TEST = [
 
 
 def test10_ssn():
-    obj = PiiManager("zh", "CN", [PiiEnum.STREET_ADDRESS,
-                                  PiiEnum.PHONE_NUMBER,
-                                  PiiEnum.DISEASE])
+    obj = PiiManager(
+        "zh", "CN", [PiiEnum.STREET_ADDRESS, PiiEnum.PHONE_NUMBER, PiiEnum.DISEASE]
+    )
     for doc, exp in TEST:
         got = obj(doc)
         assert got == exp
