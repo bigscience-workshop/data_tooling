@@ -26,11 +26,11 @@ class Visualization:
 
         sentences = [doc["text"].split(" ") for doc in data[:num_docs_for_words]]
         words = [word for sentence in sentences for word in sentence]
-        words_data = [{"len_word": len(word), "word": word} for word in words]
-        self.words_data = pd.DataFrame(words_data)
+        words = [{"len_word": len(word), "word": word} for word in words]
+        self.words = pd.DataFrame(words)
 
-        data = data[:num_docs]
-        self.data = pd.DataFrame(data)
+        docs = data[:num_docs]
+        self.docs = pd.DataFrame(docs)
 
     def set_title(self):
         st.title(f"{self.num_docs} {self.lang} documents from Oscar with their stats.")
@@ -38,12 +38,12 @@ class Visualization:
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
 
-        def set_sliders(data):
-            columns = list(data)
+        def set_sliders(docs):
+            columns = list(docs)
             keys = []
 
             if "number_words" in columns:
-                max_nb_words = int(np.max(data["number_words"])) + 1
+                max_nb_words = int(np.max(docs["number_words"])) + 1
                 cutoff_number_words = st.sidebar.slider(
                     "Min cutoff number words", 0, max_nb_words, 0
                 )
@@ -74,7 +74,7 @@ class Visualization:
                 keys.append(("lang_id_score", cutoff_lang_id_score, False))
 
             if "perplexity_score" in columns:
-                max_pp = int(np.max(data["perplexity_score"])) + 1
+                max_pp = int(np.max(docs["perplexity_score"])) + 1
                 cutoff_perplexity_score = st.sidebar.slider(
                     "Perplexity cutoff perplexity score", 0, max_pp, max_pp
                 )
@@ -82,32 +82,32 @@ class Visualization:
 
             return keys
 
-        self.keys = set_sliders(self.data)
+        self.keys = set_sliders(self.docs)
 
         cond = [
-            (self.data[key] <= cutoff) if max_cutoff else (self.data[key] >= cutoff)
+            (self.docs[key] <= cutoff) if max_cutoff else (self.docs[key] >= cutoff)
             for key, cutoff, max_cutoff in self.keys
         ]
         cond = np.all(cond, axis=0)
 
         st.header("Filtering on documents")
 
-        self.data_not_keep = self.data.loc[np.invert(cond)]
-        st.subheader(f"Discarded documents: {len(self.data_not_keep)} docs ({len(self.data_not_keep) / num_docs * 100:.2f}%)")
+        self.discarded_docs = self.docs.loc[np.invert(cond)]
+        st.subheader(f"Discarded documents: {len(self.discarded_docs)} docs ({len(self.discarded_docs) / num_docs * 100:.2f}%)")
         st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
-        st.dataframe(self.data_not_keep)
+        st.dataframe(self.discarded_docs)
 
-        self.data_keep = self.data.loc[cond]
-        st.subheader(f"Retained documents: {len(self.data_keep)} docs ({len(self.data_keep) / num_docs * 100:.2f}%)")
+        self.retained_docs = self.docs.loc[cond]
+        st.subheader(f"Retained documents: {len(self.retained_docs)} docs ({len(self.retained_docs) / num_docs * 100:.2f}%)")
         st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
-        st.dataframe(self.data_keep)
+        st.dataframe(self.retained_docs)
 
     def filtering_of_words(self):
         st.sidebar.subheader("Parameter of the filtering for words")
 
-        max_len_word = int(np.max(self.words_data["len_word"])) + 1
+        max_len_word = int(np.max(self.words["len_word"])) + 1
         cutoff_word = st.sidebar.slider("Max cutoff length word", 0, max_len_word, max_len_word)
-        cond_words = self.words_data["len_word"] <= cutoff_word
+        cond_words = self.words["len_word"] <= cutoff_word
 
         st.header("Filtering on words")
 
@@ -118,15 +118,15 @@ class Visualization:
             )
         )
 
-        words_not_keep = self.words_data.loc[np.invert(cond_words)]
-        st.subheader(f"Discarded words: {len(words_not_keep)} words ({len(words_not_keep) / len(self.words_data) * 100:.2f}%)")
+        discarded_words = self.words.loc[np.invert(cond_words)]
+        st.subheader(f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)")
         st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
-        st.dataframe(words_not_keep)
+        st.dataframe(discarded_words)
 
-        words_keep = self.words_data.loc[cond_words]
-        st.subheader(f"Retained words: {len(words_keep)} words ({len(words_keep) / len(self.words_data) * 100:.2f}%)")
+        retained_words = self.words.loc[cond_words]
+        st.subheader(f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)")
         st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
-        st.dataframe(words_keep)
+        st.dataframe(retained_words)
 
     def plot_distributions_filtering_parameters(self):
         st.header("Distributions of the filtering parameters")
@@ -144,7 +144,7 @@ class Visualization:
                 st.markdown(f"Each bin is of size: {max_range/num_bins}.")
 
             for key, _, _ in self.keys:
-                plot_hist(self.data, key)
+                plot_hist(self.docs, key)
 
     def plot_zipf_laws(self):
         st.header("Zipf's Laws")
@@ -165,9 +165,9 @@ class Visualization:
                 freq_words = -np.sort(-freq_words)
                 return freq_words
 
-            freq_words_data = get_frequency_words(self.data)
-            freq_words_data_keep = get_frequency_words(self.data_keep)
-            freq_words_data_not_keep = get_frequency_words(self.data_not_keep)
+            freq_words_data = get_frequency_words(self.docs)
+            freq_words_data_keep = get_frequency_words(self.retained_docs)
+            freq_words_data_not_keep = get_frequency_words(self.discarded_docs)
 
             fig, ax = plt.subplots()
             ax.loglog(freq_words_data)
