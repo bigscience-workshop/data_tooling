@@ -4,9 +4,9 @@ Definition of the main PiiManager object
 
 from collections import defaultdict
 from itertools import chain
+import importlib
 
-
-from typing import Iterable, Tuple, List, Callable, Union, Dict
+from typing import Iterable, Tuple, List, Callable, Union, Dict, Type
 
 from ..piientity import PiiEntity
 from ..piienum import PiiEnum
@@ -23,7 +23,7 @@ DEFAULT_TEMPLATES = {"replace": "<{name}>", "tag": "<{name}:{value}>"}
 
 def fetch_all_tasks(
     lang: str, country: Iterable[str] = None, debug: bool = False
-) -> Iterable[Tuple]:
+) -> Iterable[List[Dict]]:
     """
     Return all available anonymizer tasks for a given language & (optionally)
     country
@@ -47,7 +47,7 @@ def fetch_all_tasks(
 
 def fetch_task(
     taskname: str, lang: str, country: Iterable[str] = None
-) -> Iterable[Tuple]:
+) -> Iterable[List[Dict]]:
     """
     Return a specific task for a given language & country
     (try to find the most specific task available)
@@ -86,25 +86,38 @@ def fetch_task(
 
 # --------------------------------------------------------------------------
 
+def import_task_class(classname: str) -> Type[BasePiiTask]:
+    try:
+        modname, cname = classname.rsplit(".", 1)
+        mod = importlib.import_module(modname)
+        return getattr(mod, cname)
+    except Exception as e:
+        raise InvArgException('cannot import PiiTask class {}: {}', classname,
+                              e)
 
-def build_task(task) -> BasePiiTask:
-    if len(task) < 2:
-        InvArgException("invalid task object: {}", task)
-    lang, country, pii, obj = task[0:4]
-    if isinstance(obj, type(BasePiiTask)):
-        proc = obj(pii=pii, lang=lang, country=country)
-    elif isinstance(obj, Callable):
-        proc = CallablePiiTask(obj, pii=pii, lang=lang, country=country)
-    elif isinstance(obj, str):
-        proc = RegexPiiTask(
-            obj,
-            task[-1] if len(task) > 4 else pii.name,
-            pii=pii,
-            lang=lang,
-            country=country,
-        )
+
+def build_task(task: Dict) -> BasePiiTask:
+    """
+    Build a task object from its spec dict
+    """
+    try:
+        args = {k: task[k] for k in
+                ("pii", "lang", "country", "pii", "name", "doc")}
+        ttype, tobj = task["type"], task["task"]
+    except KeyError as e:
+        raise InvArgException("invalid pii task object: missing field {}", e)
+
+    if ttype == "PiiTask":
+        if isinstance(tobj, str):
+            tobj = import_task_class(tobj)
+        proc = tobj(**args)
+    elif ttype == "callable":
+        proc = CallablePiiTask(tobj, **args)
+    elif ttype in ("re", "regex"):
+        proc = RegexPiiTask(tobj, **args)
     else:
-        raise InvArgException("invalid pii task object for {}: {}", pii.name, type(obj))
+        raise InvArgException("invalid pii task type for {}: {}",
+                              task["pii"].name, ttype)
     return proc
 
 
@@ -123,7 +136,7 @@ class PiiManager:
         debug: bool = False,
     ):
         """
-        Initalize an anonymizer object, loading & initializing all specified
+        Initalize an processor object, loading & initializing all specified
         processing tasks
         """
         # Sanitize input
@@ -142,11 +155,11 @@ class PiiManager:
         else:
             if isinstance(tasks, PiiEnum):
                 tasks = [tasks]
-            tasklist = (fetch_task(name, self.lang, self.country) for name in tasks)
-            tasklist = filter(None, chain.from_iterable(tasklist))
+            tl = (fetch_task(name, self.lang, self.country) for name in tasks)
+            tasklist = chain.from_iterable(tl)
 
-        # Build an ordered array of tasks processors
-        taskproc = (build_task(t) for t in tasklist)
+        # Build an ordered array of task processors
+        taskproc = (build_task(t) for t in chain.from_iterable(tasklist))
         self.tasks = sorted(taskproc, key=lambda e: e.pii.value)
         self.stats = defaultdict(int)
 
@@ -158,6 +171,10 @@ class PiiManager:
             if self.mode == "extract"
             else self.mode_subst
         )
+
+    def __repr__(self) -> str:
+        return f"<PiiManager (tasks: {len(self.tasks)})>"
+
 
     def task_info(self) -> Dict:
         """

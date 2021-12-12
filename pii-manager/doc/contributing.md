@@ -35,19 +35,47 @@ including where to add the required documentation explaining the task.
 
 ## Task descriptor
 
-The task descriptor is a Python list that contains at least one tuple defining
-the entry points for this task (there might be more than one, if the file
-implements more than one PII).
+The task descriptor is a Python list that contains at least one element 
+defining the entry points for this task (there might be more than one, if 
+the file implements more than one PII).
 
 * The name of the list **must be** `PII_TASKS`
 
-* Each defined task must be a 2- or 3-element tuple, with these elements:
+* There are two versions of a task entry: simplified and full. In a `PII_TASK`
+  list they can be combined freely.
+
+
+### Simplified description
+
+In a simplified description a task must be a 2- or 3-element tuple, with 
+these elements:
    - the PII identifier for the task: a member of [PiiEnum]
    - the [task implementation]: the regex, function or class implementing the
      PII extractor
    - (only if the implementation is of regex type) a text description of the
      task (for documentation purposes)
 
+
+### Full description
+
+In a full description a task is a dictionary with these compulsory fields:
+ * `pii`: the PII identifier for the task: a member of [PiiEnum]
+ * `type`: the task type: `regex`, `callable` or `PiiTask`
+ * `task`: a fro regex tasks, a raw string; for function tasks a callable and
+    for PiiTask either a class or a string with a full class name.
+ * `lang`:
+ 
+And these optional fields
+ * `country`:
+ * `name`: a name for the task. If not present, a name will be generated from
+   the `name` class-level attribute (PiiTask) or from the class/function name.
+   This is meant to provide a higher level of detail than the `PiiEnum` 
+   generic name (e.g. different types of Government ID). Class-type tasks can
+   use a dynamic name at runtime, while function and regexes will have a
+   fixed name.
+ * `doc`: the documentation for the class. If not present, the docstring for
+   callable and class types will be used (for regex types, the task will have
+   no documentation)
 
 
 [task implementation]: #task-implementation

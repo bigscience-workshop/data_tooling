@@ -13,6 +13,7 @@ TEST = (
 def test10_constructor():
     obj = PiiManager("es", None, PiiEnum.CREDIT_CARD)
     assert obj.tasks[0].pii == PiiEnum.CREDIT_CARD
+    assert str(obj) == "<PiiManager (tasks: 1)>"
 
 
 def test20_info():

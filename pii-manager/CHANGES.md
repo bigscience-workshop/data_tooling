@@ -1,3 +1,7 @@
+v. 0.5.0
+ * new task list parsing code, adding a "full" format based on dicts, in
+   addition to the previous "simplified" format based on tuples
+
 v. 0.4.0
  * PII GOV_ID task for es-ES and en-AU
  * PII EMAIL_ADDRESS task

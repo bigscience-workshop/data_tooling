@@ -41,8 +41,11 @@ is:
    def my_pii_detector(src: doc) -> Iterable[str]:
 ```
 
-The function name itself is not relevant, since it will be referenced in the
-`PII_TASKS` array. It should:
+The function can have any name, but it should refer to the entity it is
+capturing, since it will be used as the `name` attribute of
+the task (after converting underscores into spaces).
+
+The function should:
 
  * accept a string: the document to analyze
  * return an iterable of strings: the string fragments corresponding to the
@@ -73,10 +76,13 @@ In this case the task is implemented as a Python class. The class *must*:
 
    i.e. a method returting an iterable of identified [PiiEntity]
 
-It can also, optionally, include a constructor. In this case, the constructor
-must
- * Accept an arbitrary number of keyword arguments
- * Call the parent class constructor with those arguments
+ * the task name wil be taken from the class-level attribute `name`, if it
+   exists, or else as the class name
+
+The class can also, optionally, include a constructor. In this case, the
+constructor must
+ * accept an arbitrary number of keyword arguments
+ * call the parent class constructor with those arguments
 
 In other words:
 
@@ -93,8 +99,8 @@ An example can be seen in the [credit card] detector.
 
 ## Documentation
 
-All PII Tasks should be documented with a small string that explains what they
-detect. The place to add this documentation is:
+In addition to its name, all PII Tasks should be documented with a small 
+string that explains what they detect. The place to add this documentation is:
  * For Regex tasks, add the string as the third element in the task descriptor
    inside `PII_TASKS`
  * For Callable tasks, use the function docstring to add the documentation.

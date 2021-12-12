@@ -22,7 +22,7 @@ _REGEX_DNI = None
 _REGEX_NIE = None
 
 
-def get_govt_id(text: str) -> Iterable[str]:
+def dni_or_nie(text: str) -> Iterable[str]:
     """
     Spanish DNI & NIE, recognize & validate
     """
@@ -42,4 +42,4 @@ def get_govt_id(text: str) -> Iterable[str]:
 
 # ---------------------------------------------------------------------
 
-PII_TASKS = [(PiiEnum.GOV_ID, get_govt_id)]
+PII_TASKS = [(PiiEnum.GOV_ID, dni_or_nie)]

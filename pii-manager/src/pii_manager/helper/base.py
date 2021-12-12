@@ -3,7 +3,7 @@ Define the base classes for Pii Tasks
 """
 
 import regex
-from typing import Iterable, Callable
+from typing import Iterable, Callable, Dict
 
 from ..piientity import PiiEntity
 from .exception import PiiUnimplemented
@@ -15,11 +15,16 @@ class BasePiiTask:
     """
 
     def __init__(self, **kwargs):
-        self.pii = kwargs.pop("pii")
-        self.lang = kwargs.pop("lang")
-        self.country = kwargs.pop("country", None)
-        self.doc = kwargs.pop("doc", None)
-        self.options = kwargs
+        # Full set
+        self.options = kwargs.copy()
+        # Compulsory fields
+        for f in ('pii', 'lang'):
+            setattr(self, f, kwargs.pop(f))
+        # Optional fields
+        for f in ('country', 'name'):
+            setattr(self, f, kwargs.pop(f, None))
+        # Documentation
+        self.doc = kwargs.pop("doc", self.pii.name)
 
     def find(self, doc: str) -> Iterable[PiiEntity]:
         raise PiiUnimplemented("missing implementation for Pii Task")
@@ -35,14 +40,14 @@ class RegexPiiTask(BasePiiTask):
     backwards-compatible mode)
     """
 
-    def __init__(self, pattern: str, doc: str, **kwargs):
+    def __init__(self, pattern: str, **kwargs):
         super().__init__(**kwargs)
         self.regex = regex.compile(pattern, flags=regex.X | regex.VERSION0)
-        self.doc = doc
 
     def find(self, doc: str) -> Iterable[str]:
         for cc in self.regex.finditer(doc):
-            yield PiiEntity(self.pii, cc.start(), cc.group(), country=self.country)
+            yield PiiEntity(self.pii, cc.start(), cc.group(),
+                            name=self.name, country=self.country)
 
 
 class CallablePiiTask(BasePiiTask):
@@ -53,7 +58,6 @@ class CallablePiiTask(BasePiiTask):
     def __init__(self, call: Callable, **kwargs):
         super().__init__(**kwargs)
         self.call = call
-        self.doc = call.__doc__ or self.pii.name
 
     def find(self, doc: str) -> Iterable[PiiEntity]:
         for cc in self.call(doc):
@@ -62,5 +66,6 @@ class CallablePiiTask(BasePiiTask):
                 pos = doc.find(cc, start)
                 if pos < 0:
                     break
-                yield PiiEntity(self.pii, pos, cc, country=self.country)
+                yield PiiEntity(self.pii, pos, cc,
+                                name=self.name, country=self.country)
                 start = pos + len(cc)
