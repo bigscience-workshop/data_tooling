@@ -59,8 +59,18 @@ class GetDataForVisualization:
             try:
                 sentence = next(dataset)["text"]
 
-                words = ModifyingSentences.split_on_whitespace(sentence, new_line=True, tab=True)
-                words = [word for word in words if word]
+                words = ModifyingSentences.get_words_from_sentence(sentence, self.param["strip_characters"])
+                words = [
+                    {
+                        "len_word": len(word),
+                        "incorrect_substring": any([(i_substr in word) for i_substr in self.param["incorrect_word_substrings"]]),
+                        "word": word
+                    }
+                    for word in words
+                ]
+
+                stats_sentence["words"] = words
+
                 number_words = len(words)
                 stats_sentence["number_words"] = number_words
 
@@ -115,7 +125,7 @@ if __name__ == "__main__":
     config_name = "unshuffled_deduplicated_en"
     data_files = None
     split = "train"
-    num_iter = 5000
+    num_iter = 15000
 
     dataset = load_dataset(
         dataset_name,
@@ -129,7 +139,7 @@ if __name__ == "__main__":
     path_fasttext_model = "ac_dc/lid.176.bin"
     path_sentencepiece_model = f"ac_dc/en.sp.model"
     path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_save_stats = f"./en_examples_with_stats.json"
+    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
 
     get_data_for_visualization = GetDataForVisualization(
         dataset,

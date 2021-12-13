@@ -11,11 +11,12 @@ import matplotlib.pyplot as plt
 
 
 class Visualization:
-    def __init__(self, path_data, lang, num_docs, num_docs_for_words):
+    def __init__(self, path_data, lang, num_docs, num_docs_for_words, max_len_text_display):
         self.path_data = path_data
         self.lang = lang
         self.num_docs = num_docs
         self.num_docs_for_words = num_docs_for_words
+        self.max_len_text_display = max_len_text_display
 
     def open_data(self):
         with open(self.path_data) as json_file:
@@ -24,12 +25,15 @@ class Visualization:
         self.num_docs = min(self.num_docs, len(data))
         self.num_docs_for_words = min(self.num_docs_for_words, len(data))
 
-        sentences = [doc["text"].split(" ") for doc in data[:num_docs_for_words]]
-        words = [word for sentence in sentences for word in sentence]
-        words = [{"len_word": len(word), "word": word} for word in words]
+        words = [doc["words"] for doc in data[:self.num_docs_for_words]]
+        words = [word for doc in words for word in doc]
         self.words = pd.DataFrame(words)
 
-        docs = data[:num_docs]
+        docs = data[:self.num_docs]
+        for doc in docs:
+            del doc["words"]
+            if len(doc["text"]) > self.max_len_text_display:
+                doc["text"] = doc["text"][:self.max_len_text_display] + " [...] [THIS LONG TEXT HAS BEEN TRUNCATED FOR DISPLAY REASONS]"
         self.docs = pd.DataFrame(docs)
 
     def set_title(self):
@@ -44,10 +48,14 @@ class Visualization:
 
             if "number_words" in columns:
                 max_nb_words = int(np.max(docs["number_words"])) + 1
-                cutoff_number_words = st.sidebar.slider(
+                cutoff_min_number_words = st.sidebar.slider(
                     "Min cutoff number words", 0, max_nb_words, 0
                 )
-                keys.append(("number_words", cutoff_number_words, False))
+                cutoff_max_number_words = st.sidebar.slider(
+                    "Max cutoff number words", 0, max_nb_words, max_nb_words
+                )
+                keys.append(("number_words", cutoff_min_number_words, False))
+                keys.append(("number_words", cutoff_max_number_words, True))
 
             if "special_characters_ratio" in columns:
                 cutoff_special_characters_ratio = st.sidebar.slider(
@@ -93,12 +101,12 @@ class Visualization:
         st.header("Filtering on documents")
 
         self.discarded_docs = self.docs.loc[np.invert(cond)]
-        st.subheader(f"Discarded documents: {len(self.discarded_docs)} docs ({len(self.discarded_docs) / num_docs * 100:.2f}%)")
+        st.subheader(f"Discarded documents: {len(self.discarded_docs)} docs ({len(self.discarded_docs) / self.num_docs * 100:.2f}%)")
         st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
         st.dataframe(self.discarded_docs)
 
         self.retained_docs = self.docs.loc[cond]
-        st.subheader(f"Retained documents: {len(self.retained_docs)} docs ({len(self.retained_docs) / num_docs * 100:.2f}%)")
+        st.subheader(f"Retained documents: {len(self.retained_docs)} docs ({len(self.retained_docs) / self.num_docs * 100:.2f}%)")
         st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
         st.dataframe(self.retained_docs)
 
@@ -107,14 +115,19 @@ class Visualization:
 
         max_len_word = int(np.max(self.words["len_word"])) + 1
         cutoff_word = st.sidebar.slider("Max cutoff length word", 0, max_len_word, max_len_word)
+
+        incorrect_substrings = st.sidebar.checkbox('Remove words with incorrect substrings')
+
         cond_words = self.words["len_word"] <= cutoff_word
+        if incorrect_substrings:
+            cond_words = cond_words & np.invert(self.words["incorrect_substring"])
 
         st.header("Filtering on words")
 
         st.markdown(
             (
                 f"Since the number of words is way larger than the number of documents, "
-                f"we consider in this section words for the first {num_docs_for_words} documents only."
+                f"we consider in this section words for the first {self.num_docs_for_words} documents only."
             )
         )
 
@@ -143,45 +156,30 @@ class Visualization:
                 st.bar_chart(hist_values)
                 st.markdown(f"Each bin is of size: {max_range/num_bins}.")
 
-            for key, _, _ in self.keys:
+            for key in set([el[0] for el in self.keys]):
                 plot_hist(self.docs, key)
 
-    def plot_zipf_laws(self):
-        st.header("Zipf's Laws")
+            plot_hist(self.words, "len_word")
 
-        display_zipf_laws = st.checkbox("Display Zipf's Laws")
+    def plot_zipf_law(self):
+        st.header("Zipf's Law")
 
-        if display_zipf_laws:
+        display_zipf_law = st.checkbox("Display Zipf's Law")
 
-            def get_frequency_words(data):
-                freq_words = {}
-                for index, row in data.iterrows():
-                    for word in row["text"].split(" "):
-                        if word in freq_words:
-                            freq_words[word] += 1
-                        else:
-                            freq_words[word] = 1
-                freq_words = np.array(list(freq_words.values()))
-                freq_words = -np.sort(-freq_words)
-                return freq_words
+        if display_zipf_law:
 
-            freq_words_data = get_frequency_words(self.docs)
-            freq_words_data_keep = get_frequency_words(self.retained_docs)
-            freq_words_data_not_keep = get_frequency_words(self.discarded_docs)
+            freq_words = {}
+            for _, row in self.words.iterrows():
+                freq_words[row["word"]] = freq_words.get(row["word"], 0) + 1
+            freq_words = np.array(list(freq_words.values()))
+            freq_words = -np.sort(-freq_words)
 
             fig, ax = plt.subplots()
-            ax.loglog(freq_words_data)
-            ax.loglog(freq_words_data_keep)
-            ax.loglog(freq_words_data_not_keep)
+            ax.loglog(freq_words)
             ax.set_title("Zipf's Law")
             ax.set_xlabel("$i$-th most frequent word")
             ax.set_ylabel("frequency in the documents")
-            ax.legend(["All docs", "Retained docs", "Discarded docs"])
             st.pyplot(fig)
-
-            st.markdown(
-                "If less than three curves are displayed, it means that there are overlaps."
-            )
 
     def download_data(self):
         st.header("Download data")
@@ -199,14 +197,15 @@ class Visualization:
         self.filtering_of_docs()
         self.filtering_of_words()
         self.plot_distributions_filtering_parameters()
-        self.plot_zipf_laws()
+        self.plot_zipf_law()
         self.download_data()
 
 
 path_data = "./ac_dc/visualization/en_examples_with_stats.json"
 lang = "English"
-num_docs = 5000
-num_docs_for_words = 500
+num_docs = 15000
+num_docs_for_words = 1500
+max_len_text_display = 10000
 
-visualization = Visualization(path_data, lang, num_docs, num_docs_for_words)
+visualization = Visualization(path_data, lang, num_docs, num_docs_for_words, max_len_text_display)
 visualization.visualization()
