@@ -59,12 +59,19 @@ class GetDataForVisualization:
             try:
                 sentence = next(dataset)["text"]
 
-                words = ModifyingSentences.get_words_from_sentence(sentence, self.param["strip_characters"])
+                words = ModifyingSentences.get_words_from_sentence(
+                    sentence, self.param["strip_characters"]
+                )
                 words = [
                     {
                         "len_word": len(word),
-                        "incorrect_substring": any([(i_substr in word) for i_substr in self.param["incorrect_word_substrings"]]),
-                        "word": word
+                        "incorrect_substring": any(
+                            [
+                                (i_substr in word)
+                                for i_substr in self.param["incorrect_word_substrings"]
+                            ]
+                        ),
+                        "word": word,
                     }
                     for word in words
                 ]

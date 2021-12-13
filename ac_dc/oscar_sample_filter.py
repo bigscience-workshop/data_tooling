@@ -387,7 +387,9 @@ class Filtering:
             sentence, new_line=True, tab=True
         )
         words = [word for word in words if word]
-        cond = (len(words) >= number_words_min_cutoff) and (len(words) <= number_words_max_cutoff)
+        cond = (len(words) >= number_words_min_cutoff) and (
+            len(words) <= number_words_max_cutoff
+        )
         return cond
 
     @staticmethod
@@ -551,7 +553,9 @@ class Filtering:
         perplexity_max_cutoff,
     ):
         if cond_check_number_words:
-            if not Filtering.check_number_words(sentence, number_words_min_cutoff, number_words_max_cutoff):
+            if not Filtering.check_number_words(
+                sentence, number_words_min_cutoff, number_words_max_cutoff
+            ):
                 return False
         if cond_check_special_characters:
             if not Filtering.check_special_characters(

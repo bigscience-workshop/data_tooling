@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 
 
 class Visualization:
-    def __init__(self, path_data, lang, num_docs, num_docs_for_words, max_len_text_display):
+    def __init__(
+        self, path_data, lang, num_docs, num_docs_for_words, max_len_text_display
+    ):
         self.path_data = path_data
         self.lang = lang
         self.num_docs = num_docs
@@ -25,15 +27,18 @@ class Visualization:
         self.num_docs = min(self.num_docs, len(data))
         self.num_docs_for_words = min(self.num_docs_for_words, len(data))
 
-        words = [doc["words"] for doc in data[:self.num_docs_for_words]]
+        words = [doc["words"] for doc in data[: self.num_docs_for_words]]
         words = [word for doc in words for word in doc]
         self.words = pd.DataFrame(words)
 
-        docs = data[:self.num_docs]
+        docs = data[: self.num_docs]
         for doc in docs:
             del doc["words"]
             if len(doc["text"]) > self.max_len_text_display:
-                doc["text"] = doc["text"][:self.max_len_text_display] + " [...] [THIS LONG TEXT HAS BEEN TRUNCATED FOR DISPLAY REASONS]"
+                doc["text"] = (
+                    doc["text"][: self.max_len_text_display]
+                    + " [...] [THIS LONG TEXT HAS BEEN TRUNCATED FOR DISPLAY REASONS]"
+                )
         self.docs = pd.DataFrame(docs)
 
     def set_title(self):
@@ -45,78 +50,131 @@ class Visualization:
         def set_sliders(docs):
             columns = list(docs)
             keys = []
+            conds = []
+
+            def get_cond(key, cutoff, max_cutoff):
+                if max_cutoff:
+                    return self.docs[key] <= cutoff
+                return self.docs[key] >= cutoff
+
+            def print_discared_by_cond(cond):
+                st.sidebar.caption(
+                    f"{(len(cond) - np.sum(1*cond)) / len(cond) * 100:.2f}% of the total is discarded with this filter"
+                )
+                st.sidebar.caption("---------")
 
             if "number_words" in columns:
                 max_nb_words = int(np.max(docs["number_words"])) + 1
                 cutoff_min_number_words = st.sidebar.slider(
                     "Min cutoff number words", 0, max_nb_words, 0
                 )
+                new_key = ("number_words", cutoff_min_number_words, False)
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
+
                 cutoff_max_number_words = st.sidebar.slider(
                     "Max cutoff number words", 0, max_nb_words, max_nb_words
                 )
-                keys.append(("number_words", cutoff_min_number_words, False))
-                keys.append(("number_words", cutoff_max_number_words, True))
+                new_key = ("number_words", cutoff_max_number_words, True)
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
 
             if "special_characters_ratio" in columns:
                 cutoff_special_characters_ratio = st.sidebar.slider(
                     "Max cutoff special characters ratio", 0.0, 1.0, 1.0, step=0.01
                 )
-                keys.append(("special_characters_ratio", cutoff_special_characters_ratio, True))
+                new_key = (
+                    "special_characters_ratio",
+                    cutoff_special_characters_ratio,
+                    True,
+                )
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
 
             if "stopwords_ratio" in columns:
                 cutoff_stopwords_ratio = st.sidebar.slider(
                     "Min cutoff stopwords ratio", 0.0, 1.0, 0.0, step=0.01
                 )
-                keys.append(("stopwords_ratio", cutoff_stopwords_ratio, False))
+                new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
 
             if "badwords_ratio" in columns:
                 cutoff_badwords_ratio = st.sidebar.slider(
-                    "Max cutoff badwords ratio", 0.0, 1.0, 1.0, step=0.001
+                    "Max cutoff badwords ratio", 0.0, 1.0, 1.0, step=0.01
                 )
-                keys.append(("badwords_ratio", cutoff_badwords_ratio, True))
+                new_key = ("badwords_ratio", cutoff_badwords_ratio, True)
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
 
             if "lang_id_score" in columns:
                 cutoff_lang_id_score = st.sidebar.slider(
                     "Min cutoff lang id score", 0.0, 1.0, 0.0, step=0.01
                 )
-                keys.append(("lang_id_score", cutoff_lang_id_score, False))
+                new_key = ("lang_id_score", cutoff_lang_id_score, False)
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
 
             if "perplexity_score" in columns:
                 max_pp = int(np.max(docs["perplexity_score"])) + 1
                 cutoff_perplexity_score = st.sidebar.slider(
                     "Perplexity cutoff perplexity score", 0, max_pp, max_pp
                 )
-                keys.append(("perplexity_score", cutoff_perplexity_score, True))
+                new_key = ("perplexity_score", cutoff_perplexity_score, True)
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                conds.append(cond)
+                print_discared_by_cond(cond)
 
-            return keys
+            return keys, conds
 
-        self.keys = set_sliders(self.docs)
+        self.keys, conds = set_sliders(self.docs)
 
-        cond = [
-            (self.docs[key] <= cutoff) if max_cutoff else (self.docs[key] >= cutoff)
-            for key, cutoff, max_cutoff in self.keys
-        ]
-        cond = np.all(cond, axis=0)
+        conds = np.all(conds, axis=0)
 
         st.header("Filtering on documents")
 
-        self.discarded_docs = self.docs.loc[np.invert(cond)]
-        st.subheader(f"Discarded documents: {len(self.discarded_docs)} docs ({len(self.discarded_docs) / self.num_docs * 100:.2f}%)")
-        st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
+        self.discarded_docs = self.docs.loc[np.invert(conds)]
+        st.subheader(
+            f"Discarded documents: {len(self.discarded_docs)} docs ({len(self.discarded_docs) / self.num_docs * 100:.2f}%)"
+        )
+        st.markdown(
+            "Click on a column to sort by it, place the cursor on the text to display it."
+        )
         st.dataframe(self.discarded_docs)
 
-        self.retained_docs = self.docs.loc[cond]
-        st.subheader(f"Retained documents: {len(self.retained_docs)} docs ({len(self.retained_docs) / self.num_docs * 100:.2f}%)")
-        st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
+        self.retained_docs = self.docs.loc[conds]
+        st.subheader(
+            f"Retained documents: {len(self.retained_docs)} docs ({len(self.retained_docs) / self.num_docs * 100:.2f}%)"
+        )
+        st.markdown(
+            "Click on a column to sort by it, place the cursor on the text to display it."
+        )
         st.dataframe(self.retained_docs)
 
     def filtering_of_words(self):
-        st.sidebar.subheader("Parameter of the filtering for words")
+        st.sidebar.subheader("Parameter of the filtering on words")
 
         max_len_word = int(np.max(self.words["len_word"])) + 1
-        cutoff_word = st.sidebar.slider("Max cutoff length word", 0, max_len_word, max_len_word)
+        cutoff_word = st.sidebar.slider(
+            "Max cutoff length word", 0, max_len_word, max_len_word
+        )
 
-        incorrect_substrings = st.sidebar.checkbox('Remove words with incorrect substrings')
+        incorrect_substrings = st.sidebar.checkbox(
+            "Remove words with incorrect substrings"
+        )
 
         cond_words = self.words["len_word"] <= cutoff_word
         if incorrect_substrings:
@@ -125,20 +183,26 @@ class Visualization:
         st.header("Filtering on words")
 
         st.markdown(
-            (
-                f"Since the number of words is way larger than the number of documents, "
-                f"we consider in this section words for the first {self.num_docs_for_words} documents only."
-            )
+            f"Since the number of words is way larger than the number of documents, "
+            f"we consider in this section words for the first {self.num_docs_for_words} documents only."
         )
 
         discarded_words = self.words.loc[np.invert(cond_words)]
-        st.subheader(f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)")
-        st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
+        st.subheader(
+            f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)"
+        )
+        st.markdown(
+            "Click on a column to sort by it, place the cursor on the text to display it."
+        )
         st.dataframe(discarded_words)
 
         retained_words = self.words.loc[cond_words]
-        st.subheader(f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)")
-        st.markdown("Click on a column to sort by it, place the cursor on the text to display it.")
+        st.subheader(
+            f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)"
+        )
+        st.markdown(
+            "Click on a column to sort by it, place the cursor on the text to display it."
+        )
         st.dataframe(retained_words)
 
     def plot_distributions_filtering_parameters(self):
@@ -152,11 +216,13 @@ class Visualization:
                 st.subheader(" ".join(key.split("_")))
                 hist_values = dataframe[key].values
                 max_range = np.max(hist_values)
-                hist_values = np.histogram(hist_values, bins=num_bins, range=(0, max_range))[0]
+                hist_values = np.histogram(
+                    hist_values, bins=num_bins, range=(0, max_range)
+                )[0]
                 st.bar_chart(hist_values)
                 st.markdown(f"Each bin is of size: {max_range/num_bins}.")
 
-            for key in set([el[0] for el in self.keys]):
+            for key in list({el[0]: None for el in self.keys}):
                 plot_hist(self.docs, key)
 
             plot_hist(self.words, "len_word")
@@ -207,5 +273,7 @@ num_docs = 15000
 num_docs_for_words = 1500
 max_len_text_display = 10000
 
-visualization = Visualization(path_data, lang, num_docs, num_docs_for_words, max_len_text_display)
+visualization = Visualization(
+    path_data, lang, num_docs, num_docs_for_words, max_len_text_display
+)
 visualization.visualization()
