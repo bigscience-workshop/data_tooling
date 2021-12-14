@@ -127,9 +127,10 @@ class ModifyingSentences:
         return sentence
 
     @staticmethod
-    def tokenization(sentence, sentencepiece_model):
+    def tokenization(sentence, sentencepiece_model, join_on_whitespace):
         sentence_tokenized = sentencepiece_model.encode_as_pieces(sentence)
-        sentence_tokenized = " ".join(sentence_tokenized)
+        if join_on_whitespace:
+            sentence_tokenized = " ".join(sentence_tokenized)
         return sentence_tokenized
 
     @staticmethod
@@ -197,19 +198,19 @@ class ModifyingSentences:
         return sentence_stripped
 
     @staticmethod
-    def get_words_from_sentence(sentence, strip_characters):
+    def get_words_from_sentence(sentence, lower_case, strip_characters):
         """Get words from a sentence. Non reversible since the sentence
         is split on multiple characters, words are stripped of
         special characters and characters are converted to lower case.
         Useful to compute ratios, like the stopwords ratio."""
-        sentence = sentence.lower()
-        split_sentence = ModifyingSentences.split_on_whitespace(
+        if lower_case:
+            sentence = sentence.lower()
+        words = ModifyingSentences.split_on_whitespace(
             sentence, new_line=True, tab=True
         )
-        words = [
-            ModifyingSentences.strip(word, strip_characters) for word in split_sentence
-        ]
-        words = [word for word in words if word]
+        if strip_characters:
+            words = [ModifyingSentences.strip(word, strip_characters) for word in words]
+            words = [word for word in words if word]
         return words
 
     @staticmethod
@@ -383,10 +384,9 @@ class OscarModifyingSentences:
 class Filtering:
     @staticmethod
     def check_number_words(sentence, number_words_min_cutoff, number_words_max_cutoff):
-        words = ModifyingSentences.split_on_whitespace(
-            sentence, new_line=True, tab=True
+        words = ModifyingSentences.get_words_from_sentence(
+            sentence, lower_case=False, strip_characters=None
         )
-        words = [word for word in words if word]
         cond = (len(words) >= number_words_min_cutoff) and (
             len(words) <= number_words_max_cutoff
         )
@@ -413,7 +413,9 @@ class Filtering:
 
     @staticmethod
     def compute_stopwords_ratio(sentence, strip_characters, stopwords):
-        words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        words = ModifyingSentences.get_words_from_sentence(
+            sentence, lower_case=True, strip_characters=strip_characters
+        )
         if not words:
             return 0
         stopwords_ratio = len([word for word in words if word in stopwords]) / len(
@@ -438,7 +440,9 @@ class Filtering:
 
     @staticmethod
     def compute_badwords_ratio(sentence, strip_characters, badwords):
-        words = ModifyingSentences.get_words_from_sentence(sentence, strip_characters)
+        words = ModifyingSentences.get_words_from_sentence(
+            sentence, lower_case=True, strip_characters=strip_characters
+        )
         if not words:
             return 0
         badwords_ratio = len([word for word in words if word in badwords]) / len(words)
@@ -501,7 +505,9 @@ class Filtering:
             replace_digits_with_zeros=True,
             replace_unicode_punctuation=True,
         )
-        doc = ModifyingSentences.tokenization(doc, sentencepiece_model)
+        doc = ModifyingSentences.tokenization(
+            doc, sentencepiece_model, join_on_whitespace=True
+        )
         doc_log_score, doc_length = 0, 0
         for line in doc.split("\n"):
             log_score = kenlm_model.score(line)
