@@ -17,6 +17,7 @@ special_characters_default.update(emoji)
 
 
 parameters_filtering_default = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -40,6 +41,7 @@ parameters_filtering_default = {
 }
 
 parameters_filtering_af = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -63,6 +65,7 @@ parameters_filtering_af = {
 }
 
 parameters_filtering_ar = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -86,6 +89,7 @@ parameters_filtering_ar = {
 }
 
 parameters_filtering_arz = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -109,6 +113,7 @@ parameters_filtering_arz = {
 }
 
 parameters_filtering_as = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -132,6 +137,7 @@ parameters_filtering_as = {
 }
 
 parameters_filtering_bn = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -155,6 +161,7 @@ parameters_filtering_bn = {
 }
 
 parameters_filtering_ca = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -178,6 +185,7 @@ parameters_filtering_ca = {
 }
 
 parameters_filtering_en = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": True,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -201,6 +209,7 @@ parameters_filtering_en = {
 }
 
 parameters_filtering_es = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -224,6 +233,7 @@ parameters_filtering_es = {
 }
 
 parameters_filtering_eu = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -247,6 +257,7 @@ parameters_filtering_eu = {
 }
 
 parameters_filtering_fr = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -270,6 +281,7 @@ parameters_filtering_fr = {
 }
 
 parameters_filtering_gu = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -293,6 +305,7 @@ parameters_filtering_gu = {
 }
 
 parameters_filtering_hi = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -316,6 +329,7 @@ parameters_filtering_hi = {
 }
 
 parameters_filtering_id = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -339,6 +353,7 @@ parameters_filtering_id = {
 }
 
 parameters_filtering_kn = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -362,6 +377,7 @@ parameters_filtering_kn = {
 }
 
 parameters_filtering_ml = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -385,6 +401,7 @@ parameters_filtering_ml = {
 }
 
 parameters_filtering_mr = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -408,6 +425,7 @@ parameters_filtering_mr = {
 }
 
 parameters_filtering_pt = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -431,6 +449,7 @@ parameters_filtering_pt = {
 }
 
 parameters_filtering_so = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -454,6 +473,7 @@ parameters_filtering_so = {
 }
 
 parameters_filtering_sw = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -477,6 +497,7 @@ parameters_filtering_sw = {
 }
 
 parameters_filtering_ta = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -500,6 +521,7 @@ parameters_filtering_ta = {
 }
 
 parameters_filtering_te = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -523,6 +545,7 @@ parameters_filtering_te = {
 }
 
 parameters_filtering_ur = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -546,6 +569,7 @@ parameters_filtering_ur = {
 }
 
 parameters_filtering_vi = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -569,6 +593,7 @@ parameters_filtering_vi = {
 }
 
 parameters_filtering_yo = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
@@ -592,6 +617,7 @@ parameters_filtering_yo = {
 }
 
 parameters_filtering_zh = {
+    "cond_uniform_whitespace": True,
     "cond_replace_unicode_punctuation": False,
     "cond_remove_words_with_incorrect_substrings": False,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],

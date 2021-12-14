@@ -89,6 +89,29 @@ class ModifyingSentences:
         return non_printing_characters_re.sub("", sentence)
 
     @staticmethod
+    def uniform_whitespace(
+        sentence,
+        whitespace=[
+            " ",
+            " ",
+            " ",
+            " ",
+            " ",
+            "　",
+            " ",
+            " ",
+            " ",
+            " ",
+            "￼",
+            "",
+        ],
+    ):
+        """There are different whitespace characters."""
+        whitespace = set(whitespace)
+        sentence = "".join([char if char not in whitespace else " " for char in sentence])
+        return sentence
+
+    @staticmethod
     def replace_digits_with_zeros(sentence, digits_re):
         return digits_re.sub("0", sentence)
 
@@ -102,6 +125,7 @@ class ModifyingSentences:
         remove_non_printing_characters,
         strip,
         lower_case,
+        uniform_whitespace,
         replace_digits_with_zeros,
         replace_unicode_punctuation,
         non_printing_characters_re=normalization["non_printing_characters_re"],
@@ -118,6 +142,8 @@ class ModifyingSentences:
             return sentence
         if lower_case:
             sentence = sentence.lower()
+        if uniform_whitespace:
+            sentence = ModifyingSentences.uniform_whitespace(sentence)
         if replace_digits_with_zeros:
             sentence = ModifyingSentences.replace_digits_with_zeros(sentence, digits_re)
         if replace_unicode_punctuation:
@@ -136,40 +162,11 @@ class ModifyingSentences:
     @staticmethod
     def split_on_whitespace(
         sentence,
-        whitespace=[
-            " ",
-            "",
-            " ",
-            "",
-            "",
-            " ",
-            "",
-            "",
-            " ",
-            "",
-            " ",
-            "",
-            "",
-            "",
-            "　",
-            " ",
-            " ",
-            " ",
-            "",
-            "",
-            " ",
-            "",
-            "￼",
-            "",
-            "",
-        ],
         new_line=False,
         tab=False,
     ):
-        """There are different whitespace characters, so
-        this method is more accurate than sentence.split(" ").
-        It also removes concatenated spaces."""
-        sep = whitespace + new_line * ["\n"] + tab * ["\t"]
+        """This method also removes concatenated spaces."""
+        sep = [" "] + new_line * ["\n"] + tab * ["\t"]
         sep = "|".join(sep)
         split_sentence = re.split(sep, sentence)
         split_sentence = [el for el in split_sentence if el]
@@ -323,6 +320,7 @@ class ModifyingSentences:
     @staticmethod
     def modifying_sentences(
         sentence,
+        cond_uniform_whitespace,
         cond_replace_unicode_punctuation,
         cond_remove_words_with_incorrect_substrings,
         strip_characters,
@@ -336,6 +334,7 @@ class ModifyingSentences:
             remove_non_printing_characters=False,
             strip=True,
             lower_case=False,
+            uniform_whitespace=cond_uniform_whitespace,
             replace_digits_with_zeros=False,
             replace_unicode_punctuation=cond_replace_unicode_punctuation,
         )
@@ -363,6 +362,7 @@ class OscarModifyingSentences:
     def __call__(self, example):
         example["text"] = ModifyingSentences.modifying_sentences(
             sentence=example["text"],
+            cond_uniform_whitespace=self.param["cond_uniform_whitespace"],
             cond_replace_unicode_punctuation=self.param[
                 "cond_replace_unicode_punctuation"
             ],
@@ -502,6 +502,7 @@ class Filtering:
             remove_non_printing_characters=True,
             strip=True,
             lower_case=True,
+            uniform_whitespace=True,
             replace_digits_with_zeros=True,
             replace_unicode_punctuation=True,
         )
