@@ -60,7 +60,9 @@ class GetDataForVisualization:
                 sentence = next(dataset)["text"]
 
                 words = ModifyingSentences.get_words_from_sentence(
-                    sentence, self.param["strip_characters"]
+                    sentence,
+                    lower_case=True,
+                    strip_characters=self.param["strip_characters"],
                 )
                 words = [
                     {
