@@ -66,7 +66,7 @@ class Visualization:
         def set_sliders(docs):
             columns = list(docs)
             keys = []
-            conds = []
+            conds = {}
 
             def get_cond(key, cutoff, max_cutoff):
                 if max_cutoff:
@@ -87,9 +87,8 @@ class Visualization:
                 )
                 new_key = ("number_words", cutoff_min_number_words, False)
                 keys.append(new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
-                print_discared_by_cond(cond)
+                cond_1 = get_cond(new_key[0], new_key[1], new_key[2])
+                print_discared_by_cond(cond_1)
 
                 cutoff_def = "If the number of words of a document is higher than this number, the document is removed."
                 cutoff_max_number_words = st.sidebar.slider(
@@ -97,9 +96,10 @@ class Visualization:
                 )
                 new_key = ("number_words", cutoff_max_number_words, True)
                 keys.append(new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
-                print_discared_by_cond(cond)
+                cond_2 = get_cond(new_key[0], new_key[1], new_key[2])
+                print_discared_by_cond(cond_2)
+
+                conds["number_words"] = [cond_1, cond_2]
 
             if "special_characters_ratio" in columns:
                 cutoff_def = "If the special characters ratio of a document is higher than this number, the document is removed."
@@ -113,8 +113,8 @@ class Visualization:
                 )
                 keys.append(new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
                 print_discared_by_cond(cond)
+                conds["special_characters_ratio"] = [cond]
 
             if "stopwords_ratio" in columns:
                 cutoff_def = "If the stop words ratio of a document is lower than this number, the document is removed."
@@ -124,8 +124,8 @@ class Visualization:
                 new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
                 keys.append(new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
                 print_discared_by_cond(cond)
+                conds["stopwords_ratio"] = [cond]
 
             if "badwords_ratio" in columns:
                 cutoff_def = "If the bad words ratio of a document is higher than this number, the document is removed."
@@ -135,8 +135,8 @@ class Visualization:
                 new_key = ("badwords_ratio", cutoff_badwords_ratio, True)
                 keys.append(new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
                 print_discared_by_cond(cond)
+                conds["badwords_ratio"] = [cond]
 
             if "lang_id_score" in columns:
                 cutoff_def = "If the confidence score for the language identification prediction of a document is lower than this number, the document is removed."
@@ -146,8 +146,8 @@ class Visualization:
                 new_key = ("lang_id_score", cutoff_lang_id_score, False)
                 keys.append(new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
                 print_discared_by_cond(cond)
+                conds["lang_id_score"] = [cond]
 
             if "perplexity_score" in columns:
                 cutoff_def = "If the perplexity score of a document is higher than this number, the document is removed."
@@ -158,34 +158,61 @@ class Visualization:
                 new_key = ("perplexity_score", cutoff_perplexity_score, True)
                 keys.append(new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
-                conds.append(cond)
                 print_discared_by_cond(cond)
+                conds["perplexity_score"] = [cond]
 
             return keys, conds
 
         self.keys, conds = set_sliders(self.docs)
 
-        conds = np.all(conds, axis=0)
+        all_conds = [subcond for cond in list(conds.values()) for subcond in cond]
+        all_conds = np.all(all_conds, axis=0)
 
         st.header("Filtering on documents")
 
-        self.discarded_docs = self.docs.loc[np.invert(conds)]
-        st.subheader(
-            f"Discarded documents: {len(self.discarded_docs)} docs ({len(self.discarded_docs) / self.num_docs * 100:.2f}%)"
-        )
-        st.markdown(
-            "Click on a column to sort by it, place the cursor on the text to display it."
-        )
-        st.dataframe(self.discarded_docs)
+        def display_dataset(cond, description):
+            displayed_docs = self.docs.loc[cond]
+            st.subheader(
+                f"{description}: {len(displayed_docs)} docs ({len(displayed_docs) / self.num_docs * 100:.2f}%)"
+            )
+            st.markdown(
+                "Click on a column to sort by it, place the cursor on the text to display it."
+            )
+            st.dataframe(displayed_docs)
+        
+        display_dataset(np.invert(all_conds), "Discarded documents")
 
-        self.retained_docs = self.docs.loc[conds]
-        st.subheader(
-            f"Retained documents: {len(self.retained_docs)} docs ({len(self.retained_docs) / self.num_docs * 100:.2f}%)"
-        )
-        st.markdown(
-            "Click on a column to sort by it, place the cursor on the text to display it."
-        )
-        st.dataframe(self.retained_docs)
+        #st.subheader("Display discarded documents by filter")
+        display_discarded_documents_by_filter = st.checkbox("Display discarded documents by filter")
+
+        if display_discarded_documents_by_filter:
+            columns = list(self.docs)
+
+            if "number_words" in columns:
+                cond_filter = np.invert(np.all(conds["number_words"], axis=0))
+                display_dataset(cond_filter, "Discarded documents for the filter on the number of words")
+
+            if "special_characters_ratio" in columns:
+                cond_filter = np.invert(np.all(conds["special_characters_ratio"], axis=0))
+                display_dataset(cond_filter, "Discarded documents for the filter on the special characters ratio")
+
+            if "stopwords_ratio" in columns:
+                cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
+                display_dataset(cond_filter, "Discarded documents for the filter on the stop words ratio")
+
+            if "badwords_ratio" in columns:
+                cond_filter = np.invert(np.all(conds["badwords_ratio"], axis=0))
+                display_dataset(cond_filter, "Discarded documents for the filter on the bad words ratio")
+
+            if "lang_id_score" in columns:
+                cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
+                display_dataset(cond_filter, "Discarded documents for the filter on the language identification confidence score")
+
+            if "perplexity_score" in columns:
+                cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
+                display_dataset(cond_filter, "Discarded documents for the filter on the perplexity score")
+
+        display_dataset(all_conds, "Retained documents")
 
     def filtering_of_words(self):
         st.sidebar.subheader("Parameter of the filtering on words")
