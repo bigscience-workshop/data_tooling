@@ -59,14 +59,15 @@ class Visualization:
 
             def print_discared_by_cond(cond):
                 st.sidebar.caption(
-                    f"{(len(cond) - np.sum(1*cond)) / len(cond) * 100:.2f}% of the total is discarded with this filter"
+                    f"{(len(cond) - np.sum(1*cond)) / len(cond) * 100:.2f}% of the total is discarded with this filter."
                 )
                 st.sidebar.caption("---------")
 
             if "number_words" in columns:
+                cutoff_def = "If the number of words of a document is lower than this number, the document is removed."
                 max_nb_words = int(np.max(docs["number_words"])) + 1
                 cutoff_min_number_words = st.sidebar.slider(
-                    "Min cutoff number words", 0, max_nb_words, 0
+                    cutoff_def, 0, min(max_nb_words, 500), 0
                 )
                 new_key = ("number_words", cutoff_min_number_words, False)
                 keys.append(new_key)
@@ -74,8 +75,9 @@ class Visualization:
                 conds.append(cond)
                 print_discared_by_cond(cond)
 
+                cutoff_def = "If the number of words of a document is higher than this number, the document is removed."
                 cutoff_max_number_words = st.sidebar.slider(
-                    "Max cutoff number words", 0, max_nb_words, max_nb_words
+                    cutoff_def, 0, max_nb_words, max_nb_words
                 )
                 new_key = ("number_words", cutoff_max_number_words, True)
                 keys.append(new_key)
@@ -84,8 +86,9 @@ class Visualization:
                 print_discared_by_cond(cond)
 
             if "special_characters_ratio" in columns:
+                cutoff_def = "If the special characters ratio of a document is higher than this number, the document is removed."
                 cutoff_special_characters_ratio = st.sidebar.slider(
-                    "Max cutoff special characters ratio", 0.0, 1.0, 1.0, step=0.01
+                    cutoff_def, 0.0, 1.0, 1.0, step=0.01
                 )
                 new_key = (
                     "special_characters_ratio",
@@ -98,8 +101,9 @@ class Visualization:
                 print_discared_by_cond(cond)
 
             if "stopwords_ratio" in columns:
+                cutoff_def = "If the stop words ratio of a document is lower than this number, the document is removed."
                 cutoff_stopwords_ratio = st.sidebar.slider(
-                    "Min cutoff stopwords ratio", 0.0, 1.0, 0.0, step=0.01
+                    cutoff_def, 0.0, 1.0, 0.0, step=0.01
                 )
                 new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
                 keys.append(new_key)
@@ -108,8 +112,9 @@ class Visualization:
                 print_discared_by_cond(cond)
 
             if "badwords_ratio" in columns:
+                cutoff_def = "If the bad words ratio of a document is higher than this number, the document is removed."
                 cutoff_badwords_ratio = st.sidebar.slider(
-                    "Max cutoff badwords ratio", 0.0, 1.0, 1.0, step=0.01
+                    cutoff_def, 0.0, 1.0, 1.0, step=0.01
                 )
                 new_key = ("badwords_ratio", cutoff_badwords_ratio, True)
                 keys.append(new_key)
@@ -118,8 +123,9 @@ class Visualization:
                 print_discared_by_cond(cond)
 
             if "lang_id_score" in columns:
+                cutoff_def = "If the confidence score for the language identification prediction of a document is lower than this number, the document is removed."
                 cutoff_lang_id_score = st.sidebar.slider(
-                    "Min cutoff lang id score", 0.0, 1.0, 0.0, step=0.01
+                    cutoff_def, 0.0, 1.0, 0.0, step=0.01
                 )
                 new_key = ("lang_id_score", cutoff_lang_id_score, False)
                 keys.append(new_key)
@@ -128,9 +134,10 @@ class Visualization:
                 print_discared_by_cond(cond)
 
             if "perplexity_score" in columns:
+                cutoff_def = "If the perplexity score of a document is higher than this number, the document is removed."
                 max_pp = int(np.max(docs["perplexity_score"])) + 1
                 cutoff_perplexity_score = st.sidebar.slider(
-                    "Perplexity cutoff perplexity score", 0, max_pp, max_pp
+                    cutoff_def, 0, max_pp, max_pp
                 )
                 new_key = ("perplexity_score", cutoff_perplexity_score, True)
                 keys.append(new_key)
@@ -167,13 +174,14 @@ class Visualization:
     def filtering_of_words(self):
         st.sidebar.subheader("Parameter of the filtering on words")
 
-        max_len_word = int(np.max(self.words["len_word"])) + 1
-        cutoff_word = st.sidebar.slider(
-            "Max cutoff length word", 0, max_len_word, max_len_word
+        cutoff_def = (
+            "If the length of a word is higher than this number, the word is removed."
         )
+        max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
+        cutoff_word = st.sidebar.slider(cutoff_def, 0, max_len_word, max_len_word)
 
         incorrect_substrings = st.sidebar.checkbox(
-            "Remove words with incorrect substrings"
+            "Remove words with incorrect substrings."
         )
 
         cond_words = self.words["len_word"] <= cutoff_word

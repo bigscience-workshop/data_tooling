@@ -108,7 +108,9 @@ class ModifyingSentences:
     ):
         """There are different whitespace characters."""
         whitespace = set(whitespace)
-        sentence = "".join([char if char not in whitespace else " " for char in sentence])
+        sentence = "".join(
+            [char if char not in whitespace else " " for char in sentence]
+        )
         return sentence
 
     @staticmethod
