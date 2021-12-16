@@ -2,6 +2,9 @@
 
 import streamlit as st
 
+import os
+
+import base64
 import json
 import pandas as pd
 
@@ -12,14 +15,27 @@ import matplotlib.pyplot as plt
 
 class Visualization:
     def __init__(
-        self, path_data, lang, num_docs, num_docs_for_words, max_len_text_display
+        self, path_instructions, path_data, lang, num_docs, num_docs_for_words, max_len_text_display
     ):
+        self.path_instructions = path_instructions
         self.path_data = path_data
         self.lang = lang
         self.num_docs = num_docs
         self.num_docs_for_words = num_docs_for_words
         self.max_len_text_display = max_len_text_display
 
+    def preamble(self):
+        st.markdown("Before diving into this demo, you might want to take a look at how the filtering pipeline of OSCAR looks like in more detail.")
+
+        def get_binary_file_downloader_html(bin_file, file_label='File'):
+            with open(bin_file, 'rb') as f:
+                data = f.read()
+            bin_str = base64.b64encode(data).decode()
+            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">{file_label}</a>'
+            return href
+
+        st.markdown(get_binary_file_downloader_html(self.path_instructions, "Download the filtering pipeline of OSCAR as pdf"), unsafe_allow_html=True)
+    
     def open_data(self):
         with open(self.path_data) as json_file:
             data = json.load(json_file)
@@ -42,7 +58,7 @@ class Visualization:
         self.docs = pd.DataFrame(docs)
 
     def set_title(self):
-        st.title(f"{self.num_docs} {self.lang} documents from Oscar with their stats.")
+        st.title(f"{self.num_docs} {self.lang} documents from OSCAR with their stats.")
 
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
@@ -266,6 +282,7 @@ class Visualization:
             )
 
     def visualization(self):
+        self.preamble()
         self.open_data()
         self.set_title()
         self.filtering_of_docs()
@@ -275,6 +292,7 @@ class Visualization:
         self.download_data()
 
 
+path_instructions = "./ac_dc/filtering_pipeline_oscar.pdf"
 path_data = "./ac_dc/visualization/en_examples_with_stats.json"
 lang = "English"
 num_docs = 15000
@@ -282,6 +300,6 @@ num_docs_for_words = 1500
 max_len_text_display = 10000
 
 visualization = Visualization(
-    path_data, lang, num_docs, num_docs_for_words, max_len_text_display
+    path_instructions, path_data, lang, num_docs, num_docs_for_words, max_len_text_display
 )
 visualization.visualization()
