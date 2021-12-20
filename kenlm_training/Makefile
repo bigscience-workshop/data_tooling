@@ -238,4 +238,3 @@ test_with_metadata: test_data/regroup_tr/$(_SEGMENT).json.gz
 		<(zcat test_data/mined/2019-09/*.json.gz | jq -r .url | sort) \
 		<(zcat test_data/reproduce/2019-09/*.json.gz | jq -r .url | sort) \
 		| head
-

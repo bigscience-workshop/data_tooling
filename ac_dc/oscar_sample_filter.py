@@ -25,7 +25,7 @@ class LoadParameters:
         else:
             param = parameters_filtering["default"]
         return param
-        
+
     @staticmethod
     def load_stopwords(lang_oscar_id):
         stopwords_lang_id = langs_id.loc[

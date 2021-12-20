@@ -1,4 +1,4 @@
-This is a minimally modified version of [cc_net](https://github.com/facebookresearch/cc_net) used to train KenLM models on Wikipedia and OSCAR on the majority of BigScience languages.  
+This is a minimally modified version of [cc_net](https://github.com/facebookresearch/cc_net) used to train KenLM models on Wikipedia and OSCAR on the majority of BigScience languages.
 To kick off training, run the following command:
 ```
 ./train_all.sh
@@ -63,7 +63,7 @@ You can launch the full pipeline using `python -m cc_net`.
 
 * `python -m cc_net --help` shows help
 * `python -m cc_net --dump 2019-13` treats a specific snapshot
-* `python -m cc_net -l my -l gu` 
+* `python -m cc_net -l my -l gu`
 restricts to specific languages
 * `python -m cc_net --lm_dir my_lms/` uses custom LMs
 * `python -m cc_net --lang_threshold 0.3` set a specific field in `mine.Config`
