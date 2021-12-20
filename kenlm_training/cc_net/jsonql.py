@@ -638,7 +638,7 @@ class where(Transformer):
 
     def do(self, doc: dict) -> Optional[dict]:
         assert self.clauses
-        if not doc or not all((c(doc) for c in self.clauses)):
+        if not doc or not all(c(doc) for c in self.clauses):
             return None
         self.n_selected += 1
         return doc

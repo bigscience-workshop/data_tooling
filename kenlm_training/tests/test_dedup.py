@@ -97,9 +97,9 @@ def test_dedup_with_np_dump(tmp_path: Path):
 
     results = FlatHashSet()
     results.load_np(hashes)
-    expected = set(
+    expected = {
         str_hash(l) for l in ["_hello", "_world", "i'm so original", "i'm originaler"]
-    )
+    }
     assert expected == set(results.keys())
 
 

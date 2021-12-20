@@ -41,7 +41,7 @@ setup(
         "sacremoses",
         "submitit>=1.0.0",
         "typing_extensions",
-        "datasets==1.16.1"
+        "datasets==1.16.1",
     ],
     extras_require={
         "dev": ["mypy==0.790", "pytest", "black==19.3b0", "isort==5.6.4"],

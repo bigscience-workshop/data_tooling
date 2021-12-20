@@ -309,4 +309,4 @@ def test_multiprocess(capsys):
     mult = jsonql.Mapper(lambda x: f"2x = {2 * int(x)}")
     jsonql.run_pipes(mult, processes=2, file=(str(x) for x in range(10)))
     out = set(capsys.readouterr().out.strip("\n").split("\n"))
-    assert set(f"2x = {2 * x}" for x in range(10)) == out
+    assert {f"2x = {2 * x}" for x in range(10)} == out

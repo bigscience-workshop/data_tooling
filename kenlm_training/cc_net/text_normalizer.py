@@ -48,7 +48,7 @@ UNICODE_PUNCT_RE = re.compile(f"[{''.join(UNICODE_PUNCT.keys())}]")
 
 
 def replace_unicode_punct(text: str) -> str:
-    return "".join((UNICODE_PUNCT.get(c, c) for c in text))
+    return "".join(UNICODE_PUNCT.get(c, c) for c in text)
 
 
 def remove_unicode_punct(text: str) -> str:
