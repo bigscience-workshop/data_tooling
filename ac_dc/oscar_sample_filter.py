@@ -408,11 +408,12 @@ class Filtering:
     def check_number_words(
         sentence,
         sentencepiece_model_tok,
+        strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
     ):
         words = ModifyingSentences.get_words_from_sentence(
-            sentence, sentencepiece_model_tok, lower_case=False, strip_characters=None
+            sentence, sentencepiece_model_tok, lower_case=False, strip_characters=strip_characters
         )
         cond = (len(words) >= number_words_min_cutoff) and (
             len(words) <= number_words_max_cutoff
@@ -578,13 +579,13 @@ class Filtering:
         sentence,
         cond_check_number_words,
         sentencepiece_model_tok,
+        strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
         cond_check_special_characters,
         special_characters,
         special_characters_max_cutoff,
         cond_check_stopwords,
-        strip_characters,
         stopwords,
         stopwords_min_cutoff,
         cond_check_badwords,
@@ -603,6 +604,7 @@ class Filtering:
             if not Filtering.check_number_words(
                 sentence,
                 sentencepiece_model_tok,
+                strip_characters,
                 number_words_min_cutoff,
                 number_words_max_cutoff,
             ):
@@ -685,13 +687,13 @@ class FuncOscarFiltering:
             sentence=example["text"],
             cond_check_number_words=self.param["cond_check_number_words"],
             sentencepiece_model_tok=self.sentencepiece_model_tok,
+            strip_characters=self.param["strip_characters"],
             number_words_min_cutoff=self.param["number_words_min_cutoff"],
             number_words_max_cutoff=self.param["number_words_max_cutoff"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
             special_characters=self.param["special_characters"],
             special_characters_max_cutoff=self.param["special_characters_max_cutoff"],
             cond_check_stopwords=self.param["cond_check_stopwords"],
-            strip_characters=self.param["strip_characters"],
             stopwords=self.stopwords,
             stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
             cond_check_badwords=self.param["cond_check_badwords"],
