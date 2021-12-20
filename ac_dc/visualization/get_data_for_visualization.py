@@ -27,6 +27,7 @@ class GetDataForVisualization:
 
         self.lang_oscar_id = lang_oscar_id
 
+        self.param = LoadParameters.load_parameters(lang_oscar_id)
         self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
         self.badwords = LoadParameters.load_badwords(lang_oscar_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
@@ -35,10 +36,12 @@ class GetDataForVisualization:
         self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
             lang_oscar_id, path_sentencepiece_model
         )
+        self.sentencepiece_model_tok = (
+            self.sentencepiece_model if self.param["tokenization"] else None
+        )
         self.kenlm_model = LoadParameters.load_kenlm_model(
             lang_oscar_id, path_kenlm_model
         )
-        self.param = LoadParameters.load_parameters(lang_oscar_id)
 
         self.keys_stats = [
             "special_characters_ratio",
@@ -61,6 +64,7 @@ class GetDataForVisualization:
 
                 words = ModifyingSentences.get_words_from_sentence(
                     sentence,
+                    sentencepiece_model_tok=self.sentencepiece_model_tok,
                     lower_case=True,
                     strip_characters=self.param["strip_characters"],
                 )
@@ -90,13 +94,19 @@ class GetDataForVisualization:
 
                 if self.stopwords:
                     stopwords_ratio = Filtering.compute_stopwords_ratio(
-                        sentence, self.param["strip_characters"], self.stopwords
+                        sentence,
+                        self.sentencepiece_model_tok,
+                        self.param["strip_characters"],
+                        self.stopwords,
                     )
                     stats_sentence["stopwords_ratio"] = stopwords_ratio
 
                 if self.badwords:
                     badwords_ratio = Filtering.compute_badwords_ratio(
-                        sentence, self.param["strip_characters"], self.badwords
+                        sentence,
+                        self.sentencepiece_model_tok,
+                        self.param["strip_characters"],
+                        self.badwords,
                     )
                     stats_sentence["badwords_ratio"] = badwords_ratio
 
