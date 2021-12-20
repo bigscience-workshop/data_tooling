@@ -60,7 +60,7 @@ def get_executor(
         # LocalExecutor doesn't respect task_parallelism
         return functools.partial(custom_map_array, ex, task_parallelism)
     if ex.cluster == "debug":
-        return debug_executor
+        raise ValueError("Debug mode not supported")
 
     # We are on slurm
     if task_parallelism == -1:
@@ -113,27 +113,6 @@ def map_array_and_wait(
         if len(failed_jobs) > n_failures:
             print(f"... ({len(failed_jobs) - n_failures} failed job skipped)")
         raise Exception(message)
-
-
-def debug_executor(function: Callable[..., Optional[str]], *args: Iterable) -> None:
-    logging.getLogger().setLevel(logging.DEBUG)
-    approx_length = _approx_length(*args)
-    for i, x in enumerate(zip(*args)):
-        try:
-            message = function(*x)
-        except Exception:
-            try:
-                import ipdb as pdb  # type: ignore
-            except ImportError:
-                import pdb  # type: ignore
-            import traceback
-
-            traceback.print_exc()
-            print("")
-            pdb.post_mortem()
-            sys.exit(1)
-        if message is not None:
-            print(message, f"({i + 1} / {approx_length})")
 
 
 def _approx_length(*args: Iterable):
