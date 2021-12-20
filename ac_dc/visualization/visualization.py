@@ -15,7 +15,13 @@ import matplotlib.pyplot as plt
 
 class Visualization:
     def __init__(
-        self, path_instructions, path_data, lang, num_docs, num_docs_for_words, max_len_text_display
+        self,
+        path_instructions,
+        path_data,
+        lang,
+        num_docs,
+        num_docs_for_words,
+        max_len_text_display,
     ):
         self.path_instructions = path_instructions
         self.path_data = path_data
@@ -25,17 +31,25 @@ class Visualization:
         self.max_len_text_display = max_len_text_display
 
     def preamble(self):
-        st.markdown("Before diving into this demo, you might want to take a look at how the filtering pipeline of OSCAR looks like in more detail.")
+        st.markdown(
+            "Before diving into this demo, you might want to take a look at how the filtering pipeline of OSCAR looks like in more detail."
+        )
 
-        def get_binary_file_downloader_html(bin_file, file_label='File'):
-            with open(bin_file, 'rb') as f:
+        def get_binary_file_downloader_html(bin_file, file_label="File"):
+            with open(bin_file, "rb") as f:
                 data = f.read()
             bin_str = base64.b64encode(data).decode()
             href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">{file_label}</a>'
             return href
 
-        st.markdown(get_binary_file_downloader_html(self.path_instructions, "Download the filtering pipeline of OSCAR as pdf"), unsafe_allow_html=True)
-    
+        st.markdown(
+            get_binary_file_downloader_html(
+                self.path_instructions,
+                "Download the filtering pipeline of OSCAR as pdf",
+            ),
+            unsafe_allow_html=True,
+        )
+
     def open_data(self):
         with open(self.path_data) as json_file:
             data = json.load(json_file)
@@ -179,38 +193,60 @@ class Visualization:
                 "Click on a column to sort by it, place the cursor on the text to display it."
             )
             st.dataframe(displayed_docs)
-        
+
         display_dataset(np.invert(all_conds), "Discarded documents")
 
-        #st.subheader("Display discarded documents by filter")
-        display_discarded_documents_by_filter = st.checkbox("Display discarded documents by filter")
+        # st.subheader("Display discarded documents by filter")
+        display_discarded_documents_by_filter = st.checkbox(
+            "Display discarded documents by filter"
+        )
 
         if display_discarded_documents_by_filter:
             columns = list(self.docs)
 
             if "number_words" in columns:
                 cond_filter = np.invert(np.all(conds["number_words"], axis=0))
-                display_dataset(cond_filter, "Discarded documents for the filter on the number of words")
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the number of words",
+                )
 
             if "special_characters_ratio" in columns:
-                cond_filter = np.invert(np.all(conds["special_characters_ratio"], axis=0))
-                display_dataset(cond_filter, "Discarded documents for the filter on the special characters ratio")
+                cond_filter = np.invert(
+                    np.all(conds["special_characters_ratio"], axis=0)
+                )
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the special characters ratio",
+                )
 
             if "stopwords_ratio" in columns:
                 cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
-                display_dataset(cond_filter, "Discarded documents for the filter on the stop words ratio")
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the stop words ratio",
+                )
 
             if "badwords_ratio" in columns:
                 cond_filter = np.invert(np.all(conds["badwords_ratio"], axis=0))
-                display_dataset(cond_filter, "Discarded documents for the filter on the bad words ratio")
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the bad words ratio",
+                )
 
             if "lang_id_score" in columns:
                 cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
-                display_dataset(cond_filter, "Discarded documents for the filter on the language identification confidence score")
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the language identification confidence score",
+                )
 
             if "perplexity_score" in columns:
                 cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
-                display_dataset(cond_filter, "Discarded documents for the filter on the perplexity score")
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the perplexity score",
+                )
 
         display_dataset(all_conds, "Retained documents")
 
@@ -327,6 +363,11 @@ num_docs_for_words = 1500
 max_len_text_display = 10000
 
 visualization = Visualization(
-    path_instructions, path_data, lang, num_docs, num_docs_for_words, max_len_text_display
+    path_instructions,
+    path_data,
+    lang,
+    num_docs,
+    num_docs_for_words,
+    max_len_text_display,
 )
 visualization.visualization()

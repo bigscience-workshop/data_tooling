@@ -19,6 +19,14 @@ from badwords import badwords
 
 class LoadParameters:
     @staticmethod
+    def load_parameters(lang_oscar_id):
+        if lang_oscar_id in parameters_filtering:
+            param = parameters_filtering[lang_oscar_id]
+        else:
+            param = parameters_filtering["default"]
+        return param
+        
+    @staticmethod
     def load_stopwords(lang_oscar_id):
         stopwords_lang_id = langs_id.loc[
             langs_id["oscar_id"] == lang_oscar_id, "stopwords_id"
@@ -73,14 +81,6 @@ class LoadParameters:
         else:
             kenlm_model = None
         return kenlm_model
-
-    @staticmethod
-    def load_parameters(lang_oscar_id):
-        if lang_oscar_id in parameters_filtering:
-            param = parameters_filtering[lang_oscar_id]
-        else:
-            param = parameters_filtering["default"]
-        return param
 
 
 class ModifyingSentences:
@@ -197,16 +197,32 @@ class ModifyingSentences:
         return sentence_stripped
 
     @staticmethod
-    def get_words_from_sentence(sentence, lower_case, strip_characters):
+    def get_words_from_sentence(
+        sentence, sentencepiece_model_tok, lower_case, strip_characters
+    ):
         """Get words from a sentence. Non reversible since the sentence
         is split on multiple characters, words are stripped of
         special characters and characters are converted to lower case.
         Useful to compute ratios, like the stopwords ratio."""
+        if sentencepiece_model_tok:
+            sentence_normalized = ModifyingSentences.normalization(
+                sentence=sentence,
+                remove_non_printing_characters=True,
+                strip=True,
+                lower_case=True,
+                uniform_whitespace=True,
+                replace_digits_with_zeros=True,
+                replace_unicode_punctuation=True,
+            )
+            words = ModifyingSentences.tokenization(
+                sentence_normalized, sentencepiece_model_tok, join_on_whitespace=False
+            )
+        else:
+            words = ModifyingSentences.split_on_whitespace(
+                sentence, new_line=True, tab=True
+            )
         if lower_case:
-            sentence = sentence.lower()
-        words = ModifyingSentences.split_on_whitespace(
-            sentence, new_line=True, tab=True
-        )
+            words = [word.lower() for word in words]
         if strip_characters:
             words = [ModifyingSentences.strip(word, strip_characters) for word in words]
             words = [word for word in words if word]
@@ -385,9 +401,14 @@ class OscarModifyingSentences:
 
 class Filtering:
     @staticmethod
-    def check_number_words(sentence, number_words_min_cutoff, number_words_max_cutoff):
+    def check_number_words(
+        sentence,
+        sentencepiece_model_tok,
+        number_words_min_cutoff,
+        number_words_max_cutoff,
+    ):
         words = ModifyingSentences.get_words_from_sentence(
-            sentence, lower_case=False, strip_characters=None
+            sentence, sentencepiece_model_tok, lower_case=False, strip_characters=None
         )
         cond = (len(words) >= number_words_min_cutoff) and (
             len(words) <= number_words_max_cutoff
@@ -414,9 +435,14 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_stopwords_ratio(sentence, strip_characters, stopwords):
+    def compute_stopwords_ratio(
+        sentence, sentencepiece_model_tok, strip_characters, stopwords
+    ):
         words = ModifyingSentences.get_words_from_sentence(
-            sentence, lower_case=True, strip_characters=strip_characters
+            sentence,
+            sentencepiece_model_tok,
+            lower_case=True,
+            strip_characters=strip_characters,
         )
         if not words:
             return 0
@@ -428,6 +454,7 @@ class Filtering:
     @staticmethod
     def check_stopwords(
         sentence,
+        sentencepiece_model_tok,
         strip_characters,
         stopwords,
         stopwords_min_cutoff,
@@ -435,15 +462,20 @@ class Filtering:
         cond = True
         if stopwords:
             stopwords_ratio = Filtering.compute_stopwords_ratio(
-                sentence, strip_characters, stopwords
+                sentence, sentencepiece_model_tok, strip_characters, stopwords
             )
             cond = stopwords_ratio >= stopwords_min_cutoff
         return cond
 
     @staticmethod
-    def compute_badwords_ratio(sentence, strip_characters, badwords):
+    def compute_badwords_ratio(
+        sentence, sentencepiece_model_tok, strip_characters, badwords
+    ):
         words = ModifyingSentences.get_words_from_sentence(
-            sentence, lower_case=True, strip_characters=strip_characters
+            sentence,
+            sentencepiece_model_tok,
+            lower_case=True,
+            strip_characters=strip_characters,
         )
         if not words:
             return 0
@@ -453,6 +485,7 @@ class Filtering:
     @staticmethod
     def check_badwords(
         sentence,
+        sentencepiece_model_tok,
         strip_characters,
         badwords,
         badwords_max_cutoff,
@@ -460,7 +493,7 @@ class Filtering:
         cond = True
         if badwords:
             badwords_ratio = Filtering.compute_badwords_ratio(
-                sentence, strip_characters, badwords
+                sentence, sentencepiece_model_tok, strip_characters, badwords
             )
             cond = badwords_ratio <= badwords_max_cutoff
         return cond
@@ -540,6 +573,7 @@ class Filtering:
     def filtering(
         sentence,
         cond_check_number_words,
+        sentencepiece_model_tok,
         number_words_min_cutoff,
         number_words_max_cutoff,
         cond_check_special_characters,
@@ -563,7 +597,10 @@ class Filtering:
     ):
         if cond_check_number_words:
             if not Filtering.check_number_words(
-                sentence, number_words_min_cutoff, number_words_max_cutoff
+                sentence,
+                sentencepiece_model_tok,
+                number_words_min_cutoff,
+                number_words_max_cutoff,
             ):
                 return False
         if cond_check_special_characters:
@@ -576,6 +613,7 @@ class Filtering:
         if cond_check_stopwords:
             if not Filtering.check_stopwords(
                 sentence,
+                sentencepiece_model_tok,
                 strip_characters,
                 stopwords,
                 stopwords_min_cutoff,
@@ -584,6 +622,7 @@ class Filtering:
         if cond_check_badwords:
             if not Filtering.check_badwords(
                 sentence,
+                sentencepiece_model_tok,
                 strip_characters,
                 badwords,
                 badwords_max_cutoff,
@@ -621,6 +660,7 @@ class FuncOscarFiltering:
         self.path_sentencepiece_model = path_sentencepiece_model
         self.path_kenlm_model = path_kenlm_model
 
+        self.param = LoadParameters.load_parameters(lang_oscar_id)
         self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
         self.badwords = LoadParameters.load_badwords(lang_oscar_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
@@ -629,15 +669,18 @@ class FuncOscarFiltering:
         self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
             lang_oscar_id, path_sentencepiece_model
         )
+        self.sentencepiece_model_tok = (
+            self.sentencepiece_model if self.param["tokenization"] else None
+        )
         self.kenlm_model = LoadParameters.load_kenlm_model(
             lang_oscar_id, path_kenlm_model
         )
-        self.param = LoadParameters.load_parameters(lang_oscar_id)
 
     def __call__(self, example):
         keep_example = Filtering.filtering(
             sentence=example["text"],
             cond_check_number_words=self.param["cond_check_number_words"],
+            sentencepiece_model_tok=self.sentencepiece_model_tok,
             number_words_min_cutoff=self.param["number_words_min_cutoff"],
             number_words_max_cutoff=self.param["number_words_max_cutoff"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
