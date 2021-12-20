@@ -413,7 +413,10 @@ class Filtering:
         number_words_max_cutoff,
     ):
         words = ModifyingSentences.get_words_from_sentence(
-            sentence, sentencepiece_model_tok, lower_case=False, strip_characters=strip_characters
+            sentence,
+            sentencepiece_model_tok,
+            lower_case=False,
+            strip_characters=strip_characters,
         )
         cond = (len(words) >= number_words_min_cutoff) and (
             len(words) <= number_words_max_cutoff
