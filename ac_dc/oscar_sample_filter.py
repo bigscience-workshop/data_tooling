@@ -25,7 +25,7 @@ class LoadParameters:
         else:
             param = parameters_filtering["default"]
         return param
-        
+
     @staticmethod
     def load_stopwords(lang_oscar_id):
         stopwords_lang_id = langs_id.loc[
@@ -84,6 +84,10 @@ class LoadParameters:
 
 
 class ModifyingSentences:
+    @staticmethod
+    def remove_empty_el_from_list(list_):
+        return [el for el in list_ if el]
+
     @staticmethod
     def remove_non_printing_characters(sentence, non_printing_characters_re):
         return non_printing_characters_re.sub("", sentence)
@@ -171,7 +175,7 @@ class ModifyingSentences:
         sep = [" "] + new_line * ["\n"] + tab * ["\t"]
         sep = "|".join(sep)
         split_sentence = re.split(sep, sentence)
-        split_sentence = [el for el in split_sentence if el]
+        split_sentence = ModifyingSentences.remove_empty_el_from_list(split_sentence)
         return split_sentence
 
     @staticmethod
@@ -225,7 +229,7 @@ class ModifyingSentences:
             words = [word.lower() for word in words]
         if strip_characters:
             words = [ModifyingSentences.strip(word, strip_characters) for word in words]
-            words = [word for word in words if word]
+            words = ModifyingSentences.remove_empty_el_from_list(words)
         return words
 
     @staticmethod
