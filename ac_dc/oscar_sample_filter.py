@@ -25,7 +25,7 @@ class LoadParameters:
         else:
             param = parameters_filtering["default"]
         return param
-        
+
     @staticmethod
     def load_stopwords(lang_oscar_id):
         stopwords_lang_id = langs_id.loc[
@@ -84,6 +84,10 @@ class LoadParameters:
 
 
 class ModifyingSentences:
+    @staticmethod
+    def remove_empty_el_from_list(list_):
+        return [el for el in list_ if el]
+
     @staticmethod
     def remove_non_printing_characters(sentence, non_printing_characters_re):
         return non_printing_characters_re.sub("", sentence)
@@ -171,7 +175,7 @@ class ModifyingSentences:
         sep = [" "] + new_line * ["\n"] + tab * ["\t"]
         sep = "|".join(sep)
         split_sentence = re.split(sep, sentence)
-        split_sentence = [el for el in split_sentence if el]
+        split_sentence = ModifyingSentences.remove_empty_el_from_list(split_sentence)
         return split_sentence
 
     @staticmethod
@@ -225,7 +229,7 @@ class ModifyingSentences:
             words = [word.lower() for word in words]
         if strip_characters:
             words = [ModifyingSentences.strip(word, strip_characters) for word in words]
-            words = [word for word in words if word]
+            words = ModifyingSentences.remove_empty_el_from_list(words)
         return words
 
     @staticmethod
@@ -404,11 +408,12 @@ class Filtering:
     def check_number_words(
         sentence,
         sentencepiece_model_tok,
+        strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
     ):
         words = ModifyingSentences.get_words_from_sentence(
-            sentence, sentencepiece_model_tok, lower_case=False, strip_characters=None
+            sentence, sentencepiece_model_tok, lower_case=False, strip_characters=strip_characters
         )
         cond = (len(words) >= number_words_min_cutoff) and (
             len(words) <= number_words_max_cutoff
@@ -574,13 +579,13 @@ class Filtering:
         sentence,
         cond_check_number_words,
         sentencepiece_model_tok,
+        strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
         cond_check_special_characters,
         special_characters,
         special_characters_max_cutoff,
         cond_check_stopwords,
-        strip_characters,
         stopwords,
         stopwords_min_cutoff,
         cond_check_badwords,
@@ -599,6 +604,7 @@ class Filtering:
             if not Filtering.check_number_words(
                 sentence,
                 sentencepiece_model_tok,
+                strip_characters,
                 number_words_min_cutoff,
                 number_words_max_cutoff,
             ):
@@ -681,13 +687,13 @@ class FuncOscarFiltering:
             sentence=example["text"],
             cond_check_number_words=self.param["cond_check_number_words"],
             sentencepiece_model_tok=self.sentencepiece_model_tok,
+            strip_characters=self.param["strip_characters"],
             number_words_min_cutoff=self.param["number_words_min_cutoff"],
             number_words_max_cutoff=self.param["number_words_max_cutoff"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
             special_characters=self.param["special_characters"],
             special_characters_max_cutoff=self.param["special_characters_max_cutoff"],
             cond_check_stopwords=self.param["cond_check_stopwords"],
-            strip_characters=self.param["strip_characters"],
             stopwords=self.stopwords,
             stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
             cond_check_badwords=self.param["cond_check_badwords"],
