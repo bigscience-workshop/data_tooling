@@ -649,7 +649,7 @@ parameters_filtering_zh = {
     "cond_remove_long_words": False,
     "length_word_max_cutoff": 1000,
     "cond_check_number_words": True,
-    "tokenization": False,
+    "tokenization": True,
     "strip_characters": special_characters_default,
     "number_words_min_cutoff": 1,
     "number_words_max_cutoff": 100000,

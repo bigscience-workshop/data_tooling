@@ -57,13 +57,17 @@ class Visualization:
         self.num_docs = min(self.num_docs, len(data))
         self.num_docs_for_words = min(self.num_docs_for_words, len(data))
 
-        words = [doc["words"] for doc in data[: self.num_docs_for_words]]
-        words = [word for doc in words for word in doc]
-        self.words = pd.DataFrame(words)
+        if "words" in data[0]:
+            words = [doc["words"] for doc in data[: self.num_docs_for_words]]
+            words = [word for doc in words for word in doc]
+            self.words = pd.DataFrame(words)
+        else:
+            self.words = None
 
         docs = data[: self.num_docs]
         for doc in docs:
-            del doc["words"]
+            if not (self.words is None):
+                del doc["words"]
             if len(doc["text"]) > self.max_len_text_display:
                 doc["text"] = (
                     doc["text"][: self.max_len_text_display]
@@ -251,46 +255,47 @@ class Visualization:
         display_dataset(all_conds, "Retained documents")
 
     def filtering_of_words(self):
-        st.sidebar.subheader("Parameter of the filtering on words")
+        if not (self.words is None):
+            st.sidebar.subheader("Parameter of the filtering on words")
 
-        cutoff_def = (
-            "If the length of a word is higher than this number, the word is removed."
-        )
-        max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
-        cutoff_word = st.sidebar.slider(cutoff_def, 0, max_len_word, max_len_word)
+            cutoff_def = (
+                "If the length of a word is higher than this number, the word is removed."
+            )
+            max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
+            cutoff_word = st.sidebar.slider(cutoff_def, 0, max_len_word, max_len_word)
 
-        incorrect_substrings = st.sidebar.checkbox(
-            "Remove words with incorrect substrings."
-        )
+            incorrect_substrings = st.sidebar.checkbox(
+                "Remove words with incorrect substrings."
+            )
 
-        cond_words = self.words["len_word"] <= cutoff_word
-        if incorrect_substrings:
-            cond_words = cond_words & np.invert(self.words["incorrect_substring"])
+            cond_words = self.words["len_word"] <= cutoff_word
+            if incorrect_substrings:
+                cond_words = cond_words & np.invert(self.words["incorrect_substring"])
 
-        st.header("Filtering on words")
+            st.header("Filtering on words")
 
-        st.markdown(
-            f"Since the number of words is way larger than the number of documents, "
-            f"we consider in this section words for the first {self.num_docs_for_words} documents only."
-        )
+            st.markdown(
+                f"Since the number of words is way larger than the number of documents, "
+                f"we consider in this section words for the first {self.num_docs_for_words} documents only."
+            )
 
-        discarded_words = self.words.loc[np.invert(cond_words)]
-        st.subheader(
-            f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)"
-        )
-        st.markdown(
-            "Click on a column to sort by it, place the cursor on the text to display it."
-        )
-        st.dataframe(discarded_words)
+            discarded_words = self.words.loc[np.invert(cond_words)]
+            st.subheader(
+                f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)"
+            )
+            st.markdown(
+                "Click on a column to sort by it, place the cursor on the text to display it."
+            )
+            st.dataframe(discarded_words)
 
-        retained_words = self.words.loc[cond_words]
-        st.subheader(
-            f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)"
-        )
-        st.markdown(
-            "Click on a column to sort by it, place the cursor on the text to display it."
-        )
-        st.dataframe(retained_words)
+            retained_words = self.words.loc[cond_words]
+            st.subheader(
+                f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)"
+            )
+            st.markdown(
+                "Click on a column to sort by it, place the cursor on the text to display it."
+            )
+            st.dataframe(retained_words)
 
     def plot_distributions_filtering_parameters(self):
         st.header("Distributions of the filtering parameters")
@@ -312,27 +317,29 @@ class Visualization:
             for key in list({el[0]: None for el in self.keys}):
                 plot_hist(self.docs, key)
 
-            plot_hist(self.words, "len_word")
+            if not (self.words is None):
+                plot_hist(self.words, "len_word")
 
     def plot_zipf_law(self):
-        st.header("Zipf's Law")
+        if not (self.words is None):
+            st.header("Zipf's Law")
 
-        display_zipf_law = st.checkbox("Display Zipf's Law")
+            display_zipf_law = st.checkbox("Display Zipf's Law")
 
-        if display_zipf_law:
+            if display_zipf_law:
 
-            freq_words = {}
-            for _, row in self.words.iterrows():
-                freq_words[row["word"]] = freq_words.get(row["word"], 0) + 1
-            freq_words = np.array(list(freq_words.values()))
-            freq_words = -np.sort(-freq_words)
+                freq_words = {}
+                for _, row in self.words.iterrows():
+                    freq_words[row["word"]] = freq_words.get(row["word"], 0) + 1
+                freq_words = np.array(list(freq_words.values()))
+                freq_words = -np.sort(-freq_words)
 
-            fig, ax = plt.subplots()
-            ax.loglog(freq_words)
-            ax.set_title("Zipf's Law")
-            ax.set_xlabel("$i$-th most frequent word")
-            ax.set_ylabel("frequency in the documents")
-            st.pyplot(fig)
+                fig, ax = plt.subplots()
+                ax.loglog(freq_words)
+                ax.set_title("Zipf's Law")
+                ax.set_xlabel("$i$-th most frequent word")
+                ax.set_ylabel("frequency in the documents")
+                st.pyplot(fig)
 
     def download_data(self):
         st.header("Download data")

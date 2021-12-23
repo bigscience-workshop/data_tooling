@@ -82,7 +82,8 @@ class GetDataForVisualization:
                     for word in words
                 ]
 
-                stats_sentence["words"] = words
+                if not self.param["tokenization"]:
+                    stats_sentence["words"] = words
 
                 number_words = len(words)
                 stats_sentence["number_words"] = number_words
