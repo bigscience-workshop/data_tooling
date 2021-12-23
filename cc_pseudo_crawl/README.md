@@ -68,8 +68,8 @@ For every site list
       fetch_status              SMALLINT,
       fetch_time               TIMESTAMP,
       warc_filename               STRING,
-      warc_record_offset          STRING,
-      warc_record_length          STRING,
+      warc_record_offset             INT,
+      warc_record_length             INT,
       fetch_redirect              STRING,
       content_mime_detected       STRING,
       content_languages           STRING)
