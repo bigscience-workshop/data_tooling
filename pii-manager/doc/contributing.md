@@ -15,8 +15,8 @@ repository with the following changes:
     module (the name of the file is not relevant). The module must contain:
     * The task implementation, which can have any of three flavours (regex,
       function or class), see below
-    * The task descriptor, a list with the (compulsory) name `PII_TASKS` (see
-      below)
+    * The task descriptor, a list containing all defined tasks. The list
+      variable *must* be named `PII_TASKS` (see below)
  5. Finally, add a unit test to check the validity for the task code, in the
     proper place under [test/unit/lang]. There should be at least
      - a positive test: one valid PII that has to be detected. For the cases
@@ -40,9 +40,8 @@ defining the entry points for this task (there might be more than one, if
 the file implements more than one PII).
 
 * The name of the list **must be** `PII_TASKS`
-
-* There are two versions of a task entry: simplified and full. In a `PII_TASK`
-  list they can be combined freely.
+* A task entry in the list can have two different shapes: simplified and full.
+  In a `PII_TASKS` list they can be combined freely.
 
 
 ### Simplified description
@@ -61,18 +60,24 @@ these elements:
 In a full description a task is a dictionary with these compulsory fields:
  * `pii`: the PII identifier for the task: a member of [PiiEnum]
  * `type`: the task type: `regex`, `callable` or `PiiTask`
- * `task`: a fro regex tasks, a raw string; for function tasks a callable and
-    for PiiTask either a class or a string with a full class name.
- * `lang`:
+ * `task`: for regex tasks, a raw string (contianing the regex to be used);
+    for function tasks a callable and for PiiTask either a class or a string
+	with a full class name.
  
 And these optional fields
- * `country`:
+ * `lang`: language this task is designed for (it can also be `LANG_ANY`). If
+   not present, the language will be determined from the folder structure the
+   task implementation is in
+ * `country`: country this task is designed for. If not present, the language
+   will be determined from the folder structure the task implementation is in,
+   if possible (else, a `None`value will be used, meaning the task is not
+   country-dependent)
  * `name`: a name for the task. If not present, a name will be generated from
    the `name` class-level attribute (PiiTask) or from the class/function name.
-   This is meant to provide a higher level of detail than the `PiiEnum` 
-   generic name (e.g. different types of Government ID). Class-type tasks can
-   use a dynamic name at runtime, while function and regexes will have a
-   fixed name.
+   This is meant to provide a higher level of detail than the `PiiEnum`
+   generic name (e.g. for different types of Government ID). Class-type tasks
+   can use a dynamic name at runtime (detected PII might have different names),
+   while function and regexes will have a fixed name.
  * `doc`: the documentation for the class. If not present, the docstring for
    callable and class types will be used (for regex types, the task will have
    no documentation)

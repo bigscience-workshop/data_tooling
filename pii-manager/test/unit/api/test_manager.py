@@ -24,7 +24,7 @@ def test20_info():
         (
             PiiEnum.CREDIT_CARD,
             None,
-        ): "Credit card numbers for most international credit cards (detect & validate)"
+        ): [("credit card", "Credit card numbers for most international credit cards (detect & validate)")]
     }
     assert info == exp
 

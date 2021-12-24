@@ -14,8 +14,10 @@ from pii_manager.api import PiiManager
 
 def print_tasks(proc: PiiManager, out: TextIO):
     print(f". Installed tasks [language={proc.lang}]", file=out)
-    for (pii, country), doc in proc.task_info().items():
-        print(f" {pii.name}  [country={country}]\n   ", doc, file=out)
+    for (pii, country), tasklist in proc.task_info().items():
+        print(f"\n {pii.name}  [country={country}]   ", file=out)
+        for name, doc in tasklist:
+            print(f"     {name}: {doc}", file=out)
 
 
 def process(

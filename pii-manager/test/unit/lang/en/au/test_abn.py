@@ -17,7 +17,6 @@ TEST = [
 
 def test10_abn():
     obj = PiiManager("en", "AU", PiiEnum.GOV_ID)
-    print("OBJ", obj.task_info())
     for doc, exp in TEST:
         got = obj(doc)
         assert got == exp

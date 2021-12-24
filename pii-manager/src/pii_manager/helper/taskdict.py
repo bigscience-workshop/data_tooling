@@ -127,7 +127,7 @@ def build_subdict(task_list: List[Tuple], lang: str,
             if len(src) > 2:
                 td["doc"] = src[2]
             task = td
-        elif isinstance(src, dict):
+        elif isinstance(src, dict):     # full form
             task = src.copy()
         else:
             raise InvPiiTask("element must be a tuple or dict", lang, country)
@@ -136,6 +136,7 @@ def build_subdict(task_list: List[Tuple], lang: str,
         task_check(task, lang, country)
         # Add to dict
         subdict[task["pii"].name].append(task)
+
     return subdict
 
 
@@ -152,12 +153,14 @@ def _gather_piitasks(pkg: ModuleType, path: str, lang: str, country: str,
     )
 
     # Get all tasks defined in those files
-    pii_tasks = {}
+    pii_tasks = defaultdict(list)
     for mname in modlist:
         mod = importlib.import_module("." + mname, pkg)
         task_list = getattr(mod, _LISTNAME, None)
         if task_list:
-            pii_tasks.update(build_subdict(task_list, lang, country))
+            subdict = build_subdict(task_list, lang, country)
+            for name, value in subdict.items():
+                pii_tasks[name] += value
 
     # If debug mode is on, print out the list
     if debug:
@@ -166,8 +169,10 @@ def _gather_piitasks(pkg: ModuleType, path: str, lang: str, country: str,
         else:
             print(".. PII TASKS for", pkg, file=sys.stderr)
             print(".. path =", path, file=sys.stderr)
-            for task_name, task in pii_tasks.items():
-                print("  ", task_name, "->", task[3], file=sys.stderr)
+            for task_name, tasklist in pii_tasks.items():
+                for task in tasklist:
+                    print("  ", task_name, f"-> ({task['type']})",
+                          task["doc"], file=sys.stderr)
 
     return pii_tasks
 

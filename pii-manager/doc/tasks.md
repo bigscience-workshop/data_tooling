@@ -12,8 +12,8 @@ entity to be detected.
 
 Rules for the implementation of such regex are:
 
-* Implement it as a regular expression _string_, **not** as a compiled
-  regular expression (it will be compiled by the `pii-manager` module)
+* Implement it as a regular expression _string_, **not** as a compiled regular
+  expression (it will be compiled by the `pii-manager` module)
 * The pattern **will be compiled with the [regex] package**, instead of the
   `re` package in the standard Python library, so you can use the extended
   features (such as unicode categories) in `regex`. Compilation will be done
@@ -25,7 +25,7 @@ Rules for the implementation of such regex are:
 * Do not include capturing groups (they will be ignored)
 * The pattern will be compiled with the [re.VERBOSE] (aka `re.X`) flag, so
   take that into account (in particular, **whitespace is ignored**, so if it is
-  part of the regular expression needs to included as a category i.e. `\s` or
+  part of the regular expression needs to included as a category i.e. `\s`, or
   escaped)
 
 An example can be seen in the [US Social Security Number] detector.
@@ -42,8 +42,8 @@ is:
 ```
 
 The function can have any name, but it should refer to the entity it is
-capturing, since it will be used as the `name` attribute of
-the task (after converting underscores into spaces).
+capturing, since it will be used as the `name` attribute of the task (after
+converting underscores into spaces).
 
 The function should:
 
@@ -105,6 +105,10 @@ string that explains what they detect. The place to add this documentation is:
    inside `PII_TASKS`
  * For Callable tasks, use the function docstring to add the documentation.
  * For Class tasks, add the documentation as the _class level_ docstring.
+
+For any task type, if using the "full" description in `PII_TASKS`, a `doc`
+field can be added to the dictionary descrption, and it will override any
+automatic generation from docstrings.
 
 
 [regex]: https://github.com/mrabarnett/mrab-regex

@@ -19,9 +19,7 @@ def australian_business_number(doc: str) -> Iterable[str]:
     """
     Australian Business Number (detect and validate)
     """
-    print(_ABN_REGEX.findall(doc))
     for candidate in _ABN_REGEX.findall(doc):
-        print("CANDIDATE", candidate)
         if abn.is_valid(candidate):
             yield candidate
 

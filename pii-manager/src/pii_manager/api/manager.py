@@ -41,19 +41,22 @@ def fetch_all_tasks(
         if country[0] == "all":
             country = country_list(lang)
         for c in country:
+            print("lANG", langdict.get(c))
             for task in langdict.get(c, {}).values():
                 yield task
 
 
 def fetch_task(
-    taskname: str, lang: str, country: Iterable[str] = None
+        taskname: str, lang: str,
+        country: Iterable[str] = None,
+        debug: bool = False
 ) -> Iterable[List[Dict]]:
     """
     Return a specific task for a given language & country
     (try to find the most specific task available)
     """
     found = 0
-    taskdict = get_taskdict()
+    taskdict = get_taskdict(debug=debug)
     if isinstance(taskname, PiiEnum):
         taskname = taskname.name
 
@@ -176,20 +179,24 @@ class PiiManager:
         return f"<PiiManager (tasks: {len(self.tasks)})>"
 
 
-    def task_info(self) -> Dict:
+    def task_info(self) -> Dict[Tuple, Tuple]:
         """
-        Return a dictionary with all defined tasks
+        Return a dictionary with all defined tasks:
+          - keys are tuples (task id, country)
+          - values are tuples (name, doc)
         """
-        return {
-            (task.pii, task.country): (task.doc or task.__doc__).strip()
-            for task in self.tasks
-        }
+        info = defaultdict(list)
+        for task in self.tasks:
+            info[(task.pii, task.country)].append((task.name, task.doc))
+        return info
+
 
     def __call__(self, doc: str) -> Union[Dict, str, Iterable[PiiEntity]]:
         """
         Process a document, calling all defined anonymizers
         """
         return self._process(doc)
+
 
     def mode_subst(self, doc: str) -> str:
         """
@@ -215,6 +222,7 @@ class PiiManager:
             doc = "".join(output) + doc[pos:]
         return doc
 
+
     def mode_extract(self, doc: str) -> Iterable[PiiEntity]:
         """
         Process a document, calling all defined processors and performing
@@ -226,6 +234,7 @@ class PiiManager:
             for pii in elem_list:
                 yield pii
                 self.stats[pii.elem.name] += 1
+
 
     def mode_full(self, doc: str) -> Dict:
         """
