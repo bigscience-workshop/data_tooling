@@ -10,9 +10,11 @@ from typing import Iterable, Tuple, List, Callable, Union, Dict, Type
 
 from ..piientity import PiiEntity
 from ..piienum import PiiEnum
-from ..helper import get_taskdict, TASK_ANY, country_list
+from ..helper import get_taskdict, country_list
+from ..helper.taskdict import task_check
 from ..helper.base import BasePiiTask, CallablePiiTask, RegexPiiTask
 from ..helper.exception import InvArgException
+from ..lang import LANG_ANY, COUNTRY_ANY
 
 
 DEFAULT_TEMPLATES = {"replace": "<{name}>", "tag": "<{name}:{value}>"}
@@ -30,18 +32,17 @@ def fetch_all_tasks(
     """
     taskdict = get_taskdict(debug=debug)
     # Language-independent
-    for task in taskdict[TASK_ANY].values():
+    for task in taskdict[LANG_ANY].values():
         yield task
     # Country-independent
     langdict = taskdict.get(lang, {})
-    for task in langdict.get(TASK_ANY, {}).values():
+    for task in langdict.get(COUNTRY_ANY, {}).values():
         yield task
     # Country-specific
     if country:
-        if country[0] == "all":
+        if country[0] in (COUNTRY_ANY, "all"):
             country = country_list(lang)
         for c in country:
-            print("lANG", langdict.get(c))
             for task in langdict.get(c, {}).values():
                 yield task
 
@@ -64,7 +65,7 @@ def fetch_task(
     if langdict:
         # First try: language & country
         if country:
-            if country[0] == "all":
+            if country[0] in (COUNTRY_ANY, "all"):
                 country = country_list(lang)
             for c in country:
                 task = langdict.get(c, {}).get(taskname)
@@ -72,12 +73,12 @@ def fetch_task(
                     found += 1
                     yield task
         # Second try: only language
-        task = langdict.get(TASK_ANY, {}).get(taskname)
+        task = langdict.get(COUNTRY_ANY, {}).get(taskname)
         if task:
             found += 1
             yield task
     # Third try: generic task
-    task = taskdict[TASK_ANY].get(taskname)
+    task = taskdict[LANG_ANY].get(taskname)
     if task:
         found += 1
         yield task
@@ -168,15 +169,26 @@ class PiiManager:
 
         # Prepare the method to be called
         self._process = (
-            self.mode_full
+            self.process_full
             if self.mode == "full"
-            else self.mode_extract
+            else self.process_extract
             if self.mode == "extract"
-            else self.mode_subst
+            else self.process_subst
         )
 
     def __repr__(self) -> str:
         return f"<PiiManager (tasks: {len(self.tasks)})>"
+
+
+    def add_tasks(self, tasklist: Iterable[Dict],
+                  lang: str = None, country: str = None):
+        """
+        Add a list of processing tasks to the object
+        """
+        for task_spec in tasklist:
+            task_check(task_spec, lang, country)
+            self.tasks.append(build_task(task_spec))
+        self.tasks = sorted(self.tasks, key=lambda e: e.pii.value)
 
 
     def task_info(self) -> Dict[Tuple, Tuple]:
@@ -198,7 +210,7 @@ class PiiManager:
         return self._process(doc)
 
 
-    def mode_subst(self, doc: str) -> str:
+    def process_subst(self, doc: str) -> str:
         """
         Process a document, calling all defined processors and performing
         PII substitution
@@ -223,7 +235,7 @@ class PiiManager:
         return doc
 
 
-    def mode_extract(self, doc: str) -> Iterable[PiiEntity]:
+    def process_extract(self, doc: str) -> Iterable[PiiEntity]:
         """
         Process a document, calling all defined processors and performing
         PII extraction
@@ -236,7 +248,7 @@ class PiiManager:
                 self.stats[pii.elem.name] += 1
 
 
-    def mode_full(self, doc: str) -> Dict:
+    def process_full(self, doc: str) -> Dict:
         """
         Process a document, calling all defined processors and performing
         PII extraction. Return a dict with the original document and the

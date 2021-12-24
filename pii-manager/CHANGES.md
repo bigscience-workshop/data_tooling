@@ -2,6 +2,8 @@ v. 0.5.0
  * new task list parsing code, adding a "full" format based on dicts, in
    addition to the previous "simplified" format based on tuples
  * refactored to allow more than one task for a given PII and country
+ * added the capability to add task processors programmatically
+ * TASK_ANY split into LANG_ANY & COUNTRY_ANY
 
 v. 0.4.0
  * PII GOV_ID task for es-ES and en-AU

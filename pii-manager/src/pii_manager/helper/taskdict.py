@@ -22,9 +22,7 @@ from types import ModuleType
 from pii_manager import PiiEnum
 from .exception import InvArgException
 from .base import BasePiiTask
-
-# Folder for language-independent tasks
-TASK_ANY = "any"
+from ..lang import LANG_ANY, COUNTRY_ANY
 
 # Name of the list that holds the pii tasks at each module
 _LISTNAME = "PII_TASKS"
@@ -37,10 +35,6 @@ _LANG = Path(__file__).parents[1] / "lang"
 
 # --------------------------------------------------------------------------
 
-def is_pii_class(obj: Any) -> bool:
-    return isinstance(obj, type) and issubclass(obj, BasePiiTask)
-
-
 class InvPiiTask(InvArgException):
 
     def __init__(self, msg, lang=None, country=None):
@@ -48,16 +42,22 @@ class InvPiiTask(InvArgException):
                          lang, country, msg)
 
 
+def _is_pii_class(obj: Any) -> bool:
+    return isinstance(obj, type) and issubclass(obj, BasePiiTask)
+
+
 def task_check(task: Dict, lang: str, country: str):
     """
     Check dict fields for a task, fill fields if needed
     """
+    if not isinstance(task, dict):
+        raise InvPiiTask("not a dictionary")
     if not isinstance(task.get("pii"), PiiEnum):
         raise InvPiiTask("PiiEnum not found", lang, country)
 
     # Check base fields: type & spec
     if "type" not in task:
-        if is_pii_class(task.get("task")):
+        if _is_pii_class(task.get("task")):
             task["type"] = "PiiTask"
     if task.get("type") not in ("PiiTask", "callable", "re", "regex"):
         raise InvPiiTask("unsupported task type", lang, country)
@@ -71,7 +71,7 @@ def task_check(task: Dict, lang: str, country: str):
     elif task["type"] == "callable" and not isinstance(task["task"], Callable):
         raise InvPiiTask("invalid task callable specification: spec should be a callable", lang, country)
     elif task["type"] == "PiiTask" and not (isinstance(task["task"], str) or
-                                            is_pii_class(task["task"])):
+                                            _is_pii_class(task["task"])):
         raise InvPiiTask("invalid task PiiTask specification: spec should be class name or a class object", lang, country)
 
     # Fill in name
@@ -119,7 +119,7 @@ def build_subdict(task_list: List[Tuple], lang: str,
             if len(src) != 2 and (len(src) != 3 or not isinstance(src[1], str)):
                 raise InvPiiTask("invalid simplified task spec", lang, country)
             # Task type
-            task_type = 'PiiTask' if is_pii_class(src[1]) \
+            task_type = 'PiiTask' if _is_pii_class(src[1]) \
                 else 'callable' if callable(src[1]) \
                 else 'regex' if isinstance(src[1], str) else None
             # Build the dict
@@ -183,12 +183,12 @@ def import_processor(lang: str, country: str = None, debug: bool = False) -> Dic
     """
     if debug:
         print(".. IMPORT FROM:", lang, "/", country, file=sys.stderr)
-    if lang == TASK_ANY:
-        name = TASK_ANY
-        path = _LANG / TASK_ANY
+    if lang == LANG_ANY:
+        name = LANG_ANY
+        path = _LANG / LANG_ANY
     else:
         if country is None:
-            country_elem = TASK_ANY
+            country_elem = COUNTRY_ANY
         elif country in ("in", "is"):
             country_elem = country + "_"
         else:
@@ -235,7 +235,7 @@ def _gather_all_tasks(debug: bool = False):
 
     _TASKS = {}
     for lang in language_list():
-        if lang == TASK_ANY:
+        if lang == LANG_ANY:
             _TASKS[lang] = import_processor(lang, debug=debug)
         else:
             _TASKS[lang] = {

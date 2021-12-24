@@ -1,7 +1,7 @@
 import pytest
 
 from pii_manager import PiiEnum
-from pii_manager.helper import TASK_ANY
+from pii_manager.lang import LANG_ANY
 from pii_manager.helper.base import BasePiiTask
 import pii_manager.helper.taskdict as mod
 
@@ -11,7 +11,7 @@ def test10_lang():
     Check the presence of a minimum set of languages in the dict
     """
     taskdict = mod.get_taskdict()
-    for lang in (TASK_ANY, "en", "es", "fr", "zh"):
+    for lang in (LANG_ANY, "en", "es", "fr", "zh"):
         assert lang in taskdict
 
 
@@ -23,7 +23,7 @@ def test20_lang_any():
     assert len(taskdict) >= 2
 
     # Find one element that should be there
-    tasklist = taskdict[TASK_ANY][PiiEnum.CREDIT_CARD.name]
+    tasklist = taskdict[LANG_ANY][PiiEnum.CREDIT_CARD.name]
 
     # Check its contents
     assert isinstance(tasklist, list)

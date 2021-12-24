@@ -1,7 +1,6 @@
 import pytest
 
 from pii_manager import PiiEnum, PiiEntity
-from pii_manager.helper import TASK_ANY
 from pii_manager.helper.base import BasePiiTask
 from pii_manager.helper.exception import PiiUnimplemented, InvArgException
 
