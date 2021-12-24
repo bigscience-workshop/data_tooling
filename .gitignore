@@ -149,3 +149,8 @@ lid.189.bin
 
 # Visualization json files
 **/*examples_with_stats*
+
+# Deduplication temp files
+**/outputs
+**/cache
+**/.vscode

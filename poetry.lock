@@ -32,14 +32,6 @@ python-versions = ">=3.6"
 frozenlist = ">=1.1.0"
 
 [[package]]
-name = "annoy"
-version = "1.17.0"
-description = "Approximate Nearest Neighbors in C++/Python optimized for memory usage and loading/saving to disk."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "anyio"
 version = "3.3.4"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
@@ -245,14 +237,6 @@ description = "Cross-platform colored terminal text."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-
-[[package]]
-name = "dataclasses"
-version = "0.6"
-description = "A backport of the dataclasses module for Python 3.6"
-category = "main"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "datasets"
@@ -791,24 +775,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "mpire"
-version = "2.3.2"
-description = "A Python package for easy multiprocessing, but faster than multiprocessing"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-dataclasses = "*"
-tqdm = "*"
-
-[package.extras]
-dashboard = ["flask"]
-dill = ["multiprocess"]
-docs = ["docutils (==0.17.1)", "sphinx (==3.2.1)", "sphinx-rtd-theme (==0.5.0)", "sphinx-autodoc-typehints (==1.11.0)", "sphinxcontrib-images (==0.9.2)", "sphinx-versions (==1.0.1)"]
-testing = ["multiprocess", "numpy", "dataclasses"]
-
-[[package]]
 name = "multidict"
 version = "5.2.0"
 description = "multidict implementation"
@@ -924,21 +890,6 @@ description = "Patch asyncio to allow nested event loops"
 category = "dev"
 optional = false
 python-versions = ">=3.5"
-
-[[package]]
-name = "networkx"
-version = "2.6.3"
-description = "Python package for creating and manipulating graphs and networks"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.extras]
-default = ["numpy (>=1.19)", "scipy (>=1.5,!=1.6.1)", "matplotlib (>=3.3)", "pandas (>=1.1)"]
-developer = ["black (==21.5b1)", "pre-commit (>=2.12)"]
-doc = ["sphinx (>=4.0,<5.0)", "pydata-sphinx-theme (>=0.6,<1.0)", "sphinx-gallery (>=0.9,<1.0)", "numpydoc (>=1.1)", "pillow (>=8.2)", "nb2plots (>=0.6)", "texext (>=0.6.6)"]
-extra = ["lxml (>=4.5)", "pygraphviz (>=1.7)", "pydot (>=1.4.1)"]
-test = ["pytest (>=6.2)", "pytest-cov (>=2.12)", "codecov (>=2.1)"]
 
 [[package]]
 name = "nltk"
@@ -1398,15 +1349,12 @@ objc = ["pyobjc-framework-cocoa"]
 win32 = ["pywin32"]
 
 [[package]]
-name = "simhash"
-version = "2.0.0"
-description = "A Python implementation of Simhash Algorithm"
+name = "simhash-py"
+version = "0.4.0"
+description = "Near-Duplicate Detection with Simhash"
 category = "main"
 optional = false
 python-versions = "*"
-
-[package.dependencies]
-numpy = "*"
 
 [[package]]
 name = "six"
@@ -1700,7 +1648,7 @@ kenlm = ["kenlm"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.10"
-content-hash = "a8fd4dc7721f2e1cd19ffb65b7bafc61ba654674fa33e5e7ce020c8777e10423"
+content-hash = "44f9fc6677a927a577b834faef414010a498060f559925bf16065cc61d3321d1"
 
 [metadata.files]
 aiohttp = [
@@ -1780,10 +1728,6 @@ aiohttp = [
 aiosignal = [
     {file = "aiosignal-1.2.0-py3-none-any.whl", hash = "sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a"},
     {file = "aiosignal-1.2.0.tar.gz", hash = "sha256:78ed67db6c7b7ced4f98e495e572106d5c432a93e1ddd1bf475e1dc05f5b7df2"},
-]
-annoy = [
-    {file = "annoy-1.17.0-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:78df35a7c2c74b74d94b4bdc74ab4faa9a5ff67cb83d12902673d0d9bd02219d"},
-    {file = "annoy-1.17.0.tar.gz", hash = "sha256:9891e264041d1dcf3af42f67fbb16cb273c5404bc8c869d0915a3087f71d58dd"},
 ]
 anyio = [
     {file = "anyio-3.3.4-py3-none-any.whl", hash = "sha256:4fd09a25ab7fa01d34512b7249e366cd10358cdafc95022c7ff8c8f8a5026d66"},
@@ -1909,10 +1853,6 @@ click = [
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
-]
-dataclasses = [
-    {file = "dataclasses-0.6-py3-none-any.whl", hash = "sha256:454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f"},
-    {file = "dataclasses-0.6.tar.gz", hash = "sha256:6988bd2b895eef432d562370bb707d540f32f7360ab13da45340101bc2307d84"},
 ]
 datasets = [
     {file = "datasets-1.15.1-py3-none-any.whl", hash = "sha256:e5ac4ef477a5e50c0033b33550e5c81e05c1d46fc8ac76baebada4194cccea09"},
@@ -2211,10 +2151,6 @@ mistune = [
     {file = "mistune-0.8.4-py2.py3-none-any.whl", hash = "sha256:88a1051873018da288eee8538d476dffe1262495144b33ecb586c4ab266bb8d4"},
     {file = "mistune-0.8.4.tar.gz", hash = "sha256:59a3429db53c50b5c6bcc8a07f8848cb00d7dc8bdb431a4ab41920d201d4756e"},
 ]
-mpire = [
-    {file = "mpire-2.3.2-py3-none-any.whl", hash = "sha256:c8b9a4c2e98db8b10a7ec6c05c534d8db4617ebea18db768b9ad48c7865a6314"},
-    {file = "mpire-2.3.2.tar.gz", hash = "sha256:2bf311f7ba49af5c0085073011b04ac618b743c9b6fcda9821f68beabda667d0"},
-]
 multidict = [
     {file = "multidict-5.2.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:3822c5894c72e3b35aae9909bef66ec83e44522faf767c0ad39e0e2de11d3b55"},
     {file = "multidict-5.2.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:28e6d883acd8674887d7edc896b91751dc2d8e87fbdca8359591a13872799e4e"},
@@ -2327,10 +2263,6 @@ nbformat = [
 nest-asyncio = [
     {file = "nest_asyncio-1.5.1-py3-none-any.whl", hash = "sha256:76d6e972265063fe92a90b9cc4fb82616e07d586b346ed9d2c89a4187acea39c"},
     {file = "nest_asyncio-1.5.1.tar.gz", hash = "sha256:afc5a1c515210a23c461932765691ad39e8eba6551c055ac8d5546e69250d0aa"},
-]
-networkx = [
-    {file = "networkx-2.6.3-py3-none-any.whl", hash = "sha256:80b6b89c77d1dfb64a4c7854981b60aeea6360ac02c6d4e4913319e0a313abef"},
-    {file = "networkx-2.6.3.tar.gz", hash = "sha256:c0946ed31d71f1b732b5aaa6da5a0388a345019af232ce2f49c766e2d6795c51"},
 ]
 nltk = [
     {file = "nltk-3.6.5-py3-none-any.whl", hash = "sha256:95fb4f577efe93af21765e9b2852235c2c6a405885da2a70f397478d94e906e0"},
@@ -2789,12 +2721,8 @@ send2trash = [
     {file = "Send2Trash-1.8.0-py3-none-any.whl", hash = "sha256:f20eaadfdb517eaca5ce077640cb261c7d2698385a6a0f072a4a5447fd49fa08"},
     {file = "Send2Trash-1.8.0.tar.gz", hash = "sha256:d2c24762fd3759860a0aff155e45871447ea58d2be6bdd39b5c8f966a0c99c2d"},
 ]
-simhash = [
-    {file = "simhash-2.0.0-py2-none-any.whl", hash = "sha256:0245b465fbe0bd17a74f5b89b9a70c3061984e37d7d94214eb5a8ef545384b6d"},
-    {file = "simhash-2.0.0-py2.7.egg", hash = "sha256:a4f84ac68b9afff17c9f1e6046ba60ed5eff40578ddf8d6a3d54709c44fafea0"},
-    {file = "simhash-2.0.0-py3-none-any.whl", hash = "sha256:18d9c476d1bec9fa039293e4659ef49976585f9e051cb78afec30c4ce8fa361a"},
-    {file = "simhash-2.0.0-py3.7.egg", hash = "sha256:debaf4fff92f192dc0414f31fda1ef90069936b3d05ec520d2c790128c48ee9a"},
-    {file = "simhash-2.0.0.tar.gz", hash = "sha256:d486d44a1dde0245d0733b91c86d892e87a062c932a372d184f4d9ce970e2708"},
+simhash-py = [
+    {file = "simhash-py-0.4.0.tar.gz", hash = "sha256:c83e20cfac873ba9067c564135c293db635cbd7372f126e9bcfb0fabf9fd0234"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
