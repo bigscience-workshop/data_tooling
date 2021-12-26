@@ -233,6 +233,16 @@ class ModifyingSentences:
         return words
 
     @staticmethod
+    def words_augmentation(words, group_size, join_char):
+        """Augment words, especially for Chinese (without a space between words)
+        and Vietnamese (with a space between syllables)."""
+        augmentation = [
+            join_char.join(words[i : i + group_size])
+            for i in range(len(words) - group_size + 1)
+        ]
+        return augmentation
+
+    @staticmethod
     def split_on_newline_tab_whitespace(sentence):
         """First split on "\n", then on "\t", then on " "."""
         sentences = sentence.split("\n")
@@ -444,7 +454,13 @@ class Filtering:
 
     @staticmethod
     def compute_stopwords_ratio(
-        sentence, sentencepiece_model_tok, strip_characters, stopwords
+        sentence,
+        sentencepiece_model_tok,
+        strip_characters,
+        cond_words_augmentation,
+        words_augmentation_group_sizes,
+        words_augmentation_join_char,
+        stopwords,
     ):
         words = ModifyingSentences.get_words_from_sentence(
             sentence,
@@ -454,9 +470,20 @@ class Filtering:
         )
         if not words:
             return 0
-        stopwords_ratio = len([word for word in words if word in stopwords]) / len(
-            words
-        )
+        augmentation = []
+        if cond_words_augmentation:
+            augmentation = [
+                ModifyingSentences.words_augmentation(
+                    words, group_size, words_augmentation_join_char
+                )
+                for group_size in words_augmentation_group_sizes
+            ]
+            augmentation = [word for augm in augmentation for word in augm]
+        stopwords_ratio = len(
+            [word for word in words + augmentation if word in stopwords]
+        ) / len(words)
+        if stopwords_ratio > 1.0:
+            stopwords_ratio = 1.0
         return stopwords_ratio
 
     @staticmethod
@@ -464,20 +491,35 @@ class Filtering:
         sentence,
         sentencepiece_model_tok,
         strip_characters,
+        cond_words_augmentation,
+        words_augmentation_group_sizes,
+        words_augmentation_join_char,
         stopwords,
         stopwords_min_cutoff,
     ):
         cond = True
         if stopwords:
             stopwords_ratio = Filtering.compute_stopwords_ratio(
-                sentence, sentencepiece_model_tok, strip_characters, stopwords
+                sentence,
+                sentencepiece_model_tok,
+                strip_characters,
+                cond_words_augmentation,
+                words_augmentation_group_sizes,
+                words_augmentation_join_char,
+                stopwords,
             )
             cond = stopwords_ratio >= stopwords_min_cutoff
         return cond
 
     @staticmethod
     def compute_badwords_ratio(
-        sentence, sentencepiece_model_tok, strip_characters, badwords
+        sentence,
+        sentencepiece_model_tok,
+        strip_characters,
+        cond_words_augmentation,
+        words_augmentation_group_sizes,
+        words_augmentation_join_char,
+        badwords,
     ):
         words = ModifyingSentences.get_words_from_sentence(
             sentence,
@@ -487,7 +529,23 @@ class Filtering:
         )
         if not words:
             return 0
-        badwords_ratio = len([word for word in words if word in badwords]) / len(words)
+        augmentation = []
+        if cond_words_augmentation:
+            augmentation = [
+                ModifyingSentences.words_augmentation(
+                    words, group_size, words_augmentation_join_char
+                )
+                for group_size in words_augmentation_group_sizes
+            ]
+            augmentation = [word for augm in augmentation for word in augm]
+        badwords_ratio = len(
+            [word for word in words + augmentation if word in badwords]
+        ) / len(words)
+        if badwords_ratio > 1.0:
+            badwords_ratio = 1.0
+        for word in augmentation:
+            if word in badwords:
+                print(word)
         return badwords_ratio
 
     @staticmethod
@@ -495,13 +553,22 @@ class Filtering:
         sentence,
         sentencepiece_model_tok,
         strip_characters,
+        cond_words_augmentation,
+        words_augmentation_group_sizes,
+        words_augmentation_join_char,
         badwords,
         badwords_max_cutoff,
     ):
         cond = True
         if badwords:
             badwords_ratio = Filtering.compute_badwords_ratio(
-                sentence, sentencepiece_model_tok, strip_characters, badwords
+                sentence,
+                sentencepiece_model_tok,
+                strip_characters,
+                cond_words_augmentation,
+                words_augmentation_group_sizes,
+                words_augmentation_join_char,
+                badwords,
             )
             cond = badwords_ratio <= badwords_max_cutoff
         return cond
@@ -588,6 +655,9 @@ class Filtering:
         cond_check_special_characters,
         special_characters,
         special_characters_max_cutoff,
+        cond_words_augmentation,
+        words_augmentation_group_sizes,
+        words_augmentation_join_char,
         cond_check_stopwords,
         stopwords,
         stopwords_min_cutoff,
@@ -624,6 +694,9 @@ class Filtering:
                 sentence,
                 sentencepiece_model_tok,
                 strip_characters,
+                cond_words_augmentation,
+                words_augmentation_group_sizes,
+                words_augmentation_join_char,
                 stopwords,
                 stopwords_min_cutoff,
             ):
@@ -633,6 +706,9 @@ class Filtering:
                 sentence,
                 sentencepiece_model_tok,
                 strip_characters,
+                cond_words_augmentation,
+                words_augmentation_group_sizes,
+                words_augmentation_join_char,
                 badwords,
                 badwords_max_cutoff,
             ):
@@ -696,6 +772,9 @@ class FuncOscarFiltering:
             cond_check_special_characters=self.param["cond_check_special_characters"],
             special_characters=self.param["special_characters"],
             special_characters_max_cutoff=self.param["special_characters_max_cutoff"],
+            cond_words_augmentation=self.param["cond_words_augmentation"],
+            words_augmentation_group_sizes=self.param["words_augmentation_group_sizes"],
+            words_augmentation_join_char=self.param["words_augmentation_join_char"],
             cond_check_stopwords=self.param["cond_check_stopwords"],
             stopwords=self.stopwords,
             stopwords_min_cutoff=self.param["stopwords_min_cutoff"],

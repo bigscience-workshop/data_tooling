@@ -98,6 +98,9 @@ class GetDataForVisualization:
                         sentence,
                         self.sentencepiece_model_tok,
                         self.param["strip_characters"],
+                        self.param["cond_words_augmentation"],
+                        self.param["words_augmentation_group_sizes"],
+                        self.param["words_augmentation_join_char"],
                         self.stopwords,
                     )
                     stats_sentence["stopwords_ratio"] = stopwords_ratio
@@ -107,6 +110,9 @@ class GetDataForVisualization:
                         sentence,
                         self.sentencepiece_model_tok,
                         self.param["strip_characters"],
+                        self.param["cond_words_augmentation"],
+                        self.param["words_augmentation_group_sizes"],
+                        self.param["words_augmentation_join_char"],
                         self.badwords,
                     )
                     stats_sentence["badwords_ratio"] = badwords_ratio

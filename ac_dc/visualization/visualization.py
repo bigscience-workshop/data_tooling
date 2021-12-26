@@ -258,9 +258,7 @@ class Visualization:
         if not (self.words is None):
             st.sidebar.subheader("Parameter of the filtering on words")
 
-            cutoff_def = (
-                "If the length of a word is higher than this number, the word is removed."
-            )
+            cutoff_def = "If the length of a word is higher than this number, the word is removed."
             max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
             cutoff_word = st.sidebar.slider(cutoff_def, 0, max_len_word, max_len_word)
 
