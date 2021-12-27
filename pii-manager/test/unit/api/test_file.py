@@ -30,7 +30,7 @@ def test10_line(mode):
         name = mode + (".txt" if mode in ("replace", "tag") else "-line.ndjson")
         exp = readfile(datafile(name))
         got = readfile(f.name)
-        print(got)
+        #print(got)
         assert got == exp
 
 

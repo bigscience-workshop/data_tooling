@@ -9,7 +9,7 @@ that might collide with more specific ones) should come last
 from enum import Enum, auto
 
 
-class PiiEnum(Enum):
+class PiiEnum(str, Enum):
     CREDIT_CARD = auto()
     BITCOIN_ADDRESS = auto()
     IP_ADDRESS = auto()

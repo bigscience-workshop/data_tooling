@@ -4,6 +4,7 @@ A PII task is a module that provides detection of a given PII (possible for a
 given language and country). The `pii-manager` package accepts three types of
 implementations for a PII task. They are commented in the next sections.
 
+
 ## Regex implementation
 
 In its simplest form, a PII Task can be just a regular expression
@@ -41,8 +42,8 @@ is:
    def my_pii_detector(src: doc) -> Iterable[str]:
 ```
 
-The function can have any name, but it should refer to the entity it is
-capturing, since it will be used as the `name` attribute of the task (after
+The function can have any name, but it should indicate the entity it is
+capturing, since it will be used as the `name` attribute for the task (after
 converting underscores into spaces).
 
 The function should:
@@ -67,7 +68,7 @@ then it is better to use the class implementation type below.
 
 ## Class implementation
 
-In this case the task is implemented as a Python class. The class *must*:
+In this case the task is implemented as a full Python class. The class *must*:
 
  * inherit from `pii_manager.helper.BasePiiTask`
  * implement a `find` method with the following signature:
@@ -76,8 +77,9 @@ In this case the task is implemented as a Python class. The class *must*:
 
    i.e. a method returting an iterable of identified [PiiEntity]
 
- * the task name wil be taken from the class-level attribute `name`, if it
-   exists, or else as the class name
+ * the default task name will be taken from the class-level attribute
+   `pii_name`, if it exists, or else as the class name. Nevertheless, the name
+   can be dynammicaly set with each detected PiiEntity
 
 The class can also, optionally, include a constructor. In this case, the
 constructor must
@@ -94,7 +96,8 @@ In other words:
 ```
 
 
-An example can be seen in the [credit card] detector.
+Examples can be seen in the [credit card] detector or the [Spanish GOV ID]
+detector.
 
 
 ## Documentation
@@ -107,7 +110,7 @@ string that explains what they detect. The place to add this documentation is:
  * For Class tasks, add the documentation as the _class level_ docstring.
 
 For any task type, if using the "full" description in `PII_TASKS`, a `doc`
-field can be added to the dictionary descrption, and it will override any
+field can be added to the dictionary description, and it will override any
 automatic generation from docstrings.
 
 
@@ -115,5 +118,6 @@ automatic generation from docstrings.
 [US Social Security Number]: ../src/pii_manager/lang/en/us/social_security_number.py
 [bitcoin address]: ../src/pii_manager/lang/any/bitcoin_address.py
 [credit card]: ../src/pii_manager/lang/any/credit_card.py
+[Spanish GOV ID]: ../src/pii_manager/lang/es/es/govid.py
 [PiiEntity]: ../src/pii_manager/piientity.py
 [re.VERBOSE]: https://docs.python.org/3/library/re.html#re.X

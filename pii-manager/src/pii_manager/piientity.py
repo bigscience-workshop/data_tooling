@@ -27,7 +27,7 @@ class PiiEntity:
         return len(self.value)
 
     def __repr__(self):
-        return f"<PiiEntity {self.elem.name}:{self.pos}:{self.value}:{self.country}>"
+        return f"<PiiEntity {self.elem.name}:{self.pos}:{self.value}:{self.country}:{self.name}>"
 
     def __eq__(self, other):
         return (self.elem == other.elem and self.pos == other.pos and

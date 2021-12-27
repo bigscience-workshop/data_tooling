@@ -4,7 +4,6 @@ Definition of the main PiiManager object
 
 from collections import defaultdict
 from itertools import chain
-import importlib
 
 from typing import Iterable, Tuple, List, Callable, Union, Dict, Type
 
@@ -27,15 +26,16 @@ def fetch_all_tasks(
     lang: str, country: Iterable[str] = None, debug: bool = False
 ) -> Iterable[List[Dict]]:
     """
-    Return all available anonymizer tasks for a given language & (optionally)
+    Return all processing tasks available for a given language & (optionally)
     country
     """
     taskdict = get_taskdict(debug=debug)
     # Language-independent
     for task in taskdict[LANG_ANY].values():
         yield task
-    # Country-independent
+
     langdict = taskdict.get(lang, {})
+    # Country-independent
     for task in langdict.get(COUNTRY_ANY, {}).values():
         yield task
     # Country-specific
@@ -43,6 +43,8 @@ def fetch_all_tasks(
         if country[0] in (COUNTRY_ANY, "all"):
             country = country_list(lang)
         for c in country:
+            if c == COUNTRY_ANY:        # already included above
+                continue
             for task in langdict.get(c, {}).values():
                 yield task
 
@@ -90,35 +92,26 @@ def fetch_task(
 
 # --------------------------------------------------------------------------
 
-def import_task_class(classname: str) -> Type[BasePiiTask]:
-    try:
-        modname, cname = classname.rsplit(".", 1)
-        mod = importlib.import_module(modname)
-        return getattr(mod, cname)
-    except Exception as e:
-        raise InvArgException('cannot import PiiTask class {}: {}', classname,
-                              e)
-
-
 def build_task(task: Dict) -> BasePiiTask:
     """
-    Build a task object from its spec dict
+    Build a task object from its task descriptor
     """
+    # Prepare arguments
     try:
-        args = {k: task[k] for k in
-                ("pii", "lang", "country", "pii", "name", "doc")}
         ttype, tobj = task["type"], task["task"]
+        args = {k: task[k] for k in ("pii", "lang", "country", "name", "doc")}
+        args["context"] = task.get("context")
+        kwargs = task.get('kwargs', {})
     except KeyError as e:
         raise InvArgException("invalid pii task object: missing field {}", e)
 
+    # Instantiate
     if ttype == "PiiTask":
-        if isinstance(tobj, str):
-            tobj = import_task_class(tobj)
         proc = tobj(**args)
     elif ttype == "callable":
-        proc = CallablePiiTask(tobj, **args)
+        proc = CallablePiiTask(tobj, extra_kwargs=kwargs, **args)
     elif ttype in ("re", "regex"):
-        proc = RegexPiiTask(tobj, **args)
+        proc = RegexPiiTask(tobj, **args, **kwargs)
     else:
         raise InvArgException("invalid pii task type for {}: {}",
                               task["pii"].name, ttype)
@@ -140,7 +133,7 @@ class PiiManager:
         debug: bool = False,
     ):
         """
-        Initalize an processor object, loading & initializing all specified
+        Initalize a processor object, loading & initializing all specified
         processing tasks
         """
         # Sanitize input
@@ -156,11 +149,13 @@ class PiiManager:
         # Get the list of tasks we will use
         if all_tasks:
             tasklist = fetch_all_tasks(self.lang, self.country, debug=debug)
-        else:
+        elif tasks:
             if isinstance(tasks, PiiEnum):
                 tasks = [tasks]
             tl = (fetch_task(name, self.lang, self.country) for name in tasks)
             tasklist = chain.from_iterable(tl)
+        else:
+            tasklist = []
 
         # Build an ordered array of task processors
         taskproc = (build_task(t) for t in chain.from_iterable(tasklist))
@@ -180,13 +175,12 @@ class PiiManager:
         return f"<PiiManager (tasks: {len(self.tasks)})>"
 
 
-    def add_tasks(self, tasklist: Iterable[Dict],
-                  lang: str = None, country: str = None):
+    def add_tasks(self, tasklist: Iterable[Dict]):
         """
         Add a list of processing tasks to the object
         """
         for task_spec in tasklist:
-            task_check(task_spec, lang, country)
+            task_check(task_spec, self.lang, self.country)
             self.tasks.append(build_task(task_spec))
         self.tasks = sorted(self.tasks, key=lambda e: e.pii.value)
 

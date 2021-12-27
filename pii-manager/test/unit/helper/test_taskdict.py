@@ -218,16 +218,21 @@ def test41_subdict_full_err():
     with pytest.raises(mod.InvPiiTask):
         mod.build_subdict(PII_TASKS, 'fr')
 
-    # Invalid task for a regex
+    # Invalid task descriptor for a regex
     PII_TASKS = [{"pii": PiiEnum.CREDIT_CARD, "type": "regex",
                   "task": lambda x: x}]
     with pytest.raises(mod.InvPiiTask):
         mod.build_subdict(PII_TASKS, 'fr')
 
-
-    # Invalid task for a callable
+    # Invalid task descriptor for a callable
     PII_TASKS = [{"pii": PiiEnum.CREDIT_CARD, "type": "callable",
                   "task": r"\d{16}"}]
+    with pytest.raises(mod.InvPiiTask):
+        mod.build_subdict(PII_TASKS, 'fr')
+
+    # Invalid task descriptor for a class
+    PII_TASKS = [{"pii": PiiEnum.CREDIT_CARD, "type": "PiiTask",
+                  "task": lambda x: x}]
     with pytest.raises(mod.InvPiiTask):
         mod.build_subdict(PII_TASKS, 'fr')
 
