@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
-from oscar_sample_filter import LoadParameters, ModifyingSentences, Filtering
+from oscar_sample_filter import LoadParameters, ModifyingDocuments, Filtering
 
 
 class GetDataForVisualization:
@@ -57,13 +57,13 @@ class GetDataForVisualization:
         stats = []
         num_iter_examples = True
         for i in tqdm(range(self.num_iter)):
-            stats_sentence = {}
+            stats_document = {}
 
             try:
-                sentence = next(dataset)["text"]
+                document = next(dataset)["text"]
 
-                words = ModifyingSentences.get_words_from_sentence(
-                    sentence,
+                words = ModifyingDocuments.get_words_from_document(
+                    document,
                     sentencepiece_model_tok=self.sentencepiece_model_tok,
                     lower_case=True,
                     strip_characters=self.param["strip_characters"],
@@ -83,19 +83,19 @@ class GetDataForVisualization:
                 ]
 
                 if not self.param["tokenization"]:
-                    stats_sentence["words"] = words
+                    stats_document["words"] = words
 
                 number_words = len(words)
-                stats_sentence["number_words"] = number_words
+                stats_document["number_words"] = number_words
 
                 special_characters_ratio = Filtering.compute_special_characters_ratio(
-                    sentence, self.param["special_characters"]
+                    document, self.param["special_characters"]
                 )
-                stats_sentence["special_characters_ratio"] = special_characters_ratio
+                stats_document["special_characters_ratio"] = special_characters_ratio
 
                 if self.stopwords:
                     stopwords_ratio = Filtering.compute_stopwords_ratio(
-                        sentence,
+                        document,
                         self.sentencepiece_model_tok,
                         self.param["strip_characters"],
                         self.param["cond_words_augmentation"],
@@ -103,11 +103,11 @@ class GetDataForVisualization:
                         self.param["words_augmentation_join_char"],
                         self.stopwords,
                     )
-                    stats_sentence["stopwords_ratio"] = stopwords_ratio
+                    stats_document["stopwords_ratio"] = stopwords_ratio
 
                 if self.badwords:
                     badwords_ratio = Filtering.compute_badwords_ratio(
-                        sentence,
+                        document,
                         self.sentencepiece_model_tok,
                         self.param["strip_characters"],
                         self.param["cond_words_augmentation"],
@@ -115,23 +115,23 @@ class GetDataForVisualization:
                         self.param["words_augmentation_join_char"],
                         self.badwords,
                     )
-                    stats_sentence["badwords_ratio"] = badwords_ratio
+                    stats_document["badwords_ratio"] = badwords_ratio
 
                 if self.model_lang_id:
                     _, lang_id_score = Filtering.compute_lang_id_pred_score(
-                        sentence, self.model_lang_id
+                        document, self.model_lang_id
                     )
-                    stats_sentence["lang_id_score"] = lang_id_score
+                    stats_document["lang_id_score"] = lang_id_score
 
                 if self.kenlm_model:
                     perplexity_score = Filtering.compute_perplexity_score(
-                        sentence, self.sentencepiece_model, self.kenlm_model
+                        document, self.sentencepiece_model, self.kenlm_model
                     )
-                    stats_sentence["perplexity_score"] = perplexity_score
+                    stats_document["perplexity_score"] = perplexity_score
 
-                stats_sentence["text"] = sentence
+                stats_document["text"] = document
 
-                stats.append(stats_sentence)
+                stats.append(stats_document)
 
             except:
                 num_iter_examples = False

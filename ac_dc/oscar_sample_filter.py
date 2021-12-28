@@ -83,18 +83,18 @@ class LoadParameters:
         return kenlm_model
 
 
-class ModifyingSentences:
+class ModifyingDocuments:
     @staticmethod
     def remove_empty_el_from_list(list_):
         return [el for el in list_ if el]
 
     @staticmethod
-    def remove_non_printing_characters(sentence, non_printing_characters_re):
-        return non_printing_characters_re.sub("", sentence)
+    def remove_non_printing_characters(document, non_printing_characters_re):
+        return non_printing_characters_re.sub("", document)
 
     @staticmethod
     def uniform_whitespace(
-        sentence,
+        document,
         whitespace=[
             " ",
             " ",
@@ -112,22 +112,22 @@ class ModifyingSentences:
     ):
         """There are different whitespace characters."""
         whitespace = set(whitespace)
-        sentence = "".join(
-            [char if char not in whitespace else " " for char in sentence]
+        document = "".join(
+            [char if char not in whitespace else " " for char in document]
         )
-        return sentence
+        return document
 
     @staticmethod
-    def replace_digits_with_zeros(sentence, digits_re):
-        return digits_re.sub("0", sentence)
+    def replace_digits_with_zeros(document, digits_re):
+        return digits_re.sub("0", document)
 
     @staticmethod
-    def replace_unicode_punctuation(sentence, unicode_punctuation):
-        return "".join(unicode_punctuation.get(c, c) for c in sentence)
+    def replace_unicode_punctuation(document, unicode_punctuation):
+        return "".join(unicode_punctuation.get(c, c) for c in document)
 
     @staticmethod
     def normalization(
-        sentence,
+        document,
         remove_non_printing_characters,
         strip,
         lower_case,
@@ -139,78 +139,78 @@ class ModifyingSentences:
         unicode_punctuation=normalization["unicode_punctuation"],
     ):
         if remove_non_printing_characters:
-            sentence = ModifyingSentences.remove_non_printing_characters(
-                sentence, non_printing_characters_re
+            document = ModifyingDocuments.remove_non_printing_characters(
+                document, non_printing_characters_re
             )
         if strip:
-            sentence = sentence.strip()
-        if not sentence:
-            return sentence
+            document = document.strip()
+        if not document:
+            return document
         if lower_case:
-            sentence = sentence.lower()
+            document = document.lower()
         if uniform_whitespace:
-            sentence = ModifyingSentences.uniform_whitespace(sentence)
+            document = ModifyingDocuments.uniform_whitespace(document)
         if replace_digits_with_zeros:
-            sentence = ModifyingSentences.replace_digits_with_zeros(sentence, digits_re)
+            document = ModifyingDocuments.replace_digits_with_zeros(document, digits_re)
         if replace_unicode_punctuation:
-            sentence = ModifyingSentences.replace_unicode_punctuation(
-                sentence, unicode_punctuation
+            document = ModifyingDocuments.replace_unicode_punctuation(
+                document, unicode_punctuation
             )
-        return sentence
+        return document
 
     @staticmethod
-    def tokenization(sentence, sentencepiece_model, join_on_whitespace):
-        sentence_tokenized = sentencepiece_model.encode_as_pieces(sentence)
+    def tokenization(document, sentencepiece_model, join_on_whitespace):
+        document_tokenized = sentencepiece_model.encode_as_pieces(document)
         if join_on_whitespace:
-            sentence_tokenized = " ".join(sentence_tokenized)
-        return sentence_tokenized
+            document_tokenized = " ".join(document_tokenized)
+        return document_tokenized
 
     @staticmethod
     def split_on_whitespace(
-        sentence,
+        document,
         new_line=False,
         tab=False,
     ):
         """This method also removes concatenated spaces."""
         sep = [" "] + new_line * ["\n"] + tab * ["\t"]
         sep = "|".join(sep)
-        split_sentence = re.split(sep, sentence)
-        split_sentence = ModifyingSentences.remove_empty_el_from_list(split_sentence)
-        return split_sentence
+        split_document = re.split(sep, document)
+        split_document = ModifyingDocuments.remove_empty_el_from_list(split_document)
+        return split_document
 
     @staticmethod
-    def strip(sentence, strip_characters):
-        """Way faster than sentence.strip(strip_characters)
+    def strip(document, strip_characters):
+        """Way faster than document.strip(strip_characters)
         since strip_characters is now a set instead of a str,
         and it contains a lot of elements (all the emojis)."""
-        if not sentence:
-            return sentence
+        if not document:
+            return document
         beg_ind = 0
-        end_ind = len(sentence)
-        for i in range(len(sentence)):
-            if sentence[i] in strip_characters:
+        end_ind = len(document)
+        for i in range(len(document)):
+            if document[i] in strip_characters:
                 beg_ind += 1
             else:
                 break
-        for i in range(1, len(sentence) + 1):
-            if sentence[-i] in strip_characters:
+        for i in range(1, len(document) + 1):
+            if document[-i] in strip_characters:
                 end_ind -= 1
             else:
                 break
-        sentence_stripped = sentence[beg_ind:end_ind]
-        return sentence_stripped
+        document_stripped = document[beg_ind:end_ind]
+        return document_stripped
 
     @staticmethod
-    def get_words_from_sentence(
-        sentence, sentencepiece_model_tok, lower_case, strip_characters
+    def get_words_from_document(
+        document, sentencepiece_model_tok, lower_case, strip_characters
     ):
-        """Get words from a sentence. Non reversible since the sentence
+        """Get words from a document. Non reversible since the document
         is split on multiple characters, words are stripped of
         special characters and characters are converted to lower case.
         Useful to compute ratios, like the stopwords ratio."""
         if sentencepiece_model_tok:
-            sentence_normalized = ModifyingSentences.normalization(
-                sentence=sentence,
+            document_normalized = ModifyingDocuments.normalization(
+                document=document,
                 remove_non_printing_characters=True,
                 strip=True,
                 lower_case=True,
@@ -218,18 +218,18 @@ class ModifyingSentences:
                 replace_digits_with_zeros=True,
                 replace_unicode_punctuation=True,
             )
-            words = ModifyingSentences.tokenization(
-                sentence_normalized, sentencepiece_model_tok, join_on_whitespace=False
+            words = ModifyingDocuments.tokenization(
+                document_normalized, sentencepiece_model_tok, join_on_whitespace=False
             )
         else:
-            words = ModifyingSentences.split_on_whitespace(
-                sentence, new_line=True, tab=True
+            words = ModifyingDocuments.split_on_whitespace(
+                document, new_line=True, tab=True
             )
         if lower_case:
             words = [word.lower() for word in words]
         if strip_characters:
-            words = [ModifyingSentences.strip(word, strip_characters) for word in words]
-            words = ModifyingSentences.remove_empty_el_from_list(words)
+            words = [ModifyingDocuments.strip(word, strip_characters) for word in words]
+            words = ModifyingDocuments.remove_empty_el_from_list(words)
         return words
 
     @staticmethod
@@ -243,13 +243,13 @@ class ModifyingSentences:
         return augmentation
 
     @staticmethod
-    def split_on_newline_tab_whitespace(sentence):
+    def split_on_newline_tab_whitespace(document):
         """First split on "\n", then on "\t", then on " "."""
-        sentences = sentence.split("\n")
+        sentences = document.split("\n")
         sentences = [sentence.split("\t") for sentence in sentences]
         sentences = [
             [
-                ModifyingSentences.split_on_whitespace(subsentence)
+                ModifyingDocuments.split_on_whitespace(subsentence)
                 for subsentence in sentence
             ]
             for sentence in sentences
@@ -267,14 +267,14 @@ class ModifyingSentences:
         sentences = ["\t".join(sentence) for sentence in sentences if sentence]
         if not sentences:
             return ""
-        sentence = "\n".join(sentences)
-        return sentence
+        document = "\n".join(sentences)
+        return document
 
     @staticmethod
     def should_keep_word_with_incorrect_substrings(
         word, strip_characters, incorrect_word_substrings
     ):
-        word = ModifyingSentences.strip(word, strip_characters)
+        word = ModifyingDocuments.strip(word, strip_characters)
         should_keep = all(
             [(i_substr not in word) for i_substr in incorrect_word_substrings]
         )
@@ -282,17 +282,17 @@ class ModifyingSentences:
 
     @staticmethod
     def remove_words_with_incorrect_substrings(
-        sentence,
+        document,
         strip_characters,
         incorrect_word_substrings,
     ):
-        sentences = ModifyingSentences.split_on_newline_tab_whitespace(sentence)
+        sentences = ModifyingDocuments.split_on_newline_tab_whitespace(document)
         sentences = [
             [
                 [
                     word
                     for word in subsentence
-                    if ModifyingSentences.should_keep_word_with_incorrect_substrings(
+                    if ModifyingDocuments.should_keep_word_with_incorrect_substrings(
                         word, strip_characters, incorrect_word_substrings
                     )
                 ]
@@ -300,20 +300,18 @@ class ModifyingSentences:
             ]
             for sentence in sentences
         ]
-        sentence = ModifyingSentences.merge_on_whitespace_tab_newline(sentences)
-        return sentence
+        document = ModifyingDocuments.merge_on_whitespace_tab_newline(sentences)
+        return document
 
     @staticmethod
-    def should_keep_long_word(
-        word, strip_characters, length_word_max_cutoff
-    ):
+    def should_keep_long_word(word, strip_characters, length_word_max_cutoff):
         """If the word is too long but it contains only one
         special character, it might be a concatenation of one word,
         a punctuation, and another word, with no space between them.
         In this case, we give the word a pass."""
         if len(word) <= length_word_max_cutoff:
             return True
-        word = ModifyingSentences.strip(word, strip_characters)
+        word = ModifyingDocuments.strip(word, strip_characters)
         if not word:  # The word consisted only of strip characters
             return False
         if len(word) <= length_word_max_cutoff:
@@ -321,17 +319,17 @@ class ModifyingSentences:
         return False
 
     def remove_long_words(
-        sentence,
+        document,
         strip_characters,
         length_word_max_cutoff,
     ):
-        sentences = ModifyingSentences.split_on_newline_tab_whitespace(sentence)
+        sentences = ModifyingDocuments.split_on_newline_tab_whitespace(document)
         sentences = [
             [
                 [
                     word
                     for word in subsentence
-                    if ModifyingSentences.should_keep_long_word(
+                    if ModifyingDocuments.should_keep_long_word(
                         word,
                         strip_characters,
                         length_word_max_cutoff,
@@ -341,12 +339,12 @@ class ModifyingSentences:
             ]
             for sentence in sentences
         ]
-        sentence = ModifyingSentences.merge_on_whitespace_tab_newline(sentences)
-        return sentence
+        document = ModifyingDocuments.merge_on_whitespace_tab_newline(sentences)
+        return document
 
     @staticmethod
-    def modifying_sentences(
-        sentence,
+    def modifying_documents(
+        document,
         cond_uniform_whitespace,
         cond_replace_unicode_punctuation,
         cond_remove_words_with_incorrect_substrings,
@@ -355,8 +353,8 @@ class ModifyingSentences:
         cond_remove_long_words,
         length_word_max_cutoff,
     ):
-        sentence = ModifyingSentences.normalization(
-            sentence=sentence,
+        document = ModifyingDocuments.normalization(
+            document=document,
             remove_non_printing_characters=False,
             strip=True,
             lower_case=False,
@@ -365,28 +363,28 @@ class ModifyingSentences:
             replace_unicode_punctuation=cond_replace_unicode_punctuation,
         )
         if cond_remove_words_with_incorrect_substrings:
-            sentence = ModifyingSentences.remove_words_with_incorrect_substrings(
-                sentence,
+            document = ModifyingDocuments.remove_words_with_incorrect_substrings(
+                document,
                 strip_characters,
                 incorrect_word_substrings,
             )
         if cond_remove_long_words:
-            sentence = ModifyingSentences.remove_long_words(
-                sentence,
+            document = ModifyingDocuments.remove_long_words(
+                document,
                 strip_characters,
                 length_word_max_cutoff,
             )
-        return sentence
+        return document
 
 
-class OscarModifyingSentences:
+class OscarModifyingDocuments:
     def __init__(self, lang_oscar_id):
         self.lang_oscar_id = lang_oscar_id
         self.param = LoadParameters.load_parameters(lang_oscar_id)
 
     def __call__(self, example):
-        example["text"] = ModifyingSentences.modifying_sentences(
-            sentence=example["text"],
+        example["text"] = ModifyingDocuments.modifying_documents(
+            document=example["text"],
             cond_uniform_whitespace=self.param["cond_uniform_whitespace"],
             cond_replace_unicode_punctuation=self.param[
                 "cond_replace_unicode_punctuation"
@@ -408,14 +406,14 @@ class OscarModifyingSentences:
 class Filtering:
     @staticmethod
     def check_number_words(
-        sentence,
+        document,
         sentencepiece_model_tok,
         strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
     ):
-        words = ModifyingSentences.get_words_from_sentence(
-            sentence,
+        words = ModifyingDocuments.get_words_from_document(
+            document,
             sentencepiece_model_tok,
             lower_case=False,
             strip_characters=strip_characters,
@@ -426,27 +424,27 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_special_characters_ratio(sentence, special_characters):
+    def compute_special_characters_ratio(document, special_characters):
         special_characters_ratio = len(
-            [char for char in sentence if char in special_characters]
-        ) / len(sentence)
+            [char for char in document if char in special_characters]
+        ) / len(document)
         return special_characters_ratio
 
     @staticmethod
     def check_special_characters(
-        sentence,
+        document,
         special_characters,
         special_characters_max_cutoff,
     ):
         special_characters_ratio = Filtering.compute_special_characters_ratio(
-            sentence, special_characters
+            document, special_characters
         )
         cond = special_characters_ratio <= special_characters_max_cutoff
         return cond
 
     @staticmethod
     def compute_stopwords_ratio(
-        sentence,
+        document,
         sentencepiece_model_tok,
         strip_characters,
         cond_words_augmentation,
@@ -454,8 +452,8 @@ class Filtering:
         words_augmentation_join_char,
         stopwords,
     ):
-        words = ModifyingSentences.get_words_from_sentence(
-            sentence,
+        words = ModifyingDocuments.get_words_from_document(
+            document,
             sentencepiece_model_tok,
             lower_case=True,
             strip_characters=strip_characters,
@@ -465,7 +463,7 @@ class Filtering:
         augmentation = []
         if cond_words_augmentation:
             augmentation = [
-                ModifyingSentences.words_augmentation(
+                ModifyingDocuments.words_augmentation(
                     words, group_size, words_augmentation_join_char
                 )
                 for group_size in words_augmentation_group_sizes
@@ -480,7 +478,7 @@ class Filtering:
 
     @staticmethod
     def check_stopwords(
-        sentence,
+        document,
         sentencepiece_model_tok,
         strip_characters,
         cond_words_augmentation,
@@ -492,7 +490,7 @@ class Filtering:
         cond = True
         if stopwords:
             stopwords_ratio = Filtering.compute_stopwords_ratio(
-                sentence,
+                document,
                 sentencepiece_model_tok,
                 strip_characters,
                 cond_words_augmentation,
@@ -505,7 +503,7 @@ class Filtering:
 
     @staticmethod
     def compute_badwords_ratio(
-        sentence,
+        document,
         sentencepiece_model_tok,
         strip_characters,
         cond_words_augmentation,
@@ -513,8 +511,8 @@ class Filtering:
         words_augmentation_join_char,
         badwords,
     ):
-        words = ModifyingSentences.get_words_from_sentence(
-            sentence,
+        words = ModifyingDocuments.get_words_from_document(
+            document,
             sentencepiece_model_tok,
             lower_case=True,
             strip_characters=strip_characters,
@@ -524,7 +522,7 @@ class Filtering:
         augmentation = []
         if cond_words_augmentation:
             augmentation = [
-                ModifyingSentences.words_augmentation(
+                ModifyingDocuments.words_augmentation(
                     words, group_size, words_augmentation_join_char
                 )
                 for group_size in words_augmentation_group_sizes
@@ -542,7 +540,7 @@ class Filtering:
 
     @staticmethod
     def check_badwords(
-        sentence,
+        document,
         sentencepiece_model_tok,
         strip_characters,
         cond_words_augmentation,
@@ -554,7 +552,7 @@ class Filtering:
         cond = True
         if badwords:
             badwords_ratio = Filtering.compute_badwords_ratio(
-                sentence,
+                document,
                 sentencepiece_model_tok,
                 strip_characters,
                 cond_words_augmentation,
@@ -566,9 +564,9 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_lang_id_pred_score(sentence, model_lang_id):
-        sentence = sentence.lower().replace("\n", " ")
-        pred = model_lang_id.predict(sentence)
+    def compute_lang_id_pred_score(document, model_lang_id):
+        document = document.lower().replace("\n", " ")
+        pred = model_lang_id.predict(document)
         lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
         score_pred = pred[1][0]
         lang_pred_oscar_id = langs_id.loc[
@@ -582,7 +580,7 @@ class Filtering:
 
     @staticmethod
     def check_lang_id(
-        sentence,
+        document,
         lang_oscar_id,
         model_lang_id,
         lang_id_min_cutoff,
@@ -590,7 +588,7 @@ class Filtering:
         cond = True
         if model_lang_id:
             lang_pred_oscar_id, score_pred = Filtering.compute_lang_id_pred_score(
-                sentence, model_lang_id
+                document, model_lang_id
             )
             cond = (lang_pred_oscar_id == lang_oscar_id) and (
                 score_pred >= lang_id_min_cutoff
@@ -598,9 +596,9 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_perplexity_score(doc, sentencepiece_model, kenlm_model):
-        doc = ModifyingSentences.normalization(
-            sentence=doc,
+    def compute_perplexity_score(document, sentencepiece_model, kenlm_model):
+        document = ModifyingDocuments.normalization(
+            document=document,
             remove_non_printing_characters=True,
             strip=True,
             lower_case=True,
@@ -608,11 +606,11 @@ class Filtering:
             replace_digits_with_zeros=True,
             replace_unicode_punctuation=True,
         )
-        doc = ModifyingSentences.tokenization(
-            doc, sentencepiece_model, join_on_whitespace=True
+        document = ModifyingDocuments.tokenization(
+            document, sentencepiece_model, join_on_whitespace=True
         )
         doc_log_score, doc_length = 0, 0
-        for line in doc.split("\n"):
+        for line in document.split("\n"):
             log_score = kenlm_model.score(line)
             length = len(line.split()) + 1
             doc_log_score += log_score
@@ -623,7 +621,7 @@ class Filtering:
 
     @staticmethod
     def check_perplexity(
-        sentence,
+        document,
         sentencepiece_model,
         kenlm_model,
         perplexity_max_cutoff,
@@ -631,14 +629,14 @@ class Filtering:
         cond = True
         if kenlm_model:
             score = Filtering.compute_perplexity_score(
-                sentence, sentencepiece_model, kenlm_model
+                document, sentencepiece_model, kenlm_model
             )
             cond = score <= perplexity_max_cutoff
         return cond
 
     @staticmethod
     def filtering(
-        sentence,
+        document,
         cond_check_number_words,
         sentencepiece_model_tok,
         strip_characters,
@@ -667,7 +665,7 @@ class Filtering:
     ):
         if cond_check_number_words:
             if not Filtering.check_number_words(
-                sentence,
+                document,
                 sentencepiece_model_tok,
                 strip_characters,
                 number_words_min_cutoff,
@@ -676,14 +674,14 @@ class Filtering:
                 return False
         if cond_check_special_characters:
             if not Filtering.check_special_characters(
-                sentence,
+                document,
                 special_characters,
                 special_characters_max_cutoff,
             ):
                 return False
         if cond_check_stopwords:
             if not Filtering.check_stopwords(
-                sentence,
+                document,
                 sentencepiece_model_tok,
                 strip_characters,
                 cond_words_augmentation,
@@ -695,7 +693,7 @@ class Filtering:
                 return False
         if cond_check_badwords:
             if not Filtering.check_badwords(
-                sentence,
+                document,
                 sentencepiece_model_tok,
                 strip_characters,
                 cond_words_augmentation,
@@ -707,7 +705,7 @@ class Filtering:
                 return False
         if cond_check_lang_id:
             if not Filtering.check_lang_id(
-                sentence,
+                document,
                 lang_oscar_id,
                 model_lang_id,
                 lang_id_min_cutoff,
@@ -715,7 +713,7 @@ class Filtering:
                 return False
         if cond_check_perplexity:
             if not Filtering.check_perplexity(
-                sentence,
+                document,
                 sentencepiece_model,
                 kenlm_model,
                 perplexity_max_cutoff,
@@ -755,7 +753,7 @@ class FuncOscarFiltering:
 
     def __call__(self, example):
         keep_example = Filtering.filtering(
-            sentence=example["text"],
+            document=example["text"],
             cond_check_number_words=self.param["cond_check_number_words"],
             sentencepiece_model_tok=self.sentencepiece_model_tok,
             strip_characters=self.param["strip_characters"],
@@ -815,9 +813,9 @@ class OscarFiltering:
         self.num_proc = num_proc
         self.path_dir_save_oscar = path_dir_save_oscar
 
-    def modifying_sentences(self):
-        oscar_modifying_sentences = OscarModifyingSentences(self.lang_oscar_id)
-        self.ds = self.ds.map(oscar_modifying_sentences, num_proc=self.num_proc)
+    def modifying_documents(self):
+        oscar_modifying_documents = OscarModifyingDocuments(self.lang_oscar_id)
+        self.ds = self.ds.map(oscar_modifying_documents, num_proc=self.num_proc)
 
     def filtering(self):
         func_oscar_filtering = FuncOscarFiltering(

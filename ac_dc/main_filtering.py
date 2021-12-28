@@ -92,7 +92,7 @@ def main():
         num_proc=args.num_proc,
         path_dir_save_oscar=args.path_dir_save_oscar,
     )
-    oscar_filtering.modifying_sentences()
+    oscar_filtering.modifying_documents()
     oscar_filtering.filtering()
     oscar_filtering.save_dataset()
 
