@@ -305,7 +305,7 @@ class ModifyingSentences:
 
     @staticmethod
     def should_keep_long_word(
-        word, strip_characters, special_characters, length_word_max_cutoff
+        word, strip_characters, length_word_max_cutoff
     ):
         """If the word is too long but it contains only one
         special character, it might be a concatenation of one word,
@@ -318,15 +318,11 @@ class ModifyingSentences:
             return False
         if len(word) <= length_word_max_cutoff:
             return True
-        num_special_char = len([char for char in word if char in special_characters])
-        if num_special_char == 1:
-            return True
         return False
 
     def remove_long_words(
         sentence,
         strip_characters,
-        special_characters,
         length_word_max_cutoff,
     ):
         sentences = ModifyingSentences.split_on_newline_tab_whitespace(sentence)
@@ -338,7 +334,6 @@ class ModifyingSentences:
                     if ModifyingSentences.should_keep_long_word(
                         word,
                         strip_characters,
-                        special_characters,
                         length_word_max_cutoff,
                     )
                 ]
@@ -358,7 +353,6 @@ class ModifyingSentences:
         strip_characters,
         incorrect_word_substrings,
         cond_remove_long_words,
-        special_characters,
         length_word_max_cutoff,
     ):
         sentence = ModifyingSentences.normalization(
@@ -380,7 +374,6 @@ class ModifyingSentences:
             sentence = ModifyingSentences.remove_long_words(
                 sentence,
                 strip_characters,
-                special_characters,
                 length_word_max_cutoff,
             )
         return sentence
@@ -404,7 +397,6 @@ class OscarModifyingSentences:
             strip_characters=self.param["strip_characters"],
             incorrect_word_substrings=self.param["incorrect_word_substrings"],
             cond_remove_long_words=self.param["cond_remove_long_words"],
-            special_characters=self.param["special_characters"],
             length_word_max_cutoff=self.param["length_word_max_cutoff"],
         )
         return example
