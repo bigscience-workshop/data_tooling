@@ -61,8 +61,8 @@ In a full description a task is a dictionary with these compulsory fields:
  * `pii`: the PII identifier for the task: a member of [PiiEnum]
  * `type`: the task type: `regex`, `callable` or `PiiTask`
  * `task`: for regex tasks, a raw string (contianing the regex to be used);
-    for function tasks a callable and for PiiTask either a class or a string
-	with a full class name.
+   for function tasks a callable and for PiiTask either a class or a string
+   with a full class name.
  
 And these optional fields
  * `lang`: language this task is designed for (it can also be `LANG_ANY`). If
@@ -83,9 +83,9 @@ And these optional fields
    callable and class types will be used (for regex types, the task will have
    no documentation)
  * `kwargs`: a dictionary of additional arguments. For `PiiTask` task types,
-    they will be added as arguments to the class constructor; for `callable`
-	types they will be added to each call to the task function. It is ignored
-	for `regex` types.
+   they will be added as arguments to the class constructor; for `callable`
+   types they will be added to each call to the task function. It is ignored
+   for `regex` types.
  * `context` and `context_width`: for context validation, see below.
 
 

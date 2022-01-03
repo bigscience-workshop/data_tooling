@@ -8,6 +8,9 @@ v. 0.5.0
  * TASK_ANY split into LANG_ANY & COUNTRY_ANY
  * PII detectors for international phone numbers, for en-any & es-any
  * PII detector for IP addresses, language independent
+ * PII detectors for GOV_ID
+    - lang pt, countries PT & BR
+    - lang es, country MX
  
 v. 0.4.0
  * PII GOV_ID task for es-ES and en-AU

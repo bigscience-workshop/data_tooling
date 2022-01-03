@@ -28,9 +28,8 @@ specification for [task descriptors], with these differences:
      compiled (beware of escaping all backlashes in the string)
    - for `callable` and `PiiTask` types, a string with the **fully 
      qualified** name of the function to be used or class to be instantiated.
-	 As long as that name can be located in the running Python space (i.e.
-	 it is in the load path), it will be imported and used.
-
+     As long as that name can be located in the running Python space (i.e.
+     it is in the load path), it will be imported and used.
 
 
 [lang]: ../src/pii_manager/lang
