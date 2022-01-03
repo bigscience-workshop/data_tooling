@@ -23,28 +23,26 @@ class BasePiiTask:
         """
         Base constructor: fetch & store all generic parameters
         """
-        #print("INIT", kwargs)
+        # print("INIT", kwargs)
         # Full set
         self.options = kwargs.copy()
         # Compulsory fields
-        for f in ('pii', 'lang'):
+        for f in ("pii", "lang"):
             setattr(self, f, kwargs.pop(f))
         # Optional fields
-        for f in ('country', 'name'):
+        for f in ("country", "name"):
             setattr(self, f, kwargs.pop(f, None))
         # Documentation
         self.doc = kwargs.pop("doc", self.pii.name)
         # Context
-        context = kwargs.pop('context', None)
+        context = kwargs.pop("context", None)
         self.context = context_spec(context) if context else None
-
 
     def context_check(self, doc: str, pii: PiiEntity) -> bool:
         """
         Check that a pii has the proper context around it
         """
-        return context_check(doc, self.context, [pii.pos, pii.pos+len(pii)])
-
+        return context_check(doc, self.context, [pii.pos, pii.pos + len(pii)])
 
     def find_context(self, doc: str) -> Iterable[PiiEntity]:
         """
@@ -58,13 +56,11 @@ class BasePiiTask:
             if self.context_check(ndoc, pii):
                 yield pii
 
-
     def find(self, doc: str) -> Iterable[PiiEntity]:
         """
         **Method to be implemented in subclasses**
         """
         raise PiiUnimplemented("missing implementation for Pii Task")
-
 
     def __call__(self, doc: str) -> Iterable[PiiEntity]:
         """
@@ -72,13 +68,11 @@ class BasePiiTask:
         """
         return self.find_context(doc) if self.context else self.find(doc)
 
-
     def __repr__(self) -> str:
         """
         Return a string with a representation for the task
         """
         return f"<{self.pii.name}:{self.name}:{self.country}:{self.__class__.__qualname__}>"
-
 
 
 class RegexPiiTask(BasePiiTask):
@@ -92,16 +86,14 @@ class RegexPiiTask(BasePiiTask):
         super().__init__(**kwargs)
         self.regex = regex.compile(pattern, flags=regex.X | regex.VERSION0)
 
-
     def find(self, doc: str) -> Iterable[PiiEntity]:
         """
         Iterate over the regex and produce Pii objects
         """
         for cc in self.regex.finditer(doc):
-            yield PiiEntity(self.pii, cc.start(), cc.group(),
-                            name=self.name, country=self.country)
-
-
+            yield PiiEntity(
+                self.pii, cc.start(), cc.group(), name=self.name, country=self.country
+            )
 
 
 class CallablePiiTask(BasePiiTask):
@@ -114,7 +106,6 @@ class CallablePiiTask(BasePiiTask):
         self.call = call
         self.kwargs = extra_kwargs or {}
 
-
     def find(self, doc: str) -> Iterable[PiiEntity]:
         """
         Call the function, get all returned strings, and locate them in the
@@ -126,6 +117,5 @@ class CallablePiiTask(BasePiiTask):
                 pos = doc.find(cc, start)
                 if pos < 0:
                     break
-                yield PiiEntity(self.pii, pos, cc,
-                                name=self.name, country=self.country)
+                yield PiiEntity(self.pii, pos, cc, name=self.name, country=self.country)
                 start = pos + len(cc)

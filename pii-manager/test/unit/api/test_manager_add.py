@@ -19,24 +19,27 @@ DUMMY_REGEX = {
     "lang": "en",
     "country": COUNTRY_ANY,
     "name": "disease names",
-    "doc": "a toy example to match some disease names"
+    "doc": "a toy example to match some disease names",
 }
 
 
 TEST_REGEX = [
-    ("Alvin had cancer detected and his email is alvin@anywhere.com",
-     "Alvin had <DISEASE> detected and his email is <EMAIL_ADDRESS>")
+    (
+        "Alvin had cancer detected and his email is alvin@anywhere.com",
+        "Alvin had <DISEASE> detected and his email is <EMAIL_ADDRESS>",
+    )
 ]
 
 
 def test100_info():
     obj = PiiManager("en", None, PiiEnum.EMAIL_ADDRESS)
     obj.add_tasks([DUMMY_REGEX])
-    exp = {(PiiEnum.EMAIL_ADDRESS, None):
-           [('regex for email_address', 'Email address')],
-           (PiiEnum.DISEASE, None):
-           [('disease names',
-             'a toy example to match some disease names')]}
+    exp = {
+        (PiiEnum.EMAIL_ADDRESS, None): [("regex for email_address", "Email address")],
+        (PiiEnum.DISEASE, None): [
+            ("disease names", "a toy example to match some disease names")
+        ],
+    }
     assert obj.task_info() == exp
 
 
@@ -53,11 +56,15 @@ def test110_call():
 
 
 class DummyPii(BasePiiTask):
-
     def find(self, doc):
         for r in re.finditer(r"\d{4}-\w", doc):
-            yield PiiEntity(PiiEnum.GOV_ID, r.start(), r.group(),
-                            country=self.country, name=self.name)
+            yield PiiEntity(
+                PiiEnum.GOV_ID,
+                r.start(),
+                r.group(),
+                country=self.country,
+                name=self.name,
+            )
 
 
 DUMMY_CLASS = {
@@ -66,14 +73,12 @@ DUMMY_CLASS = {
     "task": "unit.api.test_manager_add.DummyPii",
     "lang": "en",
     "country": "vo",
-    "doc": "a toy example to match some disease names"
+    "doc": "a toy example to match some disease names",
 }
 
 
-
 TEST_CLASS = [
-    ("Jeltz has vogonian ID number 1234-J",
-     "Jeltz has vogonian ID number <GOV_ID>")
+    ("Jeltz has vogonian ID number 1234-J", "Jeltz has vogonian ID number <GOV_ID>")
 ]
 
 

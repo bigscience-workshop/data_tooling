@@ -35,8 +35,8 @@ including where to add the required documentation explaining the task.
 
 ## Task descriptor
 
-The task descriptor is a Python list that contains at least one element 
-defining the entry points for this task (there might be more than one, if 
+The task descriptor is a Python list that contains at least one element
+defining the entry points for this task (there might be more than one, if
 the file implements more than one PII).
 
 * The name of the list **must be** `PII_TASKS`
@@ -46,7 +46,7 @@ the file implements more than one PII).
 
 ### Simplified description
 
-In a simplified description a task must be a 2- or 3-element tuple, with 
+In a simplified description a task must be a 2- or 3-element tuple, with
 these elements:
    - the PII identifier for the task: a member of [PiiEnum]
    - the [task implementation]: the regex, function or class implementing the
@@ -63,7 +63,7 @@ In a full description a task is a dictionary with these compulsory fields:
  * `task`: for regex tasks, a raw string (contianing the regex to be used);
    for function tasks a callable and for PiiTask either a class or a string
    with a full class name.
- 
+
 And these optional fields
  * `lang`: language this task is designed for (it can also be `LANG_ANY`). If
    not present, the language will be determined from the folder structure the
@@ -73,7 +73,7 @@ And these optional fields
    if possible (else, a `None`value will be used, meaning the task is not
    country-dependent)
  * `name`: a name for the task. If not present, a name will be generated from
-   the `pii_name` class-level attribute (PiiTask) or from the class/function 
+   the `pii_name` class-level attribute (PiiTask) or from the class/function
    name.
    This is meant to provide a higher level of detail than the `PiiEnum`
    generic name (e.g. for different types of Government ID). Class-type tasks
@@ -100,15 +100,15 @@ Note that task descriptors with context *must* be a full description, i.e. the
 dict version.
 
 Context validation can have three variants:
- * `string`: each text context is a substring to be matched. 
+ * `string`: each text context is a substring to be matched.
  * `word`: each text context is also a substring to be matched, but matching
    is ensured to work only on full words (the substring can contain more than
    one word, but it will be matched only of sequences of full words).
  * `regex`: each context is a regular expression (to be matched by the [regex]
    Python package)
- 
-Regardless of the variante, matching is always performed after normalizing 
-the extracted document context chunk: normalize whitespace (replace all 
+
+Regardless of the variante, matching is always performed after normalizing
+the extracted document context chunk: normalize whitespace (replace all
 whitespace chunks by a single space) and lowercase the chunk.
 
 This validation acts as a filter after the task implementation produces its

@@ -7,11 +7,12 @@ from pii_manager.api import PiiManager
 
 TEST = [
     # A valid CURP
-    ("Mi número de CURP es PEPP700101HASRRD09",
-     "Mi número de CURP es <GOV_ID>"),
+    ("Mi número de CURP es PEPP700101HASRRD09", "Mi número de CURP es <GOV_ID>"),
     # An invalid CURP
-    ("Mi número de CURP es PEPP700101HASRRD01",
-     "Mi número de CURP es PEPP700101HASRRD01")
+    (
+        "Mi número de CURP es PEPP700101HASRRD01",
+        "Mi número de CURP es PEPP700101HASRRD01",
+    ),
 ]
 
 

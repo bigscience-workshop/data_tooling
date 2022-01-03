@@ -28,7 +28,6 @@ def _norm(ctx: str, lang: str, escape: bool = False) -> str:
     return ctx
 
 
-
 def context_spec(spec: Union[str, List, Dict], lang=str) -> Dict:
     """
     Parse & standardize a context specification
@@ -43,9 +42,11 @@ def context_spec(spec: Union[str, List, Dict], lang=str) -> Dict:
         if not s:
             raise InvArgException("empty context spec")
     if isinstance(spec, list):
-        return {"value": [_norm(c, lang) for c in spec],
-                "width": [DEFAULT_CONTEXT_WIDTH, DEFAULT_CONTEXT_WIDTH],
-                "regex": False}
+        return {
+            "value": [_norm(c, lang) for c in spec],
+            "width": [DEFAULT_CONTEXT_WIDTH, DEFAULT_CONTEXT_WIDTH],
+            "regex": False,
+        }
 
     out = {}
 
@@ -66,8 +67,7 @@ def context_spec(spec: Union[str, List, Dict], lang=str) -> Dict:
         value = [_norm(v, lang) for v in value]
     elif ctype == "word":
         out["regex"] = True
-        value = [regex.compile(r"\b" + _norm(v, lang, True) + r"\b")
-                 for v in value]
+        value = [regex.compile(r"\b" + _norm(v, lang, True) + r"\b") for v in value]
     elif ctype == "regex":
         out["regex"] = True
         value = [regex.compile(v, flags=regex.X) for v in value]
@@ -102,8 +102,8 @@ def context_check(text: str, spec: Dict, pii_pos: Tuple[int]) -> bool:
         pii_pos.append(pii_pos[0])
 
     # Extract context chunk
-    start = max(pii_pos[0]-width[0], 0)
-    src = text[start:pii_pos[0]] + " " + text[pii_pos[1]:pii_pos[1]+width[1]]
+    start = max(pii_pos[0] - width[0], 0)
+    src = text[start : pii_pos[0]] + " " + text[pii_pos[1] : pii_pos[1] + width[1]]
 
     # Match
     if spec["regex"]:

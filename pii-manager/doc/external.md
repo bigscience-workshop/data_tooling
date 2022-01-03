@@ -21,12 +21,12 @@ argument will contain the name of a JSON file that contains an array of task
 descriptors. Each task descriptor in the array is a JSON object following the
 specification for [task descriptors], with these differences:
 
-* The `pii` field is not a `PiiEnum` object, but a string with the _name_ of 
+* The `pii` field is not a `PiiEnum` object, but a string with the _name_ of
   a `PiiEnum` object. It will be converted to the object itself.
 * The `task` field contains:
    - for `regex` types, the string with the regular expression pattern to be
      compiled (beware of escaping all backlashes in the string)
-   - for `callable` and `PiiTask` types, a string with the **fully 
+   - for `callable` and `PiiTask` types, a string with the **fully
      qualified** name of the function to be used or class to be instantiated.
      As long as that name can be located in the running Python space (i.e.
      it is in the load path), it will be imported and used.

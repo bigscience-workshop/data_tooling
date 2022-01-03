@@ -43,16 +43,14 @@ def fetch_all_tasks(
         if country[0] in (COUNTRY_ANY, "all"):
             country = country_list(lang)
         for c in country:
-            if c == COUNTRY_ANY:        # already included above
+            if c == COUNTRY_ANY:  # already included above
                 continue
             for task in langdict.get(c, {}).values():
                 yield task
 
 
 def fetch_task(
-        taskname: str, lang: str,
-        country: Iterable[str] = None,
-        debug: bool = False
+    taskname: str, lang: str, country: Iterable[str] = None, debug: bool = False
 ) -> Iterable[List[Dict]]:
     """
     Return a specific task for a given language & country
@@ -92,6 +90,7 @@ def fetch_task(
 
 # --------------------------------------------------------------------------
 
+
 def build_task(task: Dict) -> BasePiiTask:
     """
     Build a task object from its task descriptor
@@ -101,7 +100,7 @@ def build_task(task: Dict) -> BasePiiTask:
         ttype, tobj = task["type"], task["task"]
         args = {k: task[k] for k in ("pii", "lang", "country", "name", "doc")}
         args["context"] = task.get("context")
-        kwargs = task.get('kwargs', {})
+        kwargs = task.get("kwargs", {})
     except KeyError as e:
         raise InvArgException("invalid pii task object: missing field {}", e)
 
@@ -113,8 +112,9 @@ def build_task(task: Dict) -> BasePiiTask:
     elif ttype in ("re", "regex"):
         proc = RegexPiiTask(tobj, **args, **kwargs)
     else:
-        raise InvArgException("invalid pii task type for {}: {}",
-                              task["pii"].name, ttype)
+        raise InvArgException(
+            "invalid pii task type for {}: {}", task["pii"].name, ttype
+        )
     return proc
 
 
@@ -174,7 +174,6 @@ class PiiManager:
     def __repr__(self) -> str:
         return f"<PiiManager (tasks: {len(self.tasks)})>"
 
-
     def add_tasks(self, tasklist: Iterable[Dict]):
         """
         Add a list of processing tasks to the object
@@ -183,7 +182,6 @@ class PiiManager:
             task_check(task_spec, self.lang, self.country)
             self.tasks.append(build_task(task_spec))
         self.tasks = sorted(self.tasks, key=lambda e: e.pii.value)
-
 
     def task_info(self) -> Dict[Tuple, Tuple]:
         """
@@ -196,13 +194,11 @@ class PiiManager:
             info[(task.pii, task.country)].append((task.name, task.doc))
         return info
 
-
     def __call__(self, doc: str) -> Union[Dict, str, Iterable[PiiEntity]]:
         """
         Process a document, calling all defined anonymizers
         """
         return self._process(doc)
-
 
     def process_subst(self, doc: str) -> str:
         """
@@ -228,7 +224,6 @@ class PiiManager:
             doc = "".join(output) + doc[pos:]
         return doc
 
-
     def process_extract(self, doc: str) -> Iterable[PiiEntity]:
         """
         Process a document, calling all defined processors and performing
@@ -240,7 +235,6 @@ class PiiManager:
             for pii in elem_list:
                 yield pii
                 self.stats[pii.elem.name] += 1
-
 
     def process_full(self, doc: str) -> Dict:
         """

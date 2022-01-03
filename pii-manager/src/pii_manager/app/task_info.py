@@ -13,6 +13,7 @@ from pii_manager.api import PiiManager
 from pii_manager.api.file import add_taskfile
 from pii_manager.helper.taskdict import language_list, country_list
 
+
 def print_tasks(proc: PiiManager, out: TextIO):
     print(f". Installed tasks [language={proc.lang}]", file=out)
     for (pii, country), tasklist in proc.task_info().items():
@@ -28,7 +29,7 @@ def process(
     all_tasks: bool = False,
     taskfile: List[str] = None,
     debug: bool = False,
-    **kwargs
+    **kwargs,
 ):
     """
     Process the request: show task info
@@ -50,8 +51,9 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     g1 = parser.add_argument_group("Language specification")
     g11 = g1.add_mutually_exclusive_group(required=True)
     g11.add_argument("--lang", help="language to load")
-    g11.add_argument("--list-languages", action="store_true",
-                     help="List all defined languages ")
+    g11.add_argument(
+        "--list-languages", action="store_true", help="List all defined languages "
+    )
     g1.add_argument(
         "--country",
         nargs="+",
@@ -74,8 +76,9 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     g3.add_argument("--debug", action="store_true", help="debug mode")
 
     parsed = parser.parse_args(args)
-    if not (parsed.list_languages or parsed.tasks or parsed.all_tasks
-            or parsed.taskfile):
+    if not (
+        parsed.list_languages or parsed.tasks or parsed.all_tasks or parsed.taskfile
+    ):
         print(". Warning: no task list selected")
     return parsed
 

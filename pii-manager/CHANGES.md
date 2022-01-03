@@ -11,7 +11,7 @@ v. 0.5.0
  * PII detectors for GOV_ID
     - lang pt, countries PT & BR
     - lang es, country MX
- 
+
 v. 0.4.0
  * PII GOV_ID task for es-ES and en-AU
  * PII EMAIL_ADDRESS task

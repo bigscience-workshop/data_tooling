@@ -13,15 +13,9 @@ TEST = [
         "My IP address is <IP_ADDRESS>",
     ),
     # An invalid IP address
-    (
-        "My IP address is 310.45.122.65",
-        "My IP address is 310.45.122.65"
-    ),
+    ("My IP address is 310.45.122.65", "My IP address is 310.45.122.65"),
     # An IP address without context
-    (
-        "My address is 10.45.122.65",
-        "My address is 10.45.122.65"
-    ),
+    ("My address is 10.45.122.65", "My address is 10.45.122.65"),
 ]
 
 

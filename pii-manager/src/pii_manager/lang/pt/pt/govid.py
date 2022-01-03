@@ -19,11 +19,11 @@ _NIF_PATTERN = r"(?: PT \x20?)? (?: \d{3} \x20 \d{3} \x20 \d{3} | \d{9} )"
 _CC_PATTERN = r"\d{8} \x20? \d \x20? [A-Z0-9]{2}\d"
 
 
-
 class PortugueseNifCc(BasePiiTask):
     """
     Portuguese Government-issued NIF & CC numbers, recognize & validate
     """
+
     pii_name = "Portuguese NIF and CC numbers"
 
     def __init__(self, **kwargs):
@@ -37,14 +37,24 @@ class PortugueseNifCc(BasePiiTask):
         for item in self.nif.finditer(doc):
             item_value = item.group()
             if nif.is_valid(item_value):
-                yield PiiEntity(PiiEnum.GOV_ID, item.start(), item_value,
-                                country=self.country, name="Portuguese NIF")
+                yield PiiEntity(
+                    PiiEnum.GOV_ID,
+                    item.start(),
+                    item_value,
+                    country=self.country,
+                    name="Portuguese NIF",
+                )
         # CC
         for item in self.cc.finditer(doc):
             item_value = item.group()
             if cc.is_valid(item_value):
-                yield PiiEntity(PiiEnum.GOV_ID, item.start(), item_value,
-                                country=self.country, name="Portuguese CC")
+                yield PiiEntity(
+                    PiiEnum.GOV_ID,
+                    item.start(),
+                    item_value,
+                    country=self.country,
+                    name="Portuguese CC",
+                )
 
 
 # Task descriptor

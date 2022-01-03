@@ -7,39 +7,35 @@ import pii_manager.helper.context as mod
 from pii_manager.helper.exception import InvArgException
 
 TEST_TRUE = [
-    ("a special number is 34512",
-     ["special number"]),
-
-    ("a special number is 34512",
-     "special number"),
-
-    ("a special number is 34512",
-     {"value": "special number"}),
-
-    ("a special number is 34512",
-     {"value": "special number", "width": 20}),
-
-    ("a special number is 34512",
-     {"value": "special number", "width": [20, 20]}),
-
-    ("a special number is 34512",
-     {"value": "special number", "width": [20, 20], "type": "string"}),
-
-    ("special numbering is 34512",
-     {"value": "special number", "width": 20, "type": "string"}),
-
-    ("a special number is 34512",
-     {"value": "special number", "width": [20, 20], "type": "word"}),
-
-    ("a special number is 34512",
-     {"value": r"special\snumber", "width": [20, 20], "type": "regex"}),
-
-    ("a special number is 34512",
-     {"value": r"(?:special|standard)\snumber", "width": [20, 20],
-      "type": "regex"}),
-
-    ("special numbering is 34512",
-     {"value": r"\bspecial\snumber(?:ing)?\b", "width": 30, "type": "regex"})
+    ("a special number is 34512", ["special number"]),
+    ("a special number is 34512", "special number"),
+    ("a special number is 34512", {"value": "special number"}),
+    ("a special number is 34512", {"value": "special number", "width": 20}),
+    ("a special number is 34512", {"value": "special number", "width": [20, 20]}),
+    (
+        "a special number is 34512",
+        {"value": "special number", "width": [20, 20], "type": "string"},
+    ),
+    (
+        "special numbering is 34512",
+        {"value": "special number", "width": 20, "type": "string"},
+    ),
+    (
+        "a special number is 34512",
+        {"value": "special number", "width": [20, 20], "type": "word"},
+    ),
+    (
+        "a special number is 34512",
+        {"value": r"special\snumber", "width": [20, 20], "type": "regex"},
+    ),
+    (
+        "a special number is 34512",
+        {"value": r"(?:special|standard)\snumber", "width": [20, 20], "type": "regex"},
+    ),
+    (
+        "special numbering is 34512",
+        {"value": r"\bspecial\snumber(?:ing)?\b", "width": 30, "type": "regex"},
+    ),
 ]
 
 
@@ -47,17 +43,22 @@ TEST_FALSE = [
     # non-matching string
     ("a special tiny number is 34512", ["special number"]),
     # too small context width
-    ("a special number is 34512",
-     {"value": "special number", "width": 8}),
+    ("a special number is 34512", {"value": "special number", "width": 8}),
     # not full words
-    ("special numbering 34512",
-     {"value": "special number", "width": 20, "type": "word"}),
+    (
+        "special numbering 34512",
+        {"value": "special number", "width": 20, "type": "word"},
+    ),
     # not a valid extended regex (it has whitespace)
-    ("special numbering 34512",
-     {"value": "special number", "width": 20, "type": "regex"}),
+    (
+        "special numbering 34512",
+        {"value": "special number", "width": 20, "type": "regex"},
+    ),
     # marked as a string, while it should be regex
-    ("special numbering is 34512",
-     {"value": r"\bspecial\snumber(?:ing)?\b", "width": 30, "type": "string"})
+    (
+        "special numbering is 34512",
+        {"value": r"\bspecial\snumber(?:ing)?\b", "width": 30, "type": "string"},
+    ),
 ]
 
 

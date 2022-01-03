@@ -7,11 +7,9 @@ from pii_manager.api import PiiManager
 
 TEST = [
     # A valid CPF
-    ("O número do CPF é 263.946.533-30",
-     "O número do CPF é <GOV_ID>"),
+    ("O número do CPF é 263.946.533-30", "O número do CPF é <GOV_ID>"),
     # An invalid CPF
-    ("O número do CPF é 000.000.000-12",
-     "O número do CPF é 000.000.000-12")
+    ("O número do CPF é 000.000.000-12", "O número do CPF é 000.000.000-12"),
 ]
 
 

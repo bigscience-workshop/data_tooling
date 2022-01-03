@@ -102,7 +102,7 @@ detector.
 
 ## Documentation
 
-In addition to its name, all PII Tasks should be documented with a small 
+In addition to its name, all PII Tasks should be documented with a small
 string that explains what they detect. The place to add this documentation is:
  * For Regex tasks, add the string as the third element in the task descriptor
    inside `PII_TASKS`

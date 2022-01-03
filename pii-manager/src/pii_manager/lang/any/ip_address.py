@@ -20,10 +20,6 @@ PII_TASKS = [
         "task": _IP_PATTERN,
         "name": "ip address",
         "doc": "match IP addresses, with context",
-        "context": {
-            "value": "ip",
-            "type": "word",
-            "width": 16
-        }
+        "context": {"value": "ip", "type": "word", "width": 16},
     }
 ]

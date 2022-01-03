@@ -15,8 +15,9 @@ class PiiEntity:
 
     __slots__ = "elem", "pos", "value", "country", "name"
 
-    def __init__(self, elem: PiiEnum, pos: int, value: str,
-                 country: str = None, name: str = None):
+    def __init__(
+        self, elem: PiiEnum, pos: int, value: str, country: str = None, name: str = None
+    ):
         self.elem = elem
         self.pos = pos
         self.value = value
@@ -30,9 +31,13 @@ class PiiEntity:
         return f"<PiiEntity {self.elem.name}:{self.pos}:{self.value}:{self.country}:{self.name}>"
 
     def __eq__(self, other):
-        return (self.elem == other.elem and self.pos == other.pos and
-                self.value == other.value and self.country == other.country and
-                self.name == other.name)
+        return (
+            self.elem == other.elem
+            and self.pos == other.pos
+            and self.value == other.value
+            and self.country == other.country
+            and self.name == other.name
+        )
 
     def to_json(self) -> Dict:
         """
@@ -41,8 +46,7 @@ class PiiEntity:
         return piientity_asdict(self)
 
 
-def piientity_asdict(pii: PiiEntity, name: bool = None,
-                     country: bool = None) -> Dict:
+def piientity_asdict(pii: PiiEntity, name: bool = None, country: bool = None) -> Dict:
     """
     Create a dictionary from a PiiEntity object
      :param country: add country information: always (True), never (False),

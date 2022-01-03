@@ -37,11 +37,12 @@ _LANG = Path(__file__).parents[1] / "lang"
 
 # --------------------------------------------------------------------------
 
-class InvPiiTask(InvArgException):
 
+class InvPiiTask(InvArgException):
     def __init__(self, msg, lang=None, country=None):
-        super().__init__("task descriptor error [lang={}, country={}]: {}",
-                         lang, country, msg)
+        super().__init__(
+            "task descriptor error [lang={}, country={}]: {}", lang, country, msg
+        )
 
 
 def _is_pii_class(obj: Any) -> bool:
@@ -54,8 +55,7 @@ def _import_task_object(objname: str) -> Union[Callable, Type[BasePiiTask]]:
         mod = importlib.import_module(modname)
         return getattr(mod, oname)
     except Exception as e:
-        raise InvPiiTask("cannot import task object '{}': {}",
-                         objname, e) from e
+        raise InvPiiTask("cannot import task object '{}': {}", objname, e) from e
 
 
 def _task_check(task: Dict, lang: str, country: TYPE_STR_LIST):
@@ -98,7 +98,7 @@ def _task_check(task: Dict, lang: str, country: TYPE_STR_LIST):
             if name and task["type"] == "PiiTask":
                 name = " ".join(re.findall(r"[A-Z][^A-Z]*", name)).lower()
             elif task["type"] == "callable":
-                name = name.replace('_', ' ')
+                name = name.replace("_", " ")
         if not name:
             name = (task["type"] + " for " + task["pii"].name).lower()
         task["name"] = name
@@ -110,11 +110,15 @@ def _task_check(task: Dict, lang: str, country: TYPE_STR_LIST):
             task["doc"] = doc.strip()
 
     # Process lang
-    task_lang = task.get('lang')
-    if (task_lang != lang and task_lang not in (None, LANG_ANY)
-        and lang not in (None, LANG_ANY)):
-        raise InvArgException("language mismatch in task descriptor: {} vs {}",
-                              task_lang, lang)
+    task_lang = task.get("lang")
+    if (
+        task_lang != lang
+        and task_lang not in (None, LANG_ANY)
+        and lang not in (None, LANG_ANY)
+    ):
+        raise InvArgException(
+            "language mismatch in task descriptor: {} vs {}", task_lang, lang
+        )
     elif task_lang is None:
         if lang is None:
             raise InvArgException("no lang can be determined")
@@ -125,11 +129,15 @@ def _task_check(task: Dict, lang: str, country: TYPE_STR_LIST):
         country = [COUNTRY_ANY]
     elif isinstance(country, str):
         country = [country]
-    task_country = task.get('country')
-    if (task_country not in country and task_country not in (None, COUNTRY_ANY)
-        and COUNTRY_ANY not in country):
-        raise InvArgException("country mismatch in task descriptor: {} vs {}",
-                              task_country, country)
+    task_country = task.get("country")
+    if (
+        task_country not in country
+        and task_country not in (None, COUNTRY_ANY)
+        and COUNTRY_ANY not in country
+    ):
+        raise InvArgException(
+            "country mismatch in task descriptor: {} vs {}", task_country, country
+        )
     if task_country is None:
         task["country"] = country[0]
     if task["country"] == COUNTRY_ANY:
@@ -146,8 +154,7 @@ def task_check(task: Dict, lang: str, country: str):
         raise InvPiiTask(e, lang=lang, country=country)
 
 
-def build_subdict(task_list: List[Tuple], lang: str,
-                  country: str = None) -> Dict:
+def build_subdict(task_list: List[Tuple], lang: str, country: str = None) -> Dict:
     """
     Given a list of task tuples, build the task dict for them
     """
@@ -157,20 +164,26 @@ def build_subdict(task_list: List[Tuple], lang: str,
     subdict = defaultdict(list)
     for src in task_list:
         # Fetch the task
-        if isinstance(src, tuple):     # parse a simplified form (tuple)
+        if isinstance(src, tuple):  # parse a simplified form (tuple)
             # Checks
             if len(src) != 2 and (len(src) != 3 or not isinstance(src[1], str)):
                 raise InvPiiTask("invalid simplified task spec", lang, country)
             # Task type
-            task_type = 'PiiTask' if _is_pii_class(src[1]) \
-                else 'callable' if callable(src[1]) \
-                else 'regex' if isinstance(src[1], str) else None
+            task_type = (
+                "PiiTask"
+                if _is_pii_class(src[1])
+                else "callable"
+                if callable(src[1])
+                else "regex"
+                if isinstance(src[1], str)
+                else None
+            )
             # Build the dict
             td = {"pii": src[0], "type": task_type, "task": src[1]}
             if len(src) > 2:
                 td["doc"] = src[2]
             task = td
-        elif isinstance(src, dict):     # full form
+        elif isinstance(src, dict):  # full form
             task = src.copy()
         else:
             raise InvPiiTask("element must be a tuple or dict", lang, country)
@@ -183,8 +196,9 @@ def build_subdict(task_list: List[Tuple], lang: str,
     return subdict
 
 
-def _gather_piitasks(pkg: ModuleType, path: str, lang: str, country: str,
-                     debug: bool = False) -> List[Tuple]:
+def _gather_piitasks(
+    pkg: ModuleType, path: str, lang: str, country: str, debug: bool = False
+) -> List[Tuple]:
     """
     Import and load all tasks defined in a module
     """
@@ -214,8 +228,13 @@ def _gather_piitasks(pkg: ModuleType, path: str, lang: str, country: str,
             print("... path =", path, file=sys.stderr)
             for task_name, tasklist in pii_tasks.items():
                 for task in tasklist:
-                    print("  ", task_name, f"-> ({task['type']})",
-                          task["doc"], file=sys.stderr)
+                    print(
+                        "  ",
+                        task_name,
+                        f"-> ({task['type']})",
+                        task["doc"],
+                        file=sys.stderr,
+                    )
 
     return pii_tasks
 
@@ -241,8 +260,9 @@ def import_processor(lang: str, country: str = None, debug: bool = False) -> Dic
         path = _LANG / lang_elem / country_elem
 
     # mod = importlib.import_module('...lang.' + name, __name__)
-    return _gather_piitasks("pii_manager.lang." + name, path,
-                            lang, country, debug=debug)
+    return _gather_piitasks(
+        "pii_manager.lang." + name, path, lang, country, debug=debug
+    )
 
 
 def _norm(elem: str) -> str:
@@ -257,11 +277,15 @@ def country_list(lang: str) -> List[str]:
     Return all countries for a given language
     """
     p = _LANG / lang
-    return [_norm(d.name) for d in p.iterdir() if d.is_dir() and d.name != "__pycache__"]
+    return [
+        _norm(d.name) for d in p.iterdir() if d.is_dir() and d.name != "__pycache__"
+    ]
 
 
 def language_list() -> List[str]:
-    return [_norm(d.name) for d in _LANG.iterdir() if d.is_dir() and d.name != "__pycache__"]
+    return [
+        _norm(d.name) for d in _LANG.iterdir() if d.is_dir() and d.name != "__pycache__"
+    ]
 
 
 # --------------------------------------------------------------------------

@@ -31,7 +31,7 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         "--all-tasks", action="store_true", help="add all pii tasks available"
     )
     g21.add_argument(
-        "--taskfile", nargs='+', help="add all pii tasks defined in a JSON file"
+        "--taskfile", nargs="+", help="add all pii tasks defined in a JSON file"
     )
 
     g3 = parser.add_argument_group("Processing")

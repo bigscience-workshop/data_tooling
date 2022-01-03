@@ -43,7 +43,7 @@ the country as `COUNTRY_ANY` and using the `all_tasks` argument.
  from pii_manager import PiiEnum
  from pii_manager.api import PiiManager
  from pii_manager.lang import COUNTRY_ANY
- 
+
  proc = PiiManager('en', COUNTRY_ANY, all_tasks=True)
 
  text_out = proc(text_in)

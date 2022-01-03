@@ -7,18 +7,22 @@ from pii_manager.api import PiiManager
 
 TEST = [
     # A valid DNI
-    ("Mi DNI es 34657934-Q",
-     "Mi DNI es <GOV_ID>",
-     [PiiEntity(PiiEnum.GOV_ID, 10, "34657934-Q", "es", "Spanish DNI")]),
+    (
+        "Mi DNI es 34657934-Q",
+        "Mi DNI es <GOV_ID>",
+        [PiiEntity(PiiEnum.GOV_ID, 10, "34657934-Q", "es", "Spanish DNI")],
+    ),
     # A DNI without dash
-    ("El DNI 34657934Q es válido",
-     "El DNI <GOV_ID> es válido",
-     [PiiEntity(PiiEnum.GOV_ID, 7, "34657934Q", "es", "Spanish DNI")]),
+    (
+        "El DNI 34657934Q es válido",
+        "El DNI <GOV_ID> es válido",
+        [PiiEntity(PiiEnum.GOV_ID, 7, "34657934Q", "es", "Spanish DNI")],
+    ),
     # A valid NIE
     (
         "El NIE es X3465793-S",
         "El NIE es <GOV_ID>",
-        [PiiEntity(PiiEnum.GOV_ID, 10, "X3465793-S", "es", "Spanish NIE")]
+        [PiiEntity(PiiEnum.GOV_ID, 10, "X3465793-S", "es", "Spanish NIE")],
     ),
     # An invalid DNI
     ("Mi DNI es 34657934-H", "Mi DNI es 34657934-H", []),

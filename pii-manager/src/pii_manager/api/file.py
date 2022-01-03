@@ -90,20 +90,25 @@ def read_taskfile(filename: str) -> List[Dict]:
     """
     Read a list of task descriptors from a JSON file
     """
-    with open(filename, encoding='utf-8') as f:
+    with open(filename, encoding="utf-8") as f:
         try:
             tasklist = json.load(f)
             for td in tasklist:
-                td['pii'] = PiiEnum[td['pii']]
+                td["pii"] = PiiEnum[td["pii"]]
             return tasklist
         except json.JSONDecodeError as e:
-            raise InvArgException('invalid task spec file {}: {}',
-                                  filename, e)
+            raise InvArgException("invalid task spec file {}: {}", filename, e)
         except KeyError as e:
-            if str(e) == 'pii':
-                raise InvArgException("missing 'pii' field in task descriptor in {}", filename)
+            if str(e) == "pii":
+                raise InvArgException(
+                    "missing 'pii' field in task descriptor in {}", filename
+                )
             else:
-                raise InvArgException("cannot find PiiEnum element '{}' for task descriptor in {}", e, filename)
+                raise InvArgException(
+                    "cannot find PiiEnum element '{}' for task descriptor in {}",
+                    e,
+                    filename,
+                )
         except Exception as e:
             raise InvArgException("cannot read taskfile '{}': {}", filename, e)
 
@@ -117,6 +122,7 @@ def add_taskfile(filename: TYPE_STR_LIST, proc: PiiManager):
     for name in filename:
         tasklist = read_taskfile(name)
         proc.add_tasks(tasklist)
+
 
 # ----------------------------------------------------------------------
 

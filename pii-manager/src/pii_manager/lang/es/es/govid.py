@@ -18,11 +18,11 @@ _DNI_PATTERN = r"\d{6,8} -? [A-KJ-NP-TV-Z]"
 _NIE_PATTERN = r"[X-Z] \d{7} -? [A-KJ-NP-TV-Z]"
 
 
-
 class SpanishDniNie(BasePiiTask):
     """
     Spanish Government-issued DNI & NIE numbers, recognize & validate
     """
+
     pii_name = "Spanish DNI and NIE numbers"
 
     def __init__(self, **kwargs):
@@ -36,14 +36,24 @@ class SpanishDniNie(BasePiiTask):
         for item in self.dni.finditer(doc):
             item_value = item.group()
             if dni.is_valid(item_value):
-                yield PiiEntity(PiiEnum.GOV_ID, item.start(), item_value,
-                                country=self.country, name="Spanish DNI")
+                yield PiiEntity(
+                    PiiEnum.GOV_ID,
+                    item.start(),
+                    item_value,
+                    country=self.country,
+                    name="Spanish DNI",
+                )
         # NIE
         for item in self.nie.finditer(doc):
             item_value = item.group()
             if nie.is_valid(item_value):
-                yield PiiEntity(PiiEnum.GOV_ID, item.start(), item_value,
-                                country=self.country, name="Spanish NIE")
+                yield PiiEntity(
+                    PiiEnum.GOV_ID,
+                    item.start(),
+                    item_value,
+                    country=self.country,
+                    name="Spanish NIE",
+                )
 
 
 # Task descriptor
