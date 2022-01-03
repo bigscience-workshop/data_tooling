@@ -9558,11 +9558,6 @@ badwords = {
         "\u9e21\u9e21",
         "\u9f9f\u513f\u5b50",
         "\u9f9f\u5934",
-        "\ud847\udcde",
-        "\ud863\udcca",
-        "\ud863\udccd",
-        "\ud863\udcd2",
-        "\ud863\udd99",
     ],
     "zu": english_badwords
     + [

@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
-from oscar_sample_filter import LoadParameters, ModifyingSentences, Filtering
+from oscar_sample_filter import LoadParameters, ModifyingDocuments, Filtering
 
 
 class GetDataForVisualization:
@@ -27,6 +27,7 @@ class GetDataForVisualization:
 
         self.lang_oscar_id = lang_oscar_id
 
+        self.param = LoadParameters.load_parameters(lang_oscar_id)
         self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
         self.badwords = LoadParameters.load_badwords(lang_oscar_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
@@ -35,10 +36,12 @@ class GetDataForVisualization:
         self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
             lang_oscar_id, path_sentencepiece_model
         )
+        self.sentencepiece_model_tok = (
+            self.sentencepiece_model if self.param["tokenization"] else None
+        )
         self.kenlm_model = LoadParameters.load_kenlm_model(
             lang_oscar_id, path_kenlm_model
         )
-        self.param = LoadParameters.load_parameters(lang_oscar_id)
 
         self.keys_stats = [
             "special_characters_ratio",
@@ -54,48 +57,81 @@ class GetDataForVisualization:
         stats = []
         num_iter_examples = True
         for i in tqdm(range(self.num_iter)):
-            stats_sentence = {}
+            stats_document = {}
 
             try:
-                sentence = next(dataset)["text"]
+                document = next(dataset)["text"]
 
-                words = ModifyingSentences.split_on_whitespace(sentence, new_line=True, tab=True)
-                words = [word for word in words if word]
+                words = ModifyingDocuments.get_words_from_document(
+                    document,
+                    sentencepiece_model_tok=self.sentencepiece_model_tok,
+                    lower_case=True,
+                    strip_characters=self.param["strip_characters"],
+                )
+                words = [
+                    {
+                        "len_word": len(word),
+                        "incorrect_substring": any(
+                            [
+                                (i_substr in word)
+                                for i_substr in self.param["incorrect_word_substrings"]
+                            ]
+                        ),
+                        "word": word,
+                    }
+                    for word in words
+                ]
+
+                if not self.param["tokenization"]:
+                    stats_document["words"] = words
+
                 number_words = len(words)
-                stats_sentence["number_words"] = number_words
+                stats_document["number_words"] = number_words
 
                 special_characters_ratio = Filtering.compute_special_characters_ratio(
-                    sentence, self.param["special_characters"]
+                    document, self.param["special_characters"]
                 )
-                stats_sentence["special_characters_ratio"] = special_characters_ratio
+                stats_document["special_characters_ratio"] = special_characters_ratio
 
                 if self.stopwords:
                     stopwords_ratio = Filtering.compute_stopwords_ratio(
-                        sentence, self.param["strip_characters"], self.stopwords
+                        document,
+                        self.sentencepiece_model_tok,
+                        self.param["strip_characters"],
+                        self.param["cond_words_augmentation"],
+                        self.param["words_augmentation_group_sizes"],
+                        self.param["words_augmentation_join_char"],
+                        self.stopwords,
                     )
-                    stats_sentence["stopwords_ratio"] = stopwords_ratio
+                    stats_document["stopwords_ratio"] = stopwords_ratio
 
                 if self.badwords:
                     badwords_ratio = Filtering.compute_badwords_ratio(
-                        sentence, self.param["strip_characters"], self.badwords
+                        document,
+                        self.sentencepiece_model_tok,
+                        self.param["strip_characters"],
+                        self.param["cond_words_augmentation"],
+                        self.param["words_augmentation_group_sizes"],
+                        self.param["words_augmentation_join_char"],
+                        self.badwords,
                     )
-                    stats_sentence["badwords_ratio"] = badwords_ratio
+                    stats_document["badwords_ratio"] = badwords_ratio
 
                 if self.model_lang_id:
                     _, lang_id_score = Filtering.compute_lang_id_pred_score(
-                        sentence, self.model_lang_id
+                        document, self.model_lang_id
                     )
-                    stats_sentence["lang_id_score"] = lang_id_score
+                    stats_document["lang_id_score"] = lang_id_score
 
                 if self.kenlm_model:
                     perplexity_score = Filtering.compute_perplexity_score(
-                        sentence, self.sentencepiece_model, self.kenlm_model
+                        document, self.sentencepiece_model, self.kenlm_model
                     )
-                    stats_sentence["perplexity_score"] = perplexity_score
+                    stats_document["perplexity_score"] = perplexity_score
 
-                stats_sentence["text"] = sentence
+                stats_document["text"] = document
 
-                stats.append(stats_sentence)
+                stats.append(stats_document)
 
             except:
                 num_iter_examples = False
@@ -115,7 +151,7 @@ if __name__ == "__main__":
     config_name = "unshuffled_deduplicated_en"
     data_files = None
     split = "train"
-    num_iter = 5000
+    num_iter = 15000
 
     dataset = load_dataset(
         dataset_name,
@@ -129,7 +165,7 @@ if __name__ == "__main__":
     path_fasttext_model = "ac_dc/lid.176.bin"
     path_sentencepiece_model = f"ac_dc/en.sp.model"
     path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_save_stats = f"./en_examples_with_stats.json"
+    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
 
     get_data_for_visualization = GetDataForVisualization(
         dataset,
