@@ -21,7 +21,7 @@ _CCC_PATTERN = r"\d{4}\s?\d{4}\s?\d{2}\s?\d{10}"
 _REGEX_CCC = None
 
 
-def get_spanish_bank_account(text: str) -> Iterable[str]:
+def spanish_bank_ccc(text: str) -> Iterable[str]:
     """
     Spanish Bank Accounts (código cuenta cliente, 10-digit code, pre-IBAN), recognize & validate
     """
@@ -37,4 +37,4 @@ def get_spanish_bank_account(text: str) -> Iterable[str]:
 
 # ---------------------------------------------------------------------
 
-PII_TASKS = [(PiiEnum.BANK_ACCOUNT, get_spanish_bank_account)]
+PII_TASKS = [(PiiEnum.BANK_ACCOUNT, spanish_bank_ccc)]

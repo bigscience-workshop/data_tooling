@@ -1,0 +1,23 @@
+[
+  {
+    "pii": "IP_ADDRESS",
+    "lang": "any",
+    "type": "regex",
+    "task": "\\b (?: (?: 25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]? ) \\. ){3} (?: 25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]?) \\b",
+    "doc": "ip address detection via regex"
+  },
+  {
+    "pii": "BITCOIN_ADDRESS",
+    "lang": "any",
+    "type": "callable",
+    "task": "pii_manager.lang.any.bitcoin_address.bitcoin_address",
+    "doc": "bitcoin address detection"
+  },
+  {
+    "pii": "CREDIT_CARD",
+    "lang": "en",
+    "type": "PiiTask",
+    "task": "pii_manager.lang.any.credit_card.CreditCard",
+    "doc": "credit card number detection"
+  }
+]

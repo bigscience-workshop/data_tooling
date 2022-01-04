@@ -19,7 +19,7 @@ _GOV_ID_PATTERN = r"(?<!\d) (?: (\d{18}) | ( (?:G|D|S|P|H|M) \d{8} ) ) (?!\d)"
 _GOV_ID_REGEX = re.compile(_GOV_ID_PATTERN, flags=re.X)
 
 
-def gov_id_china(doc: str) -> Iterable[str]:
+def ric_or_passport(doc: str) -> Iterable[str]:
     """
     Chinese government-issued identifiers:
       - RIC (Resident Identification Card number), detect and validate
@@ -32,4 +32,4 @@ def gov_id_china(doc: str) -> Iterable[str]:
             yield g.group(2)
 
 
-PII_TASKS = [(PiiEnum.GOV_ID, gov_id_china)]
+PII_TASKS = [(PiiEnum.GOV_ID, ric_or_passport)]

@@ -29,7 +29,7 @@ _BITCOIN_PATTERN = (
 _REGEX_BITCOIN = re.compile(_BITCOIN_PATTERN, flags=re.X)
 
 
-def get_bitcoin(text: str) -> Iterable[str]:
+def bitcoin_address(text: str) -> Iterable[str]:
     """
     Bitcoin addresses (P2PKH, P2SH and Bech32), recognize & validate
     """
@@ -41,4 +41,4 @@ def get_bitcoin(text: str) -> Iterable[str]:
 
 # ---------------------------------------------------------------------
 
-PII_TASKS = [(PiiEnum.BITCOIN_ADDRESS, get_bitcoin)]
+PII_TASKS = [(PiiEnum.BITCOIN_ADDRESS, bitcoin_address)]
