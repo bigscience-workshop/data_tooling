@@ -1,0 +1,14 @@
+name: Label with contact needed
+on:
+  issue_comment:
+    types: created
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event.comment.body == '#contact' ||
+       github.event.comment.body == '#contact-needed')
+    steps:
+      - run: |
+          echo "Labeling issue ${{ github.event.issue.number }} with 'contact needed'"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["contact needed"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels
