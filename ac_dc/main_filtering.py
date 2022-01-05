@@ -1,10 +1,45 @@
 """Filtering."""
 
+from multiprocessing import cpu_count
+
 import argparse
 
 from datasets import load_dataset
 
 from filtering import DatasetFiltering
+
+
+def check_num_proc(num_proc: int = -1) -> int:
+    """
+    Check the number of processors. Return a safe-checked value.
+
+    Parameters
+    ----------
+    num_proc : int, optional
+        Number of processors to use, by default -1
+
+    Returns
+    -------
+    int
+        Number of processors to use
+
+    Raises
+    ------
+    ValueError
+        If the input exceeds the number of processors available
+    """
+    maximum: int = cpu_count()
+    if num_proc > maximum:
+        raise ValueError(
+            f"{num_proc} exceeds the maximum number ({maximum}) of processors"
+        )
+
+    if num_proc == -1:
+        num_proc = maximum
+    else:
+        print(f"Using {num_proc} processors out of {maximum} can be slow")
+
+    return num_proc
 
 
 def parseArgs():
@@ -60,8 +95,8 @@ def parseArgs():
     parser.add_argument(
         "--num_proc",
         type=int,
-        default=2,
-        help="Number of processes for multiprocessing.",
+        default=-1,
+        help="Number of processes for multiprocessing. Default at the number of processors available.",
     )
     parser.add_argument(
         "--path_dir_save_dataset",
@@ -89,7 +124,7 @@ def main():
         path_fasttext_model=args.path_fasttext_model,
         path_sentencepiece_model=args.path_sentencepiece_model,
         path_kenlm_model=args.path_kenlm_model,
-        num_proc=args.num_proc,
+        num_proc=check_num_proc(args.num_proc),
         path_dir_save_dataset=args.path_dir_save_dataset,
     )
     dataset_filtering.modifying_documents()
