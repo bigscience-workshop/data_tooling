@@ -3,7 +3,7 @@
 Usage:
     python download_kenlm_models.py --output_path /tmp/
 
-All 48 kenlm language models will be saved under /tmp.
+All kenlm language models will be saved under /tmp.
 """
 
 import argparse

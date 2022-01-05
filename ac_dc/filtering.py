@@ -19,17 +19,17 @@ from badwords import badwords
 
 class LoadParameters:
     @staticmethod
-    def load_parameters(lang_oscar_id):
-        if lang_oscar_id in parameters_filtering:
-            param = parameters_filtering[lang_oscar_id]
+    def load_parameters(lang_dataset_id):
+        if lang_dataset_id in parameters_filtering:
+            param = parameters_filtering[lang_dataset_id]
         else:
             param = parameters_filtering["default"]
         return param
 
     @staticmethod
-    def load_stopwords(lang_oscar_id):
+    def load_stopwords(lang_dataset_id):
         stopwords_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "stopwords_id"
+            langs_id["dataset_id"] == lang_dataset_id, "stopwords_id"
         ].iloc[0]
         if stopwords_lang_id:
             stopwords_lang = set(stopwords[stopwords_lang_id])
@@ -38,9 +38,9 @@ class LoadParameters:
         return stopwords_lang
 
     @staticmethod
-    def load_badwords(lang_oscar_id):
+    def load_badwords(lang_dataset_id):
         badwords_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "badwords_id"
+            langs_id["dataset_id"] == lang_dataset_id, "badwords_id"
         ].iloc[0]
         if badwords_lang_id:
             badwords_lang = set(badwords[badwords_lang_id])
@@ -49,9 +49,9 @@ class LoadParameters:
         return badwords_lang
 
     @staticmethod
-    def load_model_lang_id(lang_oscar_id, path_fasttext_model):
+    def load_model_lang_id(lang_dataset_id, path_fasttext_model):
         fasttext_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "fasttext_id"
+            langs_id["dataset_id"] == lang_dataset_id, "fasttext_id"
         ].iloc[0]
         if fasttext_lang_id:
             model_lang_id = fasttext.load_model(path_fasttext_model)
@@ -60,9 +60,9 @@ class LoadParameters:
         return model_lang_id
 
     @staticmethod
-    def load_sentencepiece_model(lang_oscar_id, path_sentencepiece_model):
+    def load_sentencepiece_model(lang_dataset_id, path_sentencepiece_model):
         sentencepiece_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "sentencepiece_id"
+            langs_id["dataset_id"] == lang_dataset_id, "sentencepiece_id"
         ].iloc[0]
         if sentencepiece_lang_id:
             sentencepiece_model = sentencepiece.SentencePieceProcessor()
@@ -72,9 +72,9 @@ class LoadParameters:
         return sentencepiece_model
 
     @staticmethod
-    def load_kenlm_model(lang_oscar_id, path_kenlm_model):
+    def load_kenlm_model(lang_dataset_id, path_kenlm_model):
         kenlm_lang_id = langs_id.loc[
-            langs_id["oscar_id"] == lang_oscar_id, "kenlm_id"
+            langs_id["dataset_id"] == lang_dataset_id, "kenlm_id"
         ].iloc[0]
         if kenlm_lang_id:
             kenlm_model = kenlm.Model(path_kenlm_model)
@@ -377,10 +377,10 @@ class ModifyingDocuments:
         return document
 
 
-class OscarModifyingDocuments:
-    def __init__(self, lang_oscar_id):
-        self.lang_oscar_id = lang_oscar_id
-        self.param = LoadParameters.load_parameters(lang_oscar_id)
+class FunctionDatasetModifyingDocuments:
+    def __init__(self, lang_dataset_id):
+        self.lang_dataset_id = lang_dataset_id
+        self.param = LoadParameters.load_parameters(lang_dataset_id)
 
     def __call__(self, example):
         example["text"] = ModifyingDocuments.modifying_documents(
@@ -400,7 +400,7 @@ class OscarModifyingDocuments:
         return example
 
     def __reduce__(self):
-        return (self.__class__, (self.lang_oscar_id,))
+        return (self.__class__, (self.lang_dataset_id,))
 
 
 class Filtering:
@@ -569,28 +569,28 @@ class Filtering:
         pred = model_lang_id.predict(document)
         lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
         score_pred = pred[1][0]
-        lang_pred_oscar_id = langs_id.loc[
-            langs_id["fasttext_id"] == lang_pred_fasttext_id, "oscar_id"
+        lang_pred_dataset_id = langs_id.loc[
+            langs_id["fasttext_id"] == lang_pred_fasttext_id, "dataset_id"
         ]
-        if len(lang_pred_oscar_id) > 0:
-            lang_pred_oscar_id = lang_pred_oscar_id.iloc[0]
+        if len(lang_pred_dataset_id) > 0:
+            lang_pred_dataset_id = lang_pred_dataset_id.iloc[0]
         else:
-            lang_pred_oscar_id = "unknown"
-        return lang_pred_oscar_id, score_pred
+            lang_pred_dataset_id = "unknown"
+        return lang_pred_dataset_id, score_pred
 
     @staticmethod
     def check_lang_id(
         document,
-        lang_oscar_id,
+        lang_dataset_id,
         model_lang_id,
         lang_id_min_cutoff,
     ):
         cond = True
         if model_lang_id:
-            lang_pred_oscar_id, score_pred = Filtering.compute_lang_id_pred_score(
+            lang_pred_dataset_id, score_pred = Filtering.compute_lang_id_pred_score(
                 document, model_lang_id
             )
-            cond = (lang_pred_oscar_id == lang_oscar_id) and (
+            cond = (lang_pred_dataset_id == lang_dataset_id) and (
                 score_pred >= lang_id_min_cutoff
             )
         return cond
@@ -655,7 +655,7 @@ class Filtering:
         badwords,
         badwords_max_cutoff,
         cond_check_lang_id,
-        lang_oscar_id,
+        lang_dataset_id,
         model_lang_id,
         lang_id_min_cutoff,
         cond_check_perplexity,
@@ -706,7 +706,7 @@ class Filtering:
         if cond_check_lang_id:
             if not Filtering.check_lang_id(
                 document,
-                lang_oscar_id,
+                lang_dataset_id,
                 model_lang_id,
                 lang_id_min_cutoff,
             ):
@@ -722,33 +722,33 @@ class Filtering:
         return True
 
 
-class FuncOscarFiltering:
+class FunctionDatasetFiltering:
     def __init__(
         self,
-        lang_oscar_id,
+        lang_dataset_id,
         path_fasttext_model,
         path_sentencepiece_model,
         path_kenlm_model,
     ):
-        self.lang_oscar_id = lang_oscar_id
+        self.lang_dataset_id = lang_dataset_id
         self.path_fasttext_model = path_fasttext_model
         self.path_sentencepiece_model = path_sentencepiece_model
         self.path_kenlm_model = path_kenlm_model
 
-        self.param = LoadParameters.load_parameters(lang_oscar_id)
-        self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
-        self.badwords = LoadParameters.load_badwords(lang_oscar_id)
+        self.param = LoadParameters.load_parameters(lang_dataset_id)
+        self.stopwords = LoadParameters.load_stopwords(lang_dataset_id)
+        self.badwords = LoadParameters.load_badwords(lang_dataset_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
-            lang_oscar_id, path_fasttext_model
+            lang_dataset_id, path_fasttext_model
         )
         self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
-            lang_oscar_id, path_sentencepiece_model
+            lang_dataset_id, path_sentencepiece_model
         )
         self.sentencepiece_model_tok = (
             self.sentencepiece_model if self.param["tokenization"] else None
         )
         self.kenlm_model = LoadParameters.load_kenlm_model(
-            lang_oscar_id, path_kenlm_model
+            lang_dataset_id, path_kenlm_model
         )
 
     def __call__(self, example):
@@ -772,7 +772,7 @@ class FuncOscarFiltering:
             badwords=self.badwords,
             badwords_max_cutoff=self.param["badwords_max_cutoff"],
             cond_check_lang_id=self.param["cond_check_lang_id"],
-            lang_oscar_id=self.lang_oscar_id,
+            lang_dataset_id=self.lang_dataset_id,
             model_lang_id=self.model_lang_id,
             lang_id_min_cutoff=self.param["lang_id_min_cutoff"],
             cond_check_perplexity=self.param["cond_check_perplexity"],
@@ -786,7 +786,7 @@ class FuncOscarFiltering:
         return (
             self.__class__,
             (
-                self.lang_oscar_id,
+                self.lang_dataset_id,
                 self.path_fasttext_model,
                 self.path_sentencepiece_model,
                 self.path_kenlm_model,
@@ -794,42 +794,44 @@ class FuncOscarFiltering:
         )
 
 
-class OscarFiltering:
+class DatasetFiltering:
     def __init__(
         self,
         dataset,
-        lang_oscar_id,
+        lang_dataset_id,
         path_fasttext_model,
         path_sentencepiece_model,
         path_kenlm_model,
         num_proc,
-        path_dir_save_oscar,
+        path_dir_save_dataset,
     ):
         self.ds = dataset
-        self.lang_oscar_id = lang_oscar_id
+        self.lang_dataset_id = lang_dataset_id
         self.path_fasttext_model = path_fasttext_model
         self.path_sentencepiece_model = path_sentencepiece_model
         self.path_kenlm_model = path_kenlm_model
         self.num_proc = num_proc
-        self.path_dir_save_oscar = path_dir_save_oscar
+        self.path_dir_save_dataset = path_dir_save_dataset
 
     def modifying_documents(self):
-        oscar_modifying_documents = OscarModifyingDocuments(self.lang_oscar_id)
-        self.ds = self.ds.map(oscar_modifying_documents, num_proc=self.num_proc)
+        dataset_modifying_documents = FunctionDatasetModifyingDocuments(
+            self.lang_dataset_id
+        )
+        self.ds = self.ds.map(dataset_modifying_documents, num_proc=self.num_proc)
 
     def filtering(self):
-        func_oscar_filtering = FuncOscarFiltering(
-            self.lang_oscar_id,
+        func_dataset_filtering = FunctionDatasetFiltering(
+            self.lang_dataset_id,
             self.path_fasttext_model,
             self.path_sentencepiece_model,
             self.path_kenlm_model,
         )
-        self.ds = self.ds.filter(func_oscar_filtering, num_proc=self.num_proc)
+        self.ds = self.ds.filter(func_dataset_filtering, num_proc=self.num_proc)
 
     def save_dataset(self):
-        pathlib.Path(self.path_dir_save_oscar).mkdir(parents=True, exist_ok=True)
+        pathlib.Path(self.path_dir_save_dataset).mkdir(parents=True, exist_ok=True)
         path_dir_save_dataset = pathlib.PurePath(
-            self.path_dir_save_oscar, self.lang_oscar_id
+            self.path_dir_save_dataset, self.lang_dataset_id
         )
         pathlib.Path(path_dir_save_dataset).mkdir(parents=True, exist_ok=True)
         self.ds.save_to_disk(path_dir_save_dataset)

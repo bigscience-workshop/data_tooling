@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
-from oscar_sample_filter import LoadParameters, ModifyingDocuments, Filtering
+from filtering import LoadParameters, ModifyingDocuments, Filtering
 
 
 class GetDataForVisualization:
@@ -15,7 +15,7 @@ class GetDataForVisualization:
         self,
         dataset,
         num_iter,
-        lang_oscar_id,
+        lang_dataset_id,
         path_fasttext_model,
         path_sentencepiece_model,
         path_kenlm_model,
@@ -25,22 +25,22 @@ class GetDataForVisualization:
         self.ds = dataset
         self.num_iter = num_iter
 
-        self.lang_oscar_id = lang_oscar_id
+        self.lang_dataset_id = lang_dataset_id
 
-        self.param = LoadParameters.load_parameters(lang_oscar_id)
-        self.stopwords = LoadParameters.load_stopwords(lang_oscar_id)
-        self.badwords = LoadParameters.load_badwords(lang_oscar_id)
+        self.param = LoadParameters.load_parameters(lang_dataset_id)
+        self.stopwords = LoadParameters.load_stopwords(lang_dataset_id)
+        self.badwords = LoadParameters.load_badwords(lang_dataset_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
-            lang_oscar_id, path_fasttext_model
+            lang_dataset_id, path_fasttext_model
         )
         self.sentencepiece_model = LoadParameters.load_sentencepiece_model(
-            lang_oscar_id, path_sentencepiece_model
+            lang_dataset_id, path_sentencepiece_model
         )
         self.sentencepiece_model_tok = (
             self.sentencepiece_model if self.param["tokenization"] else None
         )
         self.kenlm_model = LoadParameters.load_kenlm_model(
-            lang_oscar_id, path_kenlm_model
+            lang_dataset_id, path_kenlm_model
         )
 
         self.keys_stats = [
@@ -153,6 +153,12 @@ if __name__ == "__main__":
     split = "train"
     num_iter = 15000
 
+    lang_dataset_id = "en"
+    path_fasttext_model = "ac_dc/lid.176.bin"
+    path_sentencepiece_model = f"ac_dc/en.sp.model"
+    path_kenlm_model = f"ac_dc/en.arpa.bin"
+    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
+
     dataset = load_dataset(
         dataset_name,
         config_name,
@@ -161,16 +167,10 @@ if __name__ == "__main__":
         streaming=True,
     ).shuffle(buffer_size=num_iter, seed=42)
 
-    lang_oscar_id = "en"
-    path_fasttext_model = "ac_dc/lid.176.bin"
-    path_sentencepiece_model = f"ac_dc/en.sp.model"
-    path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
-
     get_data_for_visualization = GetDataForVisualization(
         dataset,
         num_iter,
-        lang_oscar_id,
+        lang_dataset_id,
         path_fasttext_model,
         path_sentencepiece_model,
         path_kenlm_model,

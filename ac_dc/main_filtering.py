@@ -1,14 +1,14 @@
-"""Filtering for OSCAR v1."""
+"""Filtering."""
 
 import argparse
 
 from datasets import load_dataset
 
-from oscar_sample_filter import OscarFiltering
+from filtering import DatasetFiltering
 
 
 def parseArgs():
-    parser = argparse.ArgumentParser(description="Filtering for OSCAR.")
+    parser = argparse.ArgumentParser(description="Filtering.")
     parser.add_argument(
         "--dataset_name",
         type=str,
@@ -34,7 +34,7 @@ def parseArgs():
         help="Split of the dataset to consider.",
     )
     parser.add_argument(
-        "--lang_oscar_id",
+        "--lang_dataset_id",
         type=str,
         default="af",
         help="ID of the language in which the dataset is written.",
@@ -64,10 +64,10 @@ def parseArgs():
         help="Number of processes for multiprocessing.",
     )
     parser.add_argument(
-        "--path_dir_save_oscar",
+        "--path_dir_save_dataset",
         type=str,
-        default="../Oscar_filtered/",
-        help="Path to the directory where the filtered version of Oscar will be saved.",
+        default="../dataset_filtered/",
+        help="Path to the directory where the filtered version of the dataset will be saved.",
     )
     args = parser.parse_args()
     return args
@@ -83,18 +83,18 @@ def main():
         split=args.split,
     )
 
-    oscar_filtering = OscarFiltering(
+    dataset_filtering = DatasetFiltering(
         dataset=dataset,
-        lang_oscar_id=args.lang_oscar_id,
+        lang_dataset_id=args.lang_dataset_id,
         path_fasttext_model=args.path_fasttext_model,
         path_sentencepiece_model=args.path_sentencepiece_model,
         path_kenlm_model=args.path_kenlm_model,
         num_proc=args.num_proc,
-        path_dir_save_oscar=args.path_dir_save_oscar,
+        path_dir_save_dataset=args.path_dir_save_dataset,
     )
-    oscar_filtering.modifying_documents()
-    oscar_filtering.filtering()
-    oscar_filtering.save_dataset()
+    dataset_filtering.modifying_documents()
+    dataset_filtering.filtering()
+    dataset_filtering.save_dataset()
 
 
 if __name__ == "__main__":

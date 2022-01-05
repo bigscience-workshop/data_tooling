@@ -32,7 +32,7 @@ class Visualization:
 
     def preamble(self):
         st.markdown(
-            "Before diving into this demo, you might want to take a look at how the filtering pipeline of OSCAR looks like in more detail."
+            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail."
         )
 
         def get_binary_file_downloader_html(bin_file, file_label="File"):
@@ -45,7 +45,7 @@ class Visualization:
         st.markdown(
             get_binary_file_downloader_html(
                 self.path_instructions,
-                "Download the filtering pipeline of OSCAR as pdf",
+                "Download the explanation of the filtering pipeline as pdf",
             ),
             unsafe_allow_html=True,
         )
@@ -76,7 +76,7 @@ class Visualization:
         self.docs = pd.DataFrame(docs)
 
     def set_title(self):
-        st.title(f"{self.num_docs} {self.lang} documents from OSCAR with their stats.")
+        st.title(f"{self.num_docs} {self.lang} documents with their stats.")
 
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
@@ -360,7 +360,7 @@ class Visualization:
         self.download_data()
 
 
-path_instructions = "./ac_dc/filtering_pipeline_oscar.pdf"
+path_instructions = "./ac_dc/explanation_filtering_pipeline.pdf"
 path_data = "./ac_dc/visualization/en_examples_with_stats.json"
 lang = "English"
 num_docs = 15000
