@@ -2,9 +2,6 @@ import re
 
 import fasttext
 
-# To download the fasttext model:
-# wget -O /tmp/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
-
 import sentencepiece
 import kenlm
 

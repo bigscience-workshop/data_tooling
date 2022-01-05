@@ -21,7 +21,7 @@ Less importantly, you can also check how the anonymization and the normalization
 
 #### 2. Download everything you need
 
-To run the filtering code, it is necessary to download the dataset on which the filtering will take place, but also the necessary models, which are the Fasttext model for language identification (download [here](https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin)) and the Sentencepiece and KenLM models for tokenization and calculation of perplexity scores (download with the file [download_kenlm_models.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/download_kenlm_models.py)).
+To run the filtering code, it is necessary to download the dataset on which the filtering will take place, but also the necessary models, which are the Fasttext model for language identification (download [here](https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin)) and the Sentencepiece and KenLM models for tokenization and calculation of perplexity scores (download with the file [download_sentencepiece_kenlm_models.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/download_sentencepiece_kenlm_models.py)).
 
 #### 3. Choose the filtering parameters
 
