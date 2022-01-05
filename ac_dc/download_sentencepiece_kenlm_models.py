@@ -21,7 +21,9 @@ def download_sentencepiece_kenlm_models(output_path: str) -> None:
                 shell=True,
             )
         except:
-            print(f"Warning: Download failed for Sentencepiece model for language {lang}.")
+            print(
+                f"Warning: Download failed for Sentencepiece model for language {lang}."
+            )
 
     supported_kenlm_langs = langs_id["kenlm_id"].dropna().unique()
     for lang in supported_kenlm_langs:
