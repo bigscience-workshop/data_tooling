@@ -1,4 +1,7 @@
+from os import stat
 import re
+
+import numpy as np
 
 import fasttext
 
@@ -421,6 +424,36 @@ class Filtering:
         return cond
 
     @staticmethod
+    def compute_repetitions_ratio(document, repetitions_length):
+        def get_freq_ngrams(document, n):
+            ngrams = [document[i : i + n] for i in range(len(document) - n + 1)]
+            freq_ngrams = {}
+            for ngram in ngrams:
+                freq_ngrams[ngram] = freq_ngrams.get(ngram, 0) + 1
+            return freq_ngrams
+
+        freq_ngrams = get_freq_ngrams(document, repetitions_length)
+        if len(freq_ngrams) == 0:
+            return 0
+        freq_ngrams = list(freq_ngrams.values())
+        freq_ngrams = sorted(freq_ngrams, reverse=True)
+        num_rep_ngrams = int(np.sqrt(len(freq_ngrams)))
+        repetitions_ratio = sum(freq_ngrams[:num_rep_ngrams]) / sum(freq_ngrams)
+        return repetitions_ratio
+
+    @staticmethod
+    def check_repetitions_removal(
+        document,
+        repetitions_length,
+        repetitions_max_cutoff,
+    ):
+        repetitions_ratio = Filtering.compute_repetitions_ratio(
+            document, repetitions_length
+        )
+        cond = repetitions_ratio <= repetitions_max_cutoff
+        return cond
+
+    @staticmethod
     def compute_special_characters_ratio(document, special_characters):
         special_characters_ratio = len(
             [char for char in document if char in special_characters]
@@ -639,6 +672,9 @@ class Filtering:
         strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
+        cond_check_repetitions_removal,
+        repetitions_length,
+        repetitions_max_cutoff,
         cond_check_special_characters,
         special_characters,
         special_characters_max_cutoff,
@@ -667,6 +703,13 @@ class Filtering:
                 strip_characters,
                 number_words_min_cutoff,
                 number_words_max_cutoff,
+            ):
+                return False
+        if cond_check_repetitions_removal:
+            if not Filtering.check_repetitions_removal(
+                document,
+                repetitions_length,
+                repetitions_max_cutoff,
             ):
                 return False
         if cond_check_special_characters:
@@ -756,6 +799,9 @@ class FunctionDatasetFiltering:
             strip_characters=self.param["strip_characters"],
             number_words_min_cutoff=self.param["number_words_min_cutoff"],
             number_words_max_cutoff=self.param["number_words_max_cutoff"],
+            cond_check_repetitions_removal=self.param["check_repetitions_removal"],
+            repetitions_length=self.param["repetitions_length"],
+            repetitions_max_cutoff=self.param["repetitions_max_cutoff"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
             special_characters=self.param["special_characters"],
             special_characters_max_cutoff=self.param["special_characters_max_cutoff"],
