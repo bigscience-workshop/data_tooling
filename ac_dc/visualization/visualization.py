@@ -7,6 +7,7 @@ import os
 import base64
 import json
 import pandas as pd
+pd.options.mode.chained_assignment = None
 
 import numpy as np
 
@@ -73,7 +74,8 @@ class Visualization:
                     doc["text"][: self.max_len_text_display]
                     + " [...] [THIS LONG TEXT HAS BEEN TRUNCATED FOR DISPLAY REASONS]"
                 )
-        self.docs = pd.DataFrame(docs)
+        self.docs_checkpoint = pd.DataFrame(docs)
+        self.docs = self.docs_checkpoint
 
     def set_title(self):
         st.title(f"{self.num_docs} {self.lang} documents with their stats.")
@@ -81,8 +83,8 @@ class Visualization:
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
 
-        def set_sliders(docs):
-            columns = list(docs)
+        def set_sliders():
+            columns = list(self.docs)
             keys = []
             conds = {}
 
@@ -99,7 +101,7 @@ class Visualization:
 
             if "number_words" in columns:
                 cutoff_def = "If the number of words of a document is lower than this number, the document is removed."
-                max_nb_words = int(np.max(docs["number_words"])) + 1
+                max_nb_words = int(np.max(self.docs["number_words"])) + 1
                 cutoff_min_number_words = st.sidebar.slider(
                     cutoff_def, 0, min(max_nb_words, 500), 0
                 )
@@ -118,6 +120,46 @@ class Visualization:
                 print_discared_by_cond(cond_2)
 
                 conds["number_words"] = [cond_1, cond_2]
+
+            if "repetitions_ratio" in columns:
+                val_repetitions_lengths = list(
+                    self.docs["repetitions_ratio"].iloc[0].keys()
+                )
+                default_index = (
+                    val_repetitions_lengths.index("10")
+                    if "10" in val_repetitions_lengths
+                    else 0
+                )
+                label_selectbox = (
+                    "Length of the repetitions (that will determine the repetitions ratio). "
+                    "Choosing a higher or lower number does not mean that the filtering "
+                    "is stronger or weaker. Be careful, choosing a low number (below 5 for languages like English) "
+                    "tends to associate a high repetitions ratio to very long documents (like book chapters), but with "
+                    "few or no repetitions, simply because their length gives them more diversity, and we do "
+                    "not want to discard such documents."
+                )
+                repetitions_length = st.sidebar.selectbox(
+                    label=label_selectbox,
+                    options=val_repetitions_lengths,
+                    index=default_index,
+                )
+                self.docs = self.docs_checkpoint
+                for i in range(len(self.docs["repetitions_ratio"])):
+                    self.docs["repetitions_ratio"].iloc[i] = self.docs["repetitions_ratio"].iloc[i][repetitions_length]
+
+                cutoff_def = "If the repetitions ratio of a document is higher than this number, the document is removed."
+                cutoff_repetitions_ratio = st.sidebar.slider(
+                    cutoff_def, 0.0, 1.0, 1.0, step=0.01
+                )
+                new_key = (
+                    "repetitions_ratio",
+                    cutoff_repetitions_ratio,
+                    True,
+                )
+                keys.append(new_key)
+                cond = get_cond(new_key[0], new_key[1], new_key[2])
+                print_discared_by_cond(cond)
+                conds["repetitions_ratio"] = [cond]
 
             if "special_characters_ratio" in columns:
                 cutoff_def = "If the special characters ratio of a document is higher than this number, the document is removed."
@@ -169,7 +211,7 @@ class Visualization:
 
             if "perplexity_score" in columns:
                 cutoff_def = "If the perplexity score of a document is higher than this number, the document is removed."
-                max_pp = int(np.max(docs["perplexity_score"])) + 1
+                max_pp = int(np.max(self.docs["perplexity_score"])) + 1
                 cutoff_perplexity_score = st.sidebar.slider(
                     cutoff_def, 0, max_pp, max_pp
                 )
@@ -181,7 +223,7 @@ class Visualization:
 
             return keys, conds
 
-        self.keys, conds = set_sliders(self.docs)
+        self.keys, conds = set_sliders()
 
         all_conds = [subcond for cond in list(conds.values()) for subcond in cond]
         all_conds = np.all(all_conds, axis=0)
@@ -213,6 +255,13 @@ class Visualization:
                 display_dataset(
                     cond_filter,
                     "Discarded documents for the filter on the number of words",
+                )
+
+            if "repetitions_ratio" in columns:
+                cond_filter = np.invert(np.all(conds["repetitions_ratio"], axis=0))
+                display_dataset(
+                    cond_filter,
+                    "Discarded documents for the filter on the repetitions ratio",
                 )
 
             if "special_characters_ratio" in columns:
