@@ -1,4 +1,5 @@
 import io
+import re
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -34,7 +35,7 @@ def get_pdf_urls(batch):
     urls = batch["url"]
     assert len(content_mime_detected) == len(urls)
     # Arrow doesn't support None, setting empty string for now
-    batch["pdf_url"] = [url if mime == "application/pdf" else "" for mime, url in zip(content_mime_detected, urls)]
+    batch["pdf_url"] = [url if mime == "application/pdf" else None for mime, url in zip(content_mime_detected, urls)]
     return batch
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
