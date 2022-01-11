@@ -7,6 +7,8 @@ import boto3
 import datasets
 from bs4 import BeautifulSoup
 from datasets import load_dataset, DatasetDict
+from botocore import UNSIGNED
+from botocore.config import Config
 
 # DEBUG
 datasets.set_caching_enabled(False)
@@ -22,9 +24,15 @@ def get_args():
     parser.add_argument('--cc-index-folder', type=str, required=True, help="Folder containing index dataset in parquet format")
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing")
     parser.add_argument('--range', type=str, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `:10`")
+    parser.add_argument('--shard-id', type=int, help="Preprocess dataset via shards")
+    parser.add_argument('--num-shards', type=int, help="Total number of shards")
+
     args = parser.parse_args()
 
     args.cc_index_folder = Path(args.cc_index_folder) / "cc"
+
+    if args.shard_id is not None:
+        assert args.num_shards is not None
 
     return args
 
@@ -46,7 +54,7 @@ s3_client = None
 def set_global_session():
     global s3_client
     if not s3_client:
-        s3_client = boto3.client('s3')
+        s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_warc(batch):
@@ -123,6 +131,8 @@ def main():
     args = get_args()
 
     ds = load_dataset("parquet", data_files=get_all_parquet_files(args.cc_index_folder), split=f"train{f'[{args.range}]' if args.range is not None else ''}")
+    if args.shard_id:
+        ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     ds = ds.map(get_warc, batched=True, num_proc=args.num_proc)
 
@@ -132,7 +142,7 @@ def main():
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     cleaned_ds = ds.remove_columns(columns_to_remove)
 
-    DatasetDict({"train": cleaned_ds}).push_to_hub("bigscience-catalogue-data/pseudo_crawl_test", private=True)
+    # DatasetDict({"train": cleaned_ds}).push_to_hub("bigscience-catalogue-data/pseudo_crawl_test", private=True)
 
 
 if __name__ == "__main__":
