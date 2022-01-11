@@ -3,8 +3,8 @@ import re
 from argparse import ArgumentParser
 from pathlib import Path
 
+import boto3
 import datasets
-import requests
 from bs4 import BeautifulSoup
 from datasets import load_dataset, DatasetDict
 
@@ -42,8 +42,16 @@ def get_pdf_urls(batch):
     batch["pdf_url"] = [url if mime == "application/pdf" else None for mime, url in zip(content_mime_detected, urls)]
     return batch
 
+s3_client = None
+def set_global_session():
+    global s3_client
+    if not s3_client:
+        s3_client = boto3.client('s3')
+
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_warc(batch):
+    set_global_session()
+    global s3_client
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     url_host_registered_domains = batch["url_host_registered_domain"]
     warc_filenames = batch["warc_filename"]
@@ -56,12 +64,13 @@ def get_warc(batch):
     compressed_warcs = []
     for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
                                                       warc_record_offset, url_host_registered_domains):
-        headers = {
-            "Range": f"bytes={offset}-{offset + length - 1}"
-        }
-
-        response = requests.get(f'https://commoncrawl.s3.amazonaws.com/{filename}', headers=headers)
-        compressed_warcs.append(response.content)
+        response = s3_client.get_object(
+            Bucket='commoncrawl',
+            Key=filename,
+            Range=f"bytes={offset}-{offset + length - 1}"
+        )
+        content = response["Body"].read()
+        compressed_warcs.append(content)
 
     batch["compressed_warc"] = compressed_warcs
     return batch
