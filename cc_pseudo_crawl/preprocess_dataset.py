@@ -19,7 +19,7 @@ def get_args():
     parser.add_argument('--range', type=str, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `:10`")
     args = parser.parse_args()
 
-    assert args.all or args.per_arch or args.per_objective or args.per_t0_adapted
+    args.cc_index_folder = Path(args.cc_index_folder) / "cc"
 
     return args
 
