@@ -6,7 +6,8 @@ from pathlib import Path
 import datasets
 import requests
 from bs4 import BeautifulSoup
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict
+
 # DEBUG
 datasets.set_caching_enabled(False)
 from warcio import ArchiveIterator
@@ -118,7 +119,7 @@ def main():
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     cleaned_ds = ds.remove_columns(columns_to_remove)
 
-    cleaned_ds.push_to_hub("bigscience-catalogue-data/pseudo_crawl_test", private=True)
+    DatasetDict({"train": cleaned_ds}).push_to_hub("bigscience-catalogue-data/pseudo_crawl_test", private=True)
 
 
 if __name__ == "__main__":
