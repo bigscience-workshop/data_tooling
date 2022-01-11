@@ -3,9 +3,12 @@ import re
 from argparse import ArgumentParser
 from pathlib import Path
 
+import datasets
 import requests
 from bs4 import BeautifulSoup
 from datasets import load_dataset
+# DEBUG
+datasets.set_caching_enabled(False)
 from warcio import ArchiveIterator
 
 """
