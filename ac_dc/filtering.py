@@ -454,6 +454,8 @@ class Filtering:
 
     @staticmethod
     def compute_special_characters_ratio(document, special_characters):
+        if len(document) == 0:
+            return 0
         special_characters_ratio = len(
             [char for char in document if char in special_characters]
         ) / len(document)
