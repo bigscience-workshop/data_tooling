@@ -94,10 +94,14 @@ def get_outgoing_links(batch):
 
         with io.BytesIO(compressed_warc) as stream:
             html = None
-            for record in ArchiveIterator(stream):
-                if record.rec_type == 'response':
-                    html = record.content_stream().read()
-                    break
+            try:
+                for record in ArchiveIterator(stream):
+                    if record.rec_type == 'response':
+                        html = record.content_stream().read()
+                        break
+            except ArchiveIterator as exception:
+                print(str(exception), compressed_warc)
+                raise exception
 
         assert html is not None
         soup = BeautifulSoup(html, 'html.parser')
