@@ -66,7 +66,19 @@ def main():
     # This table allows me to do a double join so I can easily compute the ids.
     # We'll then go through that csv and add the ids to final dataset.
     # No duplicates guaranteed
-    url_to_id = {}
+    url_to_id_and_timestamp = {}
+    # TODO: batch this
+    for data in previous_ds:
+        url = data["url"]
+        id_ = data["id"]
+        timestamp = data["fetch_time"]
+        if url in url_to_id_and_timestamp:
+            old_id, old_time_stamp = url_to_id_and_timestamp[url]
+            new_timestamp, new_id = max((timestamp, id_),(old_time_stamp, old_id))
+            url_to_id_and_timestamp[url] = (new_id, new_timestamp)
+        else:
+            url_to_id_and_timestamp[url] = (id_, timestamp)
+
     with open(csv_output_dir / f"previous_to_next.csv", "w") as fo:
         writer = csv.writer(fo)
         writer.writerow(['previous_id', 'previous_url', 'next_id', 'next_url'])
@@ -74,7 +86,7 @@ def main():
             previous_id = data["id"]
             previous_url = data["url"]
             for external_url in data["external_urls"]:
-                next_id = url_to_id.get(external_url, None)
+                next_id = url_to_id_and_timestamp.get(external_url, None)[0]
                 writer.writerow([previous_id, previous_url, next_id, external_url])
 
 

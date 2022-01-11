@@ -154,16 +154,16 @@ def main():
     ds = ds.map(get_outgoing_links, batched=True, num_proc=args.num_proc)
 
     # Assign depth.
-    ds = ds.map(functools.partial(assign_depth, {"depth": 0}), batched=True, num_proc=args.num_proc)
+    ds = ds.map(functools.partial(assign_depth, depth=0), batched=True, num_proc=args.num_proc)
 
     # Rename `id` to `seed_id`.
     ds = ds.rename_column("id", "seed_id")
 
     # Assign new `id`.
-    ds = ds.map(assign_id, with_indices=True)
+    ds = ds.map(assign_id, batched=True, with_indices=True)
 
     # Clean up columns to keep only these ones
-    columns_to_keep = ["id", "seed_id", "title", "link", "languages", "url", "pdf_url", "html", "compressed_warc", "external_urls", "depth"]
+    columns_to_keep = ["id", "seed_id", "title", "link", "languages", "url", "pdf_url", "html", "compressed_warc", "external_urls", "depth", "fetch_time"]
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     cleaned_ds = ds.remove_columns(columns_to_remove)
 
