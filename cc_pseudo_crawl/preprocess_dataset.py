@@ -24,7 +24,6 @@ Required: obtain cc_index and copy it locally
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset', type=str, required=True, help="Dataset name")
-    parser.add_argument('--split-name', type=str, required=True, help="Dataset split name.")
     parser.add_argument('--cc-index-folder', type=str, required=True, help="Folder containing index dataset in parquet format")
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing")
     parser.add_argument('--range', type=str, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `:10`")
@@ -33,9 +32,12 @@ def get_args():
 
     args = parser.parse_args()
 
-    assert args.split_name == "seed" \
-           or re.match(r"^intermediate_depth_([0-9]+)$", args.split_name) is not None
-    args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{args.split_name}"
+    empty, flavor = args.dataset.split("bigscience-catalogue-data/pseudo_crawl_test_")
+    assert empty == ""
+    assert flavor == "seed" \
+           or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+    args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{flavor}"
+    args.flavor = flavor
 
     if args.shard_id is not None:
         assert args.num_shards is not None
@@ -137,12 +139,12 @@ def assign_depth(batch, depth):
     batch["depth"] = [depth]*len(batch["id"])
     return batch
 
-def get_depth(split_name):
-    if split_name == "seed":
+def get_depth(flavor):
+    if flavor == "seed":
         return 0
     else:
         # TODO: fix for extended_depth
-        empty, depth = split_name.split("intermediate_depth_")
+        empty, depth = flavor.split("intermediate_depth_")
         assert empty == ""
         return int(depth)
 
@@ -182,7 +184,7 @@ def main():
     )
 
     # Assign depth.
-    ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.split_name)), batched=True, num_proc=args.num_proc)
+    ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
     # Rename `id` to `seed_id`.
     ds = ds.rename_column("id", "seed_id")
@@ -193,7 +195,8 @@ def main():
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     ds = ds.remove_columns(columns_to_remove)
 
-    ds.push_to_hub(args.dataset, split=args.split_name, private=True)
+    ## TODO: enforce that users have the fix for push splits to the hub
+    # ds.push_to_hub(args.dataset, private=True)
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 import csv
+import re
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
@@ -15,14 +16,21 @@ def get_args():
 
     args = parser.parse_args()
 
+    empty, flavor = args.dataset.split("bigscience-catalogue-data/pseudo_crawl_test_")
+    assert empty == ""
+    assert flavor == "seed" \
+           or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+    args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{flavor}"
+    args.flavor = flavor
+
     return args
 
-def get_depth(split_name):
-    if split_name == "seed":
+def get_depth(flavor):
+    if flavor == "seed":
         return 0
     else:
         # TODO: fix for extended_depth
-        empty, depth = split_name.split("intermediate_depth_")
+        empty, depth = flavor.split("intermediate_depth_")
         assert empty == ""
         return int(depth)
 
@@ -49,8 +57,7 @@ def main():
     subprocess.run(["mkdir", "-p", str(csv_output_dir.absolute())])
 
     # Load previous depth dataset
-    original_dataset = load_dataset(args.dataset, use_auth_token=True)
-    previous_ds = original_dataset[get_deepest_split(original_dataset)]
+    previous_ds = load_dataset(args.dataset, use_auth_token=True, split="train")
 
     previous_depth = max(previous_ds["depth"])
     url_candidates = set([url for external_urls in previous_ds["external_urls"] for url in external_urls])
