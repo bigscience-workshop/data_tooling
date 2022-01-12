@@ -175,7 +175,7 @@ def main():
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     ds = ds.remove_columns(columns_to_remove)
 
-    ds.push_to_hub(args.datasets, split=args.split_name, private=True)
+    ds.push_to_hub(args.dataset, split=args.split_name, private=True)
     # original_dict = load_dataset(args.dataset, use_auth_token=True)
     # original_dict[args.split_name] = ds
     # original_dict.push_to_hub(args.dataset, private=True)
