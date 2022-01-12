@@ -16,8 +16,9 @@ def get_args():
 
     args = parser.parse_args()
 
-    empty, flavor = args.dataset.split("bigscience-catalogue-data/pseudo_crawl_test_")
-    assert empty == ""
+    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_test_(.*)_partial$", args.dataset)
+    assert matches is not None
+    flavor = matches.groups()[0]
     assert flavor == "seed" \
            or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
     args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{flavor}"

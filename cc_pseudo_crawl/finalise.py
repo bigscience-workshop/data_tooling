@@ -1,3 +1,4 @@
+import re
 from argparse import ArgumentParser
 
 from datasets import load_dataset, concatenate_datasets
@@ -6,13 +7,36 @@ from datasets import load_dataset, concatenate_datasets
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset', type=str, required=True, help="Dataset name")
-    parser.add_argument('--datasets-to-concatenate', type=lambda s: s.split(','), required=True, help="List of datasets to concatenate in order to obtain final dataset")
 
     args = parser.parse_args()
 
     assert args.dataset not in args.datasets_to_concatenate
+    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_test_(.*)$", args.dataset)
+    assert matches is not None
+    flavor = matches.groups()[0]
+    assert flavor == "seed" \
+           or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
 
     return args
+
+def get_all_datasets_to_concatenate(flavor):
+    def get_rank(flavor):
+        if flavor == "seed":
+            return 0
+        else:
+            # TODO: fix for extended_depth
+            empty, depth = flavor.split("intermediate_depth_")
+            assert empty == ""
+            return int(depth)
+
+    def get_flavor(rank):
+        if rank == 0:
+            return "seed"
+        else:
+            return f"intermediate_depth_{rank}"
+
+    return [f"bigscience-catalogue-data/pseudo_crawl_test_{get_flavor(rank)}_partial" for rank in range(get_rank(flavor) + 1)]
+
 
 def compute_external_ids_(ds):
     """This is done at the end of processing and we basically convert `external_urls` in `external_ids`"""
