@@ -64,28 +64,7 @@ s3_client = None
 def set_global_session():
     global s3_client
     if not s3_client:
-        s3_client = S3Client()
-
-class S3Client(object):
-    """
-    Cheat class in order to make s3 client pickable.
-    https://github.com/huggingface/datasets/issues/665#issuecomment-700837024
-    """
-    def __init__(self):
-         self.client = self._build_s3_client()
-
-    @staticmethod
-    def _build_s3_client(self):
-        self.client = boto3.client('s3', config=Config(signature_version=botocore.UNSIGNED))
-
-    def __getstate__(self):
-        state = dict(self.__dict__)
-        del state["client"]
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.client = self._build_s3_client()
+        s3_client = boto3.client('s3', config=Config(signature_version=botocore.UNSIGNED))
 
 def get_warc(batch):
     set_global_session()
@@ -102,7 +81,7 @@ def get_warc(batch):
     compressed_warcs = []
     for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
                                                       warc_record_offset, url_host_registered_domains):
-        response = s3_client.client.get_object(
+        response = s3_client.get_object(
             Bucket='commoncrawl',
             Key=filename,
             Range=f"bytes={offset}-{offset + length - 1}"
