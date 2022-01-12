@@ -169,7 +169,17 @@ def main():
     )
 
     # Extract outgoing links.
-    ds = ds.map(get_outgoing_links, batched=True, num_proc=args.num_proc)
+    ds = ds.map(
+        get_outgoing_links,
+        batched=True,
+        num_proc=args.num_proc,
+        features=datasets.Features({
+            **ds.features,
+            "external_urls": datasets.features.Sequence(
+                datasets.Value("string")
+            )
+        })
+    )
 
     # Assign depth.
     ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.split_name)), batched=True, num_proc=args.num_proc)
