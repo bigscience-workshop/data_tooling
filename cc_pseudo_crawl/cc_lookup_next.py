@@ -160,7 +160,7 @@ cursor = connect(
 for crawl in crawls:
     query = join_template.format(
         crawl=crawl,
-        s3_location="{}/cc".format(s3_location),
+        s3_location=f"{s3_location}/cc-{url_table}",
         db="bigscience",
         url_table=url_table,
         tid="bs",

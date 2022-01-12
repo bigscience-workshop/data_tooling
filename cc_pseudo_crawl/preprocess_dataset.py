@@ -157,7 +157,15 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records.
-    ds = ds.map(get_warc, batched=True, num_proc=args.num_proc)
+    ds = ds.map(
+        get_warc,
+        batched=True,
+        num_proc=args.num_proc,
+        features=datasets.Features({
+            **ds.features,
+            "seed_id": datasets.Value("int")
+        })
+    )
 
     # # Extract pdf URLs.
     # ds = ds.map(

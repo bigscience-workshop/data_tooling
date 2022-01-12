@@ -16,7 +16,7 @@ source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling # Debug deepspeed temporarily
 
 CC_INDEX_FOLDER=$SCRATCH/pseudo_crawl
-DATA_TOOLING_REPO=$WORK/code/bigscience/data_tooling
+DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 pushd $DATA_TOOLING_REPO
 
 # TODO run this offline
