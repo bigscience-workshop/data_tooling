@@ -1,14 +1,13 @@
 import csv
-import os
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
-import urllib.parse
 
 from datasets import load_dataset
 
-from .preprocess_dataset import get_all_parquet_files
-
+"""
+Generate list of urls to query for next depth. We then need to use Athena to make a fancy query.
+"""
 
 def get_args():
     parser = ArgumentParser()
@@ -17,6 +16,19 @@ def get_args():
     args = parser.parse_args()
 
     return args
+
+def get_depth(split_name):
+    if split_name == "seed":
+        return 0
+    else:
+        # TODO: fix for extended_depth
+        empty, depth = split_name.split("intermediate_depth_")
+        assert empty == ""
+        return int(depth)
+
+def get_deepest_split(dataset_dict):
+    splits = sorted(dataset_dict.keys(), key=get_depth)
+    return splits[-1]
 
 def intermediate_next(url_candidates, previous_urls):
     """Query only those urls"""
@@ -37,7 +49,8 @@ def main():
     subprocess.run(["mkdir", "-p", str(csv_output_dir.absolute())])
 
     # Load previous depth dataset
-    previous_ds = load_dataset(args.dataset, use_auth_token=True)
+    original_dataset = load_dataset(args.dataset, use_auth_token=True)
+    previous_ds = original_dataset[get_deepest_split(original_dataset)]
 
     previous_depth = max(previous_ds["depth"])
     url_candidates = set([url for external_urls in previous_ds["external_urls"] for url in external_urls])
@@ -47,47 +60,18 @@ def main():
     # extended_depth_domains = extended_next(url_candidates, previous_urls)
 
     new_depth = previous_depth + 1
-    id_offset = max(previous_depth["id"]) + 1
 
     with open(csv_output_dir / f"intermediate_depth_{new_depth}.csv", "w") as fo:
         writer = csv.writer(fo)
-        writer.writerow(["id", "url", "depth"])
+        writer.writerow(["url"])
         for i, url in enumerate(intermediate_depth_urls):
-            writer.writerow([id_offset + i, url, new_depth])
+            writer.writerow([url])
 
     # with open(csv_output_dir / f"extended_depth_{new_depth}.csv", "w") as fo:
     #     writer = csv.writer(fo)
     #     writer.writerow(["id", "domain", "depth"])
     #     for i, domain in enumerate(extended_depth_domains):
     #         writer.writerow([id_offset + i, domain, new_depth])
-
-    # For each url, find the most recent row id corresponding to that url
-    # All of the duplicate of a `url` are either all in that dictionary or not in that dictionary
-    # This table allows me to do a double join so I can easily compute the ids.
-    # We'll then go through that csv and add the ids to final dataset.
-    # No duplicates guaranteed
-    url_to_id_and_timestamp = {}
-    # TODO: batch this
-    for data in previous_ds:
-        url = data["url"]
-        id_ = data["id"]
-        timestamp = data["fetch_time"]
-        if url in url_to_id_and_timestamp:
-            old_id, old_time_stamp = url_to_id_and_timestamp[url]
-            new_timestamp, new_id = max((timestamp, id_),(old_time_stamp, old_id))
-            url_to_id_and_timestamp[url] = (new_id, new_timestamp)
-        else:
-            url_to_id_and_timestamp[url] = (id_, timestamp)
-
-    with open(csv_output_dir / f"previous_to_next.csv", "w") as fo:
-        writer = csv.writer(fo)
-        writer.writerow(['previous_id', 'previous_url', 'next_id', 'next_url'])
-        for data in previous_ds:
-            previous_id = data["id"]
-            previous_url = data["url"]
-            for external_url in data["external_urls"]:
-                next_id = url_to_id_and_timestamp.get(external_url, None)[0]
-                writer.writerow([previous_id, previous_url, next_id, external_url])
 
 
 if __name__ == "__main__":
