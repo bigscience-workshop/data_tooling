@@ -158,7 +158,15 @@ def main():
     ds = ds.map(get_warc, batched=True, num_proc=args.num_proc)
 
     # Extract pdf URLs.
-    ds = ds.map(get_pdf_urls, batched=True, num_proc=args.num_proc)
+    ds = ds.map(
+        get_pdf_urls,
+        batched=True,
+        num_proc=args.num_proc,
+        features=datasets.Features({
+            **ds.features,
+            "pdf_url": datasets.Value("string")
+        })
+    )
 
     # Extract outgoing links.
     ds = ds.map(get_outgoing_links, batched=True, num_proc=args.num_proc)
@@ -176,10 +184,6 @@ def main():
     ds = ds.remove_columns(columns_to_remove)
 
     ds.push_to_hub(args.dataset, split=args.split_name, private=True)
-    # original_dict = load_dataset(args.dataset, use_auth_token=True)
-    # original_dict[args.split_name] = ds
-    # original_dict.push_to_hub(args.dataset, private=True)
-
 
 if __name__ == "__main__":
     main()
