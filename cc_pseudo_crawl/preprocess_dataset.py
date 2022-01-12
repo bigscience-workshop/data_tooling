@@ -7,12 +7,10 @@ from pathlib import Path
 import boto3
 import datasets
 from bs4 import BeautifulSoup
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset
 from botocore import UNSIGNED
 from botocore.config import Config
 
-# DEBUG
-datasets.set_caching_enabled(False)
 from warcio import ArchiveIterator
 from warcio.recordloader import ArchiveLoadFailed
 
@@ -32,7 +30,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_test_(?:(.*)_partial|(seed))$", args.dataset)
+    matches = re.match(r"^bigscience-catalogue-data/pseudo_craw_(?:(.*)_partial|(seed))$", args.dataset)
     assert matches is not None
     flavors = [elt for elt in matches.groups() if elt is not None]
     assert len(flavors) == 0
@@ -162,16 +160,16 @@ def main():
     # Get raw compressed WARC records.
     ds = ds.map(get_warc, batched=True, num_proc=args.num_proc)
 
-    # Extract pdf URLs.
-    ds = ds.map(
-        get_pdf_urls,
-        batched=True,
-        num_proc=args.num_proc,
-        features=datasets.Features({
-            **ds.features,
-            "pdf_url": datasets.Value("string")
-        })
-    )
+    # # Extract pdf URLs.
+    # ds = ds.map(
+    #     get_pdf_urls,
+    #     batched=True,
+    #     num_proc=args.num_proc,
+    #     features=datasets.Features({
+    #         **ds.features,
+    #         "pdf_url": datasets.Value("string")
+    #     })
+    # )
 
     # Extract outgoing links.
     ds = ds.map(
@@ -198,7 +196,6 @@ def main():
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     ds = ds.remove_columns(columns_to_remove)
 
-    ## TODO: enforce that users have the fix for push splits to the hub
     # ds.push_to_hub(args.dataset, private=True)
 
 if __name__ == "__main__":

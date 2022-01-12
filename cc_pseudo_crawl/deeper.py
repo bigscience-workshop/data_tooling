@@ -16,7 +16,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_test_(?:(.*)_partial|(seed))$", args.dataset)
+    matches = re.match(r"^bigscience-catalogue-data/pseudo_craw_(?:(.*)_partial|(seed))$", args.dataset)
     assert matches is not None
     flavors = [elt for elt in matches.groups() if elt is not None]
     assert len(flavors) == 0

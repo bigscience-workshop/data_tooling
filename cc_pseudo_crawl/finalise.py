@@ -11,7 +11,7 @@ def get_args():
     args = parser.parse_args()
 
     assert args.dataset not in args.datasets_to_concatenate
-    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_test_(.*)$", args.dataset)
+    matches = re.match(r"^bigscience-catalogue-data/pseudo_craw_(.*)$", args.dataset)
     assert matches is not None
     flavor = matches.groups()[0]
     assert re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
@@ -37,11 +37,11 @@ def get_all_datasets_to_concatenate(flavor):
     current_rank = get_rank(flavor)
     assert current_rank > 1, "seed is already finished"
     seed_datasets = [
-        f"bigscience-catalogue-data/pseudo_crawl_test_{get_flavor(rank)}"
+        f"bigscience-catalogue-data/pseudo_craw_{get_flavor(rank)}"
         for rank in range(0, current_rank + 1)
     ]
     intermediate_depth_datasets = [
-        f"bigscience-catalogue-data/pseudo_crawl_test_{get_flavor(rank)}_partial"
+        f"bigscience-catalogue-data/pseudo_craw_{get_flavor(rank)}_partial"
         for rank in range(1, current_rank + 1)
     ]
 
