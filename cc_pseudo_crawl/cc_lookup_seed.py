@@ -20,11 +20,7 @@ WITH (external_location = '{s3_location}/crawl={crawl}/',
       format = 'PARQUET',
       parquet_compression = 'GZIP')
 AS SELECT
-       {tid}.id              AS id,
-       {tid}.title           AS title,
-       {tid}.link            AS link,
-       {tid}.language        AS language,
-       {tid}.url_surtkey     AS url_surtkey_prefix,
+       {tid}.id              AS seed_id,
        cc.url_surtkey        AS url_surtkey,
        cc.url_host_tld       AS url_host_tld,
        cc.url_host_registered_domain AS url_host_registered_domain,
