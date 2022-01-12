@@ -24,7 +24,7 @@ pushd $DATA_TOOLING_REPO
 
 python cc_pseudo_crawl/preprocess_dataset.py \
     --dataset bigscience-catalogue-data/pseudo_craw_seed \
-    --cc-index-folder ~/code/bigscience/pseudo_crawl \
+    --cc-index-folder $CC_INDEX_FOLDER \
     --num-proc 10 \
     --shard-id $SLURM_ARRAY_TASK_ID \
     --num-shards $SLURM_ARRAY_TASK_COUNT \
