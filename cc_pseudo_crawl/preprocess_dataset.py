@@ -22,6 +22,8 @@ Required: obtain cc_index and copy it locally
 
 def get_args():
     parser = ArgumentParser()
+    parser.add_argument('--dataset', type=str, required=True, help="Dataset name")
+    parser.add_argument('--split-name', type=str, required=True, help="Dataset split name.")
     parser.add_argument('--cc-index-folder', type=str, required=True, help="Folder containing index dataset in parquet format")
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing")
     parser.add_argument('--range', type=str, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `:10`")
@@ -30,7 +32,9 @@ def get_args():
 
     args = parser.parse_args()
 
-    args.cc_index_folder = Path(args.cc_index_folder) / "cc"
+    assert args.split_name == "seed" \
+           or re.match(r"^intermediate_depth_([0-9]+)$", args.split_name) is not None
+    args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{args.split_name}"
 
     if args.shard_id is not None:
         assert args.num_shards is not None
@@ -132,9 +136,14 @@ def assign_depth(batch, depth):
     batch["depth"] = [depth]*len(batch["id"])
     return batch
 
-def assign_id(batch, indices):
-    batch["id"] = indices
-    return batch
+def get_depth(split_name):
+    if split_name == "seed":
+        return 0
+    else:
+        # TODO: fix for extended_depth
+        empty, depth = split_name.split("intermediate_depth_")
+        assert empty == ""
+        return int(depth)
 
 def main():
     args = get_args()
@@ -154,20 +163,19 @@ def main():
     ds = ds.map(get_outgoing_links, batched=True, num_proc=args.num_proc)
 
     # Assign depth.
-    ds = ds.map(functools.partial(assign_depth, depth=0), batched=True, num_proc=args.num_proc)
+    ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.split_name)), batched=True, num_proc=args.num_proc)
 
     # Rename `id` to `seed_id`.
     ds = ds.rename_column("id", "seed_id")
 
-    # Assign new `id`.
-    ds = ds.map(assign_id, batched=True, with_indices=True)
-
     # Clean up columns to keep only these ones
-    columns_to_keep = ["id", "seed_id", "title", "link", "languages", "url", "pdf_url", "html", "compressed_warc", "external_urls", "depth", "fetch_time"]
+    columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
+                       "external_urls", "depth", "fetch_time"}
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
-    cleaned_ds = ds.remove_columns(columns_to_remove)
+    ds = ds.remove_columns(columns_to_remove)
 
-    DatasetDict({"train": cleaned_ds}).push_to_hub("bigscience-catalogue-data/pseudo_crawl_test", private=True)
+    original_dict = load_dataset(args.dataset, private=True)
+    DatasetDict({**original_dict, args.split_name: ds}).push_to_hub(args.dataset, private=True)
 
 
 if __name__ == "__main__":
