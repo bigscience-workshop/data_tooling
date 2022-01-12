@@ -59,16 +59,9 @@ def get_pdf_urls(batch):
     batch["pdf_url"] = [url if mime == "application/pdf" else None for mime, url in zip(content_mime_detected, urls)]
     return batch
 
-s3_client = None
-def set_global_session():
-    global s3_client
-    if not s3_client:
-        s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
-
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_warc(batch):
-    set_global_session()
-    global s3_client
+    s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     url_host_registered_domains = batch["url_host_registered_domain"]
     warc_filenames = batch["warc_filename"]
