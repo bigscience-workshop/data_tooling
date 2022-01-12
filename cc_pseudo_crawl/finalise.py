@@ -6,12 +6,15 @@ from datasets import load_dataset, concatenate_datasets
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset', type=str, required=True, help="Dataset name")
+    parser.add_argument('--datasets-to-concatenate', type=lambda s: s.split(','), required=True, help="List of datasets to concatenate in order to obtain final dataset")
 
     args = parser.parse_args()
 
+    assert args.dataset not in args.datasets_to_concatenate
+
     return args
 
-def compute_external_ids(ds):
+def compute_external_ids_(ds):
     """This is done at the end of processing and we basically convert `external_urls` in `external_ids`"""
     # For each url, find the most recent row id corresponding to that url
     # All of the duplicate of a `url` are either all in that dictionary or not in that dictionary
@@ -40,15 +43,7 @@ def compute_external_ids(ds):
             if external_url in url_to_id_and_timestamp
         ]
 
-    # with open(csv_output_dir / f"previous_to_next.csv", "w") as fo:
-    #     writer = csv.writer(fo)
-    #     writer.writerow(['previous_id', 'previous_url', 'next_id', 'next_url'])
-    #     for data in ds:
-    #         previous_id = data["id"]
-    #         previous_url = data["url"]
-    #         for external_url in data["external_urls"]:
-    #             next_id = url_to_id_and_timestamp.get(external_url, None)[0]
-    #             writer.writerow([previous_id, previous_url, next_id, external_url])
+    return ds
 
 def assign_id(batch, indices):
     batch["id"] = indices
@@ -57,23 +52,22 @@ def assign_id(batch, indices):
 def main():
     args = get_args()
 
-    dataset_dict = load_dataset(args.dataset, use_auth_token=True)
-
-    assert "train" not in dataset_dict
+    datasets = [
+        load_dataset(dataset_name, use_auth_token=True, split="train")
+        for dataset_name in args.datasets_to_concatenate
+    ]
 
     # Concatenate all the splits together
-    ds = concatenate_datasets(list(dataset_dict.values()))
+    ds = concatenate_datasets(datasets)
 
     # Generate id
     ds = ds.map(assign_id, batched=True, with_indices=True)
 
     # Generate external_ids
-    ds = compute_external_ids(ds)
+    ds = compute_external_ids_(ds)
 
     # Add as train split
-    dataset_dict["train"] = ds
-    dataset_dict.push_to_hub(args.dataset, private=True)
-    pass
+    ds.push_to_hub(args.dataset, private=True)
 
 if __name__ == "__main__":
     main()
