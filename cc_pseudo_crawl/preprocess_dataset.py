@@ -59,7 +59,6 @@ def get_pdf_urls(batch):
     batch["pdf_url"] = [url if mime == "application/pdf" else None for mime, url in zip(content_mime_detected, urls)]
     return batch
 
-HTML_TYPES = ['text/html', 'application/xhtml+xml']
 s3_client = None
 def set_global_session():
     global s3_client
@@ -104,7 +103,7 @@ def get_external_links(soup, exclude_url):
             external_links.add(href)
     return list(external_links)
 
-
+HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_outgoing_links(batch):
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     url_host_registered_domains = batch["url_host_registered_domain"]
@@ -199,6 +198,4 @@ def main():
     # ds.push_to_hub(args.dataset, private=True)
 
 if __name__ == "__main__":
-    # main()
-    from datasets.fingerprint import Hasher
-    Hasher.hash(get_warc)
+    main()
