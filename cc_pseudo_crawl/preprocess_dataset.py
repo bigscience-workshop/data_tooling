@@ -14,6 +14,7 @@ from botocore.config import Config
 # DEBUG
 datasets.set_caching_enabled(False)
 from warcio import ArchiveIterator
+from warcio.recordloader import ArchiveLoadFailed
 
 """
 Required: obtain cc_index and copy it locally
@@ -121,7 +122,7 @@ def get_outgoing_links(batch):
                     if record.rec_type == 'response':
                         html = record.content_stream().read()
                         break
-            except ArchiveIterator as exception:
+            except ArchiveLoadFailed as exception:
                 print(str(exception), compressed_warc)
                 raise exception
 
@@ -174,7 +175,7 @@ def main():
     columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
     ds = ds.remove_columns(columns_to_remove)
 
-    original_dict = load_dataset(args.dataset, private=True)
+    original_dict = load_dataset(args.dataset, use_auth_token=True)
     DatasetDict({**original_dict, args.split_name: ds}).push_to_hub(args.dataset, private=True)
 
 
