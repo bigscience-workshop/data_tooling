@@ -14,8 +14,8 @@ def get_args():
     matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_test_(.*)$", args.dataset)
     assert matches is not None
     flavor = matches.groups()[0]
-    assert flavor == "seed" \
-           or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+    assert re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+    args.flavor = flavor
 
     return args
 
@@ -25,8 +25,7 @@ def get_all_datasets_to_concatenate(flavor):
             return 0
         else:
             # TODO: fix for extended_depth
-            empty, depth = flavor.split("intermediate_depth_")
-            assert empty == ""
+            depth = re.match(r"^intermediate_depth_([0-9]+)$", flavor).groups()[0]
             return int(depth)
 
     def get_flavor(rank):
@@ -35,7 +34,19 @@ def get_all_datasets_to_concatenate(flavor):
         else:
             return f"intermediate_depth_{rank}"
 
-    return [f"bigscience-catalogue-data/pseudo_crawl_test_{get_flavor(rank)}_partial" for rank in range(get_rank(flavor) + 1)]
+    current_rank = get_rank(flavor)
+    assert current_rank > 1, "seed is already finished"
+    seed_datasets = [
+        f"bigscience-catalogue-data/pseudo_crawl_test_{get_flavor(rank)}"
+        for rank in range(0, current_rank + 1)
+    ]
+    intermediate_depth_datasets = [
+        f"bigscience-catalogue-data/pseudo_crawl_test_{get_flavor(rank)}_partial"
+        for rank in range(1, current_rank + 1)
+    ]
+
+
+    return  seed_datasets + intermediate_depth_datasets
 
 
 def compute_external_ids_(ds):
@@ -78,7 +89,7 @@ def main():
 
     datasets = [
         load_dataset(dataset_name, use_auth_token=True, split="train")
-        for dataset_name in args.datasets_to_concatenate
+        for dataset_name in get_all_datasets_to_concatenate(args.flavor)
     ]
 
     # Concatenate all the splits together
