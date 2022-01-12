@@ -23,6 +23,7 @@ pushd $DATA_TOOLING_REPO
 # aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc/ $CC_INDEX_FOLDER/cc/
 
 python cc_pseudo_crawl/preprocess_dataset.py \
+    --dataset bigscience-catalogue-data/pseudo_craw_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
     --num-proc 10 \
     --shard-id $SLURM_ARRAY_TASK_ID \
