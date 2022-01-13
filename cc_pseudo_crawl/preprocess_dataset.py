@@ -145,9 +145,9 @@ def get_warc_and_outgoing_links(batch, thread_pool):
     assert len(content_mime_detected) == len(warc_record_offset)
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
-
-    warcs = thread_pool.starmap(get_warc, zip(warc_filenames, warc_record_offset, warc_record_length))
-    compressed_warcs = list(warcs)
+    with ThreadPoolExecutor(5, initializer=set_global_session) as thread_pool:
+        warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
+        compressed_warcs = list(warcs)
 
     # compressed_warcs = []
     # warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
@@ -188,12 +188,12 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
-    with Pool(args.num_proc, initializer=set_global_session) as thread_pool:
-        ds = ds.map(
-            functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool),
-            batched=True,
-            num_proc=1 # multiprocessing is handled manually
-        )
+    # with Pool(args.num_proc, initializer=set_global_session) as thread_pool:
+    ds = ds.map(
+        functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool),
+        batched=True,
+        num_proc=args.num_proc # multiprocessing is handled manually
+    )
 
     # # Assign depth.
     # ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
