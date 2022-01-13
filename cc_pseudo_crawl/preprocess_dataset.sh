@@ -21,5 +21,5 @@ do
     --num-proc 8 \
     --shard-id $i \
     --num-shards $NUM_SHARDS \
-    --range :100000
+    --range :1000000
 done
