@@ -197,7 +197,7 @@ def main():
     # ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
     ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
-    subprocess.run(["mv", "-r", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
+    subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
     # # Clean up columns to keep only these ones
     # columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
     #                    "external_urls", "depth", "fetch_time"}
