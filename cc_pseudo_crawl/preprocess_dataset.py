@@ -149,7 +149,7 @@ def get_warc_and_outgoing_links(batch, num_procs):
 
             warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
 
-            external_urls = process_pool.map(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
+            external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
 
     # for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
     #                                                   warc_record_offset, url_host_registered_domains):
