@@ -28,4 +28,4 @@ python cc_pseudo_crawl/preprocess_dataset.py \
     --num-proc 4 \
     --shard-id $SLURM_ARRAY_TASK_ID \
     --num-shards $SLURM_ARRAY_TASK_COUNT \
-    --range :10000
+    --range :100000
