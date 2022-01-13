@@ -1,6 +1,7 @@
 import functools
 import io
 import re
+import time
 from argparse import ArgumentParser
 from pathlib import Path
 from queue import Queue
@@ -106,8 +107,11 @@ def get_warc_and_outgoing_links(batch):
 
     compressed_warcs = []
     external_urls = []
+    average_fetching_time = 0
+    average_processing_time = 0
     for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
                                                       warc_record_offset, url_host_registered_domains):
+        start_fetching = time.time()
         response = s3_client.get_object(
             Bucket='commoncrawl',
             Key=filename,
@@ -115,7 +119,9 @@ def get_warc_and_outgoing_links(batch):
         )
         compressed_warc = response["Body"].read()
         compressed_warcs.append(compressed_warc)
+        average_fetching_time += time.time() - start_fetching
 
+        start_processing = time.time()
         if mime not in HTML_TYPES:
             external_urls.append([])
             continue
@@ -134,9 +140,12 @@ def get_warc_and_outgoing_links(batch):
         assert html is not None
         soup = BeautifulSoup(html, 'html.parser')
         external_urls.append(get_external_links(soup, domain))
+        average_processing_time += time.time() - start_processing
 
     batch["compressed_warc"] = compressed_warcs
     batch["external_urls"] = external_urls
+    print(f"Average time fetching data: {average_fetching_time / len(external_urls)}")
+    print(f"Average time processing data: {average_processing_time / len(external_urls)}")
     return batch
 
 def assign_depth(batch, depth):
