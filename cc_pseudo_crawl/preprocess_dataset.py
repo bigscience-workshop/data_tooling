@@ -207,9 +207,9 @@ def main():
     ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
     if args.shard_id:
-        save_path = Path(args.save_dir) / f"{args.datasets}--{args.shard_id}--{args.num_shards}"
+        save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
     else:
-        save_path = Path(args.save_dir) / args.datasets
+        save_path = Path(args.save_dir) / args.dataset
     ds.save_to_disk(save_path)
     # # Clean up columns to keep only these ones
     # columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
