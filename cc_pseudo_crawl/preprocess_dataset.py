@@ -176,7 +176,8 @@ def main():
         num_proc=args.num_proc,
         features=datasets.Features({
             **ds.features,
-            "seed_id": datasets.Value("int")
+            "seed_id": datasets.Value("int64"),
+            "compressed_warc": datasets.Value("binary")
         })
     )
 
