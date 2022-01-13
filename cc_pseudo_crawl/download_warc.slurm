@@ -21,9 +21,9 @@ DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 pushd $DATA_TOOLING_REPO
 
 # TODO run this offline
-# aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc/ $CC_INDEX_FOLDER/cc/
+# aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/
 
-python cc_pseudo_crawl/preprocess_dataset.py \
+python cc_pseudo_crawl/download_warc.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
     --save-dir $SAVE_DATASET_DIR \
