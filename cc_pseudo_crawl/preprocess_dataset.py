@@ -11,6 +11,8 @@ import botocore
 import datasets
 from bs4 import BeautifulSoup
 from datasets import load_dataset
+# DEBUG
+datasets.set_caching_enabled(False)
 from botocore.config import Config
 
 from warcio.archiveiterator import WARCIterator
@@ -91,7 +93,8 @@ def get_external_links(soup, exclude_url):
             external_links.add(href)
     return list(external_links)
 
-def get_warc(filename, offset, length, s3_client):
+def get_warc(filename, offset, length):
+    global s3_client
     response = s3_client.get_object(
         Bucket='commoncrawl',
         Key=filename,
@@ -102,8 +105,6 @@ def get_warc(filename, offset, length, s3_client):
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_warc_and_outgoing_links(batch):
     """We compose both as `get_outgoing_links` checks the WARC quality"""
-    set_global_session()
-    global s3_client
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     url_host_registered_domains = batch["url_host_registered_domain"]
     warc_filenames = batch["warc_filename"]
@@ -114,32 +115,57 @@ def get_warc_and_outgoing_links(batch):
     assert len(content_mime_detected) == len(warc_record_offset)
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
-
     compressed_warcs = []
     external_urls = []
-    for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
-                                                      warc_record_offset, url_host_registered_domains):
-        compressed_warc = get_warc(filename, offset, length, s3_client)
-        compressed_warcs.append(compressed_warc)
+    with ThreadPoolExecutor(initializer=set_global_session) as pool:
+        warcs_futures = pool.map(get_warc, zip(warc_filenames, warc_record_offset, warc_record_length))
 
-        if mime not in HTML_TYPES:
-            external_urls.append([])
-            continue
+        for warc_future, mime, domain in zip(warcs_futures, content_mime_detected , url_host_registered_domains):
+            compressed_warc = warc_future.result()
 
-        with io.BytesIO(compressed_warc) as stream:
-            html = None
-            try:
-                for record in WARCIterator(stream):
-                    if record.rec_type == 'response':
-                        html = record.content_stream().read()
-                        break
-            except ArchiveLoadFailed as exception:
-                print(str(exception), compressed_warc)
-                raise exception
+            if mime not in HTML_TYPES:
+                external_urls.append([])
+                continue
 
-        assert html is not None
-        soup = BeautifulSoup(html, 'html.parser')
-        external_urls.append(get_external_links(soup, domain))
+            with io.BytesIO(compressed_warc) as stream:
+                html = None
+                try:
+                    for record in WARCIterator(stream):
+                        if record.rec_type == 'response':
+                            html = record.content_stream().read()
+                            break
+                except ArchiveLoadFailed as exception:
+                    print(str(exception), compressed_warc)
+                    raise exception
+
+            assert html is not None
+            soup = BeautifulSoup(html, 'html.parser')
+            external_urls.append(get_external_links(soup, domain))
+
+
+    # for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
+    #                                                   warc_record_offset, url_host_registered_domains):
+    #     compressed_warc = get_warc(filename, offset, length, s3_client)
+    #     compressed_warcs.append(compressed_warc)
+    #
+    #     if mime not in HTML_TYPES:
+    #         external_urls.append([])
+    #         continue
+    #
+    #     with io.BytesIO(compressed_warc) as stream:
+    #         html = None
+    #         try:
+    #             for record in WARCIterator(stream):
+    #                 if record.rec_type == 'response':
+    #                     html = record.content_stream().read()
+    #                     break
+    #         except ArchiveLoadFailed as exception:
+    #             print(str(exception), compressed_warc)
+    #             raise exception
+    #
+    #     assert html is not None
+    #     soup = BeautifulSoup(html, 'html.parser')
+    #     external_urls.append(get_external_links(soup, domain))
 
     batch["compressed_warc"] = compressed_warcs
     batch["external_urls"] = external_urls
