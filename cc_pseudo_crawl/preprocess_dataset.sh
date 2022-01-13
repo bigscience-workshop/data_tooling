@@ -1,12 +1,13 @@
 NUM_SHARDS=$1
 
-CC_INDEX_FOLDER=~/bigscience/pseudo_crawl
+CC_INDEX_FOLDER=~/bigscience/pseudo_crawl/cc
+SAVE_DATASET_DIR=~/bigscience/pseudo_crawl/datasets
 
 pushd ~/code/data_tooling
 
 for i in {1..$1}
 do
-   python cc_pseudo_crawl/preprocess_dataset.py \
+   python3 cc_pseudo_crawl/preprocess_dataset.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
     --save-dir $SAVE_DATASET_DIR \
