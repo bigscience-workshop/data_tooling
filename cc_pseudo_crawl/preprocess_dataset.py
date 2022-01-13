@@ -123,6 +123,11 @@ def get_outgoing_link(compressed_warc, mime, domain):
     soup = BeautifulSoup(html, 'html.parser')
     return get_external_links(soup, domain)
 
+def add_to_list_when_consuming(generator, list_to_cumulate):
+    for elt in generator:
+        list_to_cumulate.append(elt)
+        yield elt
+
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_warc_and_outgoing_links(batch, num_procs):
     """We compose both as `get_outgoing_links` checks the WARC quality"""
@@ -136,15 +141,15 @@ def get_warc_and_outgoing_links(batch, num_procs):
     assert len(content_mime_detected) == len(warc_record_offset)
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
-    # compressed_warcs = []
+    compressed_warcs = []
     # external_urls = []
-    with ThreadPoolExecutor(5* num_procs, initializer=set_global_session) as thread_pool:
+    with ThreadPoolExecutor(5 * num_procs, initializer=set_global_session) as thread_pool:
         warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
 
-        compressed_warcs = list(warcs)
+        warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
 
-    with Pool(num_procs) as process_pool:
-        external_urls = process_pool.map(get_outgoing_link, zip(compressed_warcs, content_mime_detected , url_host_registered_domains))
+        with Pool(num_procs) as process_pool:
+            external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
 
     # for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
     #                                                   warc_record_offset, url_host_registered_domains):
