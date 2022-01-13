@@ -91,7 +91,7 @@ thread_pool = None
 def set_thread_pool():
     global thread_pool
     if not thread_pool:
-        thread_pool = ThreadPoolExecutor(5, initializer=set_global_session)
+        thread_pool = ThreadPoolExecutor(initializer=set_global_session)
 
 # Retrieves a list of all external links found on a page
 def get_external_links(soup, exclude_url):
