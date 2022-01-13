@@ -118,7 +118,7 @@ def get_warc_and_outgoing_links(batch):
     compressed_warcs = []
     external_urls = []
     with ThreadPoolExecutor(initializer=set_global_session) as pool:
-        warcs_futures = pool.map(get_warc, zip(warc_filenames, warc_record_offset, warc_record_length))
+        warcs_futures = pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
 
         for warc_future, mime, domain in zip(warcs_futures, content_mime_detected , url_host_registered_domains):
             compressed_warc = warc_future.result()
