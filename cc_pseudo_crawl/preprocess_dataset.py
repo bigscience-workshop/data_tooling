@@ -176,7 +176,7 @@ def main():
 
     # Get raw compressed WARC records and outgoing links
     with Pool(args.num_proc) as process_pool:
-        with ThreadPoolExecutor(5 * args.num.proc, initializer=set_global_session) as thread_pool:
+        with ThreadPoolExecutor(5 * args.num_proc, initializer=set_global_session) as thread_pool:
             ds = ds.map(
                 functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool, process_pool=process_pool),
                 batched=True,
