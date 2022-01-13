@@ -83,7 +83,7 @@ For every site list
    MSCK REPAIR TABLE bigscience.cc_seed;
    ```
 
-7. We want to run deduplication in terms of urls. [WIP]
+7. We want to run deduplication in terms of urls.
   ```sql
   CREATE TABLE bigscience.cc_seed_dedup_url
     WITH (external_location = 's3://bucket/path/cc-seed_dedup_url/',
@@ -115,3 +115,6 @@ For every site list
     FROM tmp
     WHERE row = 1
   ```
+8. Run `python 3 preprocess_dataset.sh ${NUM_SHARDS}` The script will download warc files.
+
+9. Send files in a bucket somewhere.
