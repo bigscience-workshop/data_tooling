@@ -158,7 +158,7 @@ def main():
 
     ds = load_dataset("parquet", data_files=get_all_parquet_files(args.cc_index_folder), split=f"train{f'[{args.range}]' if args.range is not None else ''}")
 
-    if args.shard_id:
+    if args.shard_id is not None:
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
