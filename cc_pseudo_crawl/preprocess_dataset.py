@@ -102,10 +102,8 @@ def get_warc(filename, offset, length):
         Key=filename,
         Range=f"bytes={offset}-{offset + length - 1}"
     )
-    if response.ok:
-        return response["Body"].read()
-
-    raise ValueError(f"Http request failed: {response.}")
+    # Check error handling
+    return response["Body"].read()
 
 def get_outgoing_link(compressed_warc, mime, domain):
     if mime not in HTML_TYPES:
