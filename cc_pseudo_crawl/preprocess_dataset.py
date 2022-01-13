@@ -3,6 +3,7 @@ import io
 import re
 from argparse import ArgumentParser
 from pathlib import Path
+from queue import Queue
 
 import boto3
 import botocore
@@ -47,9 +48,21 @@ def get_args():
 
 def get_all_parquet_files(path):
     path = Path(path)
-    all_crawls = [crawl for crawl in path.iterdir() if crawl.is_dir()]
-    only_warcs = [subset for crawl in all_crawls for subset in crawl.iterdir() if subset.is_dir() and subset.name == "subset=warc"]
-    return [str(file.absolute().resolve()) for subset in only_warcs for file in subset.iterdir() if file.is_file()]
+
+    def add_parquet_files(path):
+        return [str(file.absolute().resolve()) for file in path.iterdir() if file.is_file()]
+
+    parquet_files = []
+    queue_dirs = Queue()
+    while not queue_dirs.empty():
+        dir_path = queue_dirs.get()
+        if path.name == "subset=warc":
+            parquet_files += add_parquet_files(dir_path)
+        for d in dir_path.iterdir():
+            if dir_path.is_dir():
+                queue_dirs.put(d)
+
+    return parquet_files
 
 def get_pdf_urls(batch):
     content_mime_detected = batch["content_mime_detected"]
