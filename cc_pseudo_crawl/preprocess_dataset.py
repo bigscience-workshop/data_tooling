@@ -143,13 +143,13 @@ def get_warc_and_outgoing_links(batch, num_procs):
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
     compressed_warcs = []
     # external_urls = []
-    with ThreadPoolExecutor(5 * num_procs, initializer=set_global_session) as thread_pool:
-        warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
+    with Pool(num_procs) as process_pool:
+        with ThreadPoolExecutor(initializer=set_global_session) as thread_pool:
+            warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
 
-        warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
+            warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
 
-        with Pool(num_procs) as process_pool:
-            external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
+            external_urls = process_pool.map(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
 
     # for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
     #                                                   warc_record_offset, url_host_registered_domains):
