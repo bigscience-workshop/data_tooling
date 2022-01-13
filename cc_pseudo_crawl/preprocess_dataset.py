@@ -146,7 +146,7 @@ def get_warc_and_outgoing_links(batch, thread_pool):
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
 
-    warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
+    warcs = thread_pool.starmap(get_warc, zip(warc_filenames, warc_record_offset, warc_record_length))
     compressed_warcs = list(warcs)
 
     # compressed_warcs = []
@@ -188,7 +188,7 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
-    with ThreadPoolExecutor(5 * args.num_proc, initializer=set_global_session) as thread_pool:
+    with Pool(args.num_proc, initializer=set_global_session) as thread_pool:
         ds = ds.map(
             functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool),
             batched=True,
