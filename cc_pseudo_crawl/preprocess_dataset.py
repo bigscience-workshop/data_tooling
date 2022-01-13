@@ -87,6 +87,12 @@ def set_global_session():
             region_name="us-east-1"
         ).client('s3', config=Config(signature_version=botocore.UNSIGNED))
 
+thread_pool = None
+def set_thread_pool():
+    global thread_pool
+    if not thread_pool:
+        thread_pool = ThreadPoolExecutor(5, initializer=set_global_session)
+
 # Retrieves a list of all external links found on a page
 def get_external_links(soup, exclude_url):
     external_links = set()
@@ -133,7 +139,7 @@ def add_to_list_when_consuming(generator, list_to_cumulate):
         yield elt
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
-def get_warc_and_outgoing_links(batch, thread_pool):
+def get_warc_and_outgoing_links(batch):
     """We compose both as `get_outgoing_links` checks the WARC quality"""
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     # url_host_registered_domains = batch["url_host_registered_domain"]
@@ -145,9 +151,11 @@ def get_warc_and_outgoing_links(batch, thread_pool):
     assert len(content_mime_detected) == len(warc_record_offset)
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
-    with ThreadPoolExecutor(5, initializer=set_global_session) as thread_pool:
-        warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
-        compressed_warcs = list(warcs)
+    # with ThreadPoolExecutor(5, initializer=set_global_session) as thread_pool:
+    set_thread_pool()
+    global thread_pool
+    warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
+    compressed_warcs = list(warcs)
 
     # compressed_warcs = []
     # warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
@@ -188,9 +196,9 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
-    # with Pool(args.num_proc, initializer=set_global_session) as thread_pool:
+    # with Pool(args.num_proc, initializer=set_global_session) as process_pool:
     ds = ds.map(
-        functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool),
+        get_warc_and_outgoing_links,
         batched=True,
         num_proc=args.num_proc # multiprocessing is handled manually
     )
