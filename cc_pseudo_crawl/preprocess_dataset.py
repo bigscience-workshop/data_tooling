@@ -1,6 +1,7 @@
 import functools
 import io
 import re
+import subprocess
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
@@ -171,6 +172,14 @@ def get_depth(flavor):
 def main():
     args = get_args()
 
+    if args.shard_id:
+        save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
+    else:
+        save_path = Path(args.save_dir) / args.dataset
+    if save_path.exists():
+        print(f"Folder {save_path.absolute()} already exists.")
+        return
+
     ds = load_dataset("parquet", data_files=get_all_parquet_files(args.cc_index_folder), split=f"train{f'[{args.range}]' if args.range is not None else ''}")
 
     if args.shard_id is not None:
@@ -187,11 +196,8 @@ def main():
     # # Assign depth.
     # ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
-    if args.shard_id:
-        save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
-    else:
-        save_path = Path(args.save_dir) / args.dataset
-    ds.save_to_disk(save_path)
+    ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
+    subprocess.run(["mv", "-r", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
     # # Clean up columns to keep only these ones
     # columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
     #                    "external_urls", "depth", "fetch_time"}
