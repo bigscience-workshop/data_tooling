@@ -175,7 +175,7 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
-    with Pool(args.num_procs) as process_pool:
+    with Pool(args.num_proc) as process_pool:
         with ThreadPoolExecutor(initializer=set_global_session) as thread_pool:
             ds = ds.map(
                 functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool, process_pool=process_pool),
