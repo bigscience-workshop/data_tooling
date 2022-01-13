@@ -79,32 +79,6 @@ def set_global_session():
     if not s3_client:
         s3_client = boto3.client('s3', config=Config(signature_version=botocore.UNSIGNED))
 
-def get_warc(batch):
-    set_global_session()
-    global s3_client
-    content_mime_detected = batch["content_mime_detected"]  # select only text/html
-    url_host_registered_domains = batch["url_host_registered_domain"]
-    warc_filenames = batch["warc_filename"]
-    warc_record_length = batch["warc_record_length"]
-    warc_record_offset = batch["warc_record_offset"]
-    assert len(content_mime_detected) == len(warc_filenames)
-    assert len(content_mime_detected) == len(warc_record_length)
-    assert len(content_mime_detected) == len(warc_record_offset)
-
-    compressed_warcs = []
-    for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
-                                                      warc_record_offset, url_host_registered_domains):
-        response = s3_client.get_object(
-            Bucket='commoncrawl',
-            Key=filename,
-            Range=f"bytes={offset}-{offset + length - 1}"
-        )
-        content = response["Body"].read()
-        compressed_warcs.append(content)
-
-    batch["compressed_warc"] = compressed_warcs
-    return batch
-
 # Retrieves a list of all external links found on a page
 def get_external_links(soup, exclude_url):
     external_links = set()
@@ -117,15 +91,31 @@ def get_external_links(soup, exclude_url):
     return list(external_links)
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
-def get_outgoing_links(batch):
+def get_warc_and_outgoing_links(batch):
+    """We compose both as `get_outgoing_links` checks the WARC quality"""
+    set_global_session()
+    global s3_client
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     url_host_registered_domains = batch["url_host_registered_domain"]
-    compressed_warcs = batch["compressed_warc"]
-    assert len(content_mime_detected) == len(compressed_warcs)
-    assert len(content_mime_detected) == len(url_host_registered_domains)
+    warc_filenames = batch["warc_filename"]
+    warc_record_length = batch["warc_record_length"]
+    warc_record_offset = batch["warc_record_offset"]
+    assert len(content_mime_detected) == len(warc_filenames)
+    assert len(content_mime_detected) == len(warc_record_length)
+    assert len(content_mime_detected) == len(warc_record_offset)
 
+    compressed_warcs = []
     external_urls = []
-    for mime, compressed_warc, domain in zip(content_mime_detected, compressed_warcs, url_host_registered_domains):
+    for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
+                                                      warc_record_offset, url_host_registered_domains):
+        response = s3_client.get_object(
+            Bucket='commoncrawl',
+            Key=filename,
+            Range=f"bytes={offset}-{offset + length - 1}"
+        )
+        compressed_warc = response["Body"].read()
+        compressed_warcs.append(compressed_warc)
+
         if mime not in HTML_TYPES:
             external_urls.append([])
             continue
@@ -145,13 +135,9 @@ def get_outgoing_links(batch):
         soup = BeautifulSoup(html, 'html.parser')
         external_urls.append(get_external_links(soup, domain))
 
+    batch["compressed_warc"] = compressed_warcs
     batch["external_urls"] = external_urls
     return batch
-
-def get_warc_and_outgoing_links(batch):
-    """We compose both as `get_outgoing_links` checks the WARC quality"""
-    batch = get_warc(batch)
-    return get_outgoing_links(batch)
 
 def assign_depth(batch, depth):
     batch["depth"] = [depth]*len(batch["id"])
