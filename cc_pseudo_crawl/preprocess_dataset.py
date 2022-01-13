@@ -104,7 +104,6 @@ def get_warc(batch):
     batch["compressed_warc"] = compressed_warcs
     return batch
 
-
 # Retrieves a list of all external links found on a page
 def get_external_links(soup, exclude_url):
     external_links = set()
@@ -148,6 +147,11 @@ def get_outgoing_links(batch):
     batch["external_urls"] = external_urls
     return batch
 
+def get_warc_and_outgoing_links(batch):
+    """We compose both as `get_outgoing_links` checks the WARC quality"""
+    batch = get_warc(batch)
+    return get_outgoing_links(batch)
+
 def assign_depth(batch, depth):
     batch["depth"] = [depth]*len(batch["id"])
     return batch
@@ -169,50 +173,22 @@ def main():
     if args.shard_id:
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
-    # Get raw compressed WARC records.
+    # Get raw compressed WARC records and outgoing links
     ds = ds.map(
-        get_warc,
+        get_warc_and_outgoing_links,
         batched=True,
-        num_proc=args.num_proc,
-        features=datasets.Features({
-            **ds.features,
-            "seed_id": datasets.Value("int64"),
-            "compressed_warc": datasets.Value("binary")
-        })
+        num_proc=args.num_proc
     )
 
-    # # Extract pdf URLs.
-    # ds = ds.map(
-    #     get_pdf_urls,
-    #     batched=True,
-    #     num_proc=args.num_proc,
-    #     features=datasets.Features({
-    #         **ds.features,
-    #         "pdf_url": datasets.Value("string")
-    #     })
-    # )
-
-    # Extract outgoing links.
-    ds = ds.map(
-        get_outgoing_links,
-        batched=True,
-        num_proc=args.num_proc,
-        features=datasets.Features({
-            **ds.features,
-            "external_urls": datasets.features.Sequence(
-                datasets.Value("string")
-            )
-        })
-    )
-
+    datasets.set_caching_enabled(False)
     # Assign depth.
     ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
-    # Clean up columns to keep only these ones
-    columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
-                       "external_urls", "depth", "fetch_time"}
-    columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
-    ds = ds.remove_columns(columns_to_remove)
+    # # Clean up columns to keep only these ones
+    # columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
+    #                    "external_urls", "depth", "fetch_time"}
+    # columns_to_remove = [column for column in ds.column_names if column not in columns_to_keep]
+    # ds = ds.remove_columns(columns_to_remove)
 
     # ds.push_to_hub(args.dataset, private=True)
 
