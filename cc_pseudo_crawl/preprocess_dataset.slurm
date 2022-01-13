@@ -16,6 +16,7 @@ source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling # Debug deepspeed temporarily
 
 CC_INDEX_FOLDER=$SCRATCH/pseudo_crawl
+SAVE_DATASET_DIR=$SCRATCH/pseudo_crawl_shards
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 pushd $DATA_TOOLING_REPO
 
@@ -25,6 +26,7 @@ pushd $DATA_TOOLING_REPO
 python cc_pseudo_crawl/preprocess_dataset.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
+    --save-dir $SAVE_DATASET_DIR \
     --num-proc 4 \
     --shard-id $SLURM_ARRAY_TASK_ID \
     --num-shards $SLURM_ARRAY_TASK_COUNT \

@@ -27,6 +27,7 @@ def get_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset', type=str, required=True, help="Dataset name")
     parser.add_argument('--cc-index-folder', type=str, required=True, help="Folder containing index dataset in parquet format")
+    parser.add_argument('--save-dir', type=str, required=True, help="Where to save the datasets.")
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing")
     parser.add_argument('--range', type=str, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `:10`")
     parser.add_argument('--shard-id', type=int, help="Preprocess dataset via shards")
@@ -205,6 +206,11 @@ def main():
     # Assign depth.
     ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
+    if args.shard_id:
+        save_path = Path(args.save_dir) / f"{args.datasets}--{args.shard_id}--{args.num_shards}"
+    else:
+        save_path = Path(args.save_dir) / args.datasets
+    ds.save_to_disk(save_path)
     # # Clean up columns to keep only these ones
     # columns_to_keep = {"id", "seed_id", "title", "link", "languages", "url", "pdf_url", "compressed_warc",
     #                    "external_urls", "depth", "fetch_time"}
