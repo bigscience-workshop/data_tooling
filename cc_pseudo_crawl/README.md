@@ -86,26 +86,32 @@ For every site list
 7. We want to run deduplication in terms of urls. [WIP]
   ```sql
   CREATE TABLE bigscience.cc_seed_dedup_url
-    WITH (external_location = '{s3_location}/cc-seed_dedup_url',
+    WITH (external_location = 's3://bucket/path/cc-seed_dedup_url/',
           partitioned_by = ARRAY['subset'],
           format = 'PARQUET',
           parquet_compression = 'GZIP')
-    AS SELECT
-           seed_id,
-           url_surtkey,
-           url_host_tld,
-           url_host_registered_domain,
-           url_host_name,
-           DISTINCT ON(url) url,
-           fetch_status,
-           fetch_time,
-           warc_filename,
-           warc_record_offset,
-           warc_record_length,
-           fetch_redirect,
-           content_mime_detected,
-           content_languages,
-           subset
-    FROM bigscience.cc_seed
-    ORDER BY url, fetch_time DESC;
+    AS
+    WITH tmp AS (
+        SELECT *, row_number() over (partition by url order by fetch_time desc) row
+        FROM bigscience.cc_seed
+    )
+
+    SELECT
+       seed_id,
+       url,
+       url_surtkey,
+       url_host_tld,
+       url_host_registered_domain,
+       url_host_name,
+       fetch_status,
+       fetch_time,
+       warc_filename,
+       warc_record_offset,
+       warc_record_length,
+       fetch_redirect,
+       content_mime_detected,
+       content_languages,
+       subset
+    FROM tmp
+    WHERE row = 1
   ```
