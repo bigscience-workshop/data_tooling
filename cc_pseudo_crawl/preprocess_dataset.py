@@ -44,7 +44,7 @@ def get_args():
     flavor = flavors[0]
     assert flavor == "seed" \
            or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
-    args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{flavor}"
+    args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{''.join(flavors)}"
     args.flavor = flavor
 
     if args.shard_id is not None:
