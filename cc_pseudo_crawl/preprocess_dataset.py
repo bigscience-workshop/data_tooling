@@ -2,6 +2,7 @@ import functools
 import io
 import re
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from queue import Queue
 
@@ -12,7 +13,7 @@ from bs4 import BeautifulSoup
 from datasets import load_dataset
 from botocore.config import Config
 
-from warcio import ArchiveIterator
+from warcio.archiveiterator import WARCIterator
 from warcio.recordloader import ArchiveLoadFailed
 
 """
@@ -77,7 +78,7 @@ s3_client = None
 def set_global_session():
     global s3_client
     if not s3_client:
-        s3_client = boto3.client('s3', config=Config(signature_version=botocore.UNSIGNED))
+        s3_client = boto3.session.Session().client('s3', config=Config(signature_version=botocore.UNSIGNED))
 
 # Retrieves a list of all external links found on a page
 def get_external_links(soup, exclude_url):
@@ -89,6 +90,14 @@ def get_external_links(soup, exclude_url):
         if href is not None:
             external_links.add(href)
     return list(external_links)
+
+def get_warc(filename, offset, length, s3_client):
+    response = s3_client.get_object(
+        Bucket='commoncrawl',
+        Key=filename,
+        Range=f"bytes={offset}-{offset + length - 1}"
+    )
+    return response["Body"].read()
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
 def get_warc_and_outgoing_links(batch):
@@ -104,16 +113,13 @@ def get_warc_and_outgoing_links(batch):
     assert len(content_mime_detected) == len(warc_record_length)
     assert len(content_mime_detected) == len(warc_record_offset)
 
+    # TODO: Try using ThreadPoolExecutor download the files in a threadpool
+
     compressed_warcs = []
     external_urls = []
     for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
                                                       warc_record_offset, url_host_registered_domains):
-        response = s3_client.get_object(
-            Bucket='commoncrawl',
-            Key=filename,
-            Range=f"bytes={offset}-{offset + length - 1}"
-        )
-        compressed_warc = response["Body"].read()
+        compressed_warc = get_warc(filename, offset, length, s3_client)
         compressed_warcs.append(compressed_warc)
 
         if mime not in HTML_TYPES:
@@ -123,7 +129,7 @@ def get_warc_and_outgoing_links(batch):
         with io.BytesIO(compressed_warc) as stream:
             html = None
             try:
-                for record in ArchiveIterator(stream):
+                for record in WARCIterator(stream):
                     if record.rec_type == 'response':
                         html = record.content_stream().read()
                         break
