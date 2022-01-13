@@ -83,7 +83,9 @@ s3_client = None
 def set_global_session():
     global s3_client
     if not s3_client:
-        s3_client = boto3.session.Session().client('s3', config=Config(signature_version=botocore.UNSIGNED))
+        s3_client = boto3.session.Session(
+            region_name="us-east-1"
+        ).client('s3', config=Config(signature_version=botocore.UNSIGNED))
 
 # Retrieves a list of all external links found on a page
 def get_external_links(soup, exclude_url):
