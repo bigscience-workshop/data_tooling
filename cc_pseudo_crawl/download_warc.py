@@ -128,7 +128,7 @@ def get_warcs(batch):
     )
 
     # The goal is to load them next time.
-    batch["compressed_warc"], batch["download_exception"] = zip(*warcs_or_exceptions)
+    batch["compressed_warc"], batch["download_exception"] = list(zip(*warcs_or_exceptions))
     return batch
 
 def download_warcs(ds, save_path, num_proc):
