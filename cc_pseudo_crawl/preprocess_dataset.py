@@ -140,7 +140,8 @@ def get_warc_and_outgoing_links(batch):
     return batch
 
 def assign_depth(batch, depth):
-    batch["depth"] = [depth]*len(batch["id"])
+    batch_size = len(batch[next(iter(batch))])
+    batch["depth"] = [depth]* batch_size
     return batch
 
 def get_depth(flavor):
