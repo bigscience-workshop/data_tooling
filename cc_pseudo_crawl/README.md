@@ -115,6 +115,8 @@ For every site list
     FROM tmp
     WHERE row = 1
   ```
-8. Run `python 3 preprocess_dataset.sh ${NUM_SHARDS}` The script will download warc files.
+8. Run `download_warc.py` The script will download warc files. We provide two helpers: a bash script and a slurm script for easy use
 
-9. Send files in a bucket somewhere.
+10. Run `preprocess_dataset.py`. This will help populate specific columns such as `outgoing_links`, `depth` ...
+
+9. Send dataset in a bucket somewhere.

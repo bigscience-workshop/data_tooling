@@ -14,7 +14,7 @@ pushd ~/code/data_tooling
 for i in $(seq 0 $((NUM_SHARDS-1)))
 do
    echo "Processing shard number $i"
-   python3 cc_pseudo_crawl/preprocess_dataset.py \
+   python3 cc_pseudo_crawl/download_warc.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed_dedup_url \
     --cc-index-folder $CC_INDEX_FOLDER \
     --save-dir $SAVE_DATASET_DIR \
