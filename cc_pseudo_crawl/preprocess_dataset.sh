@@ -2,6 +2,7 @@ NUM_SHARDS=$1
 
 CC_INDEX_FOLDER=~/bigscience/pseudo_crawl
 
+pushd ~/code/data_tooling
 
 for i in {1..$1}
 do
