@@ -11,7 +11,7 @@ SAVE_DATASET_DIR=~/bigscience/pseudo_crawl/datasets
 
 pushd ~/code/data_tooling
 
-for i in $(seq 0 ${NUM_SHARDS-1})
+for i in $(seq 0 $((NUM_SHARDS-1)))
 do
    echo "Processing shard number $i"
    python3 cc_pseudo_crawl/preprocess_dataset.py \
