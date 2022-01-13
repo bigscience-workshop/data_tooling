@@ -8,6 +8,7 @@ from queue import Queue
 import boto3
 import botocore
 import datasets
+from botocore.exceptions import ClientError
 from datasets import load_dataset
 datasets.set_caching_enabled(False)
 from botocore.config import Config
@@ -79,13 +80,17 @@ def set_thread_pool():
 
 def get_warc(filename, offset, length):
     global s3_client
-    response = s3_client.get_object(
-        Bucket='commoncrawl',
-        Key=filename,
-        Range=f"bytes={offset}-{offset + length - 1}"
-    )
+    try:
+        response = s3_client.get_object(
+            Bucket='commoncrawl',
+            Key=filename,
+            Range=f"bytes={offset}-{offset + length - 1}"
+        )
+    except ClientError as e:
+        return None, repr(e)
+
     # Check error handling
-    return response["Body"].read()
+    return response["Body"].read(), None
 
 def add_to_list_when_consuming(generator, list_to_cumulate):
     for elt in generator:
@@ -105,10 +110,10 @@ def get_warcs(batch):
 
     set_thread_pool()
     global thread_pool
-    warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
-    compressed_warcs = list(warcs)
+    warcs_or_exceptions = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
 
-    batch["compressed_warc"] = compressed_warcs
+    # The goal is to load them next time.
+    batch["compressed_warc"], batch["download_exception"] = zip(*warcs_or_exceptions)
     return batch
 
 def main():
@@ -134,6 +139,9 @@ def main():
         batched=True,
         num_proc=args.num_proc
     )
+
+    # Provide a way to re-run the script where we query only the files that failed download.
+    print(f"Download failed for {len([e for e in ds['download_exception'] if e is not None])} rows. Please try re-running this script somehow.")
 
     ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
     subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
