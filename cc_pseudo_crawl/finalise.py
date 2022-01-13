@@ -11,7 +11,7 @@ def get_args():
     args = parser.parse_args()
 
     assert args.dataset not in args.datasets_to_concatenate
-    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_(.*)$", args.dataset)
+    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_(.*)(_dedup_url)?$", args.dataset)
     assert matches is not None
     flavor = matches.groups()[0]
     assert re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
