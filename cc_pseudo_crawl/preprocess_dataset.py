@@ -102,7 +102,10 @@ def get_warc(filename, offset, length):
         Key=filename,
         Range=f"bytes={offset}-{offset + length - 1}"
     )
-    return response["Body"].read()
+    if response.ok:
+        return response["Body"].read()
+
+    raise ValueError(f"Http request failed: {response.}")
 
 def get_outgoing_link(compressed_warc, mime, domain):
     if mime not in HTML_TYPES:
@@ -129,10 +132,10 @@ def add_to_list_when_consuming(generator, list_to_cumulate):
         yield elt
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
-def get_warc_and_outgoing_links(batch, thread_pool, process_pool):
+def get_warc_and_outgoing_links(batch, thread_pool):
     """We compose both as `get_outgoing_links` checks the WARC quality"""
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
-    url_host_registered_domains = batch["url_host_registered_domain"]
+    # url_host_registered_domains = batch["url_host_registered_domain"]
     warc_filenames = batch["warc_filename"]
     warc_record_length = batch["warc_record_length"]
     warc_record_offset = batch["warc_record_offset"]
@@ -141,15 +144,16 @@ def get_warc_and_outgoing_links(batch, thread_pool, process_pool):
     assert len(content_mime_detected) == len(warc_record_offset)
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
-    compressed_warcs = []
 
     warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
-    warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
+    compressed_warcs = list(warcs)
 
-    external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
+    # compressed_warcs = []
+    # warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
+    # external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
 
     batch["compressed_warc"] = compressed_warcs
-    batch["external_urls"] = external_urls
+    # batch["external_urls"] = external_urls
     return batch
 
 def assign_depth(batch, depth):
@@ -175,16 +179,15 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
-    with Pool(args.num_proc) as process_pool:
-        with ThreadPoolExecutor(initializer=set_global_session) as thread_pool:
-            ds = ds.map(
-                functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool, process_pool=process_pool),
-                batched=True,
-                num_proc=1 # multiprocessing is handled manually
-            )
+    with ThreadPoolExecutor(5 * args.num_proc, initializer=set_global_session) as thread_pool:
+        ds = ds.map(
+            functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool),
+            batched=True,
+            num_proc=1 # multiprocessing is handled manually
+        )
 
-    # Assign depth.
-    ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
+    # # Assign depth.
+    # ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
     if args.shard_id:
         save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
