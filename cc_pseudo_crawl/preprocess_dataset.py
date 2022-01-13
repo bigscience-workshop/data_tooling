@@ -129,7 +129,7 @@ def add_to_list_when_consuming(generator, list_to_cumulate):
         yield elt
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
-def get_warc_and_outgoing_links(batch, num_procs):
+def get_warc_and_outgoing_links(batch, thread_pool, process_pool):
     """We compose both as `get_outgoing_links` checks the WARC quality"""
     content_mime_detected = batch["content_mime_detected"]  # select only text/html
     url_host_registered_domains = batch["url_host_registered_domain"]
@@ -142,38 +142,11 @@ def get_warc_and_outgoing_links(batch, num_procs):
 
     # TODO: Try using ThreadPoolExecutor download the files in a threadpool
     compressed_warcs = []
-    # external_urls = []
-    with Pool(num_procs) as process_pool:
-        with ThreadPoolExecutor(initializer=set_global_session) as thread_pool:
-            warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
 
-            warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
+    warcs = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
+    warc_generator = add_to_list_when_consuming(warcs, compressed_warcs)
 
-            external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
-
-    # for mime, filename, length, offset, domain in zip(content_mime_detected, warc_filenames, warc_record_length,
-    #                                                   warc_record_offset, url_host_registered_domains):
-    #     compressed_warc = get_warc(filename, offset, length, s3_client)
-    #     compressed_warcs.append(compressed_warc)
-    #
-    #     if mime not in HTML_TYPES:
-    #         external_urls.append([])
-    #         continue
-    #
-    #     with io.BytesIO(compressed_warc) as stream:
-    #         html = None
-    #         try:
-    #             for record in WARCIterator(stream):
-    #                 if record.rec_type == 'response':
-    #                     html = record.content_stream().read()
-    #                     break
-    #         except ArchiveLoadFailed as exception:
-    #             print(str(exception), compressed_warc)
-    #             raise exception
-    #
-    #     assert html is not None
-    #     soup = BeautifulSoup(html, 'html.parser')
-    #     external_urls.append(get_external_links(soup, domain))
+    external_urls = process_pool.starmap(get_outgoing_link, zip(warc_generator, content_mime_detected , url_host_registered_domains))
 
     batch["compressed_warc"] = compressed_warcs
     batch["external_urls"] = external_urls
@@ -202,11 +175,13 @@ def main():
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
     # Get raw compressed WARC records and outgoing links
-    ds = ds.map(
-        functools.partial(get_warc_and_outgoing_links, num_procs = args.num_proc),
-        batched=True,
-        num_proc=1 # multiprocessing is handled manually
-    )
+    with Pool(args.num_procs) as process_pool:
+        with ThreadPoolExecutor(initializer=set_global_session) as thread_pool:
+            ds = ds.map(
+                functools.partial(get_warc_and_outgoing_links, thread_pool = thread_pool, process_pool=process_pool),
+                batched=True,
+                num_proc=1 # multiprocessing is handled manually
+            )
 
     # Assign depth.
     ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
