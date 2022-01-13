@@ -198,7 +198,7 @@ def main():
 
     # Get raw compressed WARC records and outgoing links
     ds = ds.map(
-        functools.partial(get_warc_and_outgoing_links, num_procs = args.num_procs),
+        functools.partial(get_warc_and_outgoing_links, num_procs = args.num_proc),
         batched=True,
         num_proc=1 # multiprocessing is handled manually
     )
