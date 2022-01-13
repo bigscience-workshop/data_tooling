@@ -198,12 +198,11 @@ def main():
 
     # Get raw compressed WARC records and outgoing links
     ds = ds.map(
-        get_warc_and_outgoing_links,
+        functools.partial(get_warc_and_outgoing_links, num_procs = args.num_procs),
         batched=True,
         num_proc=1 # multiprocessing is handled manually
     )
 
-    datasets.set_caching_enabled(False)
     # Assign depth.
     ds = ds.map(functools.partial(assign_depth, depth=get_depth(args.flavor)), batched=True, num_proc=args.num_proc)
 
