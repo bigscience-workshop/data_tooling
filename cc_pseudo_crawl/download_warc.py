@@ -78,7 +78,10 @@ def set_thread_pool():
     if not thread_pool:
         thread_pool = ThreadPoolExecutor(initializer=set_global_session)
 
-def get_warc(filename, offset, length):
+def get_warc(filename, offset, length, existing_compressed_warc):
+    if existing_compressed_warc:
+        return existing_compressed_warc, None
+
     global s3_client
     try:
         response = s3_client.get_object(
@@ -108,13 +111,39 @@ def get_warcs(batch):
     assert len(content_mime_detected) == len(warc_record_length)
     assert len(content_mime_detected) == len(warc_record_offset)
 
+    if "compressed_warc" in batch:
+        existing_compressed_warcs = batch["compressed_warc"]
+    else:
+        # Not yet queried
+        existing_compressed_warcs = [None] * len(warc_filenames)
+
     set_thread_pool()
     global thread_pool
-    warcs_or_exceptions = thread_pool.map(get_warc, warc_filenames, warc_record_offset, warc_record_length)
+    warcs_or_exceptions = thread_pool.map(
+        get_warc,
+        warc_filenames,
+        warc_record_offset,
+        warc_record_length,
+        existing_compressed_warcs,
+    )
 
     # The goal is to load them next time.
     batch["compressed_warc"], batch["download_exception"] = zip(*warcs_or_exceptions)
     return batch
+
+def download_warcs(ds, save_path, num_proc):
+    # Get raw compressed WARC records
+    ds = ds.map(
+        get_warcs,
+        batched=True,
+        num_proc=num_proc
+    )
+
+    # Provide a way to re-run the script where we query only the files that failed download.
+    print(f"Download failed for {len([e for e in ds['download_exception'] if e is not None])} rows. Please try re-running this script somehow.")
+
+    ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
+    subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
 
 def main():
     args = get_args()
@@ -133,18 +162,7 @@ def main():
     if args.shard_id is not None:
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
 
-    # Get raw compressed WARC records
-    ds = ds.map(
-        get_warcs,
-        batched=True,
-        num_proc=args.num_proc
-    )
-
-    # Provide a way to re-run the script where we query only the files that failed download.
-    print(f"Download failed for {len([e for e in ds['download_exception'] if e is not None])} rows. Please try re-running this script somehow.")
-
-    ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
-    subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
+    download_warcs(ds, save_path, args.num_proc)
 
 if __name__ == "__main__":
     main()
