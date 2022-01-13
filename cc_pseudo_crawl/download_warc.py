@@ -136,7 +136,12 @@ def download_warcs(ds, save_path, num_proc):
     ds = ds.map(
         get_warcs,
         batched=True,
-        num_proc=num_proc
+        num_proc=num_proc,
+        features=datasets.Features({
+            **ds.features,
+            "compressed_warc": datasets.Value("binary"),
+            "download_exception": datasets.Value("string")
+        })
     )
 
     # Provide a way to re-run the script where we query only the files that failed download.
