@@ -76,7 +76,7 @@ thread_pool = None
 def set_thread_pool():
     global thread_pool
     if not thread_pool:
-        thread_pool = ThreadPoolExecutor(30, initializer=set_global_session)
+        thread_pool = ThreadPoolExecutor(initializer=set_global_session)
 
 def get_warc(filename, offset, length, existing_compressed_warc):
     if existing_compressed_warc:
