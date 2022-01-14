@@ -46,25 +46,6 @@ def get_args():
 
     return args
 
-def get_all_parquet_files(path):
-    path = Path(path)
-
-    def add_parquet_files(path):
-        return [str(file.absolute().resolve()) for file in path.iterdir() if file.is_file()]
-
-    parquet_files = []
-    queue_dirs = Queue()
-    queue_dirs.put(path)
-    while not queue_dirs.empty():
-        dir_path = queue_dirs.get()
-        if dir_path.name == "subset=warc":
-            parquet_files += add_parquet_files(dir_path)
-        for d in dir_path.iterdir():
-            if d.is_dir():
-                queue_dirs.put(d)
-
-    return parquet_files
-
 thread_data = threading.local()
 def set_global_session():
     if not hasattr(thread_data, "s3_client"):
