@@ -111,6 +111,7 @@ def concatenate_all_shards(args):
 def main():
     args = get_args()
 
+    # Actually keeps shards, and concatenate after preprocessing.
     ds = concatenate_all_shards(args)
 
     ds.map(
@@ -119,6 +120,7 @@ def main():
         num_proc=args.num_proc
     )
 
+    # Obtain final dataset and store it (push to hub)
     ds.save_to_disk(f"{args.dataset_prefix_path}_processed")
 
 

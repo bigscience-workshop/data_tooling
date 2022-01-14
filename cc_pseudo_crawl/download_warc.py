@@ -79,7 +79,7 @@ def set_thread_pool():
         thread_pool = ThreadPoolExecutor(initializer=set_global_session)
 
 def get_warc(filename, offset, length, existing_compressed_warc):
-    if existing_compressed_warc:
+    if existing_compressed_warc is not None:
         return existing_compressed_warc, None
 
     try:
@@ -94,21 +94,13 @@ def get_warc(filename, offset, length, existing_compressed_warc):
     # Check error handling
     return response["Body"].read(), None
 
-def add_to_list_when_consuming(generator, list_to_cumulate):
-    for elt in generator:
-        list_to_cumulate.append(elt)
-        yield elt
-
 def get_warcs(batch):
     """We compose both as `get_outgoing_links` checks the WARC quality"""
-    content_mime_detected = batch["content_mime_detected"]  # select only text/html
-    # url_host_registered_domains = batch["url_host_registered_domain"]
     warc_filenames = batch["warc_filename"]
     warc_record_length = batch["warc_record_length"]
     warc_record_offset = batch["warc_record_offset"]
-    assert len(content_mime_detected) == len(warc_filenames)
-    assert len(content_mime_detected) == len(warc_record_length)
-    assert len(content_mime_detected) == len(warc_record_offset)
+    assert len(warc_filenames) == len(warc_record_length)
+    assert len(warc_filenames) == len(warc_record_offset)
 
     if "compressed_warc" in batch:
         existing_compressed_warcs = batch["compressed_warc"]
@@ -126,7 +118,6 @@ def get_warcs(batch):
         existing_compressed_warcs,
     )
 
-    # The goal is to load them next time.
     batch["compressed_warc"], batch["download_exception"] = [list(l) for l in zip(*warcs_or_exceptions)]
     return batch
 
@@ -161,6 +152,7 @@ def main():
         print(f"Folder {save_path.absolute()} already exists.")
         return
 
+    # TODO: Test out regex method: f"{args.cc_index_folder}/**/subset=warc/*"
     ds = load_dataset("parquet", data_files=get_all_parquet_files(args.cc_index_folder), split=f"train{f'[{args.range}]' if args.range is not None else ''}")
 
     if args.shard_id is not None:
