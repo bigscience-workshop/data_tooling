@@ -98,27 +98,29 @@ def apply_preprocessing(batch, depth):
 
     return batch
 
-def concatenate_all_shards(args):
+def load_all_shards(args):
     if args.num_shards is None:
         source_path = args.dataset_prefix_path
-        ds = load_dataset(source_path)
+        shards = [load_dataset(source_path)]
     else:
         shard_paths = [f"{args.dataset_prefix_path}--{i}--{args.num_shards}" for i in range(args.num_shards)]
         shards = [load_dataset(shard_path) for shard_path in shard_paths]
-        ds = concatenate_datasets(shards)
-    return ds
+    return shards
 
 def main():
     args = get_args()
 
     # Actually keeps shards, and concatenate after preprocessing.
-    ds = concatenate_all_shards(args)
+    shards = load_all_shards(args)
 
-    ds.map(
-        functools.partial(apply_preprocessing, depth=args.flavor),
-        batched=True,
-        num_proc=args.num_proc
-    )
+    for shard in shards:
+        shard.map(
+            functools.partial(apply_preprocessing, depth=args.flavor),
+            batched=True,
+            num_proc=args.num_proc
+        )
+
+    ds = concatenate_datasets(shards)
 
     # Obtain final dataset and store it (push to hub)
     ds.save_to_disk(f"{args.dataset_prefix_path}_processed")
