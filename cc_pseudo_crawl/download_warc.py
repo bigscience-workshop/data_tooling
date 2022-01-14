@@ -82,9 +82,8 @@ def get_warc(filename, offset, length, existing_compressed_warc):
     if existing_compressed_warc:
         return existing_compressed_warc, None
 
-    global s3_client
     try:
-        response = s3_client.get_object(
+        response = thread_data.s3_client.get_object(
             Bucket='commoncrawl',
             Key=filename,
             Range=f"bytes={offset}-{offset + length - 1}"
