@@ -7,7 +7,7 @@
 #SBATCH --partition=prepost
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name
-#SBATCH --array=0-9 # TODO: modify according to the number of models you want to evaluated
+#SBATCH --array=0-9%2 # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
 
 set -x -e
@@ -29,5 +29,4 @@ python cc_pseudo_crawl/download_warc.py \
     --save-dir $SAVE_DATASET_DIR \
     --num-proc 4 \
     --shard-id $SLURM_ARRAY_TASK_ID \
-    --num-shards $SLURM_ARRAY_TASK_COUNT \
-    --range :100000
+    --num-shards $SLURM_ARRAY_TASK_COUNT
