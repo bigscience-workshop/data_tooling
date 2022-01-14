@@ -124,7 +124,7 @@ def download_warcs(ds, save_path, num_proc):
 def main():
     args = get_args()
 
-    if args.shard_id:
+    if args.shard_id is not None:
         save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
     else:
         save_path = Path(args.save_dir) / args.dataset
