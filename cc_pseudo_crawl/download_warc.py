@@ -152,8 +152,11 @@ def main():
         print(f"Folder {save_path.absolute()} already exists.")
         return
 
-    # TODO: Test out regex method: f"{args.cc_index_folder}/**/subset=warc/*"
-    ds = load_dataset("parquet", data_files=get_all_parquet_files(args.cc_index_folder), split=f"train{f'[{args.range}]' if args.range is not None else ''}")
+    ds = load_dataset(
+        "parquet",
+        data_files=[f"{args.cc_index_folder}/subset=warc/*", f"{args.cc_index_folder}/**/subset=warc/*"],
+        split=f"train{f'[{args.range}]' if args.range is not None else ''}"
+    )
 
     if args.shard_id is not None:
         ds = ds.shard(num_shards=args.num_shards, index=args.shard_id)
