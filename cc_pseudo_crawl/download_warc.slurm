@@ -7,7 +7,7 @@
 #SBATCH --partition=prepost
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name
-#SBATCH --array=0-9%2 # TODO: modify according to the number of models you want to evaluated
+#SBATCH --array=0-9%2   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
 
 set -x -e
@@ -15,8 +15,8 @@ set -x -e
 source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling # Debug deepspeed temporarily
 
-CC_INDEX_FOLDER=$SCRATCH/pseudo_crawl
-SAVE_DATASET_DIR=$SCRATCH/pseudo_crawl_shards
+CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
+SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 pushd $DATA_TOOLING_REPO
 
