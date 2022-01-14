@@ -67,7 +67,7 @@ def get_all_parquet_files(path):
 
 thread_data = threading.local()
 def set_global_session():
-    if hasattr(thread_data, "s3_client"):
+    if not hasattr(thread_data, "s3_client"):
         thread_data.s3_client = boto3.session.Session(
             region_name="us-east-1"
         ).client('s3', config=Config(signature_version=botocore.UNSIGNED))
@@ -76,7 +76,7 @@ thread_pool = None
 def set_thread_pool():
     global thread_pool
     if not thread_pool:
-        thread_pool = ThreadPoolExecutor(120, initializer=set_global_session)
+        thread_pool = ThreadPoolExecutor(30, initializer=set_global_session)
 
 def get_warc(filename, offset, length, existing_compressed_warc):
     if existing_compressed_warc:
