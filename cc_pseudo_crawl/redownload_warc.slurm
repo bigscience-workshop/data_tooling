@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=pseudo_crawl_download
+#SBATCH --job-name=pseudo_crawl_redownload
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=4           # number of cores per tasks
@@ -18,15 +18,10 @@ conda activate thomas_data_tooling # Debug deepspeed temporarily
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
 SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
+DATASET_PATH="$SAVE_DATASET_DIR"/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--"$SLURM_ARRAY_TASK_COUNT"
+echo $DATASET_PATH
 pushd $DATA_TOOLING_REPO
 
-# TODO run this offline
-# aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/
-
-python cc_pseudo_crawl/download_warc.py \
-    --dataset bigscience-catalogue-data/pseudo_crawl_seed \
-    --cc-index-folder $CC_INDEX_FOLDER \
-    --save-dir $SAVE_DATASET_DIR \
+python -m cc_pseudo_crawl.redownload_warc.py \
+    --dataset-path $DATASET_PATH \
     --num-proc 4 \
-    --shard-id $SLURM_ARRAY_TASK_ID \
-    --num-shards $SLURM_ARRAY_TASK_COUNT
