@@ -564,9 +564,6 @@ class Filtering:
         ) / len(words)
         if badwords_ratio > 1.0:
             badwords_ratio = 1.0
-        for word in augmentation:
-            if word in badwords:
-                print(word)
         return badwords_ratio
 
     @staticmethod
