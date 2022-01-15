@@ -22,6 +22,6 @@ DATASET_PATH="$SAVE_DATASET_DIR"/bigscience-catalogue-data/pseudo_crawl_seed--"$
 echo $DATASET_PATH
 pushd $DATA_TOOLING_REPO
 
-python -m cc_pseudo_crawl.redownload_warc.py \
+python -m cc_pseudo_crawl.redownload_warc \
     --dataset-path $DATASET_PATH \
     --num-proc 4 \
