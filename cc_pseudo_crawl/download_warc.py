@@ -121,6 +121,11 @@ def download_warcs(ds, save_path, num_proc):
     ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
     subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
 
+    with open(save_path / "missing_rows.txt", "w") as fi:
+        indices_that_failed = [i for i, e in enumerate(ds['download_exception']) if e is not None]
+        fi.write(f"Download failed for {len(indices_that_failed)} rows. Please try re-running this script somehow.\n")
+        fi.writelines([f"{i}\n" for i in indices_that_failed])
+
 def main():
     args = get_args()
 
