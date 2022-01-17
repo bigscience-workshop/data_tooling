@@ -4,8 +4,8 @@
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=4           # number of cores per tasks
 #SBATCH --hint=nomultithread         # we get physical cores not logical
-#SBATCH --partition=prepost
-#SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
+#SBATCH --partition=compil
+#SBATCH --time 15:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=/gpfswork/rech/six/uty16tp/code/big_science/logs/download_trial_4/%x-%j.out           # output file name
 #SBATCH --array=0-9   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
