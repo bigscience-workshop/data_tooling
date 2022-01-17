@@ -19,7 +19,7 @@ export DATASETS_VERBOSITY=info
 
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
 SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets
-DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
+DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 pushd $DATA_TOOLING_REPO
 
 # TODO run this offline
