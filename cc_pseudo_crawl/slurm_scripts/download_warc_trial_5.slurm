@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=pseudo_crawl_download_trial_5_with_thomas_folder
+#SBATCH --job-name=pseudo_crawl_download_trial_7
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=4           # number of cores per tasks
@@ -19,7 +19,7 @@ export DATASETS_VERBOSITY=info
 
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
 SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets
-DATA_TOOLING_REPO=/gpfsdswork/projects/rech/six/uty16tp/code/big_science/data_tooling
+DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 pushd $DATA_TOOLING_REPO
 
 # TODO run this offline

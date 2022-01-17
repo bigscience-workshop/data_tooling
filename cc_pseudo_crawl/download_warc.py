@@ -1,3 +1,5 @@
+import json
+import logging
 import re
 import subprocess
 import threading
@@ -9,15 +11,18 @@ from queue import Queue
 import boto3
 import botocore
 import datasets
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from datasets import load_dataset
-datasets.set_caching_enabled(False)
-from botocore.config import Config
+from datasets.utils.logging import set_verbosity_info
 
 """
 Required: obtain cc_index and copy it locally
 `aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/`
 """
+datasets.set_caching_enabled(False)
+set_verbosity_info()
+logger = logging.getLogger(__name__)
 
 def get_args():
     parser = ArgumentParser()
@@ -116,7 +121,7 @@ def download_warcs(ds, save_path, num_proc):
     )
 
     # Provide a way to re-run the script where we query only the files that failed download.
-    print(f"Download failed for {len([e for e in ds['download_exception'] if e is not None])} rows. Please try re-running this script somehow.")
+    logger.info(f"Download failed for {len([e for e in ds['download_exception'] if e is not None])} rows. Please try re-running this script somehow.")
 
     ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
     subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
@@ -126,8 +131,15 @@ def download_warcs(ds, save_path, num_proc):
         fi.write(f"Download failed for {len(indices_that_failed)} rows. Please try re-running this script somehow.\n")
         fi.writelines([f"{i}\n" for i in indices_that_failed])
 
-def main():
+def main(): 
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
     args = get_args()
+    logger.info(f"** The job is runned with the following arguments: **\n{json.dumps(args, indent=4)}\n **** ")
 
     if args.shard_id is not None:
         save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
