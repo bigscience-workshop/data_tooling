@@ -13,14 +13,14 @@ import botocore
 import datasets
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from datasets import load_dataset
+from datasets import config, load_dataset
 from datasets.utils.logging import set_verbosity_info
 
 """
 Required: obtain cc_index and copy it locally
 `aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/`
 """
-datasets.set_caching_enabled(False)
+
 set_verbosity_info()
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ def get_args():
     parser.add_argument('--range', type=str, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `:10`.")
     parser.add_argument('--shard-id', type=int, help="Preprocess dataset via shards.")
     parser.add_argument('--num-shards', type=int, help="Total number of shards.")
+    parser.add_argument('--use-datasets-caching', action='store_true')
 
     args = parser.parse_args()
 
@@ -139,7 +140,12 @@ def main():
         level=logging.INFO,
     )
     args = get_args()
-    logger.info(f"** The job is runned with the following arguments: **\n{json.dumps(args, indent=4)}\n **** ")
+    logger.info(f"** The job is runned with the following arguments: **\n{args}\n **** ")
+
+    if not args.use_datasets_caching:
+        datasets.set_caching_enabled(False)
+    else:
+        logger.info(f"the datasets results will be cached at {config.HF_DATASETS_CACHE}.")
 
     if args.shard_id is not None:
         save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
