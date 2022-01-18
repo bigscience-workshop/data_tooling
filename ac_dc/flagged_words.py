@@ -6,7 +6,7 @@
 # https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words
 
 
-english_badwords = [
+english_flagged_words = [
     "adult",
     "amateur",
     "anal",
@@ -229,8 +229,8 @@ english_badwords = [
 ]
 
 
-badwords = {
-    "ar": english_badwords
+flagged_words = {
+    "ar": english_flagged_words
     + [
         "احتلام",
         "اغتصاب",
@@ -271,7 +271,7 @@ badwords = {
         "مفلقسة",
         "نيك",
     ],
-    "ca": english_badwords
+    "ca": english_flagged_words
     + [
         "anal",
         "anus",
@@ -405,8 +405,8 @@ badwords = {
         "x classificat",
         "xxx",
     ],
-    "en": english_badwords,
-    "es": english_badwords
+    "en": english_flagged_words,
+    "es": english_flagged_words
     + [
         "Asesinato",
         "Bollera",
@@ -598,7 +598,7 @@ badwords = {
         "xxx",
         "zurullo",
     ],
-    "eu": english_badwords
+    "eu": english_flagged_words
     + [
         "abortu",
         "anal",
@@ -639,7 +639,7 @@ badwords = {
         "bagina",
         "viagra",
     ],
-    "fr": english_badwords
+    "fr": english_flagged_words
     + [
         "MALPT",
         "anal",
@@ -840,7 +840,7 @@ badwords = {
         "éjaculé",
         "étron",
     ],
-    "hi": english_badwords
+    "hi": english_flagged_words
     + [
         "aand",
         "aandu",
@@ -1098,7 +1098,7 @@ badwords = {
         "होमोसेक्सुअल",
         "होर",
     ],
-    "id": english_badwords
+    "id": english_flagged_words
     + [
         "abortus",
         "anal",
@@ -1216,7 +1216,7 @@ badwords = {
         "x diberi peringkat",
         "xxx",
     ],
-    "kn": english_badwords
+    "kn": english_flagged_words
     + [
         "ಗರ್ಭಪಾತ",
         "ಗುದ",
@@ -1359,7 +1359,7 @@ badwords = {
         "x ರೇಟೆಡ್",
         "xxx",
     ],
-    "ml": english_badwords
+    "ml": english_flagged_words
     + [
         "ഗർഭഛിദ്രം",
         "വിശപ്പ്",
@@ -1496,7 +1496,7 @@ badwords = {
         "x റേറ്റുചെയ്തു",
         "xxx",
     ],
-    "mr": english_badwords
+    "mr": english_flagged_words
     + [
         "गर्भपात",
         "गुदा",
@@ -1635,7 +1635,7 @@ badwords = {
         "एक्स रेट केले",
         "xxx",
     ],
-    "pt": english_badwords
+    "pt": english_flagged_words
     + [
         "aborto",
         "amador",
@@ -1833,7 +1833,7 @@ badwords = {
         "xxx",
         "ânus",
     ],
-    "te": english_badwords
+    "te": english_flagged_words
     + [
         "గర్భస్రావం",
         "అంగ",
@@ -1980,7 +1980,7 @@ badwords = {
         "x రేట్",
         "xxx",
     ],
-    "vi": english_badwords
+    "vi": english_flagged_words
     + [
         "sự phá thai",
         "hậu môn",
@@ -2098,7 +2098,7 @@ badwords = {
         "x đánh giá",
         "xxx",
     ],
-    "zh": english_badwords
+    "zh": english_flagged_words
     + [
         "13.",
         "13点",

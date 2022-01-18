@@ -13,9 +13,9 @@ The supported languages are defined in the file [languages_id.py](https://github
 
 Take a look at the pdf [explanation_filtering_pipeline.pdf](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/explanation_filtering_pipeline.pdf) for an explanation of the filtering pipeline.
 
-#### 1. Define the lists of stop words and bad words, and check how the anonymization and the normalization of texts are done
+#### 1. Define the lists of stop words and flagged words, and check how the anonymization and the normalization of texts are done
 
-You might want to redefine the lists of stop words and bad words for robustness or ethical reasons in the files [stopwords.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/stopwords.py) and [badwords.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/badwords.py).
+You might want to redefine the lists of stop words and flagged words for robustness or ethical reasons in the files [stopwords.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/stopwords.py) and [flagged_words.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/flagged_words.py).
 
 Less importantly, you can also check how the anonymization and the normalization of texts are done in the files [anonymization.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/anonymization.py) and [normalization.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/normalization.py) (if applicable, default is to use the anonymization and not to use the normalization).
 

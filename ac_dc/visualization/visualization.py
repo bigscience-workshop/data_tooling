@@ -49,7 +49,7 @@ class Visualization:
         self.lang_dataset_id = lang_dataset_id
         self.param = LoadParameters.load_parameters(lang_dataset_id)
         self.stopwords = LoadParameters.load_stopwords(lang_dataset_id)
-        self.badwords = LoadParameters.load_badwords(lang_dataset_id)
+        self.flagged_words = LoadParameters.load_flagged_words(lang_dataset_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
             lang_dataset_id, path_fasttext_model
         )
@@ -231,16 +231,16 @@ class Visualization:
                 print_discared_by_cond(cond)
                 conds["stopwords_ratio"] = [cond]
 
-            if "badwords_ratio" in columns:
-                cutoff_def = "If the bad words ratio of a document is higher than this number, the document is removed."
-                cutoff_badwords_ratio = st.sidebar.slider(
+            if "flagged_words_ratio" in columns:
+                cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
+                cutoff_flagged_words_ratio = st.sidebar.slider(
                     cutoff_def, 0.0, 1.0, 1.0, step=0.01
                 )
-                new_key = ("badwords_ratio", cutoff_badwords_ratio, True)
+                new_key = ("flagged_words_ratio", cutoff_flagged_words_ratio, True)
                 keys.append(new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
-                conds["badwords_ratio"] = [cond]
+                conds["flagged_words_ratio"] = [cond]
 
             if "lang_id_score" in columns:
                 cutoff_def = "If the confidence score for the language identification prediction of a document is lower than this number, the document is removed."
@@ -325,11 +325,11 @@ class Visualization:
                     "Discarded documents for the filter on the stop words ratio",
                 )
 
-            if "badwords_ratio" in columns:
-                cond_filter = np.invert(np.all(conds["badwords_ratio"], axis=0))
+            if "flagged_words_ratio" in columns:
+                cond_filter = np.invert(np.all(conds["flagged_words_ratio"], axis=0))
                 display_dataset(
                     cond_filter,
-                    "Discarded documents for the filter on the bad words ratio",
+                    "Discarded documents for the filter on the flagged words ratio",
                 )
 
             if "lang_id_score" in columns:
@@ -513,19 +513,19 @@ class Visualization:
                     if is_doc_discarded(key, stopwords_ratio):
                         is_discarded = True
 
-                elif key[0] == "badwords_ratio":
-                    badwords_ratio = Filtering.compute_badwords_ratio(
+                elif key[0] == "flagged_words_ratio":
+                    flagged_words_ratio = Filtering.compute_flagged_words_ratio(
                         personal_doc,
                         self.sentencepiece_model_tok,
                         self.param["strip_characters"],
                         self.param["cond_words_augmentation"],
                         self.param["words_augmentation_group_sizes"],
                         self.param["words_augmentation_join_char"],
-                        self.badwords,
+                        self.flagged_words,
                     )
-                    badwords_ratio = round(badwords_ratio, 3)
-                    st.markdown(f"Flagged words ratio: {badwords_ratio}")
-                    if is_doc_discarded(key, badwords_ratio):
+                    flagged_words_ratio = round(flagged_words_ratio, 3)
+                    st.markdown(f"Flagged words ratio: {flagged_words_ratio}")
+                    if is_doc_discarded(key, flagged_words_ratio):
                         is_discarded = True
 
                 elif key[0] == "lang_id_score":
@@ -539,7 +539,7 @@ class Visualization:
                     st.markdown(
                         f"Language identification confidence score: {lang_id_score}"
                     )
-                    if is_doc_discarded(key, badwords_ratio) or (
+                    if is_doc_discarded(key, flagged_words_ratio) or (
                         self.lang_dataset_id != lang_pred_dataset_id
                     ):
                         is_discarded = True

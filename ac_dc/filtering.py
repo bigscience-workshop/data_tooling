@@ -13,7 +13,7 @@ from languages_id import langs_id
 from parameters_filtering import parameters_filtering
 from normalization import normalization
 from stopwords import stopwords
-from badwords import badwords
+from flagged_words import flagged_words
 
 
 class LoadParameters:
@@ -37,15 +37,15 @@ class LoadParameters:
         return stopwords_lang
 
     @staticmethod
-    def load_badwords(lang_dataset_id):
-        badwords_lang_id = langs_id.loc[
-            langs_id["dataset_id"] == lang_dataset_id, "badwords_id"
+    def load_flagged_words(lang_dataset_id):
+        flagged_words_lang_id = langs_id.loc[
+            langs_id["dataset_id"] == lang_dataset_id, "flagged_words_id"
         ].iloc[0]
-        if badwords_lang_id:
-            badwords_lang = set(badwords[badwords_lang_id])
+        if flagged_words_lang_id:
+            flagged_words_lang = set(flagged_words[flagged_words_lang_id])
         else:
-            badwords_lang = None
-        return badwords_lang
+            flagged_words_lang = None
+        return flagged_words_lang
 
     @staticmethod
     def load_model_lang_id(lang_dataset_id, path_fasttext_model):
@@ -533,14 +533,14 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_badwords_ratio(
+    def compute_flagged_words_ratio(
         document,
         sentencepiece_model_tok,
         strip_characters,
         cond_words_augmentation,
         words_augmentation_group_sizes,
         words_augmentation_join_char,
-        badwords,
+        flagged_words,
     ):
         words = ModifyingDocuments.get_words_from_document(
             document,
@@ -559,36 +559,36 @@ class Filtering:
                 for group_size in words_augmentation_group_sizes
             ]
             augmentation = [word for augm in augmentation for word in augm]
-        badwords_ratio = len(
-            [word for word in words + augmentation if word in badwords]
+        flagged_words_ratio = len(
+            [word for word in words + augmentation if word in flagged_words]
         ) / len(words)
-        if badwords_ratio > 1.0:
-            badwords_ratio = 1.0
-        return badwords_ratio
+        if flagged_words_ratio > 1.0:
+            flagged_words_ratio = 1.0
+        return flagged_words_ratio
 
     @staticmethod
-    def check_badwords(
+    def check_flagged_words(
         document,
         sentencepiece_model_tok,
         strip_characters,
         cond_words_augmentation,
         words_augmentation_group_sizes,
         words_augmentation_join_char,
-        badwords,
-        badwords_max_cutoff,
+        flagged_words,
+        flagged_words_max_cutoff,
     ):
         cond = True
-        if badwords:
-            badwords_ratio = Filtering.compute_badwords_ratio(
+        if flagged_words:
+            flagged_words_ratio = Filtering.compute_flagged_words_ratio(
                 document,
                 sentencepiece_model_tok,
                 strip_characters,
                 cond_words_augmentation,
                 words_augmentation_group_sizes,
                 words_augmentation_join_char,
-                badwords,
+                flagged_words,
             )
-            cond = badwords_ratio <= badwords_max_cutoff
+            cond = flagged_words_ratio <= flagged_words_max_cutoff
         return cond
 
     @staticmethod
@@ -682,9 +682,9 @@ class Filtering:
         cond_check_stopwords,
         stopwords,
         stopwords_min_cutoff,
-        cond_check_badwords,
-        badwords,
-        badwords_max_cutoff,
+        cond_check_flagged_words,
+        flagged_words,
+        flagged_words_max_cutoff,
         cond_check_lang_id,
         lang_dataset_id,
         model_lang_id,
@@ -729,16 +729,16 @@ class Filtering:
                 stopwords_min_cutoff,
             ):
                 return False
-        if cond_check_badwords:
-            if not Filtering.check_badwords(
+        if cond_check_flagged_words:
+            if not Filtering.check_flagged_words(
                 document,
                 sentencepiece_model_tok,
                 strip_characters,
                 cond_words_augmentation,
                 words_augmentation_group_sizes,
                 words_augmentation_join_char,
-                badwords,
-                badwords_max_cutoff,
+                flagged_words,
+                flagged_words_max_cutoff,
             ):
                 return False
         if cond_check_lang_id:
@@ -775,7 +775,7 @@ class FunctionDatasetFiltering:
 
         self.param = LoadParameters.load_parameters(lang_dataset_id)
         self.stopwords = LoadParameters.load_stopwords(lang_dataset_id)
-        self.badwords = LoadParameters.load_badwords(lang_dataset_id)
+        self.flagged_words = LoadParameters.load_flagged_words(lang_dataset_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
             lang_dataset_id, path_fasttext_model
         )
@@ -809,9 +809,9 @@ class FunctionDatasetFiltering:
             cond_check_stopwords=self.param["cond_check_stopwords"],
             stopwords=self.stopwords,
             stopwords_min_cutoff=self.param["stopwords_min_cutoff"],
-            cond_check_badwords=self.param["cond_check_badwords"],
-            badwords=self.badwords,
-            badwords_max_cutoff=self.param["badwords_max_cutoff"],
+            cond_check_flagged_words=self.param["cond_check_flagged_words"],
+            flagged_words=self.flagged_words,
+            flagged_words_max_cutoff=self.param["flagged_words_max_cutoff"],
             cond_check_lang_id=self.param["cond_check_lang_id"],
             lang_dataset_id=self.lang_dataset_id,
             model_lang_id=self.model_lang_id,

@@ -29,7 +29,7 @@ class GetDataForVisualization:
 
         self.param = LoadParameters.load_parameters(lang_dataset_id)
         self.stopwords = LoadParameters.load_stopwords(lang_dataset_id)
-        self.badwords = LoadParameters.load_badwords(lang_dataset_id)
+        self.flagged_words = LoadParameters.load_flagged_words(lang_dataset_id)
         self.model_lang_id = LoadParameters.load_model_lang_id(
             lang_dataset_id, path_fasttext_model
         )
@@ -46,7 +46,7 @@ class GetDataForVisualization:
         self.keys_stats = [
             "special_characters_ratio",
             "stopwords_ratio",
-            "badwords_ratio",
+            "flagged_words_ratio",
             "lang_id_score",
             "perplexity_score",
         ]
@@ -111,17 +111,17 @@ class GetDataForVisualization:
                     )
                     stats_document["stopwords_ratio"] = stopwords_ratio
 
-                if self.badwords:
-                    badwords_ratio = Filtering.compute_badwords_ratio(
+                if self.flagged_words:
+                    flagged_words_ratio = Filtering.compute_flagged_words_ratio(
                         document,
                         self.sentencepiece_model_tok,
                         self.param["strip_characters"],
                         self.param["cond_words_augmentation"],
                         self.param["words_augmentation_group_sizes"],
                         self.param["words_augmentation_join_char"],
-                        self.badwords,
+                        self.flagged_words,
                     )
-                    stats_document["badwords_ratio"] = badwords_ratio
+                    stats_document["flagged_words_ratio"] = flagged_words_ratio
 
                 if self.model_lang_id:
                     _, lang_id_score = Filtering.compute_lang_id_pred_score(
