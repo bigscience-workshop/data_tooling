@@ -7,7 +7,6 @@
 #SBATCH --partition=prepost
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=/gpfswork/rech/six/uty16tp/code/big_science/logs/re_dowload/%x-%j.out           # output file name
-#SBATCH --array=0-9   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
 
 set -x -e
