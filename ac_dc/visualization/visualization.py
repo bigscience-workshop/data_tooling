@@ -73,10 +73,6 @@ class Visualization:
         )
 
     def preamble(self):
-        st.markdown(
-            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail."
-        )
-
         def get_binary_file_downloader_html(bin_file, file_label="File"):
             with open(bin_file, "rb") as f:
                 data = f.read()
@@ -85,10 +81,11 @@ class Visualization:
             return href
 
         st.markdown(
+            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail in this " +
             get_binary_file_downloader_html(
                 self.path_instructions,
-                "Download the explanation of the filtering pipeline as pdf",
-            ),
+                "pdf",
+            ) + ".",
             unsafe_allow_html=True,
         )
 
@@ -123,15 +120,20 @@ class Visualization:
 
     @staticmethod
     def plot_hist(dataframe, key, num_bins=50):
-        checkbox = st.checkbox("Diplay distribution", value=True, key=f"display_distribution_{key[0]}")
+        checkbox = st.checkbox(
+            "Diplay distribution", value=True, key=f"display_distribution_{key[0]}"
+        )
         if checkbox:
             fig, ax = plt.subplots()
             val = dataframe[key[0]].values
             if np.median(val) != 0:
-                val = val[abs(val - np.median(val)) < 9 * np.median(np.absolute(val - np.median(val)))]
+                val = val[
+                    abs(val - np.median(val))
+                    < 9 * np.median(np.absolute(val - np.median(val)))
+                ]
             ax.hist(val, bins=num_bins, density=True)
             ax.set_title(" ".join(key[0].split("_")))
-            ax.axvline(x=key[1], color='r', linestyle='dashed')
+            ax.axvline(x=key[1], color="r", linestyle="dashed")
             st.pyplot(fig)
 
     def filtering_of_docs(self):
@@ -281,9 +283,7 @@ class Visualization:
                 with st.sidebar.expander("Perplexity score"):
                     cutoff_def = "If the perplexity score of a document is higher than this number, the document is removed."
                     max_pp = int(np.max(self.docs["perplexity_score"])) + 1
-                    cutoff_perplexity_score = st.slider(
-                        cutoff_def, 0, max_pp, max_pp
-                    )
+                    cutoff_perplexity_score = st.slider(cutoff_def, 0, max_pp, max_pp)
                     new_key = ("perplexity_score", cutoff_perplexity_score, True)
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
@@ -299,8 +299,12 @@ class Visualization:
         all_conds = [subcond for cond in list(conds.values()) for subcond in cond]
         all_conds = np.all(all_conds, axis=0)
 
-        with st.expander(f"Filtering on documents, for {self.num_docs} {self.lang} documents"):
-            st.header(f"Filtering on documents, for {self.num_docs} {self.lang} documents")
+        with st.expander(
+            f"Filtering on documents, for {self.num_docs} {self.lang} documents"
+        ):
+            st.header(
+                f"Filtering on documents, for {self.num_docs} {self.lang} documents"
+            )
 
             def display_dataset(cond, description):
                 displayed_docs = self.docs.loc[cond]
@@ -353,7 +357,9 @@ class Visualization:
                     )
 
                 if "flagged_words_ratio" in columns:
-                    cond_filter = np.invert(np.all(conds["flagged_words_ratio"], axis=0))
+                    cond_filter = np.invert(
+                        np.all(conds["flagged_words_ratio"], axis=0)
+                    )
                     display_dataset(
                         cond_filter,
                         "Discarded documents for the filter on the flagged words ratio",
@@ -404,10 +410,16 @@ class Visualization:
 
                 cond_words = self.words["len_word"] <= cutoff_word
                 if incorrect_substrings:
-                    cond_words = cond_words & np.invert(self.words["incorrect_substring"])
+                    cond_words = cond_words & np.invert(
+                        self.words["incorrect_substring"]
+                    )
 
-            with st.expander(f"Filtering on words, for {self.num_docs} {self.lang} documents"):
-                st.header(f"Filtering on words, for {self.num_docs} {self.lang} documents")
+            with st.expander(
+                f"Filtering on words, for {self.num_docs} {self.lang} documents"
+            ):
+                st.header(
+                    f"Filtering on words, for {self.num_docs} {self.lang} documents"
+                )
 
                 st.markdown(
                     f"Since the number of words is way larger than the number of documents, "
@@ -514,7 +526,9 @@ class Visualization:
                             )
                         )
                         special_characters_ratio = round(special_characters_ratio, 3)
-                        st.markdown(f"Special characters ratio: {special_characters_ratio}")
+                        st.markdown(
+                            f"Special characters ratio: {special_characters_ratio}"
+                        )
                         if is_doc_discarded(key, special_characters_ratio):
                             is_discarded = True
 
@@ -581,7 +595,7 @@ class Visualization:
                 )
 
     def visualization(self):
-        # self.warning_preamble()
+        self.warning_preamble()
         self.preamble()
         self.open_data()
         self.set_title()
