@@ -82,11 +82,12 @@ class Visualization:
             return href
 
         st.markdown(
-            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail in this " +
-            get_binary_file_downloader_html(
+            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail in this "
+            + get_binary_file_downloader_html(
                 self.path_instructions,
                 "pdf",
-            ) + ".",
+            )
+            + ".",
             unsafe_allow_html=True,
         )
 
@@ -202,7 +203,9 @@ class Visualization:
                         "few or no repetitions, simply because their length gives them more diversity, and we do "
                         "not want to discard such documents."
                     )
-                    self.docs["repetitions_ratio"] = self.docs_checkpoint["repetitions_ratio"]
+                    self.docs["repetitions_ratio"] = self.docs_checkpoint[
+                        "repetitions_ratio"
+                    ]
                     for i in range(len(self.docs["repetitions_ratio"])):
                         self.docs["repetitions_ratio"].iloc[i] = self.docs[
                             "repetitions_ratio"
@@ -243,13 +246,21 @@ class Visualization:
 
             if "stopwords_ratio" in columns:
                 with st.sidebar.expander("Stop words ratio"):
-                    stopwords_file = st.file_uploader("Upload your own list of stop words (one per line). If there is none, the default one is used.")
+                    stopwords_file = st.file_uploader(
+                        "Upload your own list of stop words (one per line). If there is none, the default one is used."
+                    )
                     if stopwords_file:
-                        new_stopwords = StringIO(stopwords_file.getvalue().decode("utf-8")).read()
+                        new_stopwords = StringIO(
+                            stopwords_file.getvalue().decode("utf-8")
+                        ).read()
                         new_stopwords = set(new_stopwords.split("\n"))
-                        self.docs["stopwords_ratio"] = self.docs_checkpoint["stopwords_ratio"]
+                        self.docs["stopwords_ratio"] = self.docs_checkpoint[
+                            "stopwords_ratio"
+                        ]
                         for i in range(len(self.docs["stopwords_ratio"])):
-                            self.docs["stopwords_ratio"].iloc[i] = Filtering.compute_stopwords_ratio(
+                            self.docs["stopwords_ratio"].iloc[
+                                i
+                            ] = Filtering.compute_stopwords_ratio(
                                 self.docs["text"].iloc[i],
                                 self.sentencepiece_model_tok,
                                 self.param["strip_characters"],
@@ -271,13 +282,21 @@ class Visualization:
 
             if "flagged_words_ratio" in columns:
                 with st.sidebar.expander("Flagged words ratio"):
-                    flagged_words_file = st.file_uploader("Upload your own list of flagged words (one per line). If there is none, the default one is used.")
+                    flagged_words_file = st.file_uploader(
+                        "Upload your own list of flagged words (one per line). If there is none, the default one is used."
+                    )
                     if flagged_words_file:
-                        new_flagged_words = StringIO(flagged_words_file.getvalue().decode("utf-8")).read()
+                        new_flagged_words = StringIO(
+                            flagged_words_file.getvalue().decode("utf-8")
+                        ).read()
                         new_flagged_words = set(new_flagged_words.split("\n"))
-                        self.docs["flagged_words_ratio"] = self.docs_checkpoint["flagged_words_ratio"]
+                        self.docs["flagged_words_ratio"] = self.docs_checkpoint[
+                            "flagged_words_ratio"
+                        ]
                         for i in range(len(self.docs["flagged_words_ratio"])):
-                            self.docs["flagged_words_ratio"].iloc[i] = Filtering.compute_flagged_words_ratio(
+                            self.docs["flagged_words_ratio"].iloc[
+                                i
+                            ] = Filtering.compute_flagged_words_ratio(
                                 self.docs["text"].iloc[i],
                                 self.sentencepiece_model_tok,
                                 self.param["strip_characters"],
@@ -626,7 +645,7 @@ class Visualization:
                 )
 
     def visualization(self):
-        self.warning_preamble()
+        # self.warning_preamble()
         self.preamble()
         self.open_data()
         self.set_title()
