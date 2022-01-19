@@ -8,6 +8,7 @@ from pathlib import Path
 
 import datasets
 from bs4 import BeautifulSoup
+from bs4.dammit import EncodingDetector
 from datasets import config, load_from_disk
 from datasets.utils.logging import set_verbosity_info
 from warcio.archiveiterator import WARCIterator
@@ -58,14 +59,21 @@ def get_beautifulsoup_object(compressed_warc, mime):
         try:
             for record in WARCIterator(stream):
                 if record.rec_type == 'response':
-                    html = record.content_stream().read()
+                    page = record.content_stream().read()
+                    encoding = record.rec_headers['WARC-Identified-Content-Charset']
                     break
         except ArchiveLoadFailed as exception:
             print(str(exception), compressed_warc)
             raise exception
 
-    assert html is not None
-    soup = BeautifulSoup(html, 'html.parser')
+            
+    if not encoding:
+        for encoding in EncodingDetector(page, is_html=True).encodings:
+            # take the first detected encoding
+            break
+
+    assert page is not None
+    soup = BeautifulSoup(page, 'html.parser', from_encoding=encoding)
     return soup
 
 def get_html_str_and_outgoing_link(compressed_warc, mime, domain):
