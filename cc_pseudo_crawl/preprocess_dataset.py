@@ -1,13 +1,21 @@
+from asyncio import subprocess
 import functools
 import io
+import logging
+from pathlib import Path
 import re
 from argparse import ArgumentParser
 
 from bs4 import BeautifulSoup
-from datasets import load_dataset, concatenate_datasets
+import datasets
+from datasets import config, load_from_disk
+from datasets.utils.logging import set_verbosity_info
 from warcio.archiveiterator import WARCIterator
 from warcio.exceptions import ArchiveLoadFailed
 
+
+set_verbosity_info()
+logger = logging.getLogger(__name__)
 
 def get_args():
     parser = ArgumentParser()
@@ -48,7 +56,8 @@ def get_external_links(soup, exclude_url):
     return list(external_links)
 
 HTML_TYPES = ['text/html', 'application/xhtml+xml']
-def get_outgoing_link(compressed_warc, mime, domain):
+
+def get_beautifulsoup_object(compressed_warc, mime):
     if mime not in HTML_TYPES:
         return None
 
@@ -65,7 +74,17 @@ def get_outgoing_link(compressed_warc, mime, domain):
 
     assert html is not None
     soup = BeautifulSoup(html, 'html.parser')
-    return get_external_links(soup, domain)
+    return soup
+
+def get_html_str_and_outgoing_link(compressed_warc, mime, domain):
+    soup = get_beautifulsoup_object(compressed_warc, mime)
+    if soup is None:
+        return None, None
+
+    html_str = soup.decode_contents(formatter="html")
+    external_links = get_external_links(soup, domain)
+    return html_str, external_links
+
 
 def assign_depth_(batch, depth):
     batch_size = len(batch[next(iter(batch))])
@@ -90,40 +109,50 @@ def apply_preprocessing(batch, depth):
     assert len(content_mime_detected) == len(url_host_registered_domains)
     assert len(content_mime_detected) == len(compressed_warcs)
 
-    batch["external_urls"] = [
-        get_outgoing_link(compressed_warcs, mime, domain)
-        for compressed_warc, mime, domain in zip(content_mime_detected, url_host_registered_domains, compressed_warcs)
-    ]
+    batch["external_urls"] = []
+    batch["html_str"] = []
+    for compressed_warc, mime, domain in zip(content_mime_detected, url_host_registered_domains, compressed_warcs):
+        html_str, external_links = get_html_str_and_outgoing_link(compressed_warc, mime, domain)
+        batch["external_urls"].append(external_links)
+        batch["html_str"].append(html_str)
+    
     assign_depth_(batch, depth)
 
     return batch
 
-def load_all_shards(args):
-    if args.num_shards is None:
-        source_path = args.dataset_prefix_path
-        shards = [load_dataset(source_path)]
-    else:
-        shard_paths = [f"{args.dataset_prefix_path}--{i}--{args.num_shards}" for i in range(args.num_shards)]
-        shards = [load_dataset(shard_path) for shard_path in shard_paths]
-    return shards
-
 def main():
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
     args = get_args()
+    logger.info(f"** The job is runned with the following arguments: **\n{args}\n **** ")
 
-    # Actually keeps shards, and concatenate after preprocessing.
-    shards = load_all_shards(args)
+    if not args.use_datasets_caching:
+        datasets.set_caching_enabled(False)
+    else:
+        logger.info(f"the datasets results will be cached at {config.HF_DATASETS_CACHE}.")
+    
+    ds = load_from_disk(args.dataset_path)
 
-    for shard in shards:
-        shard.map(
+    ds.map(
             functools.partial(apply_preprocessing, depth=args.flavor),
             batched=True,
             num_proc=args.num_proc
         )
+        
+    if args.save_path:
+        save_path = Path(args.save_path)
+    else:
+        save_path = Path(args.dataset_path)
 
-    ds = concatenate_datasets(shards)
-
-    # Obtain final dataset and store it (push to hub)
-    ds.save_to_disk(f"{args.dataset_prefix_path}_processed")
+    save_path_tmp = f"{str(save_path.absolute())}.tmp"
+    logger.info(f"Saving the dataset at {save_path_tmp}")
+    ds.save_to_disk(save_path_tmp)
+    logger.info(f"Moving the saved dataset to {str(save_path.absolute())}")
+    subprocess.run(["mv", save_path_tmp, str(save_path.absolute())])
 
 
 if __name__ == "__main__":
