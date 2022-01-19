@@ -32,4 +32,5 @@ python -m cc_pseudo_crawl.preprocess_dataset \
     --dataset-path $DATASET_PATH \
     --num-proc 4 \
     --save-path $SAVE_DATASET_PATH \
-    --use-datasets-caching
+    --use-datasets-caching \
+    --flavor seed
