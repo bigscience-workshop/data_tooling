@@ -75,7 +75,7 @@ def get_warc(filename, offset, length, existing_compressed_warc):
             Key=filename,
             Range=f"bytes={offset}-{offset + length - 1}"
         )
-    except ClientError as e:
+    except (ClientError, botocore.exceptions.ProxyConnectionError) as e:
         return None, repr(e)
 
     # Check error handling
