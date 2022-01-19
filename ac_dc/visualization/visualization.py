@@ -119,7 +119,7 @@ class Visualization:
         self.docs = self.docs_checkpoint
 
     def set_title(self):
-        st.title(f"{self.num_docs} {self.lang} documents with their stats.")
+        st.title(f"Filtering visualization")
 
     @staticmethod
     def plot_hist(dataframe, key, num_bins=50):
@@ -299,80 +299,90 @@ class Visualization:
         all_conds = [subcond for cond in list(conds.values()) for subcond in cond]
         all_conds = np.all(all_conds, axis=0)
 
-        st.header("Filtering on documents")
+        with st.expander(f"Filtering on documents, for {self.num_docs} {self.lang} documents"):
+            st.header(f"Filtering on documents, for {self.num_docs} {self.lang} documents")
 
-        def display_dataset(cond, description):
-            displayed_docs = self.docs.loc[cond]
-            st.subheader(
-                f"{description}: {len(displayed_docs)} docs ({len(displayed_docs) / self.num_docs * 100:.2f}%)"
+            def display_dataset(cond, description):
+                displayed_docs = self.docs.loc[cond]
+                st.subheader(
+                    f"{description}: {len(displayed_docs)} docs ({len(displayed_docs) / self.num_docs * 100:.2f}%)"
+                )
+                st.markdown(
+                    "Click on a column to sort by it, place the cursor on the text to display it."
+                )
+                st.dataframe(displayed_docs)
+
+            display_dataset(np.invert(all_conds), "Discarded documents")
+
+            # st.subheader("Display discarded documents by filter")
+            display_discarded_documents_by_filter = st.checkbox(
+                "Display discarded documents by filter"
             )
-            st.markdown(
-                "Click on a column to sort by it, place the cursor on the text to display it."
-            )
-            st.dataframe(displayed_docs)
 
-        display_dataset(np.invert(all_conds), "Discarded documents")
+            if display_discarded_documents_by_filter:
+                columns = list(self.docs)
 
-        # st.subheader("Display discarded documents by filter")
-        display_discarded_documents_by_filter = st.checkbox(
-            "Display discarded documents by filter"
-        )
+                if "number_words" in columns:
+                    cond_filter = np.invert(np.all(conds["number_words"], axis=0))
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the number of words",
+                    )
 
-        if display_discarded_documents_by_filter:
-            columns = list(self.docs)
+                if "repetitions_ratio" in columns:
+                    cond_filter = np.invert(np.all(conds["repetitions_ratio"], axis=0))
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the repetitions ratio",
+                    )
 
-            if "number_words" in columns:
-                cond_filter = np.invert(np.all(conds["number_words"], axis=0))
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the number of words",
+                if "special_characters_ratio" in columns:
+                    cond_filter = np.invert(
+                        np.all(conds["special_characters_ratio"], axis=0)
+                    )
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the special characters ratio",
+                    )
+
+                if "stopwords_ratio" in columns:
+                    cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the stop words ratio",
+                    )
+
+                if "flagged_words_ratio" in columns:
+                    cond_filter = np.invert(np.all(conds["flagged_words_ratio"], axis=0))
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the flagged words ratio",
+                    )
+
+                if "lang_id_score" in columns:
+                    cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the language identification confidence score",
+                    )
+
+                if "perplexity_score" in columns:
+                    cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
+                    display_dataset(
+                        cond_filter,
+                        "Discarded documents for the filter on the perplexity score",
+                    )
+
+            display_dataset(all_conds, "Retained documents")
+
+            st.header("Download data")
+
+            with open(self.path_data) as json_file:
+                btn = st.download_button(
+                    label="Download data as json",
+                    data=json_file,
+                    file_name="data.json",
                 )
-
-            if "repetitions_ratio" in columns:
-                cond_filter = np.invert(np.all(conds["repetitions_ratio"], axis=0))
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the repetitions ratio",
-                )
-
-            if "special_characters_ratio" in columns:
-                cond_filter = np.invert(
-                    np.all(conds["special_characters_ratio"], axis=0)
-                )
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the special characters ratio",
-                )
-
-            if "stopwords_ratio" in columns:
-                cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the stop words ratio",
-                )
-
-            if "flagged_words_ratio" in columns:
-                cond_filter = np.invert(np.all(conds["flagged_words_ratio"], axis=0))
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the flagged words ratio",
-                )
-
-            if "lang_id_score" in columns:
-                cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the language identification confidence score",
-                )
-
-            if "perplexity_score" in columns:
-                cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
-                display_dataset(
-                    cond_filter,
-                    "Discarded documents for the filter on the perplexity score",
-                )
-
-        display_dataset(all_conds, "Retained documents")
 
     def filtering_of_words(self):
         if not (self.words is None):
@@ -396,30 +406,31 @@ class Visualization:
                 if incorrect_substrings:
                     cond_words = cond_words & np.invert(self.words["incorrect_substring"])
 
-            st.header("Filtering on words")
+            with st.expander(f"Filtering on words, for {self.num_docs} {self.lang} documents"):
+                st.header(f"Filtering on words, for {self.num_docs} {self.lang} documents")
 
-            st.markdown(
-                f"Since the number of words is way larger than the number of documents, "
-                f"we consider in this section words for the first {self.num_docs_for_words} documents only."
-            )
+                st.markdown(
+                    f"Since the number of words is way larger than the number of documents, "
+                    f"we consider in this section words for the first {self.num_docs_for_words} documents only."
+                )
 
-            discarded_words = self.words.loc[np.invert(cond_words)]
-            st.subheader(
-                f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)"
-            )
-            st.markdown(
-                "Click on a column to sort by it, place the cursor on the text to display it."
-            )
-            st.dataframe(discarded_words)
+                discarded_words = self.words.loc[np.invert(cond_words)]
+                st.subheader(
+                    f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)"
+                )
+                st.markdown(
+                    "Click on a column to sort by it, place the cursor on the text to display it."
+                )
+                st.dataframe(discarded_words)
 
-            retained_words = self.words.loc[cond_words]
-            st.subheader(
-                f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)"
-            )
-            st.markdown(
-                "Click on a column to sort by it, place the cursor on the text to display it."
-            )
-            st.dataframe(retained_words)
+                retained_words = self.words.loc[cond_words]
+                st.subheader(
+                    f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)"
+                )
+                st.markdown(
+                    "Click on a column to sort by it, place the cursor on the text to display it."
+                )
+                st.dataframe(retained_words)
 
     def download_parameters(self):
         st.sidebar.subheader("Download parameters")
@@ -429,6 +440,7 @@ class Visualization:
             file_name=f"parameters_{self.lang_dataset_id}.json",
         )
 
+    """
     def plot_zipf_law(self):
         if not (self.words is None):
             st.header("Zipf's Law")
@@ -449,132 +461,124 @@ class Visualization:
                 ax.set_xlabel("$i$-th most frequent word")
                 ax.set_ylabel("frequency in the documents")
                 st.pyplot(fig)
+    """
 
     def analyse_personal_doc(self):
-        st.header("Analyse your own document")
+        with st.expander("Analyse your own document"):
+            st.header("Analyse your own document")
 
-        personal_doc = st.text_area(
-            label="Paste here the document you want to analyse",
-            value="",
-            max_chars=10000,
-        )
+            personal_doc = st.text_area(
+                label="Paste here the document you want to analyse",
+                value="",
+                max_chars=10000,
+            )
 
-        is_discarded = False
+            is_discarded = False
 
-        def is_doc_discarded(key, score):
-            if key[2]:  # max cutoff
-                return score > key[1]
-            else:
-                return score < key[1]
+            def is_doc_discarded(key, score):
+                if key[2]:  # max cutoff
+                    return score > key[1]
+                else:
+                    return score < key[1]
 
-        if personal_doc:
+            if personal_doc:
 
-            st.markdown("Statistics of the document:")
+                st.markdown("Statistics of the document:")
 
-            for key in self.keys:
-                if key[0] == "number_words":
-                    words = ModifyingDocuments.get_words_from_document(
-                        personal_doc,
-                        self.sentencepiece_model_tok,
-                        lower_case=False,
-                        strip_characters=self.param["strip_characters"],
-                    )
-                    if key[2]:
-                        st.markdown(f"Number of words: {len(words)}")
-                    if is_doc_discarded(key, len(words)):
-                        is_discarded = True
-
-                elif key[0] == "repetitions_ratio":
-                    repetitions_ratio = Filtering.compute_repetitions_ratio(
-                        personal_doc, int(key[3])
-                    )
-                    repetitions_ratio = round(repetitions_ratio, 3)
-                    st.markdown(f"Repetitions ratio: {repetitions_ratio}")
-                    if is_doc_discarded(key, repetitions_ratio):
-                        is_discarded = True
-
-                elif key[0] == "special_characters_ratio":
-                    special_characters_ratio = (
-                        Filtering.compute_special_characters_ratio(
-                            personal_doc, self.param["special_characters"]
+                for key in self.keys:
+                    if key[0] == "number_words":
+                        words = ModifyingDocuments.get_words_from_document(
+                            personal_doc,
+                            self.sentencepiece_model_tok,
+                            lower_case=False,
+                            strip_characters=self.param["strip_characters"],
                         )
-                    )
-                    special_characters_ratio = round(special_characters_ratio, 3)
-                    st.markdown(f"Special characters ratio: {special_characters_ratio}")
-                    if is_doc_discarded(key, special_characters_ratio):
-                        is_discarded = True
+                        if key[2]:
+                            st.markdown(f"Number of words: {len(words)}")
+                        if is_doc_discarded(key, len(words)):
+                            is_discarded = True
 
-                elif key[0] == "stopwords_ratio":
-                    stopwords_ratio = Filtering.compute_stopwords_ratio(
-                        personal_doc,
-                        self.sentencepiece_model_tok,
-                        self.param["strip_characters"],
-                        self.param["cond_words_augmentation"],
-                        self.param["words_augmentation_group_sizes"],
-                        self.param["words_augmentation_join_char"],
-                        self.stopwords,
-                    )
-                    stopwords_ratio = round(stopwords_ratio, 3)
-                    st.markdown(f"Stop words ratio: {stopwords_ratio}")
-                    if is_doc_discarded(key, stopwords_ratio):
-                        is_discarded = True
+                    elif key[0] == "repetitions_ratio":
+                        repetitions_ratio = Filtering.compute_repetitions_ratio(
+                            personal_doc, int(key[3])
+                        )
+                        repetitions_ratio = round(repetitions_ratio, 3)
+                        st.markdown(f"Repetitions ratio: {repetitions_ratio}")
+                        if is_doc_discarded(key, repetitions_ratio):
+                            is_discarded = True
 
-                elif key[0] == "flagged_words_ratio":
-                    flagged_words_ratio = Filtering.compute_flagged_words_ratio(
-                        personal_doc,
-                        self.sentencepiece_model_tok,
-                        self.param["strip_characters"],
-                        self.param["cond_words_augmentation"],
-                        self.param["words_augmentation_group_sizes"],
-                        self.param["words_augmentation_join_char"],
-                        self.flagged_words,
-                    )
-                    flagged_words_ratio = round(flagged_words_ratio, 3)
-                    st.markdown(f"Flagged words ratio: {flagged_words_ratio}")
-                    if is_doc_discarded(key, flagged_words_ratio):
-                        is_discarded = True
+                    elif key[0] == "special_characters_ratio":
+                        special_characters_ratio = (
+                            Filtering.compute_special_characters_ratio(
+                                personal_doc, self.param["special_characters"]
+                            )
+                        )
+                        special_characters_ratio = round(special_characters_ratio, 3)
+                        st.markdown(f"Special characters ratio: {special_characters_ratio}")
+                        if is_doc_discarded(key, special_characters_ratio):
+                            is_discarded = True
 
-                elif key[0] == "lang_id_score":
-                    (
-                        lang_pred_dataset_id,
-                        lang_id_score,
-                    ) = Filtering.compute_lang_id_pred_score(
-                        personal_doc, self.model_lang_id
-                    )
-                    lang_id_score = round(lang_id_score, 3)
-                    st.markdown(
-                        f"Language identification confidence score: {lang_id_score}"
-                    )
-                    if is_doc_discarded(key, flagged_words_ratio) or (
-                        self.lang_dataset_id != lang_pred_dataset_id
-                    ):
-                        is_discarded = True
+                    elif key[0] == "stopwords_ratio":
+                        stopwords_ratio = Filtering.compute_stopwords_ratio(
+                            personal_doc,
+                            self.sentencepiece_model_tok,
+                            self.param["strip_characters"],
+                            self.param["cond_words_augmentation"],
+                            self.param["words_augmentation_group_sizes"],
+                            self.param["words_augmentation_join_char"],
+                            self.stopwords,
+                        )
+                        stopwords_ratio = round(stopwords_ratio, 3)
+                        st.markdown(f"Stop words ratio: {stopwords_ratio}")
+                        if is_doc_discarded(key, stopwords_ratio):
+                            is_discarded = True
 
-                elif key[0] == "perplexity_score":
-                    perplexity_score = Filtering.compute_perplexity_score(
-                        personal_doc,
-                        self.sentencepiece_model,
-                        self.kenlm_model,
-                    )
-                    perplexity_score = round(perplexity_score, 3)
-                    st.markdown(f"Perplexity score: {perplexity_score}")
-                    if is_doc_discarded(key, perplexity_score):
-                        is_discarded = True
+                    elif key[0] == "flagged_words_ratio":
+                        flagged_words_ratio = Filtering.compute_flagged_words_ratio(
+                            personal_doc,
+                            self.sentencepiece_model_tok,
+                            self.param["strip_characters"],
+                            self.param["cond_words_augmentation"],
+                            self.param["words_augmentation_group_sizes"],
+                            self.param["words_augmentation_join_char"],
+                            self.flagged_words,
+                        )
+                        flagged_words_ratio = round(flagged_words_ratio, 3)
+                        st.markdown(f"Flagged words ratio: {flagged_words_ratio}")
+                        if is_doc_discarded(key, flagged_words_ratio):
+                            is_discarded = True
 
-            is_discarded = "" if is_discarded else "not "
-            st.markdown(
-                f"With the current filtering parameters, this document **is {is_discarded}discarded**."
-            )
+                    elif key[0] == "lang_id_score":
+                        (
+                            lang_pred_dataset_id,
+                            lang_id_score,
+                        ) = Filtering.compute_lang_id_pred_score(
+                            personal_doc, self.model_lang_id
+                        )
+                        lang_id_score = round(lang_id_score, 3)
+                        st.markdown(
+                            f"Language identification confidence score: {lang_id_score}"
+                        )
+                        if is_doc_discarded(key, flagged_words_ratio) or (
+                            self.lang_dataset_id != lang_pred_dataset_id
+                        ):
+                            is_discarded = True
 
-    def download_data(self):
-        st.header("Download data")
+                    elif key[0] == "perplexity_score":
+                        perplexity_score = Filtering.compute_perplexity_score(
+                            personal_doc,
+                            self.sentencepiece_model,
+                            self.kenlm_model,
+                        )
+                        perplexity_score = round(perplexity_score, 3)
+                        st.markdown(f"Perplexity score: {perplexity_score}")
+                        if is_doc_discarded(key, perplexity_score):
+                            is_discarded = True
 
-        with open(self.path_data) as json_file:
-            btn = st.download_button(
-                label="Download data as json",
-                data=json_file,
-                file_name="data.json",
-            )
+                is_discarded = "" if is_discarded else "not "
+                st.markdown(
+                    f"With the current filtering parameters, this document **is {is_discarded}discarded**."
+                )
 
     def visualization(self):
         # self.warning_preamble()
@@ -584,9 +588,7 @@ class Visualization:
         self.filtering_of_docs()
         self.filtering_of_words()
         self.download_parameters()
-        self.plot_zipf_law()
         self.analyse_personal_doc()
-        self.download_data()
 
 
 path_instructions = "./ac_dc/explanation_filtering_pipeline.pdf"
