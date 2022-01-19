@@ -4,6 +4,7 @@ import streamlit as st
 
 import os
 
+from io import StringIO
 import base64
 import json
 import pandas as pd
@@ -201,7 +202,7 @@ class Visualization:
                         "few or no repetitions, simply because their length gives them more diversity, and we do "
                         "not want to discard such documents."
                     )
-                    self.docs = self.docs_checkpoint
+                    self.docs["repetitions_ratio"] = self.docs_checkpoint["repetitions_ratio"]
                     for i in range(len(self.docs["repetitions_ratio"])):
                         self.docs["repetitions_ratio"].iloc[i] = self.docs[
                             "repetitions_ratio"
@@ -242,6 +243,21 @@ class Visualization:
 
             if "stopwords_ratio" in columns:
                 with st.sidebar.expander("Stop words ratio"):
+                    stopwords_file = st.file_uploader("Upload your own list of stop words (one per line). If there is none, the default one is used.")
+                    if stopwords_file:
+                        new_stopwords = StringIO(stopwords_file.getvalue().decode("utf-8")).read()
+                        new_stopwords = set(new_stopwords.split("\n"))
+                        self.docs["stopwords_ratio"] = self.docs_checkpoint["stopwords_ratio"]
+                        for i in range(len(self.docs["stopwords_ratio"])):
+                            self.docs["stopwords_ratio"].iloc[i] = Filtering.compute_stopwords_ratio(
+                                self.docs["text"].iloc[i],
+                                self.sentencepiece_model_tok,
+                                self.param["strip_characters"],
+                                self.param["cond_words_augmentation"],
+                                self.param["words_augmentation_group_sizes"],
+                                self.param["words_augmentation_join_char"],
+                                new_stopwords,
+                            )
                     cutoff_def = "If the stop words ratio of a document is lower than this number, the document is removed."
                     cutoff_stopwords_ratio = st.slider(
                         cutoff_def, 0.0, 1.0, 0.0, step=0.01
@@ -255,6 +271,21 @@ class Visualization:
 
             if "flagged_words_ratio" in columns:
                 with st.sidebar.expander("Flagged words ratio"):
+                    flagged_words_file = st.file_uploader("Upload your own list of flagged words (one per line). If there is none, the default one is used.")
+                    if flagged_words_file:
+                        new_flagged_words = StringIO(flagged_words_file.getvalue().decode("utf-8")).read()
+                        new_flagged_words = set(new_flagged_words.split("\n"))
+                        self.docs["flagged_words_ratio"] = self.docs_checkpoint["flagged_words_ratio"]
+                        for i in range(len(self.docs["flagged_words_ratio"])):
+                            self.docs["flagged_words_ratio"].iloc[i] = Filtering.compute_flagged_words_ratio(
+                                self.docs["text"].iloc[i],
+                                self.sentencepiece_model_tok,
+                                self.param["strip_characters"],
+                                self.param["cond_words_augmentation"],
+                                self.param["words_augmentation_group_sizes"],
+                                self.param["words_augmentation_join_char"],
+                                new_flagged_words,
+                            )
                     cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
                     cutoff_flagged_words_ratio = st.slider(
                         cutoff_def, 0.0, 1.0, 1.0, step=0.01
