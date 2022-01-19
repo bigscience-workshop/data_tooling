@@ -103,7 +103,7 @@ def apply_preprocessing(batch, depth):
 
     batch["external_urls"] = []
     batch["html_str"] = []
-    for compressed_warc, mime, domain in zip(content_mime_detected, url_host_registered_domains, compressed_warcs):
+    for mime, domain, compressed_warc in zip(content_mime_detected, url_host_registered_domains, compressed_warcs):
         html_str, external_links = get_html_str_and_outgoing_link(compressed_warc, mime, domain)
         batch["external_urls"].append(external_links)
         batch["html_str"].append(html_str)
