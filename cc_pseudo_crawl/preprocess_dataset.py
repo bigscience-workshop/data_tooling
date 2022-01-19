@@ -1,18 +1,17 @@
-from asyncio import subprocess
 import functools
 import io
 import logging
-from pathlib import Path
 import re
+import subprocess
 from argparse import ArgumentParser
+from pathlib import Path
 
-from bs4 import BeautifulSoup
 import datasets
+from bs4 import BeautifulSoup
 from datasets import config, load_from_disk
 from datasets.utils.logging import set_verbosity_info
 from warcio.archiveiterator import WARCIterator
 from warcio.exceptions import ArchiveLoadFailed
-
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)
@@ -130,7 +129,7 @@ def main():
     
     ds = load_from_disk(args.dataset_path)
 
-    ds.map(
+    ds = ds.map(
             functools.partial(apply_preprocessing, depth=args.flavor),
             batched=True,
             num_proc=args.num_proc
