@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('--dataset-prefix-path', type=str, required=True, help="Dataset name. Essentially we're going to search for all the shards")
-    parser.add_argument('--num-shards', type=int, help="Number of shards we need to query.")
+    parser.add_argument('--dataset-path', type=str, required=True, help="path to the parquet dataset folder")
+    parser.add_argument('--save-path', type=str, help="Where to save the datasets.")
+    parser.add_argument('--use-datasets-caching', action='store_true')
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing.")
 
     args = parser.parse_args()
