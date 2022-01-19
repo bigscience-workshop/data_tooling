@@ -123,16 +123,16 @@ class Visualization:
 
     @staticmethod
     def plot_hist(dataframe, key, num_bins=50):
-        checkbox = st.sidebar.checkbox("Diplay distribution", key=f"display_distribution_{key[0]}")
+        checkbox = st.checkbox("Diplay distribution", value=True, key=f"display_distribution_{key[0]}")
         if checkbox:
             fig, ax = plt.subplots()
             val = dataframe[key[0]].values
             if np.median(val) != 0:
-                val = val[abs(val - np.median(val)) < 6 * np.median(np.absolute(val - np.median(val)))]
-            ax.hist(val, bins=num_bins)
+                val = val[abs(val - np.median(val)) < 9 * np.median(np.absolute(val - np.median(val)))]
+            ax.hist(val, bins=num_bins, density=True)
             ax.set_title(" ".join(key[0].split("_")))
             ax.axvline(x=key[1], color='r', linestyle='dashed')
-            st.sidebar.pyplot(fig)
+            st.pyplot(fig)
 
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
@@ -148,142 +148,148 @@ class Visualization:
                 return self.docs[key] >= cutoff
 
             def print_discared_by_cond(cond):
-                st.sidebar.caption(
+                st.caption(
                     f"{(len(cond) - np.sum(1*cond)) / len(cond) * 100:.2f}% of the total is discarded with this filter."
                 )
-                st.sidebar.caption("---------")
 
             if "number_words" in columns:
-                cutoff_def = "If the number of words of a document is lower than this number, the document is removed."
-                max_nb_words = int(np.max(self.docs["number_words"])) + 1
-                cutoff_min_number_words = st.sidebar.slider(
-                    cutoff_def, 0, min(max_nb_words, 500), 0
-                )
-                new_key = ("number_words", cutoff_min_number_words, False)
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond_1 = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond_1)
+                with st.sidebar.expander("Number of words"):
+                    cutoff_def = "If the number of words of a document is lower than this number, the document is removed."
+                    max_nb_words = int(np.max(self.docs["number_words"])) + 1
+                    cutoff_min_number_words = st.slider(
+                        cutoff_def, 0, min(max_nb_words, 500), 0
+                    )
+                    new_key = ("number_words", cutoff_min_number_words, False)
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond_1 = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond_1)
 
-                cutoff_def = "If the number of words of a document is higher than this number, the document is removed."
-                cutoff_max_number_words = st.sidebar.slider(
-                    cutoff_def, 0, max_nb_words, max_nb_words
-                )
-                new_key = ("number_words", cutoff_max_number_words, True)
-                keys.append(new_key)
-                cond_2 = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond_2)
+                    cutoff_def = "If the number of words of a document is higher than this number, the document is removed."
+                    cutoff_max_number_words = st.slider(
+                        cutoff_def, 0, max_nb_words, max_nb_words
+                    )
+                    new_key = ("number_words", cutoff_max_number_words, True)
+                    keys.append(new_key)
+                    cond_2 = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond_2)
 
-                conds["number_words"] = [cond_1, cond_2]
+                    conds["number_words"] = [cond_1, cond_2]
 
             if "repetitions_ratio" in columns:
-                val_repetitions_lengths = list(
-                    self.docs["repetitions_ratio"].iloc[0].keys()
-                )
-                default_index = (
-                    val_repetitions_lengths.index("10")
-                    if "10" in val_repetitions_lengths
-                    else 0
-                )
-                label_selectbox = "Length of the repetitions (that will determine the repetitions ratio)."
-                repetitions_length = st.sidebar.selectbox(
-                    label=label_selectbox,
-                    options=val_repetitions_lengths,
-                    index=default_index,
-                )
-                st.sidebar.caption(
-                    "Choosing a higher or lower number does not mean that the filtering "
-                    "is stronger or weaker. Be careful, choosing a low number (below 5 for languages like English) "
-                    "tends to associate a high repetitions ratio to very long documents (like book chapters), but with "
-                    "few or no repetitions, simply because their length gives them more diversity, and we do "
-                    "not want to discard such documents."
-                )
-                self.docs = self.docs_checkpoint
-                for i in range(len(self.docs["repetitions_ratio"])):
-                    self.docs["repetitions_ratio"].iloc[i] = self.docs[
-                        "repetitions_ratio"
-                    ].iloc[i][repetitions_length]
+                with st.sidebar.expander("Repetitions ratio"):
+                    val_repetitions_lengths = list(
+                        self.docs["repetitions_ratio"].iloc[0].keys()
+                    )
+                    default_index = (
+                        val_repetitions_lengths.index("10")
+                        if "10" in val_repetitions_lengths
+                        else 0
+                    )
+                    label_selectbox = "Length of the repetitions (that will determine the repetitions ratio)."
+                    repetitions_length = st.selectbox(
+                        label=label_selectbox,
+                        options=val_repetitions_lengths,
+                        index=default_index,
+                    )
+                    st.caption(
+                        "Choosing a higher or lower number does not mean that the filtering "
+                        "is stronger or weaker. Be careful, choosing a low number (below 5 for languages like English) "
+                        "tends to associate a high repetitions ratio to very long documents (like book chapters), but with "
+                        "few or no repetitions, simply because their length gives them more diversity, and we do "
+                        "not want to discard such documents."
+                    )
+                    self.docs = self.docs_checkpoint
+                    for i in range(len(self.docs["repetitions_ratio"])):
+                        self.docs["repetitions_ratio"].iloc[i] = self.docs[
+                            "repetitions_ratio"
+                        ].iloc[i][repetitions_length]
 
-                cutoff_def = "If the repetitions ratio of a document is higher than this number, the document is removed."
-                cutoff_repetitions_ratio = st.sidebar.slider(
-                    cutoff_def, 0.0, 1.0, 1.0, step=0.01
-                )
-                new_key = (
-                    "repetitions_ratio",
-                    cutoff_repetitions_ratio,
-                    True,
-                    repetitions_length,
-                )
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond)
-                conds["repetitions_ratio"] = [cond]
+                    cutoff_def = "If the repetitions ratio of a document is higher than this number, the document is removed."
+                    cutoff_repetitions_ratio = st.slider(
+                        cutoff_def, 0.0, 1.0, 1.0, step=0.01
+                    )
+                    new_key = (
+                        "repetitions_ratio",
+                        cutoff_repetitions_ratio,
+                        True,
+                        repetitions_length,
+                    )
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond)
+                    conds["repetitions_ratio"] = [cond]
 
             if "special_characters_ratio" in columns:
-                cutoff_def = "If the special characters ratio of a document is higher than this number, the document is removed."
-                cutoff_special_characters_ratio = st.sidebar.slider(
-                    cutoff_def, 0.0, 1.0, 1.0, step=0.01
-                )
-                new_key = (
-                    "special_characters_ratio",
-                    cutoff_special_characters_ratio,
-                    True,
-                )
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond)
-                conds["special_characters_ratio"] = [cond]
+                with st.sidebar.expander("Special characters ratio"):
+                    cutoff_def = "If the special characters ratio of a document is higher than this number, the document is removed."
+                    cutoff_special_characters_ratio = st.slider(
+                        cutoff_def, 0.0, 1.0, 1.0, step=0.01
+                    )
+                    new_key = (
+                        "special_characters_ratio",
+                        cutoff_special_characters_ratio,
+                        True,
+                    )
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond)
+                    conds["special_characters_ratio"] = [cond]
 
             if "stopwords_ratio" in columns:
-                cutoff_def = "If the stop words ratio of a document is lower than this number, the document is removed."
-                cutoff_stopwords_ratio = st.sidebar.slider(
-                    cutoff_def, 0.0, 1.0, 0.0, step=0.01
-                )
-                new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond)
-                conds["stopwords_ratio"] = [cond]
+                with st.sidebar.expander("Stop words ratio"):
+                    cutoff_def = "If the stop words ratio of a document is lower than this number, the document is removed."
+                    cutoff_stopwords_ratio = st.slider(
+                        cutoff_def, 0.0, 1.0, 0.0, step=0.01
+                    )
+                    new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond)
+                    conds["stopwords_ratio"] = [cond]
 
             if "flagged_words_ratio" in columns:
-                cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
-                cutoff_flagged_words_ratio = st.sidebar.slider(
-                    cutoff_def, 0.0, 1.0, 1.0, step=0.01
-                )
-                new_key = ("flagged_words_ratio", cutoff_flagged_words_ratio, True)
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond)
-                conds["flagged_words_ratio"] = [cond]
+                with st.sidebar.expander("Flagged words ratio"):
+                    cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
+                    cutoff_flagged_words_ratio = st.slider(
+                        cutoff_def, 0.0, 1.0, 1.0, step=0.01
+                    )
+                    new_key = ("flagged_words_ratio", cutoff_flagged_words_ratio, True)
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond)
+                    conds["flagged_words_ratio"] = [cond]
 
             if "lang_id_score" in columns:
-                cutoff_def = "If the confidence score for the language identification prediction of a document is lower than this number, the document is removed."
-                cutoff_lang_id_score = st.sidebar.slider(
-                    cutoff_def, 0.0, 1.0, 0.0, step=0.01
-                )
-                new_key = ("lang_id_score", cutoff_lang_id_score, False)
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond)
-                conds["lang_id_score"] = [cond]
+                with st.sidebar.expander("Language ID confidence score"):
+                    cutoff_def = "If the confidence score for the language identification prediction of a document is lower than this number, the document is removed."
+                    cutoff_lang_id_score = st.slider(
+                        cutoff_def, 0.0, 1.0, 0.0, step=0.01
+                    )
+                    new_key = ("lang_id_score", cutoff_lang_id_score, False)
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond)
+                    conds["lang_id_score"] = [cond]
 
             if "perplexity_score" in columns:
-                cutoff_def = "If the perplexity score of a document is higher than this number, the document is removed."
-                max_pp = int(np.max(self.docs["perplexity_score"])) + 1
-                cutoff_perplexity_score = st.sidebar.slider(
-                    cutoff_def, 0, max_pp, max_pp
-                )
-                new_key = ("perplexity_score", cutoff_perplexity_score, True)
-                keys.append(new_key)
-                Visualization.plot_hist(self.docs, new_key)
-                cond = get_cond(new_key[0], new_key[1], new_key[2])
-                print_discared_by_cond(cond)
-                conds["perplexity_score"] = [cond]
+                with st.sidebar.expander("Perplexity score"):
+                    cutoff_def = "If the perplexity score of a document is higher than this number, the document is removed."
+                    max_pp = int(np.max(self.docs["perplexity_score"])) + 1
+                    cutoff_perplexity_score = st.slider(
+                        cutoff_def, 0, max_pp, max_pp
+                    )
+                    new_key = ("perplexity_score", cutoff_perplexity_score, True)
+                    keys.append(new_key)
+                    Visualization.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    print_discared_by_cond(cond)
+                    conds["perplexity_score"] = [cond]
 
             return keys, conds
 
@@ -372,23 +378,23 @@ class Visualization:
         if not (self.words is None):
             st.sidebar.subheader("Parameter of the filtering on words")
 
-            cutoff_def = "If the length of a word is higher than this number, the word is removed."
-            max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
-            cutoff_word = st.sidebar.slider(cutoff_def, 0, max_len_word, max_len_word)
-            new_key = ("len_word", cutoff_word, True)
-            self.parameters.append(new_key)
-            Visualization.plot_hist(self.words, new_key)
-            st.sidebar.caption("---------")
+            with st.sidebar.expander("Length of words"):
+                cutoff_def = "If the length of a word is higher than this number, the word is removed."
+                max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
+                cutoff_word = st.slider(cutoff_def, 0, max_len_word, max_len_word)
+                new_key = ("len_word", cutoff_word, True)
+                self.parameters.append(new_key)
+                Visualization.plot_hist(self.words, new_key)
 
-            incorrect_substrings = st.sidebar.checkbox(
-                "Remove words with incorrect substrings."
-            )
-            self.parameters.append(("incorrect_substrings", incorrect_substrings))
-            st.sidebar.caption("---------")
+            with st.sidebar.expander("Words with incorrect substrings"):
+                incorrect_substrings = st.checkbox(
+                    "Remove words with incorrect substrings."
+                )
+                self.parameters.append(("incorrect_substrings", incorrect_substrings))
 
-            cond_words = self.words["len_word"] <= cutoff_word
-            if incorrect_substrings:
-                cond_words = cond_words & np.invert(self.words["incorrect_substring"])
+                cond_words = self.words["len_word"] <= cutoff_word
+                if incorrect_substrings:
+                    cond_words = cond_words & np.invert(self.words["incorrect_substring"])
 
             st.header("Filtering on words")
 
@@ -416,6 +422,7 @@ class Visualization:
             st.dataframe(retained_words)
 
     def download_parameters(self):
+        st.sidebar.subheader("Download parameters")
         btn = st.sidebar.download_button(
             label="Download current parameters as json",
             data=json.dumps(self.parameters),
