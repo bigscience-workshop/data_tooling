@@ -18,10 +18,12 @@ conda activate thomas_data_tooling # Debug deepspeed temporarily
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
 DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--"$SLURM_ARRAY_TASK_COUNT"
-SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-redownload
+SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-redownload/bigscience-catalogue-data
+SAVE_DATASET_PATH=$SAVE_DATASET_DIR/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--"$SLURM_ARRAY_TASK_COUNT"
 echo $DATASET_PATH
 pushd $DATA_TOOLING_REPO
 
+mkdir -p $SAVE_DATASET_DIR
 
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
@@ -29,5 +31,5 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 python -m cc_pseudo_crawl.redownload_warc \
     --dataset-path $DATASET_PATH \
     --num-proc 4 \
-    --save-dir $SAVE_DATASET_DIR \
+    --save-path $SAVE_DATASET_PATH \
     --use-datasets-caching

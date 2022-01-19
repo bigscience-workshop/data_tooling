@@ -15,7 +15,7 @@ def get_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset-path', type=str, required=True, help="Dataset name.")
     parser.add_argument('--num-proc', type=int, required=True, help="Dataset name.")
-    parser.add_argument('--save-dir', type=str, help="Where to save the datasets.")
+    parser.add_argument('--save-path', type=str, help="Where to save the datasets.")
     parser.add_argument('--use-datasets-caching', action='store_true')
 
     args = parser.parse_args()
@@ -38,8 +38,8 @@ def main():
 
     ds = load_from_disk(args.dataset_path)
 
-    if args.save_dir:
-        save_path = Path(args.save_dir)
+    if args.save_path:
+        save_path = Path(args.save_path)
     else:
         save_path = Path(args.dataset_path)
 
