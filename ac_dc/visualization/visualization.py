@@ -121,6 +121,19 @@ class Visualization:
     def set_title(self):
         st.title(f"{self.num_docs} {self.lang} documents with their stats.")
 
+    @staticmethod
+    def plot_hist(dataframe, key, num_bins=50):
+        checkbox = st.sidebar.checkbox("Diplay distribution", key=f"display_distribution_{key[0]}")
+        if checkbox:
+            fig, ax = plt.subplots()
+            val = dataframe[key[0]].values
+            if np.median(val) != 0:
+                val = val[abs(val - np.median(val)) < 6 * np.median(np.absolute(val - np.median(val)))]
+            ax.hist(val, bins=num_bins)
+            ax.set_title(" ".join(key[0].split("_")))
+            ax.axvline(x=key[1], color='r', linestyle='dashed')
+            st.sidebar.pyplot(fig)
+
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
 
@@ -148,6 +161,7 @@ class Visualization:
                 )
                 new_key = ("number_words", cutoff_min_number_words, False)
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond_1 = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond_1)
 
@@ -201,6 +215,7 @@ class Visualization:
                     repetitions_length,
                 )
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
                 conds["repetitions_ratio"] = [cond]
@@ -216,6 +231,7 @@ class Visualization:
                     True,
                 )
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
                 conds["special_characters_ratio"] = [cond]
@@ -227,6 +243,7 @@ class Visualization:
                 )
                 new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
                 conds["stopwords_ratio"] = [cond]
@@ -238,6 +255,7 @@ class Visualization:
                 )
                 new_key = ("flagged_words_ratio", cutoff_flagged_words_ratio, True)
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
                 conds["flagged_words_ratio"] = [cond]
@@ -249,6 +267,7 @@ class Visualization:
                 )
                 new_key = ("lang_id_score", cutoff_lang_id_score, False)
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
                 conds["lang_id_score"] = [cond]
@@ -261,6 +280,7 @@ class Visualization:
                 )
                 new_key = ("perplexity_score", cutoff_perplexity_score, True)
                 keys.append(new_key)
+                Visualization.plot_hist(self.docs, new_key)
                 cond = get_cond(new_key[0], new_key[1], new_key[2])
                 print_discared_by_cond(cond)
                 conds["perplexity_score"] = [cond]
@@ -355,7 +375,9 @@ class Visualization:
             cutoff_def = "If the length of a word is higher than this number, the word is removed."
             max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
             cutoff_word = st.sidebar.slider(cutoff_def, 0, max_len_word, max_len_word)
-            self.parameters.append(("len_word", cutoff_word, True))
+            new_key = ("len_word", cutoff_word, True)
+            self.parameters.append(new_key)
+            Visualization.plot_hist(self.words, new_key)
             st.sidebar.caption("---------")
 
             incorrect_substrings = st.sidebar.checkbox(
@@ -399,29 +421,6 @@ class Visualization:
             data=json.dumps(self.parameters),
             file_name=f"parameters_{self.lang_dataset_id}.json",
         )
-
-    def plot_distributions_filtering_parameters(self):
-        st.header("Distributions of the filtering parameters")
-
-        display_distributions = st.checkbox("Display distributions")
-
-        if display_distributions:
-
-            def plot_hist(dataframe, key, num_bins=50):
-                st.subheader(" ".join(key.split("_")))
-                hist_values = dataframe[key].values
-                max_range = np.max(hist_values)
-                hist_values = np.histogram(
-                    hist_values, bins=num_bins, range=(0, max_range)
-                )[0]
-                st.bar_chart(hist_values)
-                st.markdown(f"Each bin is of size: {max_range/num_bins}.")
-
-            for key in list({el[0]: None for el in self.keys}):
-                plot_hist(self.docs, key)
-
-            if not (self.words is None):
-                plot_hist(self.words, "len_word")
 
     def plot_zipf_law(self):
         if not (self.words is None):
@@ -578,7 +577,6 @@ class Visualization:
         self.filtering_of_docs()
         self.filtering_of_words()
         self.download_parameters()
-        self.plot_distributions_filtering_parameters()
         self.plot_zipf_law()
         self.analyse_personal_doc()
         self.download_data()
