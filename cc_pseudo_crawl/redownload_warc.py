@@ -43,7 +43,7 @@ def main():
     else:
         save_path = Path(args.dataset_path)
 
-    download_warcs(ds, args.dataset_path, num_proc=args.num_proc)
+    download_warcs(ds, save_path, num_proc=args.num_proc)
 
 if __name__ == "__main__":
     main()
