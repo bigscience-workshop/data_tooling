@@ -48,7 +48,7 @@ def get_external_links(soup, exclude_url):
             external_links.add(href)
     return list(external_links)
 
-HTML_TYPES = ['text/html', 'application/xhtml+xml']
+HTML_TYPES = ['text/html'] # exclude 'application/xhtml+xml'
 
 def get_beautifulsoup_object(compressed_warc, mime):
     if mime not in HTML_TYPES:
