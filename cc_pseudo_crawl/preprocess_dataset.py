@@ -23,17 +23,9 @@ def get_args():
     parser.add_argument('--save-path', type=str, help="Where to save the datasets.")
     parser.add_argument('--use-datasets-caching', action='store_true')
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing.")
+    parser.add_argument('--flavor', type=str, required=True, default=1, help="Number of procs use for preprocessing.")
 
     args = parser.parse_args()
-
-    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_(?:(.*)_partial|(seed))(_dedup_url)?$", args.dataset)
-    assert matches is not None
-    flavors = [elt for elt in matches.groups() if elt is not None]
-    assert len(flavors) == 1 or (len(flavors) == 2 and flavors[1] == "_dedup_url")
-    flavor = flavors[0]
-    assert flavor == "seed" \
-           or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
-    args.flavor = flavor
 
     return args
 
