@@ -79,7 +79,7 @@ def get_beautifulsoup_object(compressed_warc, mime):
 def get_html_str_and_outgoing_link(compressed_warc, mime, domain):
     soup = get_beautifulsoup_object(compressed_warc, mime)
     if soup is None:
-        return None, None
+        return None, None, None
 
     html_str = soup.decode_contents(formatter="html")
     try:
