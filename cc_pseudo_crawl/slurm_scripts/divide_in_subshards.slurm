@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=pseudo_crawl_divide_in_subshards
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
+#SBATCH --cpus-per-task=4           # number of cores per tasks
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=/gpfswork/rech/six/uty16tp/code/big_science/logs/preprocess/%x-%j.out           # output file name
 #SBATCH --array=0-9   # TODO: modify according to the number of models you want to evaluated
@@ -26,8 +27,7 @@ mkdir -p $SAVE_DATASET_DIR
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python -m cc_pseudo_crawl.preprocess_dataset \
+python -m cc_pseudo_crawl.divide_in_shards \
     --dataset-path $DATASET_PATH \
     --save-dir $SAVE_DATASET_DIR \
-    --save-path $SAVE_DATASET_PATH \
     --num-shards 10 
