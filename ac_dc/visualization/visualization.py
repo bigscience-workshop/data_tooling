@@ -7,6 +7,7 @@ import os
 import base64
 import json
 import pandas as pd
+
 pd.options.mode.chained_assignment = None
 
 import numpy as np
@@ -145,7 +146,9 @@ class Visualization:
                 )
                 self.docs = self.docs_checkpoint
                 for i in range(len(self.docs["repetitions_ratio"])):
-                    self.docs["repetitions_ratio"].iloc[i] = self.docs["repetitions_ratio"].iloc[i][repetitions_length]
+                    self.docs["repetitions_ratio"].iloc[i] = self.docs[
+                        "repetitions_ratio"
+                    ].iloc[i][repetitions_length]
 
                 cutoff_def = "If the repetitions ratio of a document is higher than this number, the document is removed."
                 cutoff_repetitions_ratio = st.sidebar.slider(

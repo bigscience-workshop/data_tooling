@@ -30,4 +30,4 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 python -m cc_pseudo_crawl.divide_in_shards \
     --dataset-path $DATASET_PATH \
     --save-dir $SAVE_DATASET_DIR \
-    --num-shards 10 
+    --num-shards 10

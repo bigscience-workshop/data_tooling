@@ -1,7 +1,7 @@
+boto3
+bs4
+datasets
 pyathena
 surt
 tldextract
 warcio
-boto3
-bs4
-datasets

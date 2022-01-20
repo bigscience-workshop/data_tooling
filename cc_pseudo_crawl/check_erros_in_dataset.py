@@ -8,12 +8,14 @@ from datasets.utils.logging import set_verbosity_info
 set_verbosity_info()
 logger = logging.getLogger(__name__)
 
+
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('--dataset-dir', type=str, required=True, help="Dataset name.")
+    parser.add_argument("--dataset-dir", type=str, required=True, help="Dataset name.")
 
     args = parser.parse_args()
     return args
+
 
 def main():
     # Setup logging
@@ -23,7 +25,9 @@ def main():
         level=logging.INFO,
     )
     args = get_args()
-    logger.info(f"** The job is runned with the following arguments: **\n{args}\n **** ")
+    logger.info(
+        f"** The job is runned with the following arguments: **\n{args}\n **** "
+    )
 
     for dataset_name in os.listdir(args.dataset_dir):
         dataset_path = os.path.join(args.dataset_dir, dataset_name)
@@ -35,14 +39,12 @@ def main():
         except Exception as e:
             logging.warning(f"Failed to process {dataset_path} with error '{str(e)}'")
 
+
 def keep_failed_examples(example):
-    if example['download_exception'] is None:
+    if example["download_exception"] is None:
         return False
     return True
 
 
 if __name__ == "__main__":
     main()
-
-
-

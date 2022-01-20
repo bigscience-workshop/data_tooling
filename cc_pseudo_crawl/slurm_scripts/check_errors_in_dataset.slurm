@@ -24,4 +24,4 @@ export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python -m cc_pseudo_crawl.check_erros_in_dataset \
-    --dataset-dir $DATASET_DIR 
+    --dataset-dir $DATASET_DIR

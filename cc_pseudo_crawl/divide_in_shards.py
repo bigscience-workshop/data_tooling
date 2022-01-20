@@ -12,14 +12,21 @@ logger = logging.getLogger(__name__)
 # For `soup.decode_content` that can hit the limit
 sys.setrecursionlimit(10000)
 
+
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('--dataset-path', type=str, required=True, help="path to the parquet dataset folder")
-    parser.add_argument('--save-dir', type=str, help="Where to save the datasets.")
-    parser.add_argument('--num-shards', type=int, help="Total number of shards.")
+    parser.add_argument(
+        "--dataset-path",
+        type=str,
+        required=True,
+        help="path to the parquet dataset folder",
+    )
+    parser.add_argument("--save-dir", type=str, help="Where to save the datasets.")
+    parser.add_argument("--num-shards", type=int, help="Total number of shards.")
     args = parser.parse_args()
 
     return args
+
 
 def main():
     # Setup logging
@@ -29,8 +36,10 @@ def main():
         level=logging.INFO,
     )
     args = get_args()
-    logger.info(f"** The job is runned with the following arguments: **\n{args}\n **** ")
-    
+    logger.info(
+        f"** The job is runned with the following arguments: **\n{args}\n **** "
+    )
+
     ds = load_from_disk(args.dataset_path)
 
     dataset_path = Path(args.dataset_path)
