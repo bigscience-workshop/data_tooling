@@ -5,6 +5,7 @@ import re
 import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
+import sys
 
 import datasets
 from bs4 import BeautifulSoup
@@ -17,6 +18,9 @@ from warcio.exceptions import ArchiveLoadFailed
 set_verbosity_info()
 logger = logging.getLogger(__name__)
 
+# For `soup.decode_content` that can hit the limit
+sys.setrecursionlimit(10000)
+
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset-path', type=str, required=True, help="path to the parquet dataset folder")
@@ -24,7 +28,7 @@ def get_args():
     parser.add_argument('--use-datasets-caching', action='store_true')
     parser.add_argument('--num-proc', type=int, default=1, help="Number of procs use for preprocessing.")
     parser.add_argument('--flavor', type=str, required=True, default=1, help="Number of procs use for preprocessing.")
-
+    parser.add_argument('--num-examples', type=int, default=None, help="Optional argument to select a subset (used for debugging purposes). Example `10`.")
     args = parser.parse_args()
 
     return args
@@ -52,7 +56,7 @@ HTML_TYPES = ['text/html'] # exclude 'application/xhtml+xml'
 
 def get_beautifulsoup_object(compressed_warc, mime):
     if mime not in HTML_TYPES:
-        return None
+        return None, None
 
     with io.BytesIO(compressed_warc) as stream:
         html = None
@@ -73,21 +77,29 @@ def get_beautifulsoup_object(compressed_warc, mime):
             break
 
     assert page is not None
-    soup = BeautifulSoup(page, 'html.parser', from_encoding=encoding)
-    return soup
+    # error "UnboundLocalError: local variable 'match' referenced before assignment" may append in html/parser.py
+    try:
+        soup = BeautifulSoup(page, 'html.parser', from_encoding=encoding)
+    except UnboundLocalError as e:
+        return None, str(e)
+    return soup, None
 
 def get_html_str_and_outgoing_link(compressed_warc, mime, domain):
-    soup = get_beautifulsoup_object(compressed_warc, mime)
+    soup, soup_error = get_beautifulsoup_object(compressed_warc, mime)
     if soup is None:
-        return None, None, None
+        return None, None, soup_error
 
-    html_str = soup.decode_contents(formatter="html")
+    external_links = get_external_links(soup, domain)
+    try:
+        # todo: explain why we do that check here
+        html_str = soup.decode_contents(formatter="html")
+    except RecursionError as e:
+        return None, external_links, str(e)
     try:
         # todo: explain why we do that check here
         html_str.encode()
     except UnicodeEncodeError as e:
-        return None, None, str(e)
-    external_links = get_external_links(soup, domain)
+        return None, external_links, str(e)
     return html_str, external_links, None
 
 
@@ -144,10 +156,22 @@ def main():
     
     ds = load_from_disk(args.dataset_path)
 
+    if args.num_examples:
+        ds = ds.select([i for i in range(args.num_examples)])
+
+    depth = get_depth(args.flavor)
+
     ds = ds.map(
-            functools.partial(apply_preprocessing, depth=args.flavor),
+            functools.partial(apply_preprocessing, depth=depth),
             batched=True,
             num_proc=args.num_proc,
+            features=datasets.Features({
+                **ds.features,
+                "external_urls": [datasets.Value("string")],
+                "html_str": datasets.Value("string"),
+                "html_error": datasets.Value("string"),
+                "depth": datasets.Value("int16")
+            })
         )
         
     if args.save_path:
