@@ -71,7 +71,7 @@ class GetDataForVisualization:
                 words = [
                     {
                         "len_word": len(word),
-                        "incorrect_substring": any(
+                        "incorrect_substrings": any(
                             [
                                 (i_substr in word)
                                 for i_substr in self.param["incorrect_word_substrings"]

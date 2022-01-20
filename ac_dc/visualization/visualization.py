@@ -121,6 +121,12 @@ class Visualization:
         st.title(f"Filtering visualization")
 
     @staticmethod
+    def print_discarded_by_cond(cond):
+        st.caption(
+            f"{(len(cond) - np.sum(1*cond)) / len(cond) * 100:.2f}% of the total is discarded with this filter."
+        )
+
+    @staticmethod
     def plot_hist(dataframe, key, num_bins=50):
         checkbox = st.checkbox(
             "Diplay distribution", value=True, key=f"display_distribution_{key[0]}"
@@ -138,6 +144,17 @@ class Visualization:
             ax.axvline(x=key[1], color="r", linestyle="dashed")
             st.pyplot(fig)
 
+    @staticmethod
+    def display_dataset(dataframe, cond, description, type_of_examples):
+        displayed_examples = dataframe.loc[cond]
+        st.subheader(
+            f"{description}: {len(displayed_examples)} {type_of_examples} ({len(displayed_examples) / len(dataframe.index) * 100:.2f}%)"
+        )
+        st.markdown(
+            "Click on a column to sort by it, place the cursor on the text to display it."
+        )
+        st.dataframe(displayed_examples)
+
     def filtering_of_docs(self):
         st.sidebar.subheader("Parameters of the filtering on documents")
 
@@ -151,11 +168,6 @@ class Visualization:
                     return self.docs[key] <= cutoff
                 return self.docs[key] >= cutoff
 
-            def print_discared_by_cond(cond):
-                st.caption(
-                    f"{(len(cond) - np.sum(1*cond)) / len(cond) * 100:.2f}% of the total is discarded with this filter."
-                )
-
             if "number_words" in columns:
                 with st.sidebar.expander("Number of words"):
                     cutoff_def = "If the number of words of a document is lower than this number, the document is removed."
@@ -167,7 +179,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond_1 = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond_1)
+                    Visualization.print_discarded_by_cond(cond_1)
 
                     cutoff_def = "If the number of words of a document is higher than this number, the document is removed."
                     cutoff_max_number_words = st.slider(
@@ -176,7 +188,7 @@ class Visualization:
                     new_key = ("number_words", cutoff_max_number_words, True)
                     keys.append(new_key)
                     cond_2 = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond_2)
+                    Visualization.print_discarded_by_cond(cond_2)
 
                     conds["number_words"] = [cond_1, cond_2]
 
@@ -224,7 +236,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond)
+                    Visualization.print_discarded_by_cond(cond)
                     conds["repetitions_ratio"] = [cond]
 
             if "special_characters_ratio" in columns:
@@ -241,7 +253,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond)
+                    Visualization.print_discarded_by_cond(cond)
                     conds["special_characters_ratio"] = [cond]
 
             if "stopwords_ratio" in columns:
@@ -277,7 +289,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond)
+                    Visualization.print_discarded_by_cond(cond)
                     conds["stopwords_ratio"] = [cond]
 
             if "flagged_words_ratio" in columns:
@@ -313,7 +325,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond)
+                    Visualization.print_discarded_by_cond(cond)
                     conds["flagged_words_ratio"] = [cond]
 
             if "lang_id_score" in columns:
@@ -326,7 +338,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond)
+                    Visualization.print_discarded_by_cond(cond)
                     conds["lang_id_score"] = [cond]
 
             if "perplexity_score" in columns:
@@ -338,7 +350,7 @@ class Visualization:
                     keys.append(new_key)
                     Visualization.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    print_discared_by_cond(cond)
+                    Visualization.print_discarded_by_cond(cond)
                     conds["perplexity_score"] = [cond]
 
             return keys, conds
@@ -356,17 +368,7 @@ class Visualization:
                 f"Filtering on documents, for {self.num_docs} {self.lang} documents"
             )
 
-            def display_dataset(cond, description):
-                displayed_docs = self.docs.loc[cond]
-                st.subheader(
-                    f"{description}: {len(displayed_docs)} docs ({len(displayed_docs) / self.num_docs * 100:.2f}%)"
-                )
-                st.markdown(
-                    "Click on a column to sort by it, place the cursor on the text to display it."
-                )
-                st.dataframe(displayed_docs)
-
-            display_dataset(np.invert(all_conds), "Discarded documents")
+            Visualization.display_dataset(self.docs, np.invert(all_conds), "Discarded documents", "docs")
 
             # st.subheader("Display discarded documents by filter")
             display_discarded_documents_by_filter = st.checkbox(
@@ -378,58 +380,37 @@ class Visualization:
 
                 if "number_words" in columns:
                     cond_filter = np.invert(np.all(conds["number_words"], axis=0))
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the number of words",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the number of words", "docs")
 
                 if "repetitions_ratio" in columns:
                     cond_filter = np.invert(np.all(conds["repetitions_ratio"], axis=0))
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the repetitions ratio",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the repetitions ratio", "docs")
 
                 if "special_characters_ratio" in columns:
                     cond_filter = np.invert(
                         np.all(conds["special_characters_ratio"], axis=0)
                     )
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the special characters ratio",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the special characters ratio", "docs")
 
                 if "stopwords_ratio" in columns:
                     cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the stop words ratio",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the stop words ratio", "docs")
 
                 if "flagged_words_ratio" in columns:
                     cond_filter = np.invert(
                         np.all(conds["flagged_words_ratio"], axis=0)
                     )
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the flagged words ratio",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the flagged words ratio", "docs")
 
                 if "lang_id_score" in columns:
                     cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the language identification confidence score",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the language identification confidence score", "docs")
 
                 if "perplexity_score" in columns:
                     cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
-                    display_dataset(
-                        cond_filter,
-                        "Discarded documents for the filter on the perplexity score",
-                    )
+                    Visualization.display_dataset(self.docs, cond_filter, "Discarded documents for the filter on the perplexity score", "docs")
 
-            display_dataset(all_conds, "Retained documents")
+            Visualization.display_dataset(self.docs, all_conds, "Retained documents", "docs")
 
             st.header("Download data")
 
@@ -442,57 +423,70 @@ class Visualization:
 
     def filtering_of_words(self):
         if not (self.words is None):
+            columns = list(self.words)
+
             st.sidebar.subheader("Parameter of the filtering on words")
 
-            with st.sidebar.expander("Length of words"):
-                cutoff_def = "If the length of a word is higher than this number, the word is removed."
-                max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
-                cutoff_word = st.slider(cutoff_def, 0, max_len_word, max_len_word)
-                new_key = ("len_word", cutoff_word, True)
-                self.parameters.append(new_key)
-                Visualization.plot_hist(self.words, new_key)
+            conds_words = {}
 
-            with st.sidebar.expander("Words with incorrect substrings"):
-                incorrect_substrings = st.checkbox(
-                    "Remove words with incorrect substrings."
-                )
-                self.parameters.append(("incorrect_substrings", incorrect_substrings))
+            if "len_word" in columns:
+                with st.sidebar.expander("Length of words"):
+                    cutoff_def = "If the length of a word is higher than this number, the word is removed."
+                    max_len_word = min(int(np.max(self.words["len_word"])) + 1, 200)
+                    cutoff_word = st.slider(cutoff_def, 0, max_len_word, max_len_word)
+                    new_key = ("len_word", cutoff_word, True)
+                    self.parameters.append(new_key)
+                    Visualization.plot_hist(self.words, new_key)
+                    cond_len_words = self.words["len_word"] <= cutoff_word
+                    Visualization.print_discarded_by_cond(cond_len_words)
+                    conds_words["len_word"] = cond_len_words
 
-                cond_words = self.words["len_word"] <= cutoff_word
-                if incorrect_substrings:
-                    cond_words = cond_words & np.invert(
-                        self.words["incorrect_substring"]
+            if "incorrect_substrings" in columns:
+                with st.sidebar.expander("Words with incorrect substrings"):
+                    incorrect_substrings = st.checkbox(
+                        "Remove words with incorrect substrings."
                     )
+                    self.parameters.append(("incorrect_substrings", incorrect_substrings))
+
+                    if incorrect_substrings:
+                        cond_incorrect_substrings = np.invert(self.words["incorrect_substrings"])
+                    else:
+                        cond_incorrect_substrings = np.array([True for i in range(len(self.words["incorrect_substrings"]))])
+                    Visualization.print_discarded_by_cond(cond_incorrect_substrings)
+                    conds_words["incorrect_substrings"] = cond_incorrect_substrings
+
+            all_conds_words = np.all(list(conds_words.values()), axis=0)
 
             with st.expander(
-                f"Filtering on words, for {self.num_docs} {self.lang} documents"
+                f"Filtering on words, for {self.num_docs_for_words} {self.lang} documents"
             ):
                 st.header(
-                    f"Filtering on words, for {self.num_docs} {self.lang} documents"
+                    f"Filtering on words, for {self.num_docs_for_words} {self.lang} documents"
                 )
 
                 st.markdown(
                     f"Since the number of words is way larger than the number of documents, "
-                    f"we consider in this section words for the first {self.num_docs_for_words} documents only."
+                    f"we consider in this section words for only {self.num_docs_for_words} documents."
                 )
 
-                discarded_words = self.words.loc[np.invert(cond_words)]
-                st.subheader(
-                    f"Discarded words: {len(discarded_words)} words ({len(discarded_words) / len(self.words) * 100:.2f}%)"
-                )
-                st.markdown(
-                    "Click on a column to sort by it, place the cursor on the text to display it."
-                )
-                st.dataframe(discarded_words)
+                Visualization.display_dataset(self.words, np.invert(all_conds_words), "Discarded words", "words")
 
-                retained_words = self.words.loc[cond_words]
-                st.subheader(
-                    f"Retained words: {len(retained_words)} words ({len(retained_words) / len(self.words) * 100:.2f}%)"
+                # st.subheader("Display discarded words by filter")
+                display_discarded_words_by_filter = st.checkbox(
+                    "Display discarded words by filter"
                 )
-                st.markdown(
-                    "Click on a column to sort by it, place the cursor on the text to display it."
-                )
-                st.dataframe(retained_words)
+
+                if display_discarded_words_by_filter:
+
+                    if "len_word" in columns:
+                        cond_filter = np.invert(conds_words["len_word"])
+                        Visualization.display_dataset(self.words, cond_filter, "Discarded words for the filter on length", "words")
+
+                    if "incorrect_substrings" in columns:
+                        cond_filter = np.invert(conds_words["incorrect_substrings"])
+                        Visualization.display_dataset(self.words, cond_filter, "Discarded words for the filter on incorrect substrings", "words")
+
+                Visualization.display_dataset(self.words, all_conds_words, "Retained words", "words")
 
     def download_parameters(self):
         st.sidebar.subheader("Download parameters")
