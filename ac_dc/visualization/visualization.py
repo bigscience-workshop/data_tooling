@@ -448,6 +448,16 @@ class Visualization:
                     )
                     self.parameters.append(("incorrect_substrings", incorrect_substrings))
 
+                    checkbox = st.checkbox(
+                        "Diplay distribution", value=True, key="display_distribution_incorrect_substrings"
+                    )
+                    if checkbox:
+                        incor_sub = np.array(self.words["incorrect_substrings"]) * 1
+                        with_incor_sub = np.sum(incor_sub)
+                        without_incor_sub = len(incor_sub) - with_incor_sub
+                        st.markdown(f"Number of words with incorrect substrings: {with_incor_sub}")
+                        st.markdown(f"Number of words without incorrect substrings: {without_incor_sub}")
+
                     if incorrect_substrings:
                         cond_incorrect_substrings = np.invert(self.words["incorrect_substrings"])
                     else:
