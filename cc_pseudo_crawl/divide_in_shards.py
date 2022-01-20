@@ -39,8 +39,8 @@ def main():
         file_name_init = dataset_path.name
         dataset_name, shard_id_init, num_shards_init = file_name_init.split("--")
 
-        shard_id_new = shard_id_init * args.num_shards + shard_id
-        total_num_shard = num_shards_init * args.num_shards
+        shard_id_new = int(shard_id_init) * args.num_shards + shard_id
+        total_num_shard = int(num_shards_init) * args.num_shards
         shard_name = f"{dataset_name}--{shard_id_new}--{total_num_shard}"
         save_path = Path(os.path.join(args.save_dir, shard_name))
         sub_ds = ds.shard(num_shards=args.num_shards, index=shard_id)
