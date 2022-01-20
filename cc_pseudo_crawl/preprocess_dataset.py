@@ -82,8 +82,13 @@ def get_html_str_and_outgoing_link(compressed_warc, mime, domain):
         return None, None
 
     html_str = soup.decode_contents(formatter="html")
+    try:
+        # todo: explain why we do that check here
+        html_str.encode()
+    except UnicodeEncodeError as e:
+        return None, None, str(e)
     external_links = get_external_links(soup, domain)
-    return html_str, external_links
+    return html_str, external_links, None
 
 
 def assign_depth_(batch, depth):
@@ -111,10 +116,12 @@ def apply_preprocessing(batch, depth):
 
     batch["external_urls"] = []
     batch["html_str"] = []
+    batch["html_error"] = []
     for mime, domain, compressed_warc in zip(content_mime_detected, url_host_registered_domains, compressed_warcs):
-        html_str, external_links = get_html_str_and_outgoing_link(compressed_warc, mime, domain)
+        html_str, external_links, error = get_html_str_and_outgoing_link(compressed_warc, mime, domain)
         batch["external_urls"].append(external_links)
         batch["html_str"].append(html_str)
+        batch["html_error"].append(error)
     
     assign_depth_(batch, depth)
 
@@ -140,13 +147,15 @@ def main():
     ds = ds.map(
             functools.partial(apply_preprocessing, depth=args.flavor),
             batched=True,
-            num_proc=args.num_proc
+            num_proc=args.num_proc,
         )
         
     if args.save_path:
         save_path = Path(args.save_path)
     else:
         save_path = Path(args.dataset_path)
+
+    logger.info(f"HTML extraction failed for {len([e for e in ds['html_error'] if e is not None])} rows out of {len([e for e in ds['content_mime_detected'] if e in HTML_TYPES])} rows.")
 
     save_path_tmp = f"{str(save_path.absolute())}.tmp"
     logger.info(f"Saving the dataset at {save_path_tmp}")
