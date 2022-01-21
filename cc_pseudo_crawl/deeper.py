@@ -10,23 +10,30 @@ from datasets import load_dataset
 Generate list of urls to query for next depth. We then need to use Athena to make a fancy query.
 """
 
+
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('--dataset', type=str, required=True, help="Dataset name")
+    parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
 
     args = parser.parse_args()
 
-    matches = re.match(r"^bigscience-catalogue-data/pseudo_crawl_(?:(.*)_partial|(seed))(_dedup_url)?$", args.dataset)
+    matches = re.match(
+        r"^bigscience-catalogue-data/pseudo_crawl_(?:(.*)_partial|(seed))(_dedup_url)?$",
+        args.dataset,
+    )
     assert matches is not None
     flavors = [elt for elt in matches.groups() if elt is not None]
     assert len(flavors) == 1 or (len(flavors) == 2 and flavors[1] == "_dedup_url")
     flavor = flavors[0]
-    assert flavor == "seed" \
-           or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+    assert (
+        flavor == "seed"
+        or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+    )
     args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{flavor}"
     args.flavor = flavor
 
     return args
+
 
 def get_depth(flavor):
     if flavor == "seed":
@@ -37,14 +44,17 @@ def get_depth(flavor):
         assert empty == ""
         return int(depth)
 
+
 def get_deepest_split(dataset_dict):
     splits = sorted(dataset_dict.keys(), key=get_depth)
     return splits[-1]
+
 
 def intermediate_next(url_candidates, previous_urls):
     """Query only those urls"""
     new_urls_to_query = set(url_candidates) - set(previous_urls)
     return new_urls_to_query
+
 
 # def extended_next(url_candidates, previous_urls):
 #     """Query new domains"""
@@ -53,6 +63,7 @@ def intermediate_next(url_candidates, previous_urls):
 #         return parsed_url.netloc
 #     new_domains_to_query = set(get_domain(url) for url in url_candidates) - set(get_domain(url) for url in previous_urls)
 #     return new_domains_to_query
+
 
 def main():
     args = get_args()
@@ -63,7 +74,9 @@ def main():
     previous_ds = load_dataset(args.dataset, use_auth_token=True, split="train")
 
     previous_depth = max(previous_ds["depth"])
-    url_candidates = set([url for external_urls in previous_ds["external_urls"] for url in external_urls])
+    url_candidates = {
+        url for external_urls in previous_ds["external_urls"] for url in external_urls
+    }
     previous_urls = set(previous_ds["url"])
 
     intermediate_depth_urls = intermediate_next(url_candidates, previous_urls)
