@@ -24,12 +24,12 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 sys.path.append(str(Path(sys.path[0]).parent.absolute().parent.absolute()))
 
 from filtering import LoadParameters, ModifyingDocuments, Filtering
+from languages_id import langs_id
 
 
-class Visualization:
+class Visualization_for_lang:
     def __init__(
         self,
-        path_instructions,
         path_data,
         lang,
         num_docs,
@@ -40,7 +40,6 @@ class Visualization:
         path_sentencepiece_model,
         path_kenlm_model,
     ):
-        self.path_instructions = path_instructions
         self.path_data = path_data
         self.lang = lang
         self.num_docs = num_docs
@@ -64,32 +63,8 @@ class Visualization:
             lang_dataset_id, path_kenlm_model
         )
 
-    def warning_preamble(self):
-        st.markdown(
-            "This demo can be a little slow, and only allows you to process up to 5000 documents "
-            "for a decent speed. If you want to display up to three times more documents and have "
-            "a faster visualization, we invite you to run this "
-            "[code](https://github.com/bigscience-workshop/data_tooling/tree/master/ac_dc/visualization) "
-            "on your computer."
-        )
-
-    def preamble(self):
-        def get_binary_file_downloader_html(bin_file, file_label="File"):
-            with open(bin_file, "rb") as f:
-                data = f.read()
-            bin_str = base64.b64encode(data).decode()
-            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">{file_label}</a>'
-            return href
-
-        st.markdown(
-            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail in this "
-            + get_binary_file_downloader_html(
-                self.path_instructions,
-                "pdf",
-            )
-            + ".",
-            unsafe_allow_html=True,
-        )
+    def set_title(self):
+        st.title(f"Filtering visualization for {self.lang}")
 
     def open_data(self):
         with open(self.path_data) as json_file:
@@ -116,9 +91,6 @@ class Visualization:
                 )
         self.docs_checkpoint = pd.DataFrame(docs)
         self.docs = self.docs_checkpoint
-
-    def set_title(self):
-        st.title(f"Filtering visualization")
 
     @staticmethod
     def print_discarded_by_cond(cond):
@@ -177,9 +149,9 @@ class Visualization:
                     )
                     new_key = ("number_words", cutoff_min_number_words, False)
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond_1 = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond_1)
+                    Visualization_for_lang.print_discarded_by_cond(cond_1)
 
                     cutoff_def = "If the number of words of a document is higher than this number, the document is removed."
                     cutoff_max_number_words = st.slider(
@@ -188,7 +160,7 @@ class Visualization:
                     new_key = ("number_words", cutoff_max_number_words, True)
                     keys.append(new_key)
                     cond_2 = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond_2)
+                    Visualization_for_lang.print_discarded_by_cond(cond_2)
 
                     conds["number_words"] = [cond_1, cond_2]
 
@@ -234,9 +206,9 @@ class Visualization:
                         repetitions_length,
                     )
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond)
+                    Visualization_for_lang.print_discarded_by_cond(cond)
                     conds["repetitions_ratio"] = [cond]
 
             if "special_characters_ratio" in columns:
@@ -251,9 +223,9 @@ class Visualization:
                         True,
                     )
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond)
+                    Visualization_for_lang.print_discarded_by_cond(cond)
                     conds["special_characters_ratio"] = [cond]
 
             if "stopwords_ratio" in columns:
@@ -287,9 +259,9 @@ class Visualization:
                     )
                     new_key = ("stopwords_ratio", cutoff_stopwords_ratio, False)
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond)
+                    Visualization_for_lang.print_discarded_by_cond(cond)
                     conds["stopwords_ratio"] = [cond]
 
             if "flagged_words_ratio" in columns:
@@ -318,15 +290,15 @@ class Visualization:
                                 new_flagged_words,
                             )
                     cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
-                    max_fwr = np.max(self.docs["flagged_words_ratio"])
+                    max_fwr = float(np.max(self.docs["flagged_words_ratio"]))
                     cutoff_flagged_words_ratio = st.slider(
                         cutoff_def, 0.0, max_fwr, max_fwr, step=0.001
                     )
                     new_key = ("flagged_words_ratio", cutoff_flagged_words_ratio, True)
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond)
+                    Visualization_for_lang.print_discarded_by_cond(cond)
                     conds["flagged_words_ratio"] = [cond]
 
             if "lang_id_score" in columns:
@@ -337,9 +309,9 @@ class Visualization:
                     )
                     new_key = ("lang_id_score", cutoff_lang_id_score, False)
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond)
+                    Visualization_for_lang.print_discarded_by_cond(cond)
                     conds["lang_id_score"] = [cond]
 
             if "perplexity_score" in columns:
@@ -349,9 +321,9 @@ class Visualization:
                     cutoff_perplexity_score = st.slider(cutoff_def, 0, max_pp, max_pp)
                     new_key = ("perplexity_score", cutoff_perplexity_score, True)
                     keys.append(new_key)
-                    Visualization.plot_hist(self.docs, new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
-                    Visualization.print_discarded_by_cond(cond)
+                    Visualization_for_lang.print_discarded_by_cond(cond)
                     conds["perplexity_score"] = [cond]
 
             return keys, conds
@@ -369,7 +341,7 @@ class Visualization:
                 f"Filtering on documents, for {self.num_docs} {self.lang} documents"
             )
 
-            Visualization.display_dataset(
+            Visualization_for_lang.display_dataset(
                 self.docs, np.invert(all_conds), "Discarded documents", "docs"
             )
 
@@ -383,7 +355,7 @@ class Visualization:
 
                 if "number_words" in columns:
                     cond_filter = np.invert(np.all(conds["number_words"], axis=0))
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the number of words",
@@ -392,7 +364,7 @@ class Visualization:
 
                 if "repetitions_ratio" in columns:
                     cond_filter = np.invert(np.all(conds["repetitions_ratio"], axis=0))
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the repetitions ratio",
@@ -403,7 +375,7 @@ class Visualization:
                     cond_filter = np.invert(
                         np.all(conds["special_characters_ratio"], axis=0)
                     )
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the special characters ratio",
@@ -412,7 +384,7 @@ class Visualization:
 
                 if "stopwords_ratio" in columns:
                     cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the stop words ratio",
@@ -423,7 +395,7 @@ class Visualization:
                     cond_filter = np.invert(
                         np.all(conds["flagged_words_ratio"], axis=0)
                     )
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the flagged words ratio",
@@ -432,7 +404,7 @@ class Visualization:
 
                 if "lang_id_score" in columns:
                     cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the language identification confidence score",
@@ -441,14 +413,14 @@ class Visualization:
 
                 if "perplexity_score" in columns:
                     cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
-                    Visualization.display_dataset(
+                    Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
                         "Discarded documents for the filter on the perplexity score",
                         "docs",
                     )
 
-            Visualization.display_dataset(
+            Visualization_for_lang.display_dataset(
                 self.docs, all_conds, "Retained documents", "docs"
             )
 
@@ -476,9 +448,9 @@ class Visualization:
                     cutoff_word = st.slider(cutoff_def, 0, max_len_word, max_len_word)
                     new_key = ("len_word", cutoff_word, True)
                     self.parameters.append(new_key)
-                    Visualization.plot_hist(self.words, new_key)
+                    Visualization_for_lang.plot_hist(self.words, new_key)
                     cond_len_words = self.words["len_word"] <= cutoff_word
-                    Visualization.print_discarded_by_cond(cond_len_words)
+                    Visualization_for_lang.print_discarded_by_cond(cond_len_words)
                     conds_words["len_word"] = cond_len_words
 
             if "incorrect_substrings" in columns:
@@ -517,7 +489,7 @@ class Visualization:
                                 for i in range(len(self.words["incorrect_substrings"]))
                             ]
                         )
-                    Visualization.print_discarded_by_cond(cond_incorrect_substrings)
+                    Visualization_for_lang.print_discarded_by_cond(cond_incorrect_substrings)
                     conds_words["incorrect_substrings"] = cond_incorrect_substrings
 
             all_conds_words = np.all(list(conds_words.values()), axis=0)
@@ -534,7 +506,7 @@ class Visualization:
                     f"we consider in this section words for only {self.num_docs_for_words} documents."
                 )
 
-                Visualization.display_dataset(
+                Visualization_for_lang.display_dataset(
                     self.words, np.invert(all_conds_words), "Discarded words", "words"
                 )
 
@@ -547,7 +519,7 @@ class Visualization:
 
                     if "len_word" in columns:
                         cond_filter = np.invert(conds_words["len_word"])
-                        Visualization.display_dataset(
+                        Visualization_for_lang.display_dataset(
                             self.words,
                             cond_filter,
                             "Discarded words for the filter on length",
@@ -556,14 +528,14 @@ class Visualization:
 
                     if "incorrect_substrings" in columns:
                         cond_filter = np.invert(conds_words["incorrect_substrings"])
-                        Visualization.display_dataset(
+                        Visualization_for_lang.display_dataset(
                             self.words,
                             cond_filter,
                             "Discarded words for the filter on incorrect substrings",
                             "words",
                         )
 
-                Visualization.display_dataset(
+                Visualization_for_lang.display_dataset(
                     self.words, all_conds_words, "Retained words", "words"
                 )
 
@@ -717,40 +689,92 @@ class Visualization:
                     f"With the current filtering parameters, this document **is {is_discarded}discarded**."
                 )
 
-    def visualization(self):
-        # self.warning_preamble()
-        self.preamble()
-        self.open_data()
+    def visualization_for_lang(self):
         self.set_title()
+        self.open_data()
         self.filtering_of_docs()
         self.filtering_of_words()
         self.download_parameters()
         self.analyse_personal_doc()
 
 
+class Visualization:
+    def __init__(self, path_instructions, param_visu_langs):
+        self.path_instructions = path_instructions
+        self.param_visu_langs = param_visu_langs
+
+    def preamble(self):
+        def get_binary_file_downloader_html(bin_file, file_label="File"):
+            with open(bin_file, "rb") as f:
+                data = f.read()
+            bin_str = base64.b64encode(data).decode()
+            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">{file_label}</a>'
+            return href
+
+        st.markdown(
+            "Before diving into this demo, you might want to take a look at how the filtering pipeline looks like in more detail in this "
+            + get_binary_file_downloader_html(
+                self.path_instructions,
+                "pdf",
+            )
+            + ".",
+            unsafe_allow_html=True,
+        )
+
+    def warning_preamble(self):
+        st.markdown(
+            "This demo can be a little slow, and only allows you to process up to 5000 documents "
+            "for a decent speed. If you want to display up to three times more documents and have "
+            "a faster visualization, we invite you to run this "
+            "[code](https://github.com/bigscience-workshop/data_tooling/tree/master/ac_dc/visualization) "
+            "on your computer."
+        )
+
+    def choose_lang(self):
+        options = [self.param_visu_langs[lang_dataset_id]["lang"] for lang_dataset_id in self.param_visu_langs]
+        index = options.index("English") if ("English" in options) else 0
+        lang_chosen = st.selectbox(
+            label="Select the language for visualization",
+            options=options,
+            index=index,
+        )
+        if lang_chosen != "None":
+            lang_chosen_dataset_id = langs_id.loc[langs_id["lang"] == lang_chosen, "dataset_id"].iloc[0]
+            visualization_for_lang = Visualization_for_lang(
+                path_data = self.param_visu_langs[lang_chosen_dataset_id]["path_data"],
+                lang = self.param_visu_langs[lang_chosen_dataset_id]["lang"],
+                num_docs = self.param_visu_langs[lang_chosen_dataset_id]["num_docs"],
+                num_docs_for_words = self.param_visu_langs[lang_chosen_dataset_id]["num_docs_for_words"],
+                max_len_text_display = self.param_visu_langs[lang_chosen_dataset_id]["max_len_text_display"],
+                lang_dataset_id = self.param_visu_langs[lang_chosen_dataset_id]["lang_dataset_id"],
+                path_fasttext_model = self.param_visu_langs[lang_chosen_dataset_id]["path_fasttext_model"],
+                path_sentencepiece_model = self.param_visu_langs[lang_chosen_dataset_id]["path_sentencepiece_model"],
+                path_kenlm_model = self.param_visu_langs[lang_chosen_dataset_id]["path_kenlm_model"],
+            )
+            visualization_for_lang.visualization_for_lang()
+
+    def visualization(self):
+        self.preamble()
+        # self.warning_preamble()
+        self.choose_lang()
+
+
 path_instructions = "./ac_dc/explanation_filtering_pipeline.pdf"
-path_data = "./ac_dc/visualization/en_examples_with_stats.json"
-lang = "English"
-num_docs = 15000
-num_docs_for_words = 1500
-max_len_text_display = 10000
 
-# Only useful for analyse_personal_doc
-lang_dataset_id = "en"
-path_fasttext_model = "./ac_dc/lid.176.bin"
-path_sentencepiece_model = "./ac_dc/en.sp.model"
-path_kenlm_model = "./ac_dc/en.arpa.bin"
+param_visu_langs = {
+    lang_dataset_id: {
+        "path_data": f"./ac_dc/visualization/{lang_dataset_id}_examples_with_stats.json",
+        "lang": langs_id.loc[langs_id["dataset_id"] == lang_dataset_id, "lang"].iloc[0],
+        "num_docs": 15000,
+        "num_docs_for_words": 1500,
+        "max_len_text_display": 10000,
+        "lang_dataset_id": lang_dataset_id,
+        "path_fasttext_model": "./ac_dc/lid.176.bin",
+        "path_sentencepiece_model": f"./ac_dc/{lang_dataset_id}.sp.model",
+        "path_kenlm_model": f"./ac_dc/{lang_dataset_id}.arpa.bin",
+    }
+    for lang_dataset_id in ["en", "zh"]
+}
 
-visualization = Visualization(
-    path_instructions,
-    path_data,
-    lang,
-    num_docs,
-    num_docs_for_words,
-    max_len_text_display,
-    lang_dataset_id,
-    path_fasttext_model,
-    path_sentencepiece_model,
-    path_kenlm_model,
-)
+visualization = Visualization(path_instructions, param_visu_langs)
 visualization.visualization()
