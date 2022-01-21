@@ -489,7 +489,9 @@ class Visualization_for_lang:
                                 for i in range(len(self.words["incorrect_substrings"]))
                             ]
                         )
-                    Visualization_for_lang.print_discarded_by_cond(cond_incorrect_substrings)
+                    Visualization_for_lang.print_discarded_by_cond(
+                        cond_incorrect_substrings
+                    )
                     conds_words["incorrect_substrings"] = cond_incorrect_substrings
 
             all_conds_words = np.all(list(conds_words.values()), axis=0)
@@ -731,7 +733,10 @@ class Visualization:
         )
 
     def choose_lang(self):
-        options = [self.param_visu_langs[lang_dataset_id]["lang"] for lang_dataset_id in self.param_visu_langs]
+        options = [
+            self.param_visu_langs[lang_dataset_id]["lang"]
+            for lang_dataset_id in self.param_visu_langs
+        ]
         index = options.index("English") if ("English" in options) else 0
         lang_chosen = st.selectbox(
             label="Select the language for visualization",
@@ -739,17 +744,31 @@ class Visualization:
             index=index,
         )
         if lang_chosen != "None":
-            lang_chosen_dataset_id = langs_id.loc[langs_id["lang"] == lang_chosen, "dataset_id"].iloc[0]
+            lang_chosen_dataset_id = langs_id.loc[
+                langs_id["lang"] == lang_chosen, "dataset_id"
+            ].iloc[0]
             visualization_for_lang = Visualization_for_lang(
-                path_data = self.param_visu_langs[lang_chosen_dataset_id]["path_data"],
-                lang = self.param_visu_langs[lang_chosen_dataset_id]["lang"],
-                num_docs = self.param_visu_langs[lang_chosen_dataset_id]["num_docs"],
-                num_docs_for_words = self.param_visu_langs[lang_chosen_dataset_id]["num_docs_for_words"],
-                max_len_text_display = self.param_visu_langs[lang_chosen_dataset_id]["max_len_text_display"],
-                lang_dataset_id = self.param_visu_langs[lang_chosen_dataset_id]["lang_dataset_id"],
-                path_fasttext_model = self.param_visu_langs[lang_chosen_dataset_id]["path_fasttext_model"],
-                path_sentencepiece_model = self.param_visu_langs[lang_chosen_dataset_id]["path_sentencepiece_model"],
-                path_kenlm_model = self.param_visu_langs[lang_chosen_dataset_id]["path_kenlm_model"],
+                path_data=self.param_visu_langs[lang_chosen_dataset_id]["path_data"],
+                lang=self.param_visu_langs[lang_chosen_dataset_id]["lang"],
+                num_docs=self.param_visu_langs[lang_chosen_dataset_id]["num_docs"],
+                num_docs_for_words=self.param_visu_langs[lang_chosen_dataset_id][
+                    "num_docs_for_words"
+                ],
+                max_len_text_display=self.param_visu_langs[lang_chosen_dataset_id][
+                    "max_len_text_display"
+                ],
+                lang_dataset_id=self.param_visu_langs[lang_chosen_dataset_id][
+                    "lang_dataset_id"
+                ],
+                path_fasttext_model=self.param_visu_langs[lang_chosen_dataset_id][
+                    "path_fasttext_model"
+                ],
+                path_sentencepiece_model=self.param_visu_langs[lang_chosen_dataset_id][
+                    "path_sentencepiece_model"
+                ],
+                path_kenlm_model=self.param_visu_langs[lang_chosen_dataset_id][
+                    "path_kenlm_model"
+                ],
             )
             visualization_for_lang.visualization_for_lang()
 
