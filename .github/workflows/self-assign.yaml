@@ -8,7 +8,6 @@ jobs:
     if: >-
       (github.event.comment.body == '#take' ||
        github.event.comment.body == '#self-assign')
-      && !github.event.issue.assignee
     steps:
       - run: |
           echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"
