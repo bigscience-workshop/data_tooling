@@ -318,8 +318,9 @@ class Visualization:
                                 new_flagged_words,
                             )
                     cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
+                    max_fwr = np.max(self.docs["flagged_words_ratio"])
                     cutoff_flagged_words_ratio = st.slider(
-                        cutoff_def, 0.0, 1.0, 1.0, step=0.01
+                        cutoff_def, 0.0, max_fwr, max_fwr, step=0.001
                     )
                     new_key = ("flagged_words_ratio", cutoff_flagged_words_ratio, True)
                     keys.append(new_key)
