@@ -26,7 +26,8 @@ def get_args():
     return args
 
 def obtain_entire_dataset(dataset_dir: Path) -> Dataset:
-    shard_paths = dataset_dir.iterdir()
+    shard_paths = [elt for elt in dataset_dir.iterdir()]
+    logger.info(f"All the following shards have been loaded: {shard_paths}")
     shards = [load_from_disk(str(shard_path.absolute())) for shard_path in shard_paths]
     return concatenate_datasets(shards)
 
@@ -69,9 +70,11 @@ def main():
     )
 
     # Concatenate all the shards together
+    logger.info("Concatenating all datasets together")
     ds = obtain_entire_dataset(args.dataset_dir)
 
     # Filter some generic things
+    logger.info("Filtering bad seeds")
     def filter_func(batch):
         # 508: https://zh.wikipedia.org/
         # 577: https://fr.wikipedia.org/
@@ -82,12 +85,15 @@ def main():
     ds.filter(filter_func, batched=True, num_proc=args.num_proc)
 
     # Deduplicate url
+    logger.info("Deduplicating urls")
     ds = deduplicate_url(ds)
 
     # Split dataset according to seed_id
+    logger.info("Sharding by seed id")
     shards = shard_by_seed_id(ds, args.num_proc)
 
     # Save shard per seed
+    logger.info("Saving shards")
     for seed_id, shard in shards.items():
         save_path = args.save_dir / f"seed_id={seed_id}"
         shard.save_to_disk(f"{str(save_path.absolute())}.tmp")
