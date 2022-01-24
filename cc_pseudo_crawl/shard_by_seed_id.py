@@ -27,8 +27,9 @@ def get_args():
 
 def obtain_entire_dataset(dataset_dir: Path) -> Dataset:
     shard_paths = [elt for elt in dataset_dir.iterdir()]
-    logger.info(f"All the following shards have been loaded: {shard_paths}")
+    logger.info(f"All the following shards will be loaded: {shard_paths}")
     shards = [load_from_disk(str(shard_path.absolute())) for shard_path in shard_paths]
+    logger.info("Concatenating all shards together.")
     return concatenate_datasets(shards)
 
 def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
