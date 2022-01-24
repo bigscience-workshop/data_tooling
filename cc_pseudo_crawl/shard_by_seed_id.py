@@ -1,6 +1,7 @@
 import logging
 import subprocess
 from argparse import ArgumentParser
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List
 
@@ -25,10 +26,12 @@ def get_args():
     args.save_dir = Path(args.save_dir)
     return args
 
-def obtain_entire_dataset(dataset_dir: Path) -> Dataset:
+def obtain_entire_dataset(dataset_dir: Path, num_proc: int) -> Dataset:
     shard_paths = [elt for elt in dataset_dir.iterdir()]
     logger.info(f"All the following shards will be loaded: {shard_paths}")
-    shards = [load_from_disk(str(shard_path.absolute())) for shard_path in shard_paths]
+    with Pool(num_proc) as pool:
+        async_results = pool.map_async(lambda shard_path: load_from_disk(str(shard_path.absolute())), shard_paths)
+        shards = async_results.get()
     logger.info("Concatenating all shards together.")
     return concatenate_datasets(shards)
 
@@ -72,7 +75,7 @@ def main():
 
     # Concatenate all the shards together
     logger.info("Concatenating all datasets together")
-    ds = obtain_entire_dataset(args.dataset_dir)
+    ds = obtain_entire_dataset(args.dataset_dir, args.num_proc)
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
