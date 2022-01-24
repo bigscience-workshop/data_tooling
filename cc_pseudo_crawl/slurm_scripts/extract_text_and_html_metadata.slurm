@@ -55,5 +55,6 @@ python -m cc_pseudo_crawl.extract_text.extract_text_and_html_metadata\
     preprocessing_num_workers=$PREPROCESSING_NUM_WORKERS\
     num_files_to_process=$NUM_FILES_TO_PROCESS\
     save_batch_size=$SAVE_BATCH_SIZE\
-    project_name=bsmetadata_extraction
+    project_name=pseudo_crawl_extract\
+    use_load_from_disk=true
 
