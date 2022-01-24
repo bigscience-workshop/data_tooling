@@ -3,28 +3,20 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import datasets
 import hydra
 import wandb
-from datasets import Dataset, Features, config, load_dataset, load_from_disk
-from hydra.core.config_store import ConfigStore
-from omegaconf import OmegaConf
-
+from bsmetadata.preprocessing_tools import html_parser
 from bsmetadata.preprocessing_utils import (
-    DatasourcePreprocessor,
-    EntityPreprocessor,
     ErrorWrapperPreprocessor,
-    GenerationLengthPreprocessor,
-    HtmlPreprocessor,
     MetadataPreprocessor,
-    TimestampPreprocessor,
-    UrlPreprocessor,
-    WebsiteDescPreprocessor,
 )
 from bsmetadata.train import show_help
-
+from datasets import Dataset, Features, Value, config, load_dataset, load_from_disk
+from hydra.core.config_store import ConfigStore
+from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +88,111 @@ class Logger:
         wandb.finish()
 
 
+class HtmlPreprocessor(MetadataPreprocessor):
+    """Metadata preprocessor for extracting metadata from html text.
+
+    Specifically, it separates the html text contained in the `col_html`` column into a text and a list of
+    HTML metadata containing the tags, their attributes, their location in the text and their relative location to
+    each other."""
+
+    def __init__(
+        self,
+        col_html: str = "doc_html",
+        col_to_store_metadata="metadata",
+        col_to_store_text="text",
+        col_to_store_head="html_head",
+        col_to_store_footer="html_footer",
+        col_to_store_title="html_title",
+    ) -> None:
+        self.col_html = col_html
+        self.col_to_store_text = col_to_store_text
+        self.col_to_store_footer = col_to_store_footer
+        self.col_to_store_head = col_to_store_head
+        self.col_to_store_title = col_to_store_title
+        super().__init__(col_to_store_metadata=col_to_store_metadata)
+
+    @property
+    def new_columns_minimal_features(self) -> Dict[str, Any]:
+        features = {
+            self.col_to_store_metadata: [
+                {
+                    "char_end_idx": Value("int64"),
+                    "char_start_idx": Value("int64"),
+                    "html_attrs": {"attrs": [Value("string")], "values": [Value("string")]},
+                    "key": Value("string"),
+                    "relative_end_pos": Value("int64"),
+                    "relative_start_pos": Value("int64"),
+                    "type": Value("string"),
+                    "value": Value("string"),
+                }
+            ],
+            self.col_to_store_text: Value("string"),
+            self.col_to_store_footer: [Value("string")],
+            self.col_to_store_head: [Value("string")],
+            self.col_to_store_title: [Value("string")],
+        }
+        return features
+
+    def preprocess(self, examples: Dict[str, List]) -> Dict[str, List]:
+        tags_to_remove_with_content = [
+            html_parser.objects.TagToRemoveWithContent(tag="script"),
+            html_parser.objects.TagToRemoveWithContent(tag="style"),
+            html_parser.objects.TagToRemoveWithContent(tag="header"),
+            html_parser.objects.TagToRemoveWithContent(tag="iframe"),
+            html_parser.objects.TagToRemoveWithContent(tag="footer"),  # copyright in footer
+            html_parser.objects.TagToRemoveWithContent(tag="form"),
+            html_parser.objects.TagToRemoveWithContent(tag="body", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="div", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="p", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="section", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="table", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="ul", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="ol", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(tag="dl", content_max_char_length=64),
+        ]
+        head_tag = "head"
+        footer_tag = "footer"
+        title_tag = "title"
+
+        new_texts = []
+        new_head = []
+        new_footer = []
+        new_title = []
+        new_metadata = (
+            examples[self.col_to_store_metadata]
+            if self.col_to_store_metadata in examples
+            else [[] for _ in range(len(examples[self.col_html]))]
+        )
+        for example_doc_html, example_metadata in zip(examples[self.col_html], new_metadata):
+            if example_doc_html is not None:
+                plain_text, metadata, additional_columns = html_parser.get_clean_text_and_metadata(
+                    example_doc_html,
+                    tags_to_remove_with_content=tags_to_remove_with_content,
+                    consecutive_tags_to_fold=["div"],
+                    convert_br_tag_to_breaking_line=True,
+                    tags_sub_tree_to_isolate=[head_tag, footer_tag, title_tag],
+                )
+                new_texts.append(plain_text)
+                new_head.append(additional_columns.get(head_tag, []))
+                new_footer.append(additional_columns.get(footer_tag, []))
+                new_title.append(additional_columns.get(title_tag, []))
+                example_metadata.extend(
+                    [html_parser.objects.convert_html_metadata_dataclass_to_dict(node) for node in metadata]
+                )
+            else:
+                new_texts.append(None)
+                new_head.append([])
+                new_footer.append([])
+                new_title.append([])
+
+        examples[self.col_to_store_text] = new_texts
+        examples[self.col_to_store_metadata] = new_metadata
+        examples[self.col_to_store_head] = new_head
+        examples[self.col_to_store_footer] = new_footer
+        examples[self.col_to_store_title] = new_title
+        return examples
+
+
 cs = ConfigStore.instance()
 cs.store(name="preprocessing_config", node=PreprocessingConfig)
 
@@ -107,13 +204,6 @@ col_to_store_head = "html_head"
 col_to_store_footer = "html_footer"
 col_to_store_title = "html_title"
 col_to_store_metadata_html = "metadata_html"
-col_to_store_metadata_url = "metadata_url"
-col_to_store_metadata_timestamp = "metadata_timestamp"
-col_to_store_metadata_website_desc = "metadata_website_desc"
-col_to_store_metadata_entities = "metadata_entity"
-col_to_store_metadata_generation_length_text = "metadata_generation_length_text"
-col_to_store_metadata_generation_length_sentence = "metadata_generation_length_sentence"
-col_to_store_metadata_datasource = "metadata_generation_datasource"
 
 
 @hydra.main(config_name="preprocessing_config")
@@ -149,62 +239,18 @@ def main(args: PreprocessingConfig) -> None:  # Setup logging
             },
         )
 
-    if "url" in args.metadata_to_include:
-        logger.info("   Url...")
-        url_processor = UrlPreprocessor(col_to_store_metadata=col_to_store_metadata_url, col_url=col_url)
-
-    if "timestamp" in args.metadata_to_include:
-        logger.info("   Timestamp...")
-        timestamp_processor = TimestampPreprocessor(
-            col_to_store_metadata=col_to_store_metadata_timestamp, col_metadata_url=col_to_store_metadata_url
-        )
-
-    if "website_description" in args.metadata_to_include:
-        logger.info("   Website description...")
-        website_processor = WebsiteDescPreprocessor(
-            col_to_store_metadata=col_to_store_metadata_website_desc,
-            col_metadata_url=col_to_store_metadata_url,
-            path_wiki_db=args.path_wiki_db,
-        )
-
-    if "entity" in args.metadata_to_include:
-        logger.info("   Entity...")
-        entity_processor = EntityPreprocessor(
-            base_url=args.entity_path_data_dir,
-            path_wiki_db=args.path_wiki_db,
-            path_or_url_flair_ner_model=args.path_or_url_flair_ner_model,
-            col_to_store_metadata=col_to_store_metadata_entities,
-            col_text=col_to_store_text,
-        )
-
-    if "generation_length_text" in args.metadata_to_include:
-        logger.info("   Generation length text...")
-        generation_length_preprocessor_text = GenerationLengthPreprocessor(
-            mode="text", col_to_store_metadata=col_to_store_metadata_generation_length_text
-        )
-
-    if "generation_length_sentence" in args.metadata_to_include:
-        logger.info("   Generation length sentence...")
-        generation_length_preprocessor_sentence = GenerationLengthPreprocessor(
-            mode="sentence", col_to_store_metadata=col_to_store_metadata_generation_length_sentence
-        )
-
-    if "datasource" in args.metadata_to_include:
-        logger.info("   Datasource...")
-        datasource_preprocessor = DatasourcePreprocessor(
-            col_to_store_metadata=col_to_store_metadata_datasource, col_url="url"
-        )
     logger.info("Processors initialization finished")
 
     poss_files = sorted(os.listdir(args.dataset_name))
 
     if args.use_load_from_disk:
-        poss_files = [file_name for file_name in poss_files if file_name.startswith("c4-en-html")]
+        poss_files = [file_name for file_name in poss_files if file_name.startswith("pseudo_crawl_seed")]
     else:
         poss_files = [
             file_name
             for file_name in poss_files
-            if (file_name.endswith("jsonl.gz") or file_name.endswith("jsonl")) and file_name.startswith("c4-en-html")
+            if (file_name.endswith("jsonl.gz") or file_name.endswith("jsonl"))
+            and file_name.startswith("pseudo_crawl_seed")
         ]
 
     def process_file(file_name: str):
@@ -264,27 +310,6 @@ def main(args: PreprocessingConfig) -> None:  # Setup logging
 
         if "html" in args.metadata_to_include:
             ds = apply_processor(ds=ds, processor=html_processor)
-
-        if "url" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=url_processor)
-
-        if "timestamp" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=timestamp_processor)
-
-        if "website_description" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=website_processor)
-
-        if "entity" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=entity_processor)
-
-        if "generation_length_text" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=generation_length_preprocessor_text)
-
-        if "generation_length_sentence" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=generation_length_preprocessor_sentence)
-
-        if "datasource" in args.metadata_to_include:
-            ds = apply_processor(ds=ds, processor=datasource_preprocessor)
 
         if file_name.endswith(".jsonl.gz"):
             out_file_name = file_name[: -len(".jsonl.gz")]

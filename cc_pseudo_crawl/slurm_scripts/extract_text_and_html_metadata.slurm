@@ -2,13 +2,13 @@
 #SBATCH --job-name=pseudo_crawl_preprocess_extract_text             # (change me!) job name
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1                                             # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=4                                               # (change me! between 0 and 48) number of cores per tasks
+#SBATCH --cpus-per-task=16                                               # (change me! between 0 and 48) number of cores per tasks
 #SBATCH --hint=nomultithread                                            # we get physical cores not logical
-#SBATCH --time 20:00:00                                                 # (change me! between 0 and 20h) maximum execution time (HH:MM:SS)
-#SBATCH --output=/gpfsdswork/projects/rech/six/uue59kq/logs/extract-metadata-from-full-v3/%j-%x.out   # output file name
-#SBATCH --error=/gpfsdswork/projects/rech/six/uue59kq/logs/extract-metadata-from-full-v3/%j-%x.err    # error file name
+#SBATCH --time 2:00:00                                                 # (change me! between 0 and 20h) maximum execution time (HH:MM:SS)
+#SBATCH --output=/gpfsdswork/projects/rech/six/uue59kq/logs/pseudo_crawl_preprocess_extract_text-test/%j-%x.out   # output file name
+#SBATCH --error=/gpfsdswork/projects/rech/six/uue59kq/logs/pseudo_crawl_preprocess_extract_text-test/%j-%x.err    # error file name
 #SBATCH --account=six@cpu                                               # account
-#SBATCH --array=0-99
+#SBATCH --array=0
 #SBATCH --partition=cpu_p1
 
 set -x -e
@@ -31,7 +31,7 @@ OUT_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-preprocessed-text-extracted/b
 mkdir -p $OUT_DIR
 
 MAP_BATCH_SIZE=1
-PREPROCESSING_NUM_WORKERS=8
+PREPROCESSING_NUM_WORKERS=32
 NUM_FILES_TO_PROCESS=1
 SAVE_BATCH_SIZE=1000
 
