@@ -25,7 +25,7 @@ mkdir -p $SAVE_DATASET_DIR
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python -m cc_pseudo_crawl.redownload_warc \
+python cc_pseudo_crawl/shard_by_seed_id.py \
     --dataset-dir $DATASET_DIR \
     --num-proc 40 \
     --save-dir $SAVE_DATASET_DIR
