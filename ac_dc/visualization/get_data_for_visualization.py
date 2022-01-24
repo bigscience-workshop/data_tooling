@@ -89,7 +89,9 @@ class GetDataForVisualization:
                 stats_document["number_words"] = number_words
 
                 repetitions_ratios = {
-                    n: round(Filtering.compute_repetitions_ratio(document, n), 4)
+                    n: round(
+                        Filtering.compute_character_repetition_ratio(document, n), 4
+                    )
                     for n in range(2, 16)
                 }
                 stats_document["repetitions_ratio"] = repetitions_ratios

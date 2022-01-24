@@ -423,33 +423,91 @@ class Filtering:
         return cond
 
     @staticmethod
-    def compute_repetitions_ratio(document, repetitions_length):
-        def get_freq_ngrams(document, n):
-            ngrams = [document[i : i + n] for i in range(len(document) - n + 1)]
-            freq_ngrams = {}
-            for ngram in ngrams:
-                freq_ngrams[ngram] = freq_ngrams.get(ngram, 0) + 1
-            return freq_ngrams
+    def compute_character_repetition_ratio(document, character_repetition_length):
+        def get_freq_character_ngrams(document, n):
+            character_ngrams = [
+                document[i : i + n] for i in range(len(document) - n + 1)
+            ]
+            freq_character_ngrams = {}
+            for character_ngram in character_ngrams:
+                freq_character_ngrams[character_ngram] = (
+                    freq_character_ngrams.get(character_ngram, 0) + 1
+                )
+            return freq_character_ngrams
 
-        freq_ngrams = get_freq_ngrams(document, repetitions_length)
-        if len(freq_ngrams) == 0:
+        freq_character_ngrams = get_freq_character_ngrams(
+            document, character_repetition_length
+        )
+        if len(freq_character_ngrams) == 0:
             return 0
-        freq_ngrams = list(freq_ngrams.values())
-        freq_ngrams = sorted(freq_ngrams, reverse=True)
-        num_rep_ngrams = int(np.sqrt(len(freq_ngrams)))
-        repetitions_ratio = sum(freq_ngrams[:num_rep_ngrams]) / sum(freq_ngrams)
-        return repetitions_ratio
+        freq_character_ngrams = list(freq_character_ngrams.values())
+        freq_character_ngrams = sorted(freq_character_ngrams, reverse=True)
+        val_less_than_one = len([el for el in freq_character_ngrams if el > 1])
+        num_rep_character_ngrams = min(
+            int(np.sqrt(len(freq_character_ngrams))),
+            len(freq_character_ngrams) - val_less_than_one,
+        )
+        character_repetition_ratio = sum(
+            freq_character_ngrams[:num_rep_character_ngrams]
+        ) / sum(freq_character_ngrams)
+        return character_repetition_ratio
 
     @staticmethod
-    def check_repetitions_removal(
+    def check_character_repetition_removal(
         document,
-        repetitions_length,
-        repetitions_max_cutoff,
+        character_repetition_length,
+        character_repetition_max_cutoff,
     ):
-        repetitions_ratio = Filtering.compute_repetitions_ratio(
-            document, repetitions_length
+        character_repetition_ratio = Filtering.compute_character_repetition_ratio(
+            document, character_repetition_length
         )
-        cond = repetitions_ratio <= repetitions_max_cutoff
+        cond = character_repetition_ratio <= character_repetition_max_cutoff
+        return cond
+
+    @staticmethod
+    def compute_word_repetition_ratio(
+        document, sentencepiece_model_tok, strip_characters, word_repetition_length
+    ):
+        def get_freq_word_ngrams(
+            document, sentencepiece_model_tok, strip_characters, n
+        ):
+            words = ModifyingDocuments.get_words_from_document(
+                document,
+                sentencepiece_model_tok,
+                lower_case=True,
+                strip_characters=strip_characters,
+            )
+            word_ngrams = [
+                " ".join(words[i : i + n]) for i in range(len(words) - n + 1)
+            ]
+            freq_word_ngrams = {}
+            for word_ngram in word_ngrams:
+                freq_word_ngrams[word_ngram] = freq_word_ngrams.get(word_ngram, 0) + 1
+            return freq_word_ngrams
+
+        freq_word_ngrams = get_freq_word_ngrams(
+            document, sentencepiece_model_tok, strip_characters, word_repetition_length
+        )
+        if len(freq_word_ngrams) == 0:
+            return 0
+        freq_word_ngrams = list(freq_word_ngrams.values())
+        word_repetition_ratio = sum(
+            freq for freq in freq_word_ngrams if freq > 1
+        ) / sum(freq_word_ngrams)
+        return word_repetition_ratio
+
+    @staticmethod
+    def check_word_repetition_removal(
+        document,
+        sentencepiece_model_tok,
+        strip_characters,
+        word_repetition_length,
+        word_repetition_max_cutoff,
+    ):
+        word_repetition_ratio = Filtering.compute_word_repetition_ratio(
+            document, sentencepiece_model_tok, strip_characters, word_repetition_length
+        )
+        cond = word_repetition_ratio <= word_repetition_max_cutoff
         return cond
 
     @staticmethod
@@ -670,9 +728,12 @@ class Filtering:
         strip_characters,
         number_words_min_cutoff,
         number_words_max_cutoff,
-        cond_check_repetitions_removal,
-        repetitions_length,
-        repetitions_max_cutoff,
+        cond_check_character_repetition_removal,
+        character_repetition_length,
+        character_repetition_max_cutoff,
+        cond_check_word_repetition_removal,
+        word_repetition_length,
+        word_repetition_max_cutoff,
         cond_check_special_characters,
         special_characters,
         special_characters_max_cutoff,
@@ -703,11 +764,20 @@ class Filtering:
                 number_words_max_cutoff,
             ):
                 return False
-        if cond_check_repetitions_removal:
-            if not Filtering.check_repetitions_removal(
+        if cond_check_character_repetition_removal:
+            if not Filtering.check_character_repetition_removal(
                 document,
-                repetitions_length,
-                repetitions_max_cutoff,
+                character_repetition_length,
+                character_repetition_max_cutoff,
+            ):
+                return False
+        if cond_check_word_repetition_removal:
+            if not Filtering.check_word_repetition_removal(
+                document,
+                sentencepiece_model_tok,
+                strip_characters,
+                word_repetition_length,
+                word_repetition_max_cutoff,
             ):
                 return False
         if cond_check_special_characters:
@@ -797,9 +867,18 @@ class FunctionDatasetFiltering:
             strip_characters=self.param["strip_characters"],
             number_words_min_cutoff=self.param["number_words_min_cutoff"],
             number_words_max_cutoff=self.param["number_words_max_cutoff"],
-            cond_check_repetitions_removal=self.param["check_repetitions_removal"],
-            repetitions_length=self.param["repetitions_length"],
-            repetitions_max_cutoff=self.param["repetitions_max_cutoff"],
+            cond_check_character_repetition_removal=self.param[
+                "cond_check_character_repetition_removal"
+            ],
+            character_repetition_length=self.param["character_repetition_length"],
+            character_repetition_max_cutoff=self.param[
+                "character_repetition_max_cutoff"
+            ],
+            cond_check_word_repetition_removal=self.param[
+                "cond_check_word_repetition_removal"
+            ],
+            word_repetition_length=self.param["word_repetition_length"],
+            word_repetition_max_cutoff=self.param["word_repetition_max_cutoff"],
             cond_check_special_characters=self.param["cond_check_special_characters"],
             special_characters=self.param["special_characters"],
             special_characters_max_cutoff=self.param["special_characters_max_cutoff"],

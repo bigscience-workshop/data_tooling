@@ -615,8 +615,10 @@ class Visualization_for_lang:
                             is_discarded = True
 
                     elif key[0] == "repetitions_ratio":
-                        repetitions_ratio = Filtering.compute_repetitions_ratio(
-                            personal_doc, int(key[3])
+                        repetitions_ratio = (
+                            Filtering.compute_character_repetition_ratio(
+                                personal_doc, int(key[3])
+                            )
                         )
                         repetitions_ratio = round(repetitions_ratio, 3)
                         st.markdown(f"Repetitions ratio: {repetitions_ratio}")
