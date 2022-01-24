@@ -27,5 +27,5 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python cc_pseudo_crawl/shard_by_seed_id.py \
     --dataset-dir $DATASET_DIR \
-    --num-proc 40 \
+    --num-proc 80 \
     --save-dir $SAVE_DATASET_DIR
