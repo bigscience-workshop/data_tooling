@@ -27,10 +27,10 @@ def get_args():
     return args
 
 def obtain_entire_dataset(dataset_dir: Path, num_proc: int) -> Dataset:
-    shard_paths = [elt for elt in dataset_dir.iterdir()]
+    shard_paths = [str(elt.absolute()) for elt in dataset_dir.iterdir()]
     logger.info(f"All the following shards will be loaded: {shard_paths}")
     with Pool(num_proc) as pool:
-        async_results = pool.map_async(lambda shard_path: load_from_disk(str(shard_path.absolute())), shard_paths)
+        async_results = pool.map_async(load_from_disk, shard_paths)
         shards = async_results.get()
     logger.info("Concatenating all shards together.")
     return concatenate_datasets(shards)
