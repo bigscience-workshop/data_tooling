@@ -71,6 +71,16 @@ def main():
     # Concatenate all the shards together
     ds = obtain_entire_dataset(args.dataset_dir)
 
+    # Filter some generic things
+    def filter_func(batch):
+        # 508: https://zh.wikipedia.org/
+        # 577: https://fr.wikipedia.org/
+        # 523: https://github.com/
+        # 529: https://sites.google.com/
+        bad_seeds = [508, 523, 529, 577]
+        return [row["seed_id"] not in bad_seeds for row in batch]
+    ds.filter(filter_func, batched=True, num_proc=args.num_proc)
+
     # Deduplicate url
     ds = deduplicate_url(ds)
 
