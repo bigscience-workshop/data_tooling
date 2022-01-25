@@ -46,7 +46,7 @@ def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     result = {}
 
     for seed_id in seed_ids:
-        result[seed_id] = ds.filter(lambda row: row["seed_id"] == seed_id, num_proc=num_proc, batched=True, batch_size=100)
+        result[seed_id] = ds.filter(lambda seed_ids_: [elt == seed_id for elt in seed_ids_], input_column="seed_id" ,num_proc=num_proc, batched=True, batch_size=100)
 
     return result
 
@@ -67,13 +67,13 @@ def deduplicate_url(ds: Dataset) -> Dataset:
     indices_to_keep = [id_ for _, id_ in url_to_timestamp_and_index.values()]
     return ds.select(indices_to_keep)
 
-def filter_func(batch):
+def filter_func(seed_ids):
     # 508: https://zh.wikipedia.org/
     # 577: https://fr.wikipedia.org/
     # 523: https://github.com/
     # 529: https://sites.google.com/
     bad_seeds = [508, 523, 529, 577]
-    return [row["seed_id"] not in bad_seeds for row in batch]
+    return [seed_id not in bad_seeds for seed_id in seed_ids]
 
 def run_on_entire_dataset(args):
     # Concatenate all the shards together
@@ -106,7 +106,7 @@ def run_on_shard(args):
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
-    ds = ds.filter(filter_func, batched=True, num_proc=args.num_proc, batch_size=100)
+    ds = ds.filter(filter_func, input_columns="seed_id", batched=True, num_proc=args.num_proc, batch_size=100)
 
     # This has to be done at some point but doesn't work on seperate shards.
     # # Deduplicate url
