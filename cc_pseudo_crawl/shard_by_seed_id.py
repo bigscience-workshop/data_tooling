@@ -29,15 +29,15 @@ def get_args():
 def obtain_entire_dataset(dataset_dir: Path, num_proc: int) -> Dataset:
     shard_paths = [str(elt.absolute()) for elt in dataset_dir.iterdir()]
     logger.info(f"All the following shards will be loaded: {shard_paths}")
-    shards = []
-    for shard_path in shard_paths:
-        logger.info(f"Loaded {shard_path}")
-        shard = load_from_disk(shard_path)
-        shards.append(shard)
-    # # Parallel version seems to go OOM
-    # with Pool(num_proc) as pool:
-    #     async_results = pool.map_async(load_from_disk, shard_paths)
-    #     shards = async_results.get()
+    # shards = []
+    # for shard_path in shard_paths:
+    #     logger.info(f"Loaded {shard_path}")
+    #     shard = load_from_disk(shard_path)
+    #     shards.append(shard)
+    # Parallel version seems to go OOM
+    with Pool(num_proc) as pool:
+        async_results = pool.map_async(load_from_disk, shard_paths)
+        shards = async_results.get()
     logger.info("Concatenating all shards together.")
     return concatenate_datasets(shards)
 
@@ -81,7 +81,7 @@ def main():
 
     # Concatenate all the shards together
     logger.info("Concatenating all datasets together")
-    ds = obtain_entire_dataset(args.dataset_dir, args.num_proc)
+    ds = obtain_entire_dataset(args.dataset_dir, 10)
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
