@@ -22,8 +22,8 @@ def get_args():
     parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
     args = parser.parse_args()
 
-    args.dataset_dir = Path(args.dataset_dir)
-    args.save_dir = Path(args.save_dir)
+    args.dataset_path = Path(args.dataset_path)
+    args.save_prefix_path = Path(args.save_prefix_path)
     return args
 
 def obtain_entire_dataset(dataset_dir: Path, num_proc: int) -> Dataset:
