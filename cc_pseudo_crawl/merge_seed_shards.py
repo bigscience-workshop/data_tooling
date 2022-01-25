@@ -1,19 +1,56 @@
+import logging
 from argparse import ArgumentParser
+from pathlib import Path
 
+from datasets import Dataset, load_from_disk, concatenate_datasets
+from datasets.utils.logging import set_verbosity_info
+
+set_verbosity_info()
+logger = logging.getLogger(__name__)
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument("--dataset-shard", type=str, required=True, help="Dataset directory containing all shards")
-    parser.add_argument("--save-prefix-path", type=str, required=True, help="Where to save the dataset.")
-    parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
+    parser.add_argument("--dataset-dir", type=str, required=True, help="Dataset directory containing all shards")
+    parser.add_argument("--save-path", type=str, required=True, help="Where to save dataset.")
+    parser.add_argument("--seed-id", type=int, required=True, help="Seed id.")
     args = parser.parse_args()
 
     args.dataset_dir = Path(args.dataset_dir)
-    args.save_dir = Path(args.save_dir)
+    args.save_path = Path(args.save_path)
     return args
 
+def load_all_matching_shards(dataset_dir: Path, seed_id: int)-> Dataset:
+    """We use seed id and check that the shards correspond to"""
+    matching_suffix = f"--seed_id--{seed_id}"
+    shard_paths = sorted([str(elt.absolute()) for elt in dataset_dir.iterdir() if elt.name.endswith(matching_suffix)])
+    logger.info(f"All the following shards will be loaded: {shard_paths}")
+    shards = []
+    for shard_path in shard_paths:
+        logger.info(f"Loading {shard_path}")
+        shard = load_from_disk(shard_path)
+        shards.append(shard)
+    # # Parallel version seems to go OOM
+    # with Pool(num_proc) as pool:
+    #     async_results = pool.map_async(load_from_disk, shard_paths)
+    #     shards = async_results.get()
+    logger.info("Concatenating all shards together.")
+    return concatenate_datasets(shards)
+
 def main():
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
     args = get_args()
+    logger.info(
+        f"** The job is runned with the following arguments: **\n{args}\n **** "
+    )
+
+    ds = load_all_matching_shards(args.dataset_dir, args.seed_id)
+    ds.save_to_disk(args.save_path)
+
 
 if __name__ == "__main__":
     main()
