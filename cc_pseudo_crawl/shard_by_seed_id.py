@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument("--dataset-dir", type=str, required=True, help="Dataset directory containing all shards.")
-    parser.add_argument("--save-dir", type=str, required=True, help="Where to save the datasets.")
+    parser.add_argument("--dataset-path", type=str, required=True, help="Dataset path.")
+    parser.add_argument("--save-prefix-path", type=str, required=True, help="Where to save the dataset.")
     parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
     args = parser.parse_args()
 
@@ -67,24 +67,14 @@ def deduplicate_url(ds: Dataset) -> Dataset:
     indices_to_keep = [id_ for _, id_ in url_to_timestamp_and_index.values()]
     return ds.select(indices_to_keep)
 
-def main():
-    # Setup logging
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-        level=logging.INFO,
-    )
-    args = get_args()
-    logger.info(
-        f"** The job is runned with the following arguments: **\n{args}\n **** "
-    )
-
+def run_on_entire_dataset(args):
     # Concatenate all the shards together
     logger.info("Concatenating all datasets together")
     ds = obtain_entire_dataset(args.dataset_dir, 10)
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
+
     def filter_func(batch):
         # 508: https://zh.wikipedia.org/
         # 577: https://fr.wikipedia.org/
@@ -92,7 +82,8 @@ def main():
         # 529: https://sites.google.com/
         bad_seeds = [508, 523, 529, 577]
         return [row["seed_id"] not in bad_seeds for row in batch]
-    ds.filter(filter_func, batched=True, num_proc=args.num_proc)
+
+    ds = ds.filter(filter_func, batched=True, num_proc=args.num_proc)
 
     # Deduplicate url
     logger.info("Deduplicating urls")
@@ -110,6 +101,53 @@ def main():
         subprocess.run(
             ["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())]
         )
+
+def run_on_shard(args):
+    ds = load_from_disk(args.dataset_path)
+
+    # Filter some generic things
+    logger.info("Filtering bad seeds")
+    def filter_func(batch):
+        # 508: https://zh.wikipedia.org/
+        # 577: https://fr.wikipedia.org/
+        # 523: https://github.com/
+        # 529: https://sites.google.com/
+        bad_seeds = [508, 523, 529, 577]
+        return [row["seed_id"] not in bad_seeds for row in batch]
+    ds = ds.filter(filter_func, batched=True, num_proc=args.num_proc)
+
+    # This has to be done at some point.
+    # # Deduplicate url
+    # logger.info("Deduplicating urls")
+    # ds = deduplicate_url(ds)
+
+    # Split dataset according to seed_id
+    logger.info("Sharding by seed id")
+    shards = shard_by_seed_id(ds, args.num_proc)
+
+    # Save shard per seed
+    logger.info("Saving shards")
+    for seed_id, shard in shards.items():
+        save_path = f"{str(args.save_prefix_path.absolute())}--seed_id--{seed_id}"
+        shard.save_to_disk(f"{save_path}.tmp")
+        subprocess.run(
+            ["mv", f"{save_path}.tmp", save_path]
+        )
+
+
+def main():
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
+    args = get_args()
+    logger.info(
+        f"** The job is runned with the following arguments: **\n{args}\n **** "
+    )
+
+    run_on_shard(args)
 
 if __name__ == "__main__":
     main()
