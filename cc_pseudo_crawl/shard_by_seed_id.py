@@ -67,6 +67,14 @@ def deduplicate_url(ds: Dataset) -> Dataset:
     indices_to_keep = [id_ for _, id_ in url_to_timestamp_and_index.values()]
     return ds.select(indices_to_keep)
 
+def filter_func(batch):
+    # 508: https://zh.wikipedia.org/
+    # 577: https://fr.wikipedia.org/
+    # 523: https://github.com/
+    # 529: https://sites.google.com/
+    bad_seeds = [508, 523, 529, 577]
+    return [row["seed_id"] not in bad_seeds for row in batch]
+
 def run_on_entire_dataset(args):
     # Concatenate all the shards together
     logger.info("Concatenating all datasets together")
@@ -74,15 +82,6 @@ def run_on_entire_dataset(args):
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
-
-    def filter_func(batch):
-        # 508: https://zh.wikipedia.org/
-        # 577: https://fr.wikipedia.org/
-        # 523: https://github.com/
-        # 529: https://sites.google.com/
-        bad_seeds = [508, 523, 529, 577]
-        return [row["seed_id"] not in bad_seeds for row in batch]
-
     ds = ds.filter(filter_func, batched=True, num_proc=args.num_proc)
 
     # Deduplicate url
@@ -107,16 +106,9 @@ def run_on_shard(args):
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
-    def filter_func(batch):
-        # 508: https://zh.wikipedia.org/
-        # 577: https://fr.wikipedia.org/
-        # 523: https://github.com/
-        # 529: https://sites.google.com/
-        bad_seeds = [508, 523, 529, 577]
-        return [row["seed_id"] not in bad_seeds for row in batch]
     ds = ds.filter(filter_func, batched=True, num_proc=args.num_proc)
 
-    # This has to be done at some point.
+    # This has to be done at some point but doesn't work on seperate shards.
     # # Deduplicate url
     # logger.info("Deduplicating urls")
     # ds = deduplicate_url(ds)
