@@ -2,13 +2,14 @@
 #SBATCH --job-name=pseudo_crawl_shard_by_id
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=40           # number of cores per tasks
+#SBATCH --cpus-per-task=1           # number of cores per tasks
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name
 #SBATCH --array=0-99   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
+
 
 set -x -e
 
@@ -26,7 +27,7 @@ mkdir -p $SAVE_DATASET_DIR
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/shard_by_seed_id.py \
-    --dataset-path $DATASET_PATH \
+python cc_pseudo_crawl/merge_seed_shards.py \
+    --dataset-dir $DATASET_DIR \
     --num-proc 80 \
-    --save-prefix-path $SAVE_DATASET_PREFIX_PATH
+    --save-prefix-path $SAVE_DATASET_DIR
