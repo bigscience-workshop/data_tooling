@@ -1,91 +1,41 @@
+import copy
 import logging
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import unquote, urlparse, urlsplit
 
 import datasets
 import hydra
 import wandb
-from bsmetadata.preprocessing_tools import html_parser
-from bsmetadata.preprocessing_utils import (
-    ErrorWrapperPreprocessor,
-    MetadataPreprocessor,
-)
-from bsmetadata.train import show_help
 from datasets import Dataset, Features, Value, config, load_dataset, load_from_disk
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 
+from bsmetadata.preprocessing_tools import html_parser
+from bsmetadata.train import show_help
+
 logger = logging.getLogger(__name__)
 
+class MetadataPreprocessor():
+    """A metadata processor can be used for preprocessing text and adding or extracting metadata information."""
 
-@dataclass
-class PreprocessingConfig:
-    task_id: int = field(metadata={"help": "The id of the task"})
-    out_dir: str = field(metadata={"help": "where to save the resulting dataset."})
-    num_files_to_process: int = field(metadata={"help": "the number of files to process"})
-    path_wiki_db: Optional[str] = field(
-        metadata={"help": "The path to the wikipedia database file necessary for the website descriptions"}
-    )
-    entity_path_data_dir: Optional[str] = field(
-        metadata={
-            "help": "The path to the directory containing the directories `ed-wiki-2019`, `generic` and `wiki_2019` "
-        }
-    )
-    path_or_url_flair_ner_model: Optional[str] = field(
-        default=None, metadata={"help": "TThe path or name of the flair ner model to use to preprocess entities"}
-    )
-    metadata_to_include: Optional[list] = field(
-        default_factory=lambda: ["website_description", "entity", "timestamp"],
-        metadata={"help": "The list of metadata to extract"},
-    )
-    dataset_name: Optional[str] = field(
-        default=None, metadata={"help": "The name of the dataset to use (via the datasets library)"}
-    )
-    dataset_config_name: Optional[str] = field(
-        default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)"}
-    )
-    overwrite_cache: Optional[bool] = field(
-        default=False, metadata={"help": "Whether the local cache containing datasets should be overwritten."}
-    )
-    cache_dir: Optional[str] = field(
-        default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3?"}
-    )
-    preprocessing_num_workers: Optional[int] = field(
-        default=None, metadata={"help": "The number of processes to use for the preprocessing."}
-    )
-    map_batch_size: Optional[int] = field(
-        default=1,
-        metadata={
-            "help": "This is the size of the batch size that will be used for the mapping operation when generating"
-            " the dataset. If you are using `with_metadata` the recommended batch size is 1.."
-        },
-    )
-    project_name: str = field(default="metadata_lm_exploration", metadata={"help": "The project name."})
-    save_batch_size: int = field(
-        default=datasets.config.DEFAULT_MAX_BATCH_SIZE,
-        metadata={"help": " Size of the batch to load in memory and write at once."},
-    )
-    use_load_from_disk: bool = field(
-        default=False,
-        metadata={
-            "help": "If false, the program will load the dataset with `load_dataset` and if false, it will load it "
-            "with `load_from_disk`."
-        },
-    )
+    def __init__(self, col_to_store_metadata: str) -> None:
+        self.col_to_store_metadata = col_to_store_metadata
+        super().__init__()
 
+    @property
+    def new_columns_minimal_features(self) -> Dict[str, Any]:
+        """Returns a dictionary whose key corresponds to the name of a new column / a column modified by this processor
+        and whose value corresponds to the minimal format of this column"""
+        pass
 
-class Logger:
-    def __init__(self, *args, **kwargs):
-        self.run = wandb.init(*args, **kwargs)
-
-    def log(self, dic):
-        wandb.log(dic)
-
-    def close(self):
-        wandb.finish()
+    def preprocess(self, examples: Dict[str, List]) -> Dict[str, List]:
+        """Process a batch of examples and add or extract corresponding metadata."""
+        pass
 
 
 class HtmlPreprocessor(MetadataPreprocessor):
@@ -191,6 +141,156 @@ class HtmlPreprocessor(MetadataPreprocessor):
         examples[self.col_to_store_footer] = new_footer
         examples[self.col_to_store_title] = new_title
         return examples
+
+class ErrorWrapperPreprocessor:
+    def __init__(
+        self, metadata_preprocessor: MetadataPreprocessor, output_keys: Dict[str, Any], verbose: bool = True
+    ) -> None:
+        self.metadata_preprocessor = metadata_preprocessor
+        self.output_keys = output_keys
+        self.verbose = verbose
+
+        self.error_column_name = f"{type(metadata_preprocessor).__name__}_error"
+        self.error_comment_column_name = f"{type(metadata_preprocessor).__name__}_error_comment"
+
+    @property
+    def new_columns_minimal_features(self) -> Dict[str, Any]:
+        features = self.metadata_preprocessor.new_columns_minimal_features
+        features.update(
+            {
+                self.error_column_name: Value("int64"),
+                self.error_comment_column_name: Value("string"),
+            }
+        )
+        return features
+
+    def preprocess(self, examples: Dict[str, List]) -> Tuple[Dict[str, List], int]:
+        """Process a batch of examples and add or extract corresponding metadata."""
+        num_errors = 0
+
+        metadata_list_backup = {
+            col_name: copy.deepcopy(examples[col_name])
+            for col_name in self.metadata_preprocessor.new_columns_minimal_features.keys()
+            if col_name in examples
+        }
+        try:
+            processed_examples = self.metadata_preprocessor.preprocess(examples=examples)
+
+            random_key = list(processed_examples)[0]
+            num_examples = len(processed_examples[random_key])
+            if self.error_column_name not in processed_examples:
+                processed_examples[self.error_column_name] = [0 for _ in range(num_examples)]
+
+            if self.error_comment_column_name not in processed_examples:
+                processed_examples[self.error_comment_column_name] = ["" for _ in range(num_examples)]
+        except:  # noqa
+            # we try the example one by one to find the culprit(s) and strore the error
+            processed_examples = {
+                key: []
+                for key in list(self.output_keys.keys()) + [self.error_column_name, self.error_comment_column_name]
+            }
+
+            for key, values in metadata_list_backup.items():
+                examples[key] = copy.deepcopy(values)
+
+            random_key = list(examples)[0]
+            for idx in range(len(examples[random_key])):
+                example = {key: [values[idx]] for key, values in examples.items()}
+                try:
+                    processed_example = self.metadata_preprocessor.preprocess(examples=example)
+
+                    for key, value in processed_example.items():
+                        processed_examples[key].append(value[0])
+
+                    processed_examples[self.error_column_name].append(0)
+                    processed_examples[self.error_comment_column_name].append("")
+                except Exception as e:
+                    for output_key in self.output_keys.keys():
+                        if output_key in metadata_list_backup:
+                            # We keep the initial value
+                            processed_examples[output_key].append(metadata_list_backup[output_key][idx])
+                        elif output_key in example:
+                            # We keep the initial value
+                            processed_examples[output_key].append(example[output_key][0])
+                        else:
+                            # We use the default value
+                            processed_examples[output_key].append(self.output_keys[output_key])
+
+                    processed_examples[self.error_column_name].append(1)
+                    processed_examples[self.error_comment_column_name].append(str(e))
+                    logger.info(f"An error occurred with the message: {str(e)}")
+                    num_errors += 1
+        if self.verbose and num_errors != 0:
+            logger.warning(f"{num_errors} errors occurred during the preprocessing")
+        return processed_examples
+
+@dataclass
+class PreprocessingConfig:
+    task_id: int = field(metadata={"help": "The id of the task"})
+    out_dir: str = field(metadata={"help": "where to save the resulting dataset."})
+    num_files_to_process: int = field(metadata={"help": "the number of files to process"})
+    path_wiki_db: Optional[str] = field(
+        metadata={"help": "The path to the wikipedia database file necessary for the website descriptions"}
+    )
+    entity_path_data_dir: Optional[str] = field(
+        metadata={
+            "help": "The path to the directory containing the directories `ed-wiki-2019`, `generic` and `wiki_2019` "
+        }
+    )
+    path_or_url_flair_ner_model: Optional[str] = field(
+        default=None, metadata={"help": "TThe path or name of the flair ner model to use to preprocess entities"}
+    )
+    metadata_to_include: Optional[list] = field(
+        default_factory=lambda: ["website_description", "entity", "timestamp"],
+        metadata={"help": "The list of metadata to extract"},
+    )
+    dataset_name: Optional[str] = field(
+        default=None, metadata={"help": "The name of the dataset to use (via the datasets library)"}
+    )
+    dataset_config_name: Optional[str] = field(
+        default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)"}
+    )
+    overwrite_cache: Optional[bool] = field(
+        default=False, metadata={"help": "Whether the local cache containing datasets should be overwritten."}
+    )
+    cache_dir: Optional[str] = field(
+        default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3?"}
+    )
+    preprocessing_num_workers: Optional[int] = field(
+        default=None, metadata={"help": "The number of processes to use for the preprocessing."}
+    )
+    map_batch_size: Optional[int] = field(
+        default=1,
+        metadata={
+            "help": "This is the size of the batch size that will be used for the mapping operation when generating"
+            " the dataset. If you are using `with_metadata` the recommended batch size is 1.."
+        },
+    )
+    project_name: str = field(default="metadata_lm_exploration", metadata={"help": "The project name."})
+    save_batch_size: int = field(
+        default=datasets.config.DEFAULT_MAX_BATCH_SIZE,
+        metadata={"help": " Size of the batch to load in memory and write at once."},
+    )
+    use_load_from_disk: bool = field(
+        default=False,
+        metadata={
+            "help": "If false, the program will load the dataset with `load_dataset` and if false, it will load it "
+            "with `load_from_disk`."
+        },
+    )
+
+
+class Logger:
+    def __init__(self, *args, **kwargs):
+        self.run = wandb.init(*args, **kwargs)
+
+    def log(self, dic):
+        wandb.log(dic)
+
+    def close(self):
+        wandb.finish()
+
+
 
 
 cs = ConfigStore.instance()
