@@ -28,5 +28,5 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python cc_pseudo_crawl/shard_by_seed_id.py \
     --dataset-path $DATASET_PATH \
-    --num-proc 80 \
+    --num-proc 40 \
     --save-prefix-path $SAVE_DATASET_PREFIX_PATH
