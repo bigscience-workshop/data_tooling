@@ -31,5 +31,5 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python cc_pseudo_crawl/merge_seed_shards.py \
     --dataset-dir $DATASET_DIR \
-    --num-proc 80 \
+    --seed-id $SEED_ID \
     --save-prefix-path $SAVE_DATASET_PREFIX_PATH
