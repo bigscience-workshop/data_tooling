@@ -46,7 +46,7 @@ def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     result = {}
 
     for seed_id in seed_ids:
-        result[seed_id] = ds.filter(lambda seed_ids_: [elt == seed_id for elt in seed_ids_], input_column="seed_id" ,num_proc=num_proc, batched=True, batch_size=100)
+        result[seed_id] = ds.filter(lambda seed_ids_: [elt == seed_id for elt in seed_ids_], input_columns="seed_id" ,num_proc=num_proc, batched=True, batch_size=100)
 
     return result
 
