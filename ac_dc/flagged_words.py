@@ -2264,9 +2264,8 @@ flagged_words = {
         "龟儿子",
         "龟头",
     ],
-    "ta" : english_flagged_words
-    +
-    [
+    "ta": english_flagged_words
+    + [
         "ஓதா",
         "ஒத்தா",
         "புண்டை",
@@ -2276,6 +2275,6 @@ flagged_words = {
         "கருமம்",
         "சனியன்",
         "கஸ்மாலம்",
-        "சூத்து"
+        "சூத்து",
     ],
 }
