@@ -7,7 +7,7 @@
 #SBATCH --partition=compil
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name
-#SBATCH --array=0-99   # TODO: modify according to the number of models you want to evaluated
+#SBATCH --array=0-999   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
 
 set -x -e
@@ -17,8 +17,8 @@ conda activate thomas_data_tooling # Debug deepspeed temporarily
 
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
-DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-preprocessed-text-extracted/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--100
-SAVE_DATASET_PREFIX_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-shard-by-seed-id/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--100
+DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-preprocessed-text-extracted/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--1000
+SAVE_DATASET_PREFIX_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-shard-by-seed-id/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--1000
 pushd $DATA_TOOLING_REPO
 
 mkdir -p $(dirname $SAVE_DATASET_PREFIX_PATH)
