@@ -55,12 +55,18 @@ def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     #     logger.info(f"Done seed id: {seed_id}")
     #     result[seed_id] = select_seed_id(ds, seed_id, index_and_seed_id_per_row)
 
-    # Parallel version
-    with Pool(num_proc) as pool:
-        filtered_dsets = pool.imap(functools.partial(select_seed_id, ds=ds, index_and_seed_id_per_row=index_and_seed_id_per_row), list(seed_ids))
-        for seed_id, filtered_dset in zip(seed_ids, filtered_dsets):
-            logger.info(f"Done seed id: {seed_id}")
-            result[seed_id] = filtered_dset
+    # # Parallel version
+    # with Pool(num_proc) as pool:
+    #     filtered_dsets = pool.imap(functools.partial(select_seed_id, ds=ds, index_and_seed_id_per_row=index_and_seed_id_per_row), list(seed_ids))
+    #     for seed_id, filtered_dset in zip(seed_ids, filtered_dsets):
+    #         logger.info(f"Done seed id: {seed_id}")
+    #         result[seed_id] = filtered_dset
+
+    # Use filter
+    for seed_id in seed_ids:
+        logger.info(f"Done seed id: {seed_id}")
+        result[seed_id] = ds.filter(lambda seed_id_: [seed_id == seed_id_ for seed_id_ in seed_ids], input_columns="seed_id", batched=True, num_proc=num_proc)
+
     return result
 
 def deduplicate_url(ds: Dataset) -> Dataset:
@@ -119,7 +125,7 @@ def run_on_shard(args):
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
-    ds = ds.filter(filter_func, input_columns="seed_id", batched=True, num_proc=args.num_proc, batch_size=100, writer_batch_size=100)
+    ds = ds.filter(filter_func, input_columns="seed_id", batched=True, num_proc=args.num_proc)
 
     # This has to be done at some point but doesn't work on seperate shards.
     # # Deduplicate url
