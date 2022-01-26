@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 # Append the path of the ac_dc directory to the python path
-# to find the file filtering.py in the parent directory
+# to find the files filtering.py and languages_id.py in the parent directory
 sys.path.append(str(Path(sys.path[0]).parent.absolute().parent.absolute()))
 
 from filtering import LoadParameters, ModifyingDocuments, Filtering
@@ -164,17 +164,17 @@ class Visualization_for_lang:
 
                     conds["number_words"] = [cond_1, cond_2]
 
-            if "repetitions_ratio" in columns:
-                with st.sidebar.expander("Repetitions ratio"):
+            if "character_repetition_ratio" in columns:
+                with st.sidebar.expander("Character repetition ratio"):
                     val_repetitions_lengths = list(
-                        self.docs["repetitions_ratio"].iloc[0].keys()
+                        self.docs["character_repetition_ratio"].iloc[0].keys()
                     )
                     default_index = (
                         val_repetitions_lengths.index("10")
                         if "10" in val_repetitions_lengths
                         else 0
                     )
-                    label_selectbox = "Length of the repetitions (that will determine the repetitions ratio)."
+                    label_selectbox = "Length of repetitions in characters (that will influence the character repetition ratio)."
                     repetitions_length = st.selectbox(
                         label=label_selectbox,
                         options=val_repetitions_lengths,
@@ -183,25 +183,27 @@ class Visualization_for_lang:
                     st.caption(
                         "Choosing a higher or lower number does not mean that the filtering "
                         "is stronger or weaker. Be careful, choosing a low number (below 5 for languages like English) "
-                        "tends to associate a high repetitions ratio to very long documents (like book chapters), but with "
+                        "tends to associate a high character repetition ratio to very long documents (like book chapters), but with "
                         "few or no repetitions, simply because their length gives them more diversity, and we do "
-                        "not want to discard such documents."
+                        "not want to discard such documents. It is generally better to increase this number, so that false "
+                        "positives are very short documents (which we want to delete anyway) rather than long ones. However, "
+                        "a low number can be useful for Chinese, where a character can designate a whole word."
                     )
-                    self.docs["repetitions_ratio"] = self.docs_checkpoint[
-                        "repetitions_ratio"
+                    self.docs["character_repetition_ratio"] = self.docs_checkpoint[
+                        "character_repetition_ratio"
                     ]
-                    for i in range(len(self.docs["repetitions_ratio"])):
-                        self.docs["repetitions_ratio"].iloc[i] = self.docs[
-                            "repetitions_ratio"
+                    for i in range(len(self.docs["character_repetition_ratio"])):
+                        self.docs["character_repetition_ratio"].iloc[i] = self.docs[
+                            "character_repetition_ratio"
                         ].iloc[i][repetitions_length]
 
-                    cutoff_def = "If the repetitions ratio of a document is higher than this number, the document is removed."
-                    cutoff_repetitions_ratio = st.slider(
+                    cutoff_def = "If the character repetition ratio of a document is higher than this number, the document is removed."
+                    cutoff_character_repetition_ratio = st.slider(
                         cutoff_def, 0.0, 1.0, 1.0, step=0.01
                     )
                     new_key = (
-                        "repetitions_ratio",
-                        cutoff_repetitions_ratio,
+                        "character_repetition_ratio",
+                        cutoff_character_repetition_ratio,
                         True,
                         repetitions_length,
                     )
@@ -209,7 +211,55 @@ class Visualization_for_lang:
                     Visualization_for_lang.plot_hist(self.docs, new_key)
                     cond = get_cond(new_key[0], new_key[1], new_key[2])
                     Visualization_for_lang.print_discarded_by_cond(cond)
-                    conds["repetitions_ratio"] = [cond]
+                    conds["character_repetition_ratio"] = [cond]
+
+            if "word_repetition_ratio" in columns:
+                with st.sidebar.expander("Word repetition ratio"):
+                    val_repetitions_lengths = list(
+                        self.docs["word_repetition_ratio"].iloc[0].keys()
+                    )
+                    default_index = (
+                        val_repetitions_lengths.index("5")
+                        if "5" in val_repetitions_lengths
+                        else 0
+                    )
+                    label_selectbox = "Length of repetitions in words (that will influence the word repetition ratio)."
+                    repetitions_length = st.selectbox(
+                        label=label_selectbox,
+                        options=val_repetitions_lengths,
+                        index=default_index,
+                    )
+                    st.caption(
+                        "Choosing a higher or lower number does not mean that the filtering "
+                        "is stronger or weaker. Be careful, choosing a low number (like 3) could "
+                        "tend to associate a high word repetition ratio to very long documents (like book chapters), but with "
+                        "few or no repetitions, simply because their length gives them more diversity, and we do "
+                        "not want to discard such documents. It is generally better to increase a bit this number, so that false "
+                        "positives are very short documents (which we want to delete anyway) rather than long ones."
+                    )
+                    self.docs["word_repetition_ratio"] = self.docs_checkpoint[
+                        "word_repetition_ratio"
+                    ]
+                    for i in range(len(self.docs["word_repetition_ratio"])):
+                        self.docs["word_repetition_ratio"].iloc[i] = self.docs[
+                            "word_repetition_ratio"
+                        ].iloc[i][repetitions_length]
+
+                    cutoff_def = "If the word repetition ratio of a document is higher than this number, the document is removed."
+                    cutoff_word_repetition_ratio = st.slider(
+                        cutoff_def, 0.0, 1.0, 1.0, step=0.01
+                    )
+                    new_key = (
+                        "word_repetition_ratio",
+                        cutoff_word_repetition_ratio,
+                        True,
+                        repetitions_length,
+                    )
+                    keys.append(new_key)
+                    Visualization_for_lang.plot_hist(self.docs, new_key)
+                    cond = get_cond(new_key[0], new_key[1], new_key[2])
+                    Visualization_for_lang.print_discarded_by_cond(cond)
+                    conds["word_repetition_ratio"] = [cond]
 
             if "special_characters_ratio" in columns:
                 with st.sidebar.expander("Special characters ratio"):
@@ -369,12 +419,25 @@ class Visualization_for_lang:
                         "docs",
                     )
 
-                if "repetitions_ratio" in columns:
-                    cond_filter = np.invert(np.all(conds["repetitions_ratio"], axis=0))
+                if "character_repetition_ratio" in columns:
+                    cond_filter = np.invert(
+                        np.all(conds["character_repetition_ratio"], axis=0)
+                    )
                     Visualization_for_lang.display_dataset(
                         self.docs,
                         cond_filter,
-                        "Discarded documents for the filter on the repetitions ratio",
+                        "Discarded documents for the filter on the character repetition ratio",
+                        "docs",
+                    )
+
+                if "word_repetition_ratio" in columns:
+                    cond_filter = np.invert(
+                        np.all(conds["word_repetition_ratio"], axis=0)
+                    )
+                    Visualization_for_lang.display_dataset(
+                        self.docs,
+                        cond_filter,
+                        "Discarded documents for the filter on the word repetition ratio",
                         "docs",
                     )
 
@@ -614,15 +677,31 @@ class Visualization_for_lang:
                         if is_doc_discarded(key, len(words)):
                             is_discarded = True
 
-                    elif key[0] == "repetitions_ratio":
-                        repetitions_ratio = (
+                    elif key[0] == "character_repetition_ratio":
+                        character_repetition_ratio = (
                             Filtering.compute_character_repetition_ratio(
                                 personal_doc, int(key[3])
                             )
                         )
-                        repetitions_ratio = round(repetitions_ratio, 3)
-                        st.markdown(f"Repetitions ratio: {repetitions_ratio}")
-                        if is_doc_discarded(key, repetitions_ratio):
+                        character_repetition_ratio = round(
+                            character_repetition_ratio, 3
+                        )
+                        st.markdown(
+                            f"Character repetition ratio: {character_repetition_ratio}"
+                        )
+                        if is_doc_discarded(key, character_repetition_ratio):
+                            is_discarded = True
+
+                    elif key[0] == "word_repetition_ratio":
+                        word_repetition_ratio = Filtering.compute_word_repetition_ratio(
+                            personal_doc,
+                            self.sentencepiece_model_tok,
+                            self.param["strip_characters"],
+                            int(key[3]),
+                        )
+                        word_repetition_ratio = round(word_repetition_ratio, 3)
+                        st.markdown(f"Word repetition ratio: {word_repetition_ratio}")
+                        if is_doc_discarded(key, word_repetition_ratio):
                             is_discarded = True
 
                     elif key[0] == "special_characters_ratio":

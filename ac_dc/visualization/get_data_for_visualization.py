@@ -43,13 +43,6 @@ class GetDataForVisualization:
             lang_dataset_id, path_kenlm_model
         )
 
-        self.keys_stats = [
-            "special_characters_ratio",
-            "stopwords_ratio",
-            "flagged_words_ratio",
-            "lang_id_score",
-            "perplexity_score",
-        ]
         self.path_save_stats = path_save_stats
 
     def compute_stats(self):
@@ -88,13 +81,29 @@ class GetDataForVisualization:
                 number_words = len(words)
                 stats_document["number_words"] = number_words
 
-                repetitions_ratios = {
+                character_repetition_ratios = {
                     n: round(
                         Filtering.compute_character_repetition_ratio(document, n), 4
                     )
                     for n in range(2, 16)
                 }
-                stats_document["repetitions_ratio"] = repetitions_ratios
+                stats_document[
+                    "character_repetition_ratio"
+                ] = character_repetition_ratios
+
+                word_repetition_ratios = {
+                    n: round(
+                        Filtering.compute_word_repetition_ratio(
+                            document,
+                            self.sentencepiece_model_tok,
+                            self.param["strip_characters"],
+                            n,
+                        ),
+                        4,
+                    )
+                    for n in range(3, 11)
+                }
+                stats_document["word_repetition_ratio"] = word_repetition_ratios
 
                 special_characters_ratio = Filtering.compute_special_characters_ratio(
                     document, self.param["special_characters"]
