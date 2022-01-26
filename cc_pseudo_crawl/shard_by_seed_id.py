@@ -46,7 +46,7 @@ def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     result = {}
 
     for seed_id in seed_ids:
-        result[seed_id] = ds.filter(lambda seed_ids_: [elt == seed_id for elt in seed_ids_], input_columns="seed_id" ,num_proc=num_proc, batched=True, batch_size=100)
+        result[seed_id] = ds.filter(lambda seed_ids_: [elt == seed_id for elt in seed_ids_], input_columns="seed_id", num_proc=num_proc, batched=True, batch_size=100)
 
     return result
 
@@ -103,6 +103,7 @@ def run_on_entire_dataset(args):
 
 def run_on_shard(args):
     ds = load_from_disk(args.dataset_path)
+    ds = ds.map(batched=True, num_proc=args.num_proc, batch_size=100)
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
