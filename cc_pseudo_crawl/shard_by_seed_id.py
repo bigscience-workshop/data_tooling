@@ -49,6 +49,7 @@ def select_seed_id(ds, seed_id, index_and_seed_id_per_row):
 def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     seed_ids = sorted(set(ds["seed_id"]))
     result = {}
+    print(f"Total number of seeds: {len(seed_ids)}")
     index_and_seed_id_per_row = list(enumerate(ds["seed_id"]))
 
     # for seed_id in seed_ids:
