@@ -45,9 +45,10 @@ def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     seed_ids = set(ds["seed_id"])
     result = {}
 
+    index_and_seed_id_per_row = list(enumerate(ds["seed_id"]))
     for seed_id in seed_ids:
-        result[seed_id] = ds.filter(lambda seed_ids_: [elt == seed_id for elt in seed_ids_], input_columns="seed_id", num_proc=num_proc, batched=True, batch_size=100)
-
+        index_to_keep = [index for index, seed_id_ in index_and_seed_id_per_row if seed_id_ == seed_id]
+        result[seed_id] = ds.select(index_to_keep)
     return result
 
 def deduplicate_url(ds: Dataset) -> Dataset:
@@ -103,7 +104,6 @@ def run_on_entire_dataset(args):
 
 def run_on_shard(args):
     ds = load_from_disk(args.dataset_path)
-    ds = ds.map(batched=True, num_proc=args.num_proc, batch_size=100)
 
     # Filter some generic things
     logger.info("Filtering bad seeds")
