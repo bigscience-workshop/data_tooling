@@ -139,7 +139,7 @@ flagged_words = {
         "مهتاج",
         "نشوة",
         "نكاح",
-        "نيك",  
+        "نيك",
     ],
     "ca": english_flagged_words
     + [
