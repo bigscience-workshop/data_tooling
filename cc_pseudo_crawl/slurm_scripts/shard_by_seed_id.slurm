@@ -2,7 +2,7 @@
 #SBATCH --job-name=pseudo_crawl_shard_by_id
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=40           # number of cores per tasks
+#SBATCH --cpus-per-task=4           # number of cores per tasks
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=compil
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
@@ -28,5 +28,5 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python cc_pseudo_crawl/shard_by_seed_id.py \
     --dataset-path $DATASET_PATH \
-    --num-proc 40 \
+    --num-proc 4 \
     --save-prefix-path $SAVE_DATASET_PREFIX_PATH
