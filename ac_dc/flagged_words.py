@@ -2264,7 +2264,7 @@ flagged_words = {
         "龟儿子",
         "龟头",
     ],
-    "ta": english_flagged_words
+    "tam": english_flagged_words
     + [
         "ஓதா",
         "ஒத்தா",
