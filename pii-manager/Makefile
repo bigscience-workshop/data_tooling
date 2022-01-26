@@ -78,11 +78,11 @@ $(VENV)/bin/pytest:
 
 # -----------------------------------------------------------------------
 
-upload-check:
+upload-check: $(PKGFILE)
 	twine check $(PKGFILE)
 
-upload-test:
+upload-test: $(PKGFILE)
 	twine upload --repository pypitest $(PKGFILE)
 
-upload:
+upload: $(PKGFILE)
 	twine upload $(PKGFILE)

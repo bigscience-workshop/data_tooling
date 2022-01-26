@@ -1,0 +1,17 @@
+[
+  {
+    "pii": "IP_ADDRESS",
+    "type": "regex",
+    "task": "\\b (?: (?: 25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]? ) \\. ){3} (?: 25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]?) \\b"
+  },
+  {
+    "pii": "NOT_A_VALID_PII_TASK_CLASS",
+    "type": "call",
+    "task": "pii_manager.lang.any.bitcoin_address.bitcoin_address"
+  },
+  {
+    "pii": "CREDIT_CARD",
+    "type": "PiiClass",
+    "task": "pii_manager.lang.any.credit_card.CreditCard"
+  }
+]

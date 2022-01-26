@@ -10,6 +10,8 @@ import re
 
 from stdnum import luhn
 
+from typing import Iterable
+
 from pii_manager import PiiEnum, PiiEntity
 from pii_manager.helper import BasePiiTask
 
@@ -38,6 +40,8 @@ class CreditCard(BasePiiTask):
     Credit card numbers for most international credit cards (detect & validate)
     """
 
+    pii_name = "credit card"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Compile the credit card regexes
@@ -46,7 +50,7 @@ class CreditCard(BasePiiTask):
             _REGEX_CC_BASE = re.compile(_CREDIT_PATTERN_BASE, flags=re.VERBOSE)
             _REGEX_CC_FULL = re.compile(_CREDIT_PATTERN, flags=re.VERBOSE)
 
-    def find(self, doc: str):
+    def find(self, doc: str) -> Iterable[PiiEntity]:
         # First find candidates
         for cc in _REGEX_CC_BASE.finditer(doc):
             cc_value = cc.group()
@@ -54,7 +58,9 @@ class CreditCard(BasePiiTask):
             strip_cc = re.sub(r"[ -]+", "", cc_value)
             # now validate the credit card number
             if re.fullmatch(_REGEX_CC_FULL, strip_cc) and luhn.is_valid(strip_cc):
-                yield PiiEntity(PiiEnum.CREDIT_CARD, cc.start(), cc_value)
+                yield PiiEntity(
+                    PiiEnum.CREDIT_CARD, cc.start(), cc_value, name=CreditCard.pii_name
+                )
 
 
 # ---------------------------------------------------------------------

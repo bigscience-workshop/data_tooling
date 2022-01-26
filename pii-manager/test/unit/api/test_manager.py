@@ -13,6 +13,7 @@ TEST = (
 def test10_constructor():
     obj = PiiManager("es", None, PiiEnum.CREDIT_CARD)
     assert obj.tasks[0].pii == PiiEnum.CREDIT_CARD
+    assert str(obj) == "<PiiManager (tasks: 1)>"
 
 
 def test20_info():
@@ -20,10 +21,12 @@ def test20_info():
     info = obj.task_info()
 
     exp = {
-        (
-            PiiEnum.CREDIT_CARD,
-            None,
-        ): "Credit card numbers for most international credit cards (detect & validate)"
+        (PiiEnum.CREDIT_CARD, None,): [
+            (
+                "credit card",
+                "Credit card numbers for most international credit cards (detect & validate)",
+            )
+        ]
     }
     assert info == exp
 

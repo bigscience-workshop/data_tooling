@@ -2,11 +2,15 @@
 
 ## API Usage
 
-There are two types of API usage: the file-based API and the object-based API
+There are two types of API usage: the object-based API (lower-level, based on
+object instantiation) and the file-based API (higher-level, based on function
+calls).
+
 
 ### Object API
 
-Usage of the object-based package API goes like this:
+The object-based API is centered on the `PiiManager` object. Its usage goes
+like this:
 
 ```Python
 
@@ -32,14 +36,15 @@ and UK (assuming all these tasks are implemented in the package).
 
 
 It is also possible to load all possible tasks for a language, by specifying
-country as `all` and using the `all_tasks` argument.
+the country as `COUNTRY_ANY` and using the `all_tasks` argument.
 
 ```Python
 
  from pii_manager import PiiEnum
  from pii_manager.api import PiiManager
+ from pii_manager.lang import COUNTRY_ANY
 
- proc = PiiManager('en', 'all', all_tasks=True)
+ proc = PiiManager('en', COUNTRY_ANY, all_tasks=True)
 
  text_out = proc(text_in)
 
@@ -51,11 +56,14 @@ country as `all` and using the `all_tasks` argument.
  * country-dependent tasks for *all* countries implemented under the `en`
    language
 
+Finally, the API allows for [importing arbitrary tasks] defined outside the
+package.
+
 
 ### File-based API
 
-The file-based API reads from a file, and writes to an output file. It is
-executed as:
+The file-based API uses the `process_file` function to read from a file and
+write the result to an output file. It is executed as:
 
 ```Python
 
@@ -74,7 +82,8 @@ executed as:
 ```
 
 The file-based API accepts also the `all_tasks` argument to add all suitable
-defined tasks.
+defined tasks, as well as the `COUNTRY_ANY` option. It can also [import
+external tasks], as defined in a JSON file.
 
 
 ## Command-line usage
@@ -97,7 +106,7 @@ process text; it is only used to show the available tasks for a given language.
 
 ## Processing mode
 
-PII processing accetps four modes: _replace_ , _tag_, _extract_ and _full_. To
+PII processing accepts four modes: _replace_ , _tag_, _extract_ and _full_. To
 show an example, let us consider a fragment such as:
 
 > my credit card number is 4273 9666 4581 5642
@@ -146,3 +155,5 @@ calling the PII tasks:
 
 
 [NDJSON]: http://ndjson.org/
+[importing arbitrary tasks]: external.md#object-based-api
+[import external tasks]:external.md#file-based-api
