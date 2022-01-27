@@ -53,7 +53,10 @@ class GetDataForVisualization:
             stats_document = {}
 
             try:
-                document = next(dataset)["text"]
+                example = next(dataset)
+                document = example["text"]
+                if "labels" in example:
+                    stats_document["labels"] = example["labels"]
 
                 words = ModifyingDocuments.get_words_from_document(
                     document,
@@ -164,9 +167,9 @@ class GetDataForVisualization:
 
 if __name__ == "__main__":
 
-    dataset_name = "oscar"
-    config_name = "unshuffled_deduplicated_en"
-    data_files = None
+    dataset_name = "TurkuNLP/register_oscar"  # "oscar"
+    config_name = None  # "unshuffled_deduplicated_en"
+    data_files = "en/en_00000.jsonl.gz"  # None
     split = "train"
     num_iter = 15000
 
@@ -174,7 +177,7 @@ if __name__ == "__main__":
     path_fasttext_model = "ac_dc/lid.176.bin"
     path_sentencepiece_model = f"ac_dc/en.sp.model"
     path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
+    path_save_stats = f"ac_dc/visualization/en_examples_with_stats_register.json"
 
     dataset = load_dataset(
         dataset_name,
