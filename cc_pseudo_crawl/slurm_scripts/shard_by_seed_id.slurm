@@ -8,6 +8,8 @@
 #SBATCH --time 04:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name
 #SBATCH --array=0-999   # TODO: modify according to the number of models you want to evaluated
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=thomas.wang@huggingface.co
 #SBATCH --account=six@cpu
 
 set -x -e
