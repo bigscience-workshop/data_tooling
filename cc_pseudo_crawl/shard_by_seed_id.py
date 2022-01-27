@@ -66,8 +66,7 @@ def shard_by_seed_id(ds: Dataset, num_proc: int) -> Dict[int, Dataset]:
     # Use filter
     for seed_id in seed_ids:
         logger.info(f"Done seed id: {seed_id}")
-        result[seed_id] = ds.filter(lambda seed_id_: [seed_id == seed_id_ for seed_id_ in seed_ids], input_columns="seed_id", batched=True, num_proc=num_proc)
-
+        result[seed_id] = ds.filter(lambda seed_ids_: [seed_id == seed_id_ for seed_id_ in seed_ids_], input_columns="seed_id", batched=True, num_proc=num_proc)
     return result
 
 def deduplicate_url(ds: Dataset) -> Dataset:
