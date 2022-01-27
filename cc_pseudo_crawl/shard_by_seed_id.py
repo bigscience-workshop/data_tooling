@@ -141,6 +141,7 @@ def run_on_shard(args):
     logger.info("Saving shards")
     for seed_id, shard in shards.items():
         save_path = f"{str(args.save_prefix_path.absolute())}--seed_id--{seed_id}"
+        logger.info(f"Saving seed id shard: {seed_id} at {save_path}")
         shard.save_to_disk(f"{save_path}.tmp")
         subprocess.run(
             ["mv", f"{save_path}.tmp", save_path]
