@@ -447,8 +447,7 @@ flagged_words = {
         "xxx",
         "zurullo",
     ],
-    "eu": english_flagged_words
-    + [ ],
+    "eu": english_flagged_words + [],
     "fr": english_flagged_words
     + [
         "MALPT",
