@@ -22,7 +22,7 @@ DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-shard-by-seed-id/bigscien
 pushd $DATA_TOOLING_REPO
 
 SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
-
+echo "Merging all shards of seed id ${SEED_ID}"
 SAVE_DATASET_PREFIX_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
 mkdir -p $SAVE_DATASET_DIR
 

@@ -1,11 +1,12 @@
 import csv
 from argparse import ArgumentParser
+from pathlib import Path
 
 
 def get_args():
    parser = ArgumentParser()
    parser.add_argument("--seed-path", type=str, required=True, help="Seed path.")
-   parser.add_argument("--seed_index", type=str, required=True, help="Seed index.")
+   parser.add_argument("--seed-index", type=str, required=True, help="Seed index.")
    args = parser.parse_args()
 
    return args
@@ -14,7 +15,7 @@ def get_args():
 def main():
    args = get_args()
 
-   with open(f"{__file__}sourcing_sheet_seeds/seeds.csv", "r") as fi:
+   with open(Path(__file__).parent / "sourcing_sheet_seeds/seeds.csv", "r") as fi:
       data = csv.reader(fi)
       seed_ids = [str(row[0]) for row in data]
       print(seed_ids[args.seed_index])
