@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=4           # number of cores per tasks
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
-#SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
+#SBATCH --time 04:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name
 #SBATCH --array=0-999   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --account=six@cpu
