@@ -21,8 +21,11 @@ def get_args():
 
 def load_all_matching_shards(dataset_dir: Path, seed_id: int)-> Dataset:
     """We use seed id and check that the shards correspond to"""
-    matching_suffix = f"--seed_id--{seed_id}"
-    shard_paths = sorted([str(elt.absolute()) for elt in dataset_dir.iterdir() if elt.name.endswith(matching_suffix)])
+    shard_paths = sorted([
+        str((elt / f"seed_id={seed_id}").absolute())
+        for elt in dataset_dir.iterdir()
+        if (elt / f"seed_id={seed_id}").exists()
+    ])
     logger.info(f"All the following shards will be loaded: {shard_paths}")
     shards = []
     for shard_path in shard_paths:
@@ -49,6 +52,11 @@ def main():
     )
 
     ds = load_all_matching_shards(args.dataset_dir, args.seed_id)
+
+    if not all([seed_id == args.seed_id for seed_id in ds["seed_id"]]):
+        logger.info("Not all rows correspond to the correct seed. We need to fix this.")
+        exit(1)
+
     ds.save_to_disk(args.save_path)
 
 
