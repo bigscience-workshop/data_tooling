@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=pseudo_crawl_shard_by_id
+#SBATCH --job-name=pseudo_crawl_merge_seed_shards
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=4           # number of cores per tasks
@@ -25,8 +25,7 @@ pushd $DATA_TOOLING_REPO
 
 SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
 echo "Merging all shards of seed id ${SEED_ID}"
-SAVE_DATASET_PREFIX_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
-mkdir -p $SAVE_DATASET_DIR
+SAVE_DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
 
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
@@ -34,4 +33,4 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 python cc_pseudo_crawl/merge_seed_shards.py \
     --dataset-dir $DATASET_DIR \
     --seed-id $SEED_ID \
-    --save-prefix-path $SAVE_DATASET_PREFIX_PATH
+    --save-path $SAVE_DATASET_PATH
