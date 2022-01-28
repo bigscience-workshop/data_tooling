@@ -30,7 +30,7 @@ def compute_number_of_shards(ds: Dataset, max_size: int) -> int:
 
     logger.info(f"Estimated dataset size: {ds_nbytes} bytes")
     logger.info(f"Max shard size: {max_size} bytes")
-    return ceil(max_size / ds_nbytes)
+    return ceil(ds_nbytes / max_size)
 
 def load_and_shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
     """The idea is to shard everything in order for final shards to be 10G of less"""
@@ -63,7 +63,7 @@ def main():
     shards = load_and_shard_dataset(ds, args.max_size)
     num_shards = len(shards)
     for i, shard in enumerate(shards):
-        shard.to_json(args.save_path / f"shard-id-{i}--{num_shards}" , num_proc=args.num_proc, compression="gzip")
+        shard.to_json(args.save_path / f"shard-id-{i}--{num_shards}.jsonl.gz", num_proc=args.num_proc, compression="gzip")
 
 if __name__ == "__main__":
     main()
