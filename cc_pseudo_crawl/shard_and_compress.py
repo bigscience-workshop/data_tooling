@@ -87,7 +87,7 @@ def main():
         save_split_path.mkdir(parents=True, exist_ok=True)
         num_shards = len(shards_per_split)
         for i, shard_per_split in enumerate(shards_per_split):
-            if "key" is "text/html":
+            if key == "text/html":
                 shard_per_split = shard_per_split.remove_columns("compressed_warc")
                 shard_per_split.to_json(
                     save_split_path / f"shard-id-{i}--{num_shards}.jsonl.gz",
