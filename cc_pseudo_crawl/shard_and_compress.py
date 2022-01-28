@@ -90,6 +90,8 @@ def main():
             if key == "text/html":
                 shard_per_split = shard_per_split.remove_columns("compressed_warc")
                 save_path = save_split_path / f"shard-id-{i}--{num_shards}.jsonl.gz"
+                if save_path.exists():
+                    continue
                 shard_per_split.to_json(
                     f"{str(save_path.absolute())}.tmp",
                     num_proc=args.num_proc,
@@ -97,6 +99,8 @@ def main():
                 )
             else:
                 save_path = save_split_path / f"shard-id-{i}--{num_shards}"
+                if save_path.exists():
+                    continue
                 shard_per_split.save_to_disk(
                     f"{str(save_path.absolute())}.tmp",
                 )
