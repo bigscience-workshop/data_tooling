@@ -32,7 +32,7 @@ def compute_number_of_shards(ds: Dataset, max_size: int) -> int:
     logger.info(f"Max shard size: {max_size} bytes")
     return ceil(ds_nbytes / max_size)
 
-def load_and_shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
+def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
     """The idea is to shard everything in order for final shards to be 10G of less"""
 
     number_shards = compute_number_of_shards(ds, max_size)
@@ -44,7 +44,9 @@ def load_and_shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
     logger.info(f"Shard dataset in {number_shards} shards")
     for shard_id in range(number_shards):
         logger.info(f"Shard {shard_id}/{number_shards}")
-        results.append(ds.shard(num_shards=number_shards, index=shard_id))
+        shard = ds.shard(num_shards=number_shards, index=shard_id)
+        shard = shard.remove_columns("compressed_warc")
+        results.append(shard)
     return results
 
 def main():
@@ -60,10 +62,14 @@ def main():
     )
 
     ds = load_from_disk(str(args.dataset_path.absolute()))
-    shards = load_and_shard_dataset(ds, args.max_size)
+    shards = shard_dataset(ds, args.max_size)
     num_shards = len(shards)
     for i, shard in enumerate(shards):
-        shard.to_json(args.save_path / f"shard-id-{i}--{num_shards}.jsonl.gz", num_proc=args.num_proc, compression="gzip")
+        shard.to_json(
+            args.save_path / f"shard-id-{i}--{num_shards}.jsonl.gz",
+            num_proc=args.num_proc,
+            compression="gzip"
+        )
 
 if __name__ == "__main__":
     main()
