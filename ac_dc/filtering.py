@@ -687,7 +687,7 @@ class Filtering:
             document=document,
             remove_non_printing_characters=True,
             strip=True,
-            lower_case=True,
+            lower_case=False,
             uniform_whitespace=True,
             replace_digits_with_zeros=True,
             replace_unicode_punctuation=True,

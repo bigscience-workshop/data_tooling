@@ -177,7 +177,7 @@ if __name__ == "__main__":
     path_fasttext_model = "ac_dc/lid.176.bin"
     path_sentencepiece_model = f"ac_dc/en.sp.model"
     path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_save_stats = f"ac_dc/visualization/en_examples_with_stats_register.json"
+    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
 
     dataset = load_dataset(
         dataset_name,
