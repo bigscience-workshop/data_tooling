@@ -66,7 +66,7 @@ def main():
     selected_mime_types = set("text/html")
     splits: Dict[str, Dataset] = {
         **{
-            "mime_type": ds.filter(
+            mime_type: ds.filter(
                 lambda mime_types_: [mime_type_ == mime_type for mime_type_ in mime_types_],
                 input_columns="content_mime_detected", batched=True, num_proc=args.num_proc
             )
