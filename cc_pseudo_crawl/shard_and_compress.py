@@ -1,8 +1,9 @@
 import logging
+import os
 from argparse import ArgumentParser
 from math import ceil
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 from datasets import Dataset, load_from_disk
 from datasets.utils.logging import set_verbosity_info
@@ -39,7 +40,6 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
 
     if number_shards <= 1:
         return [ds]
-
     results = []
     logger.info(f"Shard dataset in {number_shards} shards")
     for shard_id in range(number_shards):
@@ -62,14 +62,42 @@ def main():
     )
 
     ds = load_from_disk(str(args.dataset_path.absolute()))
-    shards = shard_dataset(ds, args.max_size)
-    num_shards = len(shards)
-    for i, shard in enumerate(shards):
-        shard.to_json(
-            args.save_path / f"shard-id-{i}--{num_shards}.jsonl.gz",
-            num_proc=args.num_proc,
-            compression="gzip"
+
+    selected_mime_types = set("text/html")
+    splits: Dict[str, Dataset] = {
+        **{
+            "mime_type": ds.filter(
+                lambda mime_types_: [mime_type_ == mime_type for mime_type_ in mime_types_],
+                input_columns="content_mime_detected", batched=True, num_proc=args.num_proc
+            )
+            for mime_type in selected_mime_types
+        },
+        "others": ds.filter(
+            lambda mime_types_: [mime_type_ not in selected_mime_types for mime_type_ in mime_types_],
+            input_columns="content_mime_detected", batched=True, num_proc=args.num_proc
         )
+    }
+    shards: Dict[str, List[Dataset]] = {
+        key: shard_dataset(split, args.max_size)
+        for key, split in splits.items()
+    }
+    num_shards = len(shards)
+    for key, shards_per_split in shards.items():
+        folder_name = key.replace("/", "__")
+        save_split_path: Path = args.save_path / folder_name
+        save_split_path.mkdir(parents=True, exist_ok=True)
+        for i, shard_per_split in enumerate(shards_per_split):
+            if "key" is "html/text":
+                shard_per_split.remove_columns("compressed_warc")
+                shard_per_split.to_json(
+                    save_split_path / f"shard-id-{i}--{num_shards}.jsonl.gz",
+                    num_proc=args.num_proc,
+                    compression="gzip"
+                )
+            else:
+                shard_per_split.save_to_disk(
+                    str((save_split_path / f"shard-id-{i}--{num_shards}").absolute()),
+                )
 
 if __name__ == "__main__":
     main()
