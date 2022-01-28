@@ -81,11 +81,11 @@ def main():
         key: shard_dataset(split, args.max_size)
         for key, split in splits.items()
     }
-    num_shards = len(shards)
     for key, shards_per_split in shards.items():
         folder_name = key.replace("/", "__")
         save_split_path: Path = args.save_path / folder_name
         save_split_path.mkdir(parents=True, exist_ok=True)
+        num_shards = len(shards_per_split)
         for i, shard_per_split in enumerate(shards_per_split):
             if "key" is "html/text":
                 shard_per_split = shard_per_split.remove_columns("compressed_warc")
