@@ -45,7 +45,6 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
     for shard_id in range(number_shards):
         logger.info(f"Shard {shard_id}/{number_shards}")
         shard = ds.shard(num_shards=number_shards, index=shard_id)
-        shard = shard.remove_columns("compressed_warc")
         results.append(shard)
     return results
 
@@ -63,7 +62,7 @@ def main():
 
     ds = load_from_disk(str(args.dataset_path.absolute()))
 
-    selected_mime_types = set(["text/html"])
+    selected_mime_types = {"text/html"}
     splits: Dict[str, Dataset] = {
         **{
             mime_type: ds.filter(
