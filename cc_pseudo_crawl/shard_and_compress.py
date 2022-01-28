@@ -63,7 +63,7 @@ def main():
 
     ds = load_from_disk(str(args.dataset_path.absolute()))
 
-    selected_mime_types = set("text/html")
+    selected_mime_types = set(["text/html"])
     splits: Dict[str, Dataset] = {
         **{
             mime_type: ds.filter(
