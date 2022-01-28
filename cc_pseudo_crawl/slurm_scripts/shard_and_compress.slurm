@@ -28,7 +28,7 @@ echo "Sharding and compressing seed id ${SEED_ID}"
 DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
 SAVE_DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/seed_id="$SEED_ID"
 
-mkdir -p $(dirname $SAVE_DATASET_PATH)
+mkdir -p $SAVE_DATASET_PATH
 
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
