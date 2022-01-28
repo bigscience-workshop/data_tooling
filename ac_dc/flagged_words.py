@@ -1872,7 +1872,7 @@ flagged_words = {
         "lon to",
         "phim sex",
         "phim xex",
-        "phim xxx"
+        "phim xxx",
     ],
     "zh": english_flagged_words
     + [
