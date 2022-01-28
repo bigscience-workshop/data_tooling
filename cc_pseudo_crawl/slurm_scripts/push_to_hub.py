@@ -15,7 +15,7 @@ set -x -e
 
 source $HOME/start-modelling-metadata-user
 
-mv $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/* 
+mv $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
 
 cd $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
 
