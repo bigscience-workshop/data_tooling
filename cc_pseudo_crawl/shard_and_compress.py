@@ -17,6 +17,7 @@ def get_args():
     parser.add_argument("--dataset-path", type=str, required=True, help="Dataset path.")
     parser.add_argument("--max-size", type=int, required=True, help="Max shards sizes.")
     parser.add_argument("--save-path", type=str, required=True, help="Where to save the dataset.")
+    parser.add_argument("--save-batch-size", type=int, required=True, help="Batch size when writing.")
     parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
     args = parser.parse_args()
 
@@ -94,7 +95,9 @@ def main():
                     continue
                 shard_per_split.to_json(
                     f"{str(save_path.absolute())}.tmp",
-                    num_proc=args.num_proc,
+                    # num_proc=args.num_proc,
+                    num_proc=1,
+                    batch_size=args.save_batch_size,
                     compression="gzip"
                 )
             else:
