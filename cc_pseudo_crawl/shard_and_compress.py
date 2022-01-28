@@ -1,5 +1,6 @@
 import logging
 import os
+import subprocess
 from argparse import ArgumentParser
 from math import ceil
 from pathlib import Path
@@ -88,15 +89,20 @@ def main():
         for i, shard_per_split in enumerate(shards_per_split):
             if key == "text/html":
                 shard_per_split = shard_per_split.remove_columns("compressed_warc")
+                save_path = save_split_path / f"shard-id-{i}--{num_shards}.jsonl.gz"
                 shard_per_split.to_json(
-                    save_split_path / f"shard-id-{i}--{num_shards}.jsonl.gz",
+                    f"{str(save_path.absolute())}.tmp",
                     num_proc=args.num_proc,
                     compression="gzip"
                 )
             else:
+                save_path = save_split_path / f"shard-id-{i}--{num_shards}"
                 shard_per_split.save_to_disk(
-                    str((save_split_path / f"shard-id-{i}--{num_shards}").absolute()),
+                    f"{str(save_path.absolute())}.tmp",
                 )
+            subprocess.run(
+                ["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())]
+            )
 
 if __name__ == "__main__":
     main()
