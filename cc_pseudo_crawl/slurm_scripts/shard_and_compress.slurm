@@ -35,6 +35,6 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python cc_pseudo_crawl/shard_by_seed_id.py \
     --dataset-path $DATASET_PATH \
-    --max-size 10000000000 \
+    --max-size 10_000_000_000 \
     --num-proc 4 \
     --save-path $SAVE_DATASET_PATH
