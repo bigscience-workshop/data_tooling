@@ -38,5 +38,5 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --max-size 10_000_000_000 \
     --num-proc 4 \
     --save-path $SAVE_DATASET_PATH \
-    --save-batch-size 100
+    --save-batch-size 20
 
