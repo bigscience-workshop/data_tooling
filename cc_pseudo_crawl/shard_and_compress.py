@@ -1,8 +1,10 @@
+import functools
 import logging
 import os
 import subprocess
 from argparse import ArgumentParser
 from math import ceil
+from multiprocessing import Pool
 from pathlib import Path
 from typing import List, Dict
 
@@ -50,6 +52,30 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
         results.append(shard)
     return results
 
+def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, save_batch_size):
+    if key == "text/html":
+        shard_per_split = shard_per_split.remove_columns("compressed_warc")
+        save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}.jsonl.gz"
+        if save_path.exists():
+            return
+        shard_per_split.to_json(
+            f"{str(save_path.absolute())}.tmp",
+            # num_proc=args.num_proc,
+            num_proc=1,
+            batch_size=save_batch_size,
+            compression="gzip"
+        )
+    else:
+        save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}"
+        if save_path.exists():
+            return
+        shard_per_split.save_to_disk(
+            f"{str(save_path.absolute())}.tmp",
+        )
+    subprocess.run(
+        ["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())]
+    )
+
 def main():
     # Setup logging
     logging.basicConfig(
@@ -82,33 +108,27 @@ def main():
         key: shard_dataset(split, args.max_size)
         for key, split in splits.items()
     }
-    for key, shards_per_split in shards.items():
-        folder_name = key.replace("/", "__")
-        save_split_path: Path = args.save_path / folder_name
-        save_split_path.mkdir(parents=True, exist_ok=True)
-        num_shards = len(shards_per_split)
-        for i, shard_per_split in enumerate(shards_per_split):
-            if key == "text/html":
-                shard_per_split = shard_per_split.remove_columns("compressed_warc")
-                save_path = save_split_path / f"shard-id-{i}--{num_shards}.jsonl.gz"
-                if save_path.exists():
-                    continue
-                shard_per_split.to_json(
-                    f"{str(save_path.absolute())}.tmp",
-                    # num_proc=args.num_proc,
-                    num_proc=1,
-                    batch_size=args.save_batch_size,
-                    compression="gzip"
-                )
-            else:
-                save_path = save_split_path / f"shard-id-{i}--{num_shards}"
-                if save_path.exists():
-                    continue
-                shard_per_split.save_to_disk(
-                    f"{str(save_path.absolute())}.tmp",
-                )
-            subprocess.run(
-                ["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())]
+
+    with Pool(args.num_proc) as pool:
+        for key, shards_per_split in shards.items():
+            folder_name = key.replace("/", "__")
+            save_split_path: Path = args.save_path / folder_name
+            save_split_path.mkdir(parents=True, exist_ok=True)
+            num_shards = len(shards_per_split)
+            # for i, shard_per_split in enumerate(shards_per_split):
+            #     save_dataset(shard_per_split, key, save_split_path, i, num_shards, args.save_batch_size)
+
+            # parallel version
+            pool.map(
+                functools.partial(
+                    save_dataset,
+                    key=key,
+                    save_split_path=save_split_path,
+                    num_shards=num_shards,
+                    save_batch_size=args.save_batch_size
+                ),
+                enumerate(shards_per_split),
+                chunksize=1
             )
 
 if __name__ == "__main__":
