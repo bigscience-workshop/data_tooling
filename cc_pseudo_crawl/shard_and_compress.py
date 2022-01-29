@@ -119,7 +119,7 @@ def main():
             #     save_dataset(shard_per_split, key, save_split_path, i, num_shards, args.save_batch_size)
 
             # parallel version
-            pool.map(
+            pool.starmap(
                 functools.partial(
                     save_dataset,
                     key=key,
