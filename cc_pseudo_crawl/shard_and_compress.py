@@ -127,7 +127,7 @@ def main():
                     num_shards=num_shards,
                     save_batch_size=args.save_batch_size
                 ),
-                enumerate(shards_per_split),
+                [(shards, i) for i, shards in enumerate(shards_per_split)],
                 chunksize=1
             )
 
