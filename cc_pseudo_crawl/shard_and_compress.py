@@ -115,21 +115,21 @@ def main():
             save_split_path: Path = args.save_path / folder_name
             save_split_path.mkdir(parents=True, exist_ok=True)
             num_shards = len(shards_per_split)
-            # for i, shard_per_split in enumerate(shards_per_split):
-            #     save_dataset(shard_per_split, key, save_split_path, i, num_shards, args.save_batch_size)
+            for i, shard_per_split in enumerate(shards_per_split):
+                save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.save_batch_size)
 
-            # parallel version
-            pool.starmap(
-                functools.partial(
-                    save_dataset,
-                    key=key,
-                    save_split_path=save_split_path,
-                    num_shards=num_shards,
-                    save_batch_size=args.save_batch_size
-                ),
-                [(shards, i) for i, shards in enumerate(shards_per_split)],
-                chunksize=1
-            )
+            # # parallel version
+            # pool.starmap(
+            #     functools.partial(
+            #         save_dataset,
+            #         key=key,
+            #         save_split_path=save_split_path,
+            #         num_shards=num_shards,
+            #         save_batch_size=args.save_batch_size
+            #     ),
+            #     [(shards, i) for i, shards in enumerate(shards_per_split)],
+            #     chunksize=1
+            # )
 
 if __name__ == "__main__":
     main()
