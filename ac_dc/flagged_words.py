@@ -2119,5 +2119,7 @@ flagged_words = {
         "iskanci",
         "duri",
         "durin",
+        "guntsu",
+        "guntsun",
     ],
 }
