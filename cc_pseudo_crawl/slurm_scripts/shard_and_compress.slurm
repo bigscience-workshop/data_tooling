@@ -6,7 +6,7 @@
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=prepost
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
-#SBATCH --output=logs/%x-%j.out           # output file name
+#SBATCH --output=logs/fix_compress/%x-%j.out           # output file name
 #SBATCH --array=0-8   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=thomas.wang@huggingface.co
