@@ -22,33 +22,33 @@ DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 
 pushd $DATA_TOOLING_REPO
 
-# SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
-SEED_IDS=(
-263
-20
-280
-424
-299
-58
-189
-191
-63
-585
-333
-79
-211
-86
-349
-354
-226
-100
-497
-373
-249
-638
-255
-)
-SEED_ID=${SEED_IDS[$SLURM_ARRAY_TASK_ID]}
+SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
+# SEED_IDS=(
+# 263
+# 20
+# 280
+# 424
+# 299
+# 58
+# 189
+# 191
+# 63
+# 585
+# 333
+# 79
+# 211
+# 86
+# 349
+# 354
+# 226
+# 100
+# 497
+# 373
+# 249
+# 638
+# 255
+# )
+# SEED_ID=${SEED_IDS[$SLURM_ARRAY_TASK_ID]}
 
 echo "Sharding and compressing seed id ${SEED_ID}"
 
@@ -66,5 +66,5 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --num-proc 4 \
     --save-num-proc 40 \
     --save-path $SAVE_DATASET_PATH \
-    --save-batch-size 20
+    --save-batch-size 100
 
