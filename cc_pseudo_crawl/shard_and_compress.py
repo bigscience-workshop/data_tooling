@@ -61,8 +61,8 @@ def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, nu
             return
         shard_per_split.to_json(
             f"{str(save_path.absolute())}.tmp",
-            # num_proc=num_proc,
-            num_proc=1,
+            num_proc=num_proc,
+            # num_proc=1,
             batch_size=save_batch_size,
             compression="gzip"
         )
@@ -131,7 +131,7 @@ def main():
     #                 key=key,
     #                 save_split_path=save_split_path,
     #                 num_shards=num_shards,
-    #                 num_proc=args.num_proc,
+    #                 num_proc=1,
     #                 save_batch_size=args.save_batch_size
     #             ),
     #             [(shards, i) for i, shards in enumerate(shards_per_split)],
