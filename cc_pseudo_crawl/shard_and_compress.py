@@ -18,6 +18,7 @@ def get_args():
     parser = ArgumentParser()
     parser.add_argument("--dataset-path", type=str, required=True, help="Dataset path.")
     parser.add_argument("--max-size", type=int, required=True, help="Max shards sizes.")
+    parser.add_argument("--save-num-proc", type=int, default=1, help="Number of procs use for saving.")
     parser.add_argument("--save-path", type=str, required=True, help="Where to save the dataset.")
     parser.add_argument("--save-batch-size", type=int, required=True, help="Batch size when writing.")
     parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
@@ -109,33 +110,33 @@ def main():
         for key, split in splits.items()
     }
 
-    # for key, shards_per_split in shards.items():
-    #     folder_name = key.replace("/", "__")
-    #     save_split_path: Path = args.save_path / folder_name
-    #     save_split_path.mkdir(parents=True, exist_ok=True)
-    #     num_shards = len(shards_per_split)
-    #     for i, shard_per_split in enumerate(shards_per_split):
-    #         save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.num_proc, args.save_batch_size)
+    for key, shards_per_split in shards.items():
+        folder_name = key.replace("/", "__")
+        save_split_path: Path = args.save_path / folder_name
+        save_split_path.mkdir(parents=True, exist_ok=True)
+        num_shards = len(shards_per_split)
+        for i, shard_per_split in enumerate(shards_per_split):
+            save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.save_num_proc, args.save_batch_size)
 
-    # parallel version
-    with Pool(args.num_proc) as pool:
-        for key, shards_per_split in shards.items():
-            folder_name = key.replace("/", "__")
-            save_split_path: Path = args.save_path / folder_name
-            save_split_path.mkdir(parents=True, exist_ok=True)
-            num_shards = len(shards_per_split)
-            pool.starmap(
-                functools.partial(
-                    save_dataset,
-                    key=key,
-                    save_split_path=save_split_path,
-                    num_shards=num_shards,
-                    num_proc=args.num_proc,
-                    save_batch_size=args.save_batch_size
-                ),
-                [(shards, i) for i, shards in enumerate(shards_per_split)],
-                chunksize=1
-            )
+    # # parallel version
+    # with Pool(args.save_num_proc) as pool:
+    #     for key, shards_per_split in shards.items():
+    #         folder_name = key.replace("/", "__")
+    #         save_split_path: Path = args.save_path / folder_name
+    #         save_split_path.mkdir(parents=True, exist_ok=True)
+    #         num_shards = len(shards_per_split)
+    #         pool.starmap(
+    #             functools.partial(
+    #                 save_dataset,
+    #                 key=key,
+    #                 save_split_path=save_split_path,
+    #                 num_shards=num_shards,
+    #                 num_proc=args.num_proc,
+    #                 save_batch_size=args.save_batch_size
+    #             ),
+    #             [(shards, i) for i, shards in enumerate(shards_per_split)],
+    #             chunksize=1
+    #         )
 
 if __name__ == "__main__":
     main()
