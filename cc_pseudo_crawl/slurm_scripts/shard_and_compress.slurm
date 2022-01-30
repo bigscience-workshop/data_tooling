@@ -7,7 +7,7 @@
 #SBATCH --partition=cpu_p1
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/fix_compress_cpu_p1/%x-%j.out           # output file name
-#SBATCH --array=0-605   # TODO: modify according to the number of models you want to evaluated
+#SBATCH --array=0-604   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=thomas.wang@huggingface.co
 #SBATCH --account=six@cpu
@@ -64,7 +64,7 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --dataset-path $DATASET_PATH \
     --max-size 10_000_000_000 \
     --num-proc 4 \
-    --save-num-proc 40 \
+    --save-num-proc 80 \
     --save-path $SAVE_DATASET_PATH \
-    --save-batch-size 10
+    --save-batch-size 2 # 100 # 10 # 2
 
