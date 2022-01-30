@@ -34,7 +34,7 @@ SEED_IDS=(
 661
 35
 )
-SEED_ID=${CHECKPOINT_STEPS[$SLURM_ARRAY_TASK_ID]}
+SEED_ID=${SEED_IDS[$SLURM_ARRAY_TASK_ID]}
 
 echo "Sharding and compressing seed id ${SEED_ID}"
 
