@@ -2,7 +2,7 @@
 #SBATCH --job-name=pseudo_crawl_shard_and_compress
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
-#SBATCH --cpus-per-task=4          # number of cores per tasks
+#SBATCH --cpus-per-task=48          # number of cores per tasks
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=prepost
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
@@ -50,6 +50,7 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --dataset-path $DATASET_PATH \
     --max-size 10_000_000_000 \
     --num-proc 4 \
+    --save-num-proc 40 \
     --save-path $SAVE_DATASET_PATH \
     --save-batch-size 20
 
