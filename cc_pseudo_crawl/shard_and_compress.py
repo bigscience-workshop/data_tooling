@@ -52,7 +52,7 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
         results.append(shard)
     return results
 
-def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, save_batch_size):
+def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, num_proc, save_batch_size):
     if key == "text/html":
         shard_per_split = shard_per_split.remove_columns("compressed_warc")
         save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}.jsonl.gz"
@@ -60,7 +60,7 @@ def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, sa
             return
         shard_per_split.to_json(
             f"{str(save_path.absolute())}.tmp",
-            # num_proc=args.num_proc,
+            # num_proc=num_proc,
             num_proc=1,
             batch_size=save_batch_size,
             compression="gzip"
@@ -109,27 +109,32 @@ def main():
         for key, split in splits.items()
     }
 
+    # for key, shards_per_split in shards.items():
+    #     folder_name = key.replace("/", "__")
+    #     save_split_path: Path = args.save_path / folder_name
+    #     save_split_path.mkdir(parents=True, exist_ok=True)
+    #     num_shards = len(shards_per_split)
+    #     for i, shard_per_split in enumerate(shards_per_split):
+    #         save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.num_proc, args.save_batch_size)
+
+    # parallel version
     with Pool(args.num_proc) as pool:
         for key, shards_per_split in shards.items():
             folder_name = key.replace("/", "__")
             save_split_path: Path = args.save_path / folder_name
             save_split_path.mkdir(parents=True, exist_ok=True)
             num_shards = len(shards_per_split)
-            for i, shard_per_split in enumerate(shards_per_split):
-                save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.save_batch_size)
-
-            # # parallel version
-            # pool.starmap(
-            #     functools.partial(
-            #         save_dataset,
-            #         key=key,
-            #         save_split_path=save_split_path,
-            #         num_shards=num_shards,
-            #         save_batch_size=args.save_batch_size
-            #     ),
-            #     [(shards, i) for i, shards in enumerate(shards_per_split)],
-            #     chunksize=1
-            # )
+            pool.starmap(
+                functools.partial(
+                    save_dataset,
+                    key=key,
+                    save_split_path=save_split_path,
+                    num_shards=num_shards,
+                    save_batch_size=args.save_batch_size
+                ),
+                [(shards, i) for i, shards in enumerate(shards_per_split)],
+                chunksize=1
+            )
 
 if __name__ == "__main__":
     main()
