@@ -66,5 +66,5 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --num-proc 4 \
     --save-num-proc 40 \
     --save-path $SAVE_DATASET_PATH \
-    --save-batch-size 100
+    --save-batch-size 10
 
