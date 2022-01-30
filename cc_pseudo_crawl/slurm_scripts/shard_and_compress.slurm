@@ -7,7 +7,7 @@
 #SBATCH --partition=cpu_p1
 #SBATCH --time 20:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/fix_compress_cpu_p1/%x-%j.out           # output file name
-#SBATCH --array=0-22   # TODO: modify according to the number of models you want to evaluated
+#SBATCH --array=0-605   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=thomas.wang@huggingface.co
 #SBATCH --account=six@cpu
