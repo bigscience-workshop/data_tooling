@@ -130,6 +130,7 @@ def main():
                     key=key,
                     save_split_path=save_split_path,
                     num_shards=num_shards,
+                    num_proc=args.num_proc,
                     save_batch_size=args.save_batch_size
                 ),
                 [(shards, i) for i, shards in enumerate(shards_per_split)],
