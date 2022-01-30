@@ -2115,8 +2115,7 @@ flagged_words = {
         "maɗugo",
         "maɗigo",
         "tsuliya",
-        "tsuliyar"
-        "iskanci",
+        "tsuliyar" "iskanci",
         "duri",
         "durin",
         "guntsu",
