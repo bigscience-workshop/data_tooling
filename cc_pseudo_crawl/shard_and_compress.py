@@ -54,6 +54,7 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
     return results
 
 def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, num_proc, save_batch_size):
+    logger.info(f"Saving: {shard_id}")
     if key == "text/html":
         shard_per_split = shard_per_split.remove_columns("compressed_warc")
         save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}.jsonl.gz"
