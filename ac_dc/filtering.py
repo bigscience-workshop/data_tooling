@@ -934,10 +934,10 @@ class DatasetFiltering:
         self.path_dir_save_dataset = path_dir_save_dataset
 
     def modifying_documents(self):
-        dataset_modifying_documents = FunctionDatasetModifyingDocuments(
+        func_dataset_modifying_documents = FunctionDatasetModifyingDocuments(
             self.lang_dataset_id
         )
-        self.ds = self.ds.map(dataset_modifying_documents, num_proc=self.num_proc)
+        self.ds = self.ds.map(func_dataset_modifying_documents, num_proc=self.num_proc)
 
     def filtering(self):
         func_dataset_filtering = FunctionDatasetFiltering(
