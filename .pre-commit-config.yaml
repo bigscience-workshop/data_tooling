@@ -47,14 +47,14 @@ repos:
 
 # Black, the code formatter, natively supports pre-commit
 - repo: https://github.com/psf/black
-  rev: 21.12b0 # Keep in sync with blacken-docs
+  rev: 22.1.0 # Keep in sync with blacken-docs
   hooks:
   - id: black
     exclude: ^pii_processing/
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.10
+  rev: v1.1.11
   hooks:
   - id: remove-tabs
     exclude: ^(pii_processing|.*Makefile)
