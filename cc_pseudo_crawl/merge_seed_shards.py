@@ -1,4 +1,5 @@
 import logging
+import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -57,7 +58,10 @@ def main():
         logger.info("Not all rows correspond to the correct seed. We need to fix this.")
         exit(1)
 
-    ds.save_to_disk(args.save_path)
+    ds.save_to_disk(f"{args.save_path}.tmp")
+    subprocess.run(
+        ["mv", f"{args.save_path}.tmp", args.save_path]
+    )
 
 
 if __name__ == "__main__":
