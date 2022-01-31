@@ -6,8 +6,8 @@
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
 #SBATCH --time 5:00:00              # maximum execution time (HH:MM:SS)
-#SBATCH --output=logs/fix_compress_cpu_p1/%x-%j.out           # output file name
-#SBATCH --array=0-604   # TODO: modify according to the number of models you want to evaluated
+#SBATCH --output=logs/fix_compress_cpu_p1_2/%x-%j.out           # output file name
+#SBATCH --array=0-44   # TODO: modify according to the number of models you want to evaluated
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=thomas.wang@huggingface.co
 #SBATCH --account=six@cpu
@@ -24,16 +24,16 @@ pushd $DATA_TOOLING_REPO
 
 SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
 SEED_IDS=(
-600
-497
-459
+689
+510
+550
 )
 # SEED_ID=${SEED_IDS[$SLURM_ARRAY_TASK_ID]}
 
-NODES_PER_SEED=10
+NODES_PER_SEED=15
 
 INDEX_SLICE=$(python -c "print($SLURM_ARRAY_TASK_ID % $NODES_PER_SEED)")
-SEED_ID=${SEED_IDS[$(python -c "print($SLURM_ARRAY_TASK_ID // ${#SEED_IDS[@]})")]}
+SEED_ID=${SEED_IDS[$(python -c "print($SLURM_ARRAY_TASK_ID // $NODES_PER_SEED")]}
 
 echo "Sharding and compressing seed id ${SEED_ID}"
 
@@ -49,8 +49,8 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --dataset-path $DATASET_PATH \
     --max-size 10_000_000_000 \
     --num-proc 4 \
-    --save-num-proc 80 \
+    --save-num-proc 10 \
     --save-path $SAVE_DATASET_PATH \
-    --save-batch-size 2 # 100 # 10 # 2 \
+    --save-batch-size 10 # 100 # 10 # 2 \
     --index-slice $INDEX_SLICE \ # ::10
     --total-number-slice $NODES_PER_SEED
