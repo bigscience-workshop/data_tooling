@@ -22,10 +22,19 @@ def get_args():
     parser.add_argument("--save-path", type=str, required=True, help="Where to save the dataset.")
     parser.add_argument("--save-batch-size", type=int, required=True, help="Batch size when writing.")
     parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
+
+    parser.add_argument("--index-slice", type=int)
+    parser.add_argument("--total-number-slice", type=int)
     args = parser.parse_args()
 
     args.dataset_path = Path(args.dataset_path)
     args.save_path = Path(args.save_path)
+
+    if args.index_slice is None:
+        assert args.total_number_slice is None
+    else:
+        assert isinstance(args.index_slice, int)
+        assert isinstance(args.total_number_slice, int)
     return args
 
 def compute_number_of_shards(ds: Dataset, max_size: int) -> int:
@@ -59,6 +68,7 @@ def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, nu
         shard_per_split = shard_per_split.remove_columns("compressed_warc")
         save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}.jsonl.gz"
         if save_path.exists():
+
             return
         shard_per_split.to_json(
             f"{str(save_path.absolute())}.tmp",
@@ -117,6 +127,9 @@ def main():
         save_split_path.mkdir(parents=True, exist_ok=True)
         num_shards = len(shards_per_split)
         for i, shard_per_split in enumerate(shards_per_split):
+            if args.index_slice is not None:
+                if args.index_slice != i % args.total_number_slice:
+                    continue
             save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.save_num_proc, args.save_batch_size)
 
     # # parallel version
