@@ -51,6 +51,6 @@ python cc_pseudo_crawl/shard_and_compress.py \
     --num-proc 4 \
     --save-num-proc 10 \
     --save-path $SAVE_DATASET_PATH \
-    --save-batch-size 10 # 100 # 10 # 2 \
-    --index-slice $INDEX_SLICE \ # ::10
+    --save-batch-size 10 \
+    --index-slice $INDEX_SLICE \
     --total-number-slice $NODES_PER_SEED
