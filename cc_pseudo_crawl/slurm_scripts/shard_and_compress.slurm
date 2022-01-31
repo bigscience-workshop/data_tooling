@@ -33,7 +33,7 @@ SEED_IDS=(
 NODES_PER_SEED=15
 
 INDEX_SLICE=$(python -c "print($SLURM_ARRAY_TASK_ID % $NODES_PER_SEED)")
-SEED_ID=${SEED_IDS[$(python -c "print($SLURM_ARRAY_TASK_ID // $NODES_PER_SEED")]}
+SEED_ID=${SEED_IDS[$(python -c "print($SLURM_ARRAY_TASK_ID // $NODES_PER_SEED)")]}
 
 echo "Sharding and compressing seed id ${SEED_ID}"
 
