@@ -177,7 +177,7 @@ langs_id = [
         "lang": "Tamil",
         "dataset_id": "ta",
         "stopwords_id": None,
-        "flagged_words_id": None,
+        "flagged_words_id": "ta",
         "fasttext_id": "ta",
         "sentencepiece_id": "ta",
         "kenlm_id": "ta",
