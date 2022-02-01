@@ -1019,7 +1019,7 @@ def open_write(
 
 
 def parse_size(size):
-    unit_map = {"B": 1, "K": 1024, "M": 1024 ** 2, "G": 1024 ** 3}
+    unit_map = {"B": 1, "K": 1024, "M": 1024**2, "G": 1024**3}
     unit = size[-1].upper()
     assert (
         unit in unit_map
@@ -1102,7 +1102,7 @@ def request_get_content(url: str, n_retry: int = 3) -> bytes:
             warnings.warn(
                 f"Swallowed error {e} while downloading {url} ({i} out of {n_retry})"
             )
-            time.sleep(10 * 2 ** i)
+            time.sleep(10 * 2**i)
     dl_time = time.time() - t0
     dl_speed = len(r.content) / dl_time / 1024
     logging.info(
@@ -1148,7 +1148,7 @@ def sharded_file(file_pattern: Path, mode: str, max_size: str = "4G") -> MultiFi
     assert 0 < n < 8
     assert "?" * n in name, f"The '?' need to be adjacents in {file_pattern}"
     assert "r" not in mode
-    files = (folder / name.replace("?" * n, f"%0{n}d" % i) for i in range(10 ** n))
+    files = (folder / name.replace("?" * n, f"%0{n}d" % i) for i in range(10**n))
 
     return MultiFile(files, mode, max_size)
 
