@@ -26,15 +26,14 @@ For every site list
   ```
   aws s3 cp seeds.gz.parquet s3://bucket/path/seeds/
   ```
-  Note: the S3 path must point to a bucket with write permissions granted. The path needs to be adjusted also in follwing commands.
+  Note: the S3 path must point to a bucket with write permissions granted. The path needs to be adjusted also in following commands.
 
 3. import the seed table into Athena
   ```sql
-  CREATE EXTERNAL TABLE IF NOT EXISTS bigscience.seeds (
+  CREATE EXTERNAL TABLE IF NOT EXISTS bigscience.seed (
            `id` int,
            `title` string,
            `link` string,
-           `language` string,
            `url_path_prefix` string,
            `url_host_name` string,
            `url_host_registered_domain` string,
@@ -48,18 +47,14 @@ For every site list
 
 4. join the seeds table crawl by crawl with Common Crawl's index, creating a temporary table which is later used as one partition of the result table
    ```
-   python3 cc_lookup.py s3://bucket/path seeds "CC-MAIN-2021"
+   python3 cc_lookup_seed.py s3://bucket/path seeds "CC-MAIN-2021"
    ```
    This will run the join for all crawls of the year 2021 and put the join data into `s3://bucket/path/cc`.
 
 5. finally, create a table holding the result data in order to get further metrics or prepare the content export
   ```sql
-  CREATE EXTERNAL TABLE IF NOT EXISTS bigscience.cc (
-      id                             INT,
-      title                       STRING,
-      link                        STRING,
-      language                    STRING,
-      url_surtkey_prefix          STRING,
+  CREATE EXTERNAL TABLE IF NOT EXISTS bigscience.cc_seed (
+      seed_id                     INT,
       url_surtkey                 STRING,
       url_host_tld                STRING,
       url_host_registered_domain  STRING,
@@ -85,5 +80,43 @@ For every site list
 
 6. load the partitions of the join table
    ```sql
-   MSCK REPAIR TABLE bigscience.cc;
+   MSCK REPAIR TABLE bigscience.cc_seed;
    ```
+
+7. We want to run deduplication in terms of urls.
+  ```sql
+  CREATE TABLE bigscience.cc_seed_dedup_url
+    WITH (external_location = 's3://bucket/path/cc-seed_dedup_url/',
+          partitioned_by = ARRAY['subset'],
+          format = 'PARQUET',
+          parquet_compression = 'GZIP')
+    AS
+    WITH tmp AS (
+        SELECT *, row_number() over (partition by url order by fetch_time desc) row
+        FROM bigscience.cc_seed
+    )
+
+    SELECT
+       seed_id,
+       url,
+       url_surtkey,
+       url_host_tld,
+       url_host_registered_domain,
+       url_host_name,
+       fetch_status,
+       fetch_time,
+       warc_filename,
+       warc_record_offset,
+       warc_record_length,
+       fetch_redirect,
+       content_mime_detected,
+       content_languages,
+       subset
+    FROM tmp
+    WHERE row = 1
+  ```
+8. Run `download_warc.py` The script will download warc files. We provide two helpers: a bash script and a slurm script for easy use
+
+10. Run `preprocess_dataset.py`. This will help populate specific columns such as `outgoing_links`, `depth` ...
+
+9. Send dataset in a bucket somewhere.
