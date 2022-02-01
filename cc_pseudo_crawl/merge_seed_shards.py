@@ -9,10 +9,18 @@ from datasets.utils.logging import set_verbosity_info
 set_verbosity_info()
 logger = logging.getLogger(__name__)
 
+
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument("--dataset-dir", type=str, required=True, help="Dataset directory containing all shards")
-    parser.add_argument("--save-path", type=str, required=True, help="Where to save dataset.")
+    parser.add_argument(
+        "--dataset-dir",
+        type=str,
+        required=True,
+        help="Dataset directory containing all shards",
+    )
+    parser.add_argument(
+        "--save-path", type=str, required=True, help="Where to save dataset."
+    )
     parser.add_argument("--seed-id", type=int, required=True, help="Seed id.")
     args = parser.parse_args()
 
@@ -20,13 +28,14 @@ def get_args():
     args.save_path = Path(args.save_path)
     return args
 
-def load_all_matching_shards(dataset_dir: Path, seed_id: int)-> Dataset:
+
+def load_all_matching_shards(dataset_dir: Path, seed_id: int) -> Dataset:
     """We use seed id and check that the shards correspond to"""
-    shard_paths = sorted([
+    shard_paths = sorted(
         str((elt / f"seed_id={seed_id}").absolute())
         for elt in dataset_dir.iterdir()
         if (elt / f"seed_id={seed_id}").exists()
-    ])
+    )
     logger.info(f"All the following shards will be loaded: {shard_paths}")
 
     shards = []
@@ -42,6 +51,7 @@ def load_all_matching_shards(dataset_dir: Path, seed_id: int)-> Dataset:
 
     logger.info("Concatenating all shards together.")
     return concatenate_datasets(shards)
+
 
 def main():
     # Setup logging
@@ -62,9 +72,7 @@ def main():
         exit(1)
 
     ds.save_to_disk(f"{args.save_path}.tmp")
-    subprocess.run(
-        ["mv", f"{args.save_path}.tmp", args.save_path]
-    )
+    subprocess.run(["mv", f"{args.save_path}.tmp", args.save_path])
 
 
 if __name__ == "__main__":

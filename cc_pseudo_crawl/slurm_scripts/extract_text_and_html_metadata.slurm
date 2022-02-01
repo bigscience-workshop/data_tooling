@@ -57,4 +57,3 @@ python -m cc_pseudo_crawl.extract_text.extract_text_and_html_metadata\
     save_batch_size=$SAVE_BATCH_SIZE\
     project_name=pseudo_crawl_extract\
     use_load_from_disk=true
-

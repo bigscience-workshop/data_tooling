@@ -20,7 +20,8 @@ from bsmetadata.train import show_help
 
 logger = logging.getLogger(__name__)
 
-class MetadataPreprocessor():
+
+class MetadataPreprocessor:
     """A metadata processor can be used for preprocessing text and adding or extracting metadata information."""
 
     def __init__(self, col_to_store_metadata: str) -> None:
@@ -68,7 +69,10 @@ class HtmlPreprocessor(MetadataPreprocessor):
                 {
                     "char_end_idx": Value("int64"),
                     "char_start_idx": Value("int64"),
-                    "html_attrs": {"attrs": [Value("string")], "values": [Value("string")]},
+                    "html_attrs": {
+                        "attrs": [Value("string")],
+                        "values": [Value("string")],
+                    },
                     "key": Value("string"),
                     "relative_end_pos": Value("int64"),
                     "relative_start_pos": Value("int64"),
@@ -89,16 +93,34 @@ class HtmlPreprocessor(MetadataPreprocessor):
             html_parser.objects.TagToRemoveWithContent(tag="style"),
             html_parser.objects.TagToRemoveWithContent(tag="header"),
             html_parser.objects.TagToRemoveWithContent(tag="iframe"),
-            html_parser.objects.TagToRemoveWithContent(tag="footer"),  # copyright in footer
+            html_parser.objects.TagToRemoveWithContent(
+                tag="footer"
+            ),  # copyright in footer
             html_parser.objects.TagToRemoveWithContent(tag="form"),
-            html_parser.objects.TagToRemoveWithContent(tag="body", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="div", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="p", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="section", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="table", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="ul", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="ol", content_max_char_length=64),
-            html_parser.objects.TagToRemoveWithContent(tag="dl", content_max_char_length=64),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="body", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="div", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="p", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="section", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="table", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="ul", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="ol", content_max_char_length=64
+            ),
+            html_parser.objects.TagToRemoveWithContent(
+                tag="dl", content_max_char_length=64
+            ),
         ]
         head_tag = "head"
         footer_tag = "footer"
@@ -113,9 +135,15 @@ class HtmlPreprocessor(MetadataPreprocessor):
             if self.col_to_store_metadata in examples
             else [[] for _ in range(len(examples[self.col_html]))]
         )
-        for example_doc_html, example_metadata in zip(examples[self.col_html], new_metadata):
+        for example_doc_html, example_metadata in zip(
+            examples[self.col_html], new_metadata
+        ):
             if example_doc_html is not None:
-                plain_text, metadata, additional_columns = html_parser.get_clean_text_and_metadata(
+                (
+                    plain_text,
+                    metadata,
+                    additional_columns,
+                ) = html_parser.get_clean_text_and_metadata(
                     example_doc_html,
                     tags_to_remove_with_content=tags_to_remove_with_content,
                     consecutive_tags_to_fold=["div"],
@@ -127,7 +155,12 @@ class HtmlPreprocessor(MetadataPreprocessor):
                 new_footer.append(additional_columns.get(footer_tag, []))
                 new_title.append(additional_columns.get(title_tag, []))
                 example_metadata.extend(
-                    [html_parser.objects.convert_html_metadata_dataclass_to_dict(node) for node in metadata]
+                    [
+                        html_parser.objects.convert_html_metadata_dataclass_to_dict(
+                            node
+                        )
+                        for node in metadata
+                    ]
                 )
             else:
                 new_texts.append(None)
@@ -142,16 +175,22 @@ class HtmlPreprocessor(MetadataPreprocessor):
         examples[self.col_to_store_title] = new_title
         return examples
 
+
 class ErrorWrapperPreprocessor:
     def __init__(
-        self, metadata_preprocessor: MetadataPreprocessor, output_keys: Dict[str, Any], verbose: bool = True
+        self,
+        metadata_preprocessor: MetadataPreprocessor,
+        output_keys: Dict[str, Any],
+        verbose: bool = True,
     ) -> None:
         self.metadata_preprocessor = metadata_preprocessor
         self.output_keys = output_keys
         self.verbose = verbose
 
         self.error_column_name = f"{type(metadata_preprocessor).__name__}_error"
-        self.error_comment_column_name = f"{type(metadata_preprocessor).__name__}_error_comment"
+        self.error_comment_column_name = (
+            f"{type(metadata_preprocessor).__name__}_error_comment"
+        )
 
     @property
     def new_columns_minimal_features(self) -> Dict[str, Any]:
@@ -174,20 +213,27 @@ class ErrorWrapperPreprocessor:
             if col_name in examples
         }
         try:
-            processed_examples = self.metadata_preprocessor.preprocess(examples=examples)
+            processed_examples = self.metadata_preprocessor.preprocess(
+                examples=examples
+            )
 
             random_key = list(processed_examples)[0]
             num_examples = len(processed_examples[random_key])
             if self.error_column_name not in processed_examples:
-                processed_examples[self.error_column_name] = [0 for _ in range(num_examples)]
+                processed_examples[self.error_column_name] = [
+                    0 for _ in range(num_examples)
+                ]
 
             if self.error_comment_column_name not in processed_examples:
-                processed_examples[self.error_comment_column_name] = ["" for _ in range(num_examples)]
+                processed_examples[self.error_comment_column_name] = [
+                    "" for _ in range(num_examples)
+                ]
         except:  # noqa
             # we try the example one by one to find the culprit(s) and strore the error
             processed_examples = {
                 key: []
-                for key in list(self.output_keys.keys()) + [self.error_column_name, self.error_comment_column_name]
+                for key in list(self.output_keys.keys())
+                + [self.error_column_name, self.error_comment_column_name]
             }
 
             for key, values in metadata_list_backup.items():
@@ -197,7 +243,9 @@ class ErrorWrapperPreprocessor:
             for idx in range(len(examples[random_key])):
                 example = {key: [values[idx]] for key, values in examples.items()}
                 try:
-                    processed_example = self.metadata_preprocessor.preprocess(examples=example)
+                    processed_example = self.metadata_preprocessor.preprocess(
+                        examples=example
+                    )
 
                     for key, value in processed_example.items():
                         processed_examples[key].append(value[0])
@@ -208,13 +256,19 @@ class ErrorWrapperPreprocessor:
                     for output_key in self.output_keys.keys():
                         if output_key in metadata_list_backup:
                             # We keep the initial value
-                            processed_examples[output_key].append(metadata_list_backup[output_key][idx])
+                            processed_examples[output_key].append(
+                                metadata_list_backup[output_key][idx]
+                            )
                         elif output_key in example:
                             # We keep the initial value
-                            processed_examples[output_key].append(example[output_key][0])
+                            processed_examples[output_key].append(
+                                example[output_key][0]
+                            )
                         else:
                             # We use the default value
-                            processed_examples[output_key].append(self.output_keys[output_key])
+                            processed_examples[output_key].append(
+                                self.output_keys[output_key]
+                            )
 
                     processed_examples[self.error_column_name].append(1)
                     processed_examples[self.error_comment_column_name].append(str(e))
@@ -224,13 +278,18 @@ class ErrorWrapperPreprocessor:
             logger.warning(f"{num_errors} errors occurred during the preprocessing")
         return processed_examples
 
+
 @dataclass
 class PreprocessingConfig:
     task_id: int = field(metadata={"help": "The id of the task"})
     out_dir: str = field(metadata={"help": "where to save the resulting dataset."})
-    num_files_to_process: int = field(metadata={"help": "the number of files to process"})
+    num_files_to_process: int = field(
+        metadata={"help": "the number of files to process"}
+    )
     path_wiki_db: Optional[str] = field(
-        metadata={"help": "The path to the wikipedia database file necessary for the website descriptions"}
+        metadata={
+            "help": "The path to the wikipedia database file necessary for the website descriptions"
+        }
     )
     entity_path_data_dir: Optional[str] = field(
         metadata={
@@ -238,26 +297,40 @@ class PreprocessingConfig:
         }
     )
     path_or_url_flair_ner_model: Optional[str] = field(
-        default=None, metadata={"help": "TThe path or name of the flair ner model to use to preprocess entities"}
+        default=None,
+        metadata={
+            "help": "TThe path or name of the flair ner model to use to preprocess entities"
+        },
     )
     metadata_to_include: Optional[list] = field(
         default_factory=lambda: ["website_description", "entity", "timestamp"],
         metadata={"help": "The list of metadata to extract"},
     )
     dataset_name: Optional[str] = field(
-        default=None, metadata={"help": "The name of the dataset to use (via the datasets library)"}
+        default=None,
+        metadata={"help": "The name of the dataset to use (via the datasets library)"},
     )
     dataset_config_name: Optional[str] = field(
-        default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)"}
+        default=None,
+        metadata={
+            "help": "The configuration name of the dataset to use (via the datasets library)"
+        },
     )
     overwrite_cache: Optional[bool] = field(
-        default=False, metadata={"help": "Whether the local cache containing datasets should be overwritten."}
+        default=False,
+        metadata={
+            "help": "Whether the local cache containing datasets should be overwritten."
+        },
     )
     cache_dir: Optional[str] = field(
-        default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3?"}
+        default=None,
+        metadata={
+            "help": "Where do you want to store the pretrained models downloaded from s3?"
+        },
     )
     preprocessing_num_workers: Optional[int] = field(
-        default=None, metadata={"help": "The number of processes to use for the preprocessing."}
+        default=None,
+        metadata={"help": "The number of processes to use for the preprocessing."},
     )
     map_batch_size: Optional[int] = field(
         default=1,
@@ -266,7 +339,9 @@ class PreprocessingConfig:
             " the dataset. If you are using `with_metadata` the recommended batch size is 1.."
         },
     )
-    project_name: str = field(default="metadata_lm_exploration", metadata={"help": "The project name."})
+    project_name: str = field(
+        default="metadata_lm_exploration", metadata={"help": "The project name."}
+    )
     save_batch_size: int = field(
         default=datasets.config.DEFAULT_MAX_BATCH_SIZE,
         metadata={"help": " Size of the batch to load in memory and write at once."},
@@ -289,8 +364,6 @@ class Logger:
 
     def close(self):
         wandb.finish()
-
-
 
 
 cs = ConfigStore.instance()
@@ -344,7 +417,11 @@ def main(args: PreprocessingConfig) -> None:  # Setup logging
     poss_files = sorted(os.listdir(args.dataset_name))
 
     if args.use_load_from_disk:
-        poss_files = [file_name for file_name in poss_files if file_name.startswith("pseudo_crawl_seed")]
+        poss_files = [
+            file_name
+            for file_name in poss_files
+            if file_name.startswith("pseudo_crawl_seed")
+        ]
     else:
         poss_files = [
             file_name
@@ -357,7 +434,9 @@ def main(args: PreprocessingConfig) -> None:  # Setup logging
 
         logger.info(config.HF_DATASETS_CACHE)
         processing_name = (
-            "-".join(args.metadata_to_include) if args.metadata_to_include is not None else "full-process"
+            "-".join(args.metadata_to_include)
+            if args.metadata_to_include is not None
+            else "full-process"
         )
         metrics_logger.log({processing_name: 0})
 
@@ -386,8 +465,13 @@ def main(args: PreprocessingConfig) -> None:  # Setup logging
         features_dict = dict(ds.features)
         logger.info(f"the initial features of the dataset are: {features_dict}")
 
-        def apply_processor(ds: Dataset, processor: MetadataPreprocessor, remove_columns=None) -> Dataset:
-            for col_name, feature_type in processor.new_columns_minimal_features.items():
+        def apply_processor(
+            ds: Dataset, processor: MetadataPreprocessor, remove_columns=None
+        ) -> Dataset:
+            for (
+                col_name,
+                feature_type,
+            ) in processor.new_columns_minimal_features.items():
                 assert col_name not in features_dict
                 features_dict[col_name] = feature_type
             extraction_name = processor.__class__.__name__
@@ -432,7 +516,10 @@ def main(args: PreprocessingConfig) -> None:  # Setup logging
         metrics_logger.log({processing_name: 1})
 
     for file_name in poss_files[
-        args.task_id * args.num_files_to_process : args.task_id * args.num_files_to_process + args.num_files_to_process
+        args.task_id
+        * args.num_files_to_process : args.task_id
+        * args.num_files_to_process
+        + args.num_files_to_process
     ]:
         logger.info(f"Start to process {file_name}")
         process_file(file_name=file_name)
