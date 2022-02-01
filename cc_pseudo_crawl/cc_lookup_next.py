@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # iterate over monthly crawls and store
 # the joined data as a partition of the result table
 
@@ -20,11 +18,6 @@ WITH (external_location = '{s3_location}/crawl={crawl}/',
       format = 'PARQUET',
       parquet_compression = 'GZIP')
 AS SELECT
-       {tid}.id              AS id,
-       {tid}.title           AS title,
-       {tid}.link            AS link,
-       {tid}.language        AS language,
-       {tid}.url_surtkey     AS url_surtkey_prefix,
        cc.url_surtkey        AS url_surtkey,
        cc.url_host_tld       AS url_host_tld,
        cc.url_host_registered_domain AS url_host_registered_domain,
@@ -40,9 +33,8 @@ AS SELECT
        cc.content_languages  AS content_languages,
        cc.subset             AS subset
 FROM ccindex.ccindex AS cc
-  RIGHT OUTER JOIN {db}.{seed_table} AS {tid}
-  ON cc.url_host_registered_domain = {tid}.url_host_registered_domain
-     AND strpos(cc.url_surtkey, {tid}.url_surtkey) = 1
+  RIGHT OUTER JOIN {db}.{url_table} AS {tid}
+  ON cc.url = {tid}.url
 WHERE cc.crawl = '{crawl}'
 """
 
@@ -153,7 +145,7 @@ crawls = [
 s3_location = sys.argv[1]
 s3_location = s3_location.rstrip("/")  # no trailing slash!
 
-seed_table = sys.argv[2]
+url_table = sys.argv[2]
 
 crawl_selector = re.compile(sys.argv[3], re.IGNORECASE)
 
@@ -168,9 +160,9 @@ cursor = connect(
 for crawl in crawls:
     query = join_template.format(
         crawl=crawl,
-        s3_location="{}/cc".format(s3_location),
+        s3_location=f"{s3_location}/cc-{url_table}",
         db="bigscience",
-        seed_table=seed_table,
+        url_table=url_table,
         tid="bs",
     )
     logging.info("Athena query: %s", query)
