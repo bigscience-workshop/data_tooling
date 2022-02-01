@@ -15,11 +15,11 @@ set -x -e
 
 source $HOME/start-modelling-metadata-user
 
-mv $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
+# mv $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/ not used
 
 rsync -vam -f'+ *.jsonl.gz' -f'+ */' -f'- *' $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
 
-ls $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/ -f'+ *.jsonl.gz' | xargs -n1 -P8 -I% rsync -Pa % $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
+# ls $six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/ -f'+ *.jsonl.gz' | xargs -n1 -P8 -I% rsync -Pa % $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/ not used
 
 
 cd $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
@@ -29,19 +29,8 @@ git status
 for seed_id in {1..697}
 do
     echo "Add seed id n°$seed_id"
-    git add -v *seed_id="$seed_id"*.gz
+    git add -v *seed_id="$seed_id"/*.gz
 done
-
-git add -v html_dataset_infos.json
-
-for seed_id in {1..697}
-do
-    echo "Add seed id n°$seed_id"
-    git add -v *seed_id="$seed_id"*.arrow
-    git add -v *seed_id="$seed_id"*.json
-done
-
 
 git commit -v -m "add depth 0 dataset with html content extracted"
-
 git push -v
