@@ -50,7 +50,6 @@ SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING
 # )
 # SEED_ID=${SEED_IDS[$SLURM_ARRAY_TASK_ID]}
 
-
 echo "Sharding and compressing seed id ${SEED_ID}"
 
 DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
