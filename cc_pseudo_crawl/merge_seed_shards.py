@@ -28,15 +28,18 @@ def load_all_matching_shards(dataset_dir: Path, seed_id: int)-> Dataset:
         if (elt / f"seed_id={seed_id}").exists()
     ])
     logger.info(f"All the following shards will be loaded: {shard_paths}")
+
     shards = []
     for shard_path in shard_paths:
         logger.info(f"Loading {shard_path}")
         shard = load_from_disk(shard_path)
         shards.append(shard)
+
     # # Parallel version seems to go OOM
     # with Pool(num_proc) as pool:
     #     async_results = pool.map_async(load_from_disk, shard_paths)
     #     shards = async_results.get()
+
     logger.info("Concatenating all shards together.")
     return concatenate_datasets(shards)
 

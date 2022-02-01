@@ -1,6 +1,4 @@
-import functools
 import logging
-import os
 import subprocess
 from argparse import ArgumentParser
 from math import ceil
@@ -54,6 +52,7 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
 
     if number_shards <= 1:
         return [ds]
+
     results = []
     logger.info(f"Shard dataset in {number_shards} shards")
     for shard_id in range(number_shards):
@@ -63,23 +62,23 @@ def shard_dataset(ds: Dataset, max_size: int) -> List[Dataset]:
     return results
 
 def save_dataset(shard_per_split, shard_id, key, save_split_path, num_shards, num_proc, save_batch_size):
-    logger.info(f"Saving: {shard_id}")
+    logger.info(f"Saving: {shard_id} / {num_shards}")
     if key == "text/html":
         shard_per_split = shard_per_split.remove_columns("compressed_warc")
         save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}.jsonl.gz"
         if save_path.exists():
-
+            logger.info("Shard was already saved")
             return
         shard_per_split.to_json(
             f"{str(save_path.absolute())}.tmp",
             num_proc=num_proc,
-            # num_proc=1,
             batch_size=save_batch_size,
             compression="gzip"
         )
     else:
         save_path = save_split_path / f"shard-id-{shard_id}--{num_shards}"
         if save_path.exists():
+            logger.info("Shard was already saved")
             return
         shard_per_split.save_to_disk(
             f"{str(save_path.absolute())}.tmp",
@@ -131,26 +130,6 @@ def main():
                 if args.index_slice != i % args.total_number_slice:
                     continue
             save_dataset(shard_per_split, i, key, save_split_path, num_shards, args.save_num_proc, args.save_batch_size)
-
-    # # parallel version
-    # with Pool(args.save_num_proc) as pool:
-    #     for key, shards_per_split in shards.items():
-    #         folder_name = key.replace("/", "__")
-    #         save_split_path: Path = args.save_path / folder_name
-    #         save_split_path.mkdir(parents=True, exist_ok=True)
-    #         num_shards = len(shards_per_split)
-    #         pool.starmap(
-    #             functools.partial(
-    #                 save_dataset,
-    #                 key=key,
-    #                 save_split_path=save_split_path,
-    #                 num_shards=num_shards,
-    #                 num_proc=1,
-    #                 save_batch_size=args.save_batch_size
-    #             ),
-    #             [(shards, i) for i, shards in enumerate(shards_per_split)],
-    #             chunksize=1
-    #         )
 
 if __name__ == "__main__":
     main()

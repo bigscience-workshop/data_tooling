@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 import subprocess
@@ -6,7 +5,6 @@ import threading
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from queue import Queue
 
 import boto3
 import botocore
