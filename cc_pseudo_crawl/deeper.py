@@ -1,3 +1,6 @@
+"""
+Generate list of urls to query for next depth. We then need to use Athena to make a fancy query.
+"""
 import csv
 import re
 import subprocess
@@ -5,11 +8,6 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from datasets import load_dataset
-
-"""
-Generate list of urls to query for next depth. We then need to use Athena to make a fancy query.
-"""
-
 
 def get_args():
     parser = ArgumentParser()

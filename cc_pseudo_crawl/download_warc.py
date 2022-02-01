@@ -1,3 +1,8 @@
+"""
+Required: obtain cc_index and copy it locally
+`aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/`
+"""
+
 import logging
 import re
 import subprocess
@@ -13,11 +18,6 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from datasets import config, load_dataset
 from datasets.utils.logging import set_verbosity_info
-
-"""
-Required: obtain cc_index and copy it locally
-`aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/`
-"""
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)

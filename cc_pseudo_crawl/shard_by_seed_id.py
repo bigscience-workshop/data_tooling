@@ -1,3 +1,6 @@
+"""
+Deduplicating using `datasets` is much harder, we but we forgot to generate an id when building an index, so we're screwed.
+"""
 import logging
 import subprocess
 from argparse import ArgumentParser
@@ -7,10 +10,6 @@ from typing import Dict
 
 from datasets import Dataset, load_from_disk, concatenate_datasets
 from datasets.utils.logging import set_verbosity_info
-
-"""
-Deduplicating using `datasets` is much harder, we but we forgot to generate an id when building an index, so we're screwed.
-"""
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)
