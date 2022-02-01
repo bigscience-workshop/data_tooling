@@ -9,6 +9,7 @@ from pathlib import Path
 
 from datasets import load_dataset
 
+
 def get_args():
     parser = ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
