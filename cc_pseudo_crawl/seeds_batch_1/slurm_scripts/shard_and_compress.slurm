@@ -44,7 +44,7 @@ mkdir -p $SAVE_DATASET_PATH
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/seeds_batch_1/shard_and_compress.py \
+python cc_pseudo_crawl/python_scripts/shard_and_compress.py \
     --dataset-path $DATASET_PATH \
     --max-size 10_000_000_000 \
     --num-proc 4 \

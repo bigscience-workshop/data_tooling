@@ -26,7 +26,7 @@ pushd $DATA_TOOLING_REPO
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/seeds_batch_1/download_warc.py \
+python cc_pseudo_crawl/python_scripts/download_warc.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
     --save-dir $SAVE_DATASET_DIR \

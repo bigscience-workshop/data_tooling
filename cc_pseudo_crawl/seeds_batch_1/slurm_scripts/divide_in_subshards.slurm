@@ -27,7 +27,7 @@ mkdir -p $SAVE_DATASET_DIR
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python -m cc_pseudo_crawl.seeds_batch_1.divide_in_shards \
+python -m cc_pseudo_crawl.python_scripts.divide_in_shards \
     --dataset-path $DATASET_PATH \
     --save-dir $SAVE_DATASET_DIR \
     --num-shards 10

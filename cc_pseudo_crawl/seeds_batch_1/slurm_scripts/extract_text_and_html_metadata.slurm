@@ -46,7 +46,7 @@ echo "    out_dir=$OUT_DIR"
 echo "    dataset_name=$DATASET_FILES_DIR"
 echo "    metadata_to_include=$METADATA_TO_INCLUDE"
 
-python -m cc_pseudo_crawl.seeds_batch_1.extract_text.extract_text_and_html_metadata\
+python -m cc_pseudo_crawl.python_scripts.extract_text.extract_text_and_html_metadata\
     task_id=${SLURM_ARRAY_TASK_ID}\
     out_dir=$OUT_DIR \
     dataset_name=$DATASET_FILES_DIR \

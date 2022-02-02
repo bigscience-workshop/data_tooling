@@ -23,5 +23,5 @@ pushd $DATA_TOOLING_REPO
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python -m cc_pseudo_crawl.seeds_batch_1.check_erros_in_dataset \
+python -m cc_pseudo_crawl.python_scripts.check_erros_in_dataset \
     --dataset-dir $DATASET_DIR
