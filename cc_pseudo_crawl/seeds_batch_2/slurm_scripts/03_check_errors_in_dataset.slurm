@@ -16,7 +16,7 @@ conda activate thomas_data_tooling
 
 DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling #TODO change path if necessary
 
-DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-redownload/bigscience-catalogue-data
+DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl_batch_2/datasets-redownload/bigscience-catalogue-data
 echo $DATASET_DIR
 pushd $DATA_TOOLING_REPO
 
