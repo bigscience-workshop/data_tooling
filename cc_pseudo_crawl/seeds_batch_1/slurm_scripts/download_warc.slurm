@@ -15,8 +15,8 @@ set -x -e
 source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling # Debug deepspeed temporarily
 
-CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
-SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets
+CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/cc
+SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 pushd $DATA_TOOLING_REPO
 
