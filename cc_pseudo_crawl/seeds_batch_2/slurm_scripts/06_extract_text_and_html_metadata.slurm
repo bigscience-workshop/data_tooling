@@ -34,7 +34,7 @@ PREPROCESSING_NUM_WORKERS=80
 NUM_FILES_TO_PROCESS=1
 SAVE_BATCH_SIZE=1000
 
-DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
+DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 pushd $DATA_TOOLING_REPO
 
 echo "Args:"
