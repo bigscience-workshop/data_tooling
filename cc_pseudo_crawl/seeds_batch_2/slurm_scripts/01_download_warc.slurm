@@ -15,8 +15,8 @@ set -x -e
 source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling
 
-CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl_batch_2/cc #TODO change path if necessary
-SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl_batch_2/datasets
+CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/cc #TODO change path if necessary
+SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling #TODO change path if necessary
 pushd $DATA_TOOLING_REPO
 
