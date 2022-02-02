@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=pseudo_crawl_compute_stats
+#SBATCH --job-name=pseudo_crawl_compute_stats_v5
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
 #SBATCH --cpus-per-task=4         # number of cores per tasks
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
 #SBATCH --time 10:00:00              # maximum execution time (HH:MM:SS)
-#SBATCH --output=/gpfswork/rech/six/uty16tp/code/big_science/logs/compute_stats/%x-%j.out           # output file name
+#SBATCH --output=/gpfswork/rech/six/uty16tp/code/big_science/logs/compute_stats_v5/%x-%j.out           # output file name
 #SBATCH --array=1-604
 #SBATCH --account=six@cpu
 
@@ -26,9 +26,10 @@ echo "Computing stats on seed id ${SEED_ID}"
 
 DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
 SAVE_STATS_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-stats/bigscience-catalogue-data/seed_id="$SEED_ID"/stats.json
-SAVE_STATS_PATH_FULL=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-stats/bigscience-catalogue-data/seed_id="$SEED_ID"/full
+SAVE_STATS_PATH_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-stats/bigscience-catalogue-data/seed_id="$SEED_ID"/full
+SAVE_STATS_PATH_FULL=$SAVE_STATS_PATH_DIR/full.jsonl.gz
 
-mkdir -p $SAVE_STATS_PATH_FULL
+mkdir -p $SAVE_STATS_PATH_DIR
 
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete

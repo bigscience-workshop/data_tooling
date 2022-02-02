@@ -1,22 +1,17 @@
+import os
 import json
 import logging
 import subprocess
-import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from statistics import mean
 
 import datasets
-from bs4 import BeautifulSoup
-from bs4.dammit import EncodingDetector
 from datasets import config, load_from_disk
 from datasets.utils.logging import set_verbosity_info
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)
-
-# For `soup.decode_content` that can hit the limit
-sys.setrecursionlimit(10000)
 
 
 def get_args():
@@ -59,6 +54,11 @@ def main():
     args = get_args()
     logger.info(f"** The job is runned with the following arguments: **\n{args}\n **** ")
 
+    if os.path.isfile(args.save_path_stats_json):
+        logger.info(f" --- Statistics already computed for seed id {args.seed_id} ")
+        return
+        
+    logger.info(f" --- Statistics not already computed for seed id {args.seed_id} ")
     if not args.use_datasets_caching:
         datasets.set_caching_enabled(False)
     else:
@@ -92,8 +92,10 @@ def main():
 
     ds_html = splits[selected_mime_types[0]]
 
+    logger.info(f"the currents splits are {data_stats}.")
+
     def get_length_text(example):
-        example["length_text"] = len(example["text"])
+        example["length_text"] = len(example["text"]) if example["text"] is not None else 0
         return example
 
     cols_to_remove = [col for col in ds.column_names if col not in ["content_languages", "url_host_tld"]]
@@ -105,7 +107,9 @@ def main():
     )
 
     data_stats["html_empty_text"] = len([e for e in ds_html["length_text"] if e == 0])
-    data_stats["html_mean_length_non_empty_text"] = mean([e for e in ds_html["length_text"] if e != 0])
+
+    non_empty_texts = [e for e in ds_html["length_text"] if e != 0]
+    data_stats["html_mean_length_non_empty_text"] = mean(non_empty_texts) if non_empty_texts != [] else None
     data_stats["seed_id"] = args.seed_id
 
     logger.info(f"There is {data_stats['html_empty_text']} empty text rows out of {len(ds_html)} rows.")
@@ -119,7 +123,8 @@ def main():
     subprocess.run(["mv", save_path_tmp, str(save_path.absolute())])
 
     save_path = Path(args.save_path_stats_full_json)
-    save_path_tmp = f"{str(save_path.absolute())}.tmp"
+    tmp_file_name = f"tmp-{str(save_path.name)}"
+    save_path_tmp = os.path.join(save_path.parent, tmp_file_name) 
     logger.info(f"Saving the dataset at {save_path_tmp}")
     ds_html.to_json(
         save_path_tmp,
