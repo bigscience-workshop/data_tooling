@@ -28,7 +28,7 @@ mkdir -p $(dirname $SAVE_DATASET_PREFIX_PATH)
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/shard_by_seed_id.py \
+python cc_pseudo_crawl/seeds_batch_1/shard_by_seed_id.py \
     --dataset-path $DATASET_PATH \
     --num-proc 4 \
     --save-prefix-path $SAVE_DATASET_PREFIX_PATH

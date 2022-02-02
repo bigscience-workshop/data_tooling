@@ -25,7 +25,7 @@ pushd $DATA_TOOLING_REPO
 # TODO run this offline
 # aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/
 
-python cc_pseudo_crawl/download_warc.py \
+python cc_pseudo_crawl/seeds_batch_1/download_warc.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
     --save-dir $SAVE_DATASET_DIR \
