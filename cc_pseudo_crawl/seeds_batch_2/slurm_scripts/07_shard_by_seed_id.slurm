@@ -6,7 +6,7 @@
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
 #SBATCH --time 04:00:00              # maximum execution time (HH:MM:SS)
-#SBATCH --output=logs/%x-%j.out           # output file name #TODO change path if necessary
+#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_2/logs/shard_by_seed_id/%x-%j.out           # output file name #TODO change path if necessary
 #SBATCH --array=0-99   #TODO set correct number
 #SBATCH --account=six@cpu
 

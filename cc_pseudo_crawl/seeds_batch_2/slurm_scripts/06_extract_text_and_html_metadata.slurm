@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=40                                               # (change me! between 0 and 48) number of cores per tasks
 #SBATCH --hint=nomultithread                                            # we get physical cores not logical
 #SBATCH --time 2:00:00                                                 # (change me! between 0 and 20h) maximum execution time (HH:MM:SS)
-#SBATCH --output=logs/%x-%j.out           # output file name #TODO change path if necessary
+#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_2/logs/extract_meta/%x-%j.out           # output file name #TODO change path if necessary
 #SBATCH --account=six@cpu                                               # account
 #SBATCH --array=0-99   #TODO set correct number
 #SBATCH --partition=cpu_p1
