@@ -32,8 +32,12 @@ def get_args():
         required=True,
         help="Folder containing index dataset in parquet format.",
     )
-    parser.add_argument("--save-dir", type=str, required=True, help="Where to save the datasets.")
-    parser.add_argument("--num-proc", type=int, default=1, help="Number of procs use for preprocessing.")
+    parser.add_argument(
+        "--save-dir", type=str, required=True, help="Where to save the datasets."
+    )
+    parser.add_argument(
+        "--num-proc", type=int, default=1, help="Number of procs use for preprocessing."
+    )
     parser.add_argument(
         "--range",
         type=str,
@@ -44,7 +48,10 @@ def get_args():
     parser.add_argument("--num-shards", type=int, help="Total number of shards.")
     parser.add_argument("--use-datasets-caching", action="store_true")
     parser.add_argument(
-        "--flavor", type=str, default=None, help="Optional string to denominate the type of the dataset."
+        "--flavor",
+        type=str,
+        default=None,
+        help="Optional string to denominate the type of the dataset.",
     )
 
     args = parser.parse_args()
@@ -135,7 +142,9 @@ def get_warcs(batch):
         existing_compressed_warcs,
     )
 
-    batch["compressed_warc"], batch["download_exception"] = [list(l) for l in zip(*warcs_or_exceptions)]
+    batch["compressed_warc"], batch["download_exception"] = [
+        list(l) for l in zip(*warcs_or_exceptions)
+    ]
     return batch
 
 
@@ -160,11 +169,17 @@ def download_warcs(ds, save_path, num_proc):
     )
 
     ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
-    subprocess.run(["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())])
+    subprocess.run(
+        ["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())]
+    )
 
     with open(save_path / "missing_rows.txt", "w") as fi:
-        indices_that_failed = [i for i, e in enumerate(ds["download_exception"]) if e is not None]
-        fi.write(f"Download failed for {len(indices_that_failed)} rows. Please try re-running this script somehow.\n")
+        indices_that_failed = [
+            i for i, e in enumerate(ds["download_exception"]) if e is not None
+        ]
+        fi.write(
+            f"Download failed for {len(indices_that_failed)} rows. Please try re-running this script somehow.\n"
+        )
         fi.writelines([f"{i}\n" for i in indices_that_failed])
 
 
@@ -176,15 +191,21 @@ def main():
         level=logging.INFO,
     )
     args = get_args()
-    logger.info(f"** The job is runned with the following arguments: **\n{args}\n **** ")
+    logger.info(
+        f"** The job is runned with the following arguments: **\n{args}\n **** "
+    )
 
     if not args.use_datasets_caching:
         datasets.set_caching_enabled(False)
     else:
-        logger.info(f"the datasets results will be cached at {config.HF_DATASETS_CACHE}.")
+        logger.info(
+            f"the datasets results will be cached at {config.HF_DATASETS_CACHE}."
+        )
 
     if args.shard_id is not None:
-        save_path = Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
+        save_path = (
+            Path(args.save_dir) / f"{args.dataset}--{args.shard_id}--{args.num_shards}"
+        )
     else:
         save_path = Path(args.save_dir) / args.dataset
 
