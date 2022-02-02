@@ -15,7 +15,7 @@ source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling # Debug deepspeed temporarily
 
 DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
-DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-redownload/bigscience-catalogue-data
+DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-redownload/bigscience-catalogue-data
 echo $DATASET_DIR
 pushd $DATA_TOOLING_REPO
 

@@ -25,8 +25,8 @@ export WANDB_DIR=$SCRATCH
 
 METADATA_TO_INCLUDE='["html"]'
 
-DATASET_FILES_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-preprocessed/bigscience-catalogue-data
-OUT_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-preprocessed-text-extracted/bigscience-catalogue-data
+DATASET_FILES_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-preprocessed/bigscience-catalogue-data
+OUT_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-preprocessed-text-extracted/bigscience-catalogue-data
 
 mkdir -p $OUT_DIR
 

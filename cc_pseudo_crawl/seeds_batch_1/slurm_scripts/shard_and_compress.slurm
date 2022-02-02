@@ -16,7 +16,7 @@ set -x -e
 source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling # Debug deepspeed temporarily
 
-CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/cc
+CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/cc
 DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 
 pushd $DATA_TOOLING_REPO
@@ -36,8 +36,8 @@ SEED_ID=$(python cc_pseudo_crawl/seeds_batch_1/load_all_seed_ids.py --seed-path 
 
 echo "Sharding and compressing seed id ${SEED_ID}"
 
-DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
-SAVE_DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-compressed-shards/bigscience-catalogue-data/seed_id="$SEED_ID"
+DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
+SAVE_DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-compressed-shards/bigscience-catalogue-data/seed_id="$SEED_ID"
 
 mkdir -p $SAVE_DATASET_PATH
 

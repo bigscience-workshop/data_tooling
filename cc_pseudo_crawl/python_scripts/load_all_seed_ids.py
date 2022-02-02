@@ -5,7 +5,12 @@ from pathlib import Path
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument("--seed-path", type=str, required=True, help="Seed full path. e.g. 'xxx/seeds.csv'")
+    parser.add_argument(
+        "--seed-path",
+        type=str,
+        required=True,
+        help="Seed full path. e.g. 'xxx/seeds.csv'",
+    )
     parser.add_argument("--seed-index", type=int, required=True, help="Seed index.")
     args = parser.parse_args()
 
