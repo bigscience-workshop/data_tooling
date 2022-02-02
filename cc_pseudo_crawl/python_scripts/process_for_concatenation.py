@@ -1,7 +1,14 @@
 import ast
+import logging
 from argparse import ArgumentParser
+from pathlib import Path
+from typing import Dict
 
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, concatenate_datasets
+
+set_verbosity_info()
+logger = logging.getLogger(__name__)
+
 
 def parse_dataset_with_ratio(elt: str):
     tuple_ = ast.literal_eval(elt)
@@ -15,7 +22,18 @@ def get_args():
     parser.add_argument(
         "--datasets-with_ratio",
         type=lambda x: [parse_dataset_with_ratio(elt) for elt in x.split(",")],
-        required=True, help="Dataset name.")
+        required=True
+    )
+    parser.add_argument(
+        "--num-proc",
+        type=int,
+        required=True
+    )
+    parser.add_argument(
+        "--save-path",
+        type=Path,
+        required=True
+    )
 
     args = parser.parse_args()
 
@@ -42,20 +60,40 @@ def collapse_meta(ds: Dataset, num_proc):
     column_names_to_remove = [name for name in ds.column_names if name not in columns_to_keep]
     return ds.map(collapse_meta_, batched=True, num_proc=num_proc, remove_columns=column_names_to_remove)
 
-
 def main():
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
     args = get_args()
+    logger.info(
+        f"** The job is runned with the following arguments: **\n{args}\n **** "
+    )
 
-    sampled_datasets = {}
+    sampled_datasets: Dict[str, Dataset] = {}
     for dataset_path, ratio in args.datasets_with_ratio:
         ds = load_dataset(dataset_path)
 
+        # collapse all meta data in "meta" column
+        ds = collapse_meta(ds, args.num_proc)
+
+        # randomly sample ratio * len(ds)
+        # TODO: build more efficiently
         ds = ds.shuffle(seed=42)
-        ds = ds[:int(ratio * len(ds))]
+        ds = ds.select(range(int(ratio * len(ds))))
+
         sampled_datasets[dataset_path] = ds
+        logger.info(f"Processed {dataset_path}")
 
+    ds = concatenate_datasets(list(sampled_datasets.values()))
 
-
+    # Save dataset locally
+    logger.info(f"Save dataset at {args.save_path}")
+    save_path_tmp = Path(f"{str(args.save_path.absolute())}.tmp")
+    ds.save_to_disk(str(save_path_tmp.absolute()))
+    save_path_tmp.rename(args.save_path)
 
 if __name__ == "__main__":
     main()
