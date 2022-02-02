@@ -23,14 +23,14 @@ DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-shard-by-seed-id/bigscience-catalogue-data
 pushd $DATA_TOOLING_REPO
 
-SEED_ID=$(python cc_pseudo_crawl/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
+SEED_ID=$(python cc_pseudo_crawl/seeds_batch_1/load_all_seed_ids.py --seed-path "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/ --seed-index $SLURM_ARRAY_TASK_ID)
 echo "Merging all shards of seed id ${SEED_ID}"
 SAVE_DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-catalogue-data/pseudo_crawl_seed--seed-id--"$SEED_ID"
 
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/merge_seed_shards.py \
+python cc_pseudo_crawl/seeds_batch_1/merge_seed_shards.py \
     --dataset-dir $DATASET_DIR \
     --seed-id $SEED_ID \
     --save-path $SAVE_DATASET_PATH
