@@ -38,9 +38,8 @@ def get_args():
     parser.add_argument(
         "--flavor",
         type=str,
-        required=True,
-        default=1,
-        help="Number of procs use for preprocessing.",
+        default=None,
+        help="Optional string to denominate the type of the dataset.",
     )
     parser.add_argument(
         "--num-examples",
