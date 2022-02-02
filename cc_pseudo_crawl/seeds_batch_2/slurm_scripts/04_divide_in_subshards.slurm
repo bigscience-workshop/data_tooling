@@ -13,7 +13,7 @@
 set -x -e
 
 source $six_ALL_CCFRWORK/start-prod
-conda activate thomas_data_tooling 
+conda activate thomas_data_tooling
 
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/cc  #TODO change path if necessary
 DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling  #TODO change path if necessary
