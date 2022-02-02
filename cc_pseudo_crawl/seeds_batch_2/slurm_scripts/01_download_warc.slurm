@@ -25,10 +25,14 @@ mkdir -p $SAVE_DATASET_DIR
 # TODO run this offline
 # aws s3 sync s3://commoncrawl-dev/big-science-workshop/data-sourcing-sheet/cc-{FLAVOR}/ $CC_INDEX_FOLDER/cc-{FLAVOR}/
 
+export HF_DATASETS_OFFLINE=1
+export HF_DATASETS_CACHE=$SCRATCH/to_delete
+
 python cc_pseudo_crawl/seeds_batch_1/download_warc.py \
     --dataset bigscience-catalogue-data/pseudo_crawl_seed \
     --cc-index-folder $CC_INDEX_FOLDER \
     --save-dir $SAVE_DATASET_DIR \
     --num-proc 4 \
     --shard-id $SLURM_ARRAY_TASK_ID \
-    --num-shards $SLURM_ARRAY_TASK_COUNT
+    --num-shards $SLURM_ARRAY_TASK_COUNT \
+    --use-datasets-caching
