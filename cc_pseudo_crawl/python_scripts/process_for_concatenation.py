@@ -23,11 +23,18 @@ def get_args():
 
 def collapse_meta_(batch):
     """{"text": str, "meta": str}"""
-    columns_not_in_meta = ["text"," html_str"]
-    column_names = [name for name in batch.keys() if name]
+    # TODO: check that
+    columns_not_in_meta = ["text", "html_str"]
+    columns_to_collapse = [name for name in batch.keys() if name not in columns_not_in_meta]
 
-    batch["meta"]
-    return batch
+    new_batch = {
+        "text": batch["text"],
+        "meta": [
+            str({key: value for key, value in zip(columns_to_collapse, row)})
+            for row in zip(*[batch[name] for name in columns_to_collapse])
+        ]
+    }
+    return new_batch
 
 def collapse_meta(ds: Dataset, num_proc):
     """{"text": str, "meta": str}"""
