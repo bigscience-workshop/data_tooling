@@ -30,7 +30,7 @@ SAVE_DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/datasets-seeds/bigscience-ca
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/seeds_batch_1/merge_seed_shards.py \
+python cc_pseudo_crawl/python_scripts/merge_seed_shards.py \
     --dataset-dir $DATASET_DIR \
     --seed-id $SEED_ID \
     --save-path $SAVE_DATASET_PATH
