@@ -7,7 +7,7 @@
 #SBATCH --partition=cpu_p1
 #SBATCH --time 04:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name #TODO change path if necessary
-#SBATCH --array=0-9   #TODO set correct number
+#SBATCH --array=0-99   #TODO set correct number
 #SBATCH --account=six@cpu
 
 set -x -e
@@ -16,10 +16,10 @@ source $six_ALL_CCFRWORK/start-prod
 conda activate thomas_data_tooling
 
 CC_INDEX_FOLDER=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/cc  #TODO change path if necessary
-DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling  #TODO change path if necessary
+DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling  #TODO change path if necessary
 
-DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-preprocessed-text-extracted/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--1000
-SAVE_DATASET_PREFIX_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1/datasets-shard-by-seed-id/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--1000
+DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-preprocessed-text-extracted/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--100
+SAVE_DATASET_PREFIX_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-shard-by-seed-id/bigscience-catalogue-data/pseudo_crawl_seed--"$SLURM_ARRAY_TASK_ID"--100
 pushd $DATA_TOOLING_REPO
 
 mkdir -p $(dirname $SAVE_DATASET_PREFIX_PATH)

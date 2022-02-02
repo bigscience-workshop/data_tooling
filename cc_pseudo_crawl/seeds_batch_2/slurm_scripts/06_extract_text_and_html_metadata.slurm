@@ -7,7 +7,7 @@
 #SBATCH --time 2:00:00                                                 # (change me! between 0 and 20h) maximum execution time (HH:MM:SS)
 #SBATCH --output=logs/%x-%j.out           # output file name #TODO change path if necessary
 #SBATCH --account=six@cpu                                               # account
-#SBATCH --array=0-9   #TODO set correct number
+#SBATCH --array=0-99   #TODO set correct number
 #SBATCH --partition=cpu_p1
 
 set -x -e
@@ -34,7 +34,7 @@ PREPROCESSING_NUM_WORKERS=80
 NUM_FILES_TO_PROCESS=1
 SAVE_BATCH_SIZE=1000
 
-DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
+DATA_TOOLING_REPO=$WORK/code/big_science/data_tooling
 pushd $DATA_TOOLING_REPO
 
 echo "Args:"
