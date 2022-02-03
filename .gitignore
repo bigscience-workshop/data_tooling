@@ -147,4 +147,4 @@ lid.176.bin
 **/*.lprof
 
 # Visualization json files
-**/*examples_with_stats.json
+**/*examples_with_stats*
