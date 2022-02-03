@@ -37,7 +37,7 @@ def main():
     others = load_others(args.dataset_path)
     features = others.features.copy()
     features.pop("compressed_warc")
-    text_htmls = load_dataset(str((args.dataset_path / "text__html").absolute()), data_files="**.jsonl.gz", features=features)
+    text_htmls = load_dataset(str((args.dataset_path / "text__html").absolute()), data_files="**.jsonl.gz", features=features, split="train")
 
     logger.info(f"Text/html: {len(text_htmls)}")
     logger.info(f"Others: {len(others)}")
