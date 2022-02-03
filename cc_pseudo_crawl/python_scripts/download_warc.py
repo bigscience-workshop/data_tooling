@@ -5,6 +5,7 @@ Required: obtain cc_index and copy it locally
 
 import logging
 import re
+import shutil
 import subprocess
 import threading
 from argparse import ArgumentParser
@@ -47,23 +48,34 @@ def get_args():
     parser.add_argument("--shard-id", type=int, help="Preprocess dataset via shards.")
     parser.add_argument("--num-shards", type=int, help="Total number of shards.")
     parser.add_argument("--use-datasets-caching", action="store_true")
+    parser.add_argument(
+        "--flavor",
+        type=str,
+        default=None,
+        help="Optional string to denominate the type of the dataset.",
+    )
 
     args = parser.parse_args()
 
-    matches = re.match(
-        r"^bigscience-catalogue-data/pseudo_crawl_(?:(.*)_partial|(seed))(_dedup_url)?$",
-        args.dataset,
-    )
-    assert matches is not None
-    flavors = [elt for elt in matches.groups() if elt is not None]
-    assert len(flavors) == 1 or (len(flavors) == 2 and flavors[1] == "_dedup_url")
-    flavor = flavors[0]
+    # TODO, nuke this, too complicated
+    if not args.flavor:
+        matches = re.match(
+            r"^bigscience-catalogue-data/pseudo_crawl_(?:(.*)_partial|(seed))(_dedup_url)?$",
+            args.dataset,
+        )
+        assert matches is not None
+        flavors = [elt for elt in matches.groups() if elt is not None]
+        assert len(flavors) == 1 or (len(flavors) == 2 and flavors[1] == "_dedup_url")
+        flavor = flavors[0]
+        args.flavor = flavor
+    else:
+        flavors = [args.flavor]
     assert (
-        flavor == "seed"
-        or re.match(r"^intermediate_depth_([0-9]+)$", flavor) is not None
+        args.flavor == "seed"
+        or args.flavor == "seeds_batch_2"
+        or re.match(r"^intermediate_depth_([0-9]+)$", args.flavor) is not None
     )
     args.cc_index_folder = Path(args.cc_index_folder) / f"cc-{''.join(flavors)}"
-    args.flavor = flavor
 
     if args.shard_id is not None:
         assert args.num_shards is not None
@@ -157,10 +169,14 @@ def download_warcs(ds, save_path, num_proc):
         f"Download failed for {len([e for e in ds['download_exception'] if e is not None])} rows. Please try re-running this script somehow."
     )
 
-    ds.save_to_disk(f"{str(save_path.absolute())}.tmp")
-    subprocess.run(
-        ["mv", f"{str(save_path.absolute())}.tmp", str(save_path.absolute())]
-    )
+    save_path_tmp = Path(f"{str(save_path.absolute())}.tmp")
+    save_path_tmp_2 = Path(f"{str(save_path.absolute())}.tmp.2")
+    ds.save_to_disk(save_path_tmp)  # Will override previous dataset
+    if save_path.exists():
+        save_path.rename(save_path_tmp_2)
+    save_path_tmp.rename(save_path)
+    if save_path_tmp_2.exists():
+        shutil.rmtree(save_path_tmp_2)
 
     with open(save_path / "missing_rows.txt", "w") as fi:
         indices_that_failed = [
