@@ -63,4 +63,4 @@ repos:
   rev: v0.8.0.3
   hooks:
   - id: shellcheck
-    exclude: ^pii_processing/
+    exclude: ^(pii_processing/|cc_pseudo_crawl)
