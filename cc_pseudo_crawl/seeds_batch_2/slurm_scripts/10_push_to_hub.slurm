@@ -14,14 +14,14 @@ set -x -e
 
 source $HOME/start-modelling-metadata-user
 
-# mv $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/hub/pseudo_crawl/ not used
+# mv $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/ not used
 
-rsync -vam -f'+ *.jsonl.gz' -f'+ */' -f'- *' $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/hub/pseudo_crawl/
+rsync -vam -f'+ *.jsonl.gz' -f'+ */' -f'- *' $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-compressed-shards/bigscience-catalogue-data/* $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
 
-# ls $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-compressed-shards/bigscience-catalogue-data/ -f'+ *.jsonl.gz' | xargs -n1 -P8 -I% rsync -Pa % $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/hub/pseudo_crawl/ not used
+# ls $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/datasets-compressed-shards/bigscience-catalogue-data/ -f'+ *.jsonl.gz' | xargs -n1 -P8 -I% rsync -Pa % $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/ not used
 
 
-cd $six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_2/hub/pseudo_crawl/
+cd $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
 
 git status
 
