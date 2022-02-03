@@ -25,7 +25,7 @@ cd $six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl/
 
 git status
 
-for seed_id in {1..697}
+for seed_id in {698..708}
 do
     echo "Add seed id n°$seed_id"
     git add -v *seed_id="$seed_id"/*.gz
