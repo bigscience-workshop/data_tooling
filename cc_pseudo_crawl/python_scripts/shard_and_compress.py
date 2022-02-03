@@ -157,6 +157,7 @@ def main():
             if args.index_slice is not None:
                 if args.index_slice != i % args.total_number_slice:
                     continue
+            logger.info(f"Shard has {len(shard_per_split)} rows")
             save_dataset(
                 shard_per_split,
                 i,
