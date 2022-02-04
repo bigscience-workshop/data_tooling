@@ -74,7 +74,6 @@ def get_features():
 
     def convert_types(features):
         if isinstance(features, dict) and "_type" in features:
-            # raise ValueError("WRONG")
             return getattr(datasets, features["_type"])(features["dtype"])
         elif isinstance(features, dict):
             return {key: convert_types(value) for key, value in features.items()}
@@ -90,14 +89,35 @@ def load_fasttext_model(path_fasttext_model):
     return fasttext.load_model(path_fasttext_model)
 
 
-def get_fasttext_info(document, model_lang_id):
-    if not document:
-        document = ""
-    document = document.lower().replace("\n", " ")
-    pred = model_lang_id.predict(document)
+def get_fasttext_info(line, model_lang_id):
+    """The line should be in lower case and without \n in it."""
+    pred = model_lang_id.predict(line)
     lang_pred_fasttext_id = pred[0][0].replace("__label__", "")
     score_pred = pred[1][0]
-    info = {"lang_pred_fasttext_id": lang_pred_fasttext_id, "score_pred": score_pred}
+    return lang_pred_fasttext_id, score_pred
+
+
+def get_all_fasttext_info(document, model_lang_id):
+    if not document:
+        document = ""
+    document = document.lower()
+    lang_pred_fasttext_id, score_pred = get_fasttext_info(
+        document.replace("\n", " "), model_lang_id
+    )
+    info = {
+        "lang_pred_fasttext_id": lang_pred_fasttext_id,
+        "score_pred": score_pred,
+        "on_lines": [
+            {
+                "id_line": id_line,
+                "number_caracters_line": len(line),
+                "lang_pred_fasttext_id_line": result_fasttext_line[0],
+                "score_pred_line": result_fasttext_line[1],
+            }
+            for id_line, line in enumerate(document.split("\n"))
+            for result_fasttext_line in [get_fasttext_info(line, model_lang_id)]
+        ],
+    }
     return info
 
 
@@ -107,7 +127,7 @@ class FunctionDatasetModifyingDocuments:
         self.model_lang_id = load_fasttext_model(path_fasttext_model)
 
     def __call__(self, example):
-        example["fasttext_pred"] = get_fasttext_info(
+        example["fasttext_pred"] = get_all_fasttext_info(
             example["text"], self.model_lang_id
         )
         return example
@@ -130,7 +150,9 @@ def main():
         path_fasttext_model
     )
     # Could be improved by allowing multiprocessing with map (currently doesn't work)
-    dataset = dataset.map(func_dataset_modifying_documents, num_proc=1)  # cpu_count())
+    dataset = dataset.map(
+        func_dataset_modifying_documents, num_proc=1
+    )  # num_proc=cpu_count()
     print("Fasttext done")
 
     path_dir_save_dataset = (
