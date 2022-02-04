@@ -573,6 +573,9 @@ flagged_words = {
     ],
     "id": english_flagged_words
     + [
+        "bokep",
+        "coli",
+        "colmek",
         "grepe",
         "horni",
         "janda",
@@ -582,12 +585,14 @@ flagged_words = {
         "kontol",
         "masturbasi",
         "memek",
+        "ngentot",
+        "ngewe",
         "peju",
         "pepek",
         "pornografi",
+        "sange",
         "sepong",
         "tusbol",
-        "tusuk bola",
     ],
     "kn": english_flagged_words
     + [
