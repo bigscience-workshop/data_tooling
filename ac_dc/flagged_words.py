@@ -1486,7 +1486,6 @@ flagged_words = {
     ],
     "zh": english_flagged_words
     + [
-        "㞗",
         "三级片",
         "乳交",
         "卖B",
