@@ -156,15 +156,6 @@ langs_id = [
         "kenlm_id": "pt",
     },
     {
-        "lang": "Somali",
-        "dataset_id": "so",
-        "stopwords_id": "so",
-        "flagged_words_id": None,
-        "fasttext_id": "so",
-        "sentencepiece_id": None,
-        "kenlm_id": None,
-    },
-    {
         "lang": "Swahili",
         "dataset_id": "sw",
         "stopwords_id": "sw",
