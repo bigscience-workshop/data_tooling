@@ -545,7 +545,7 @@ flagged_words = {
         "ɗuwaiwan",
         "ɗuwawu",
         "ɗuwawun",
-    ]
+    ],
     "hi": english_flagged_words
     + [
         "aand",
