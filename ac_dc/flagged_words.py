@@ -221,8 +221,7 @@ flagged_words = {
         "empinat",
         "empinats",
         "empinada",
-        "empinades"
-        "escrot",
+        "empinades" "escrot",
         "escrots",
         "semen",
         "semens",
@@ -290,8 +289,7 @@ flagged_words = {
         "verga",
         "vergues",
         "zorra",
-        "zorres"
-        "ramera",
+        "zorres" "ramera",
         "rameres",
         "meuca",
         "meuques",
@@ -330,7 +328,7 @@ flagged_words = {
         "calentorres",
         "trans",
         "trio",
-        "coit"
+        "coit",
     ],
     "en": english_flagged_words,
     "es": english_flagged_words
