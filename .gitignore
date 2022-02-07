@@ -130,6 +130,7 @@ dmypy.json
 
 # Fasttext model
 lid.176.bin
+lid.189.bin
 
 # Kenlm models
 *.arpa.bin
