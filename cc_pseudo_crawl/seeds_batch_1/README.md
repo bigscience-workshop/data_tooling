@@ -47,7 +47,7 @@ For every site list
 
 4. join the seeds table crawl by crawl with Common Crawl's index, creating a temporary table which is later used as one partition of the result table
    ```
-   python3 cc_lookup_seed.py s3://bucket/path seeds "CC-MAIN-2021"
+   python3 cc_lookup_seed.py s3://bucket/path seeds "CC-MAIN-202[01]"
    ```
    This will run the join for all crawls of the year 2021 and put the join data into `s3://bucket/path/cc`.
 
