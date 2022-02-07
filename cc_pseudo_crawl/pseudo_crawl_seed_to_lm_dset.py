@@ -1,7 +1,6 @@
 import argparse
 import gzip
 import json
-import os
 
 import datasets
 from datasets import Features, load_dataset
@@ -76,6 +75,7 @@ final_features
 # seed processing and upload functions
 ###
 
+
 # extract just the metadata we wish to keep
 def get_meta_dict(page):
     meta = dict([(k, page[k]) for k in ["url", "content_languages", "seed_id"]])
@@ -87,12 +87,12 @@ def filter_lines(article, skip_dict):
     lines = [line.strip() for line in article.split("\n")]
     keep = []
     skip = []
-    for i, line in enumerate(lines):
+    for line in lines:
         if skip_dict.get(line, False):
             skip += [line]
         else:
             keep += [line]
-    return "\n".join(keep), "\n".join(skip)
+    return "\n".join(keep).strip(), "\n".join(skip).strip()
 
 
 # do both together and return an entry
@@ -125,28 +125,26 @@ def get_lines_to_skip(dset):
 
 
 # create a private repository and push processed seed in jsonl format
-def push_seed_to_hub(
-    dset, language, name, token, skip_lines_dict, min_chars=32, gzipped=False
-):
+def make_seed_jsonl(dset, language, name, skip_lines_dict, min_chars=32, gzipped=False):
     repo_name = f"lm_{language}_pseudocrawl_{name}"
     # process and write to file
     if gzipped:
         file_name = f"{repo_name}.jsonl.gz"
-        fout = gzip.open("lm_vi_pseudocrawl_vnexpress.jsonl.gz", "w")
-        for article in tqdm(dset["train"]):
-            processed_dct = process_page(article, skip_lines_dict)
-            if len(processed_dct["text"]) > min_chars:
-                _ = fout.write((json.dumps(processed_dct) + "\n").encode("utf-8"))
-        fout.close()
+        f = gzip.open(file_name, "w")
     else:
         file_name = f"{repo_name}.jsonl"
         f = open(file_name, "w", encoding="utf-8")
-        for article in tqdm(dset["train"]):
-            processed_dct = process_page(article, skip_lines_dict)
-            if len(processed_dct["text"]) > min_chars:
-                _ = f.write(json.dumps(processed_dct) + "\n")
-        f.close()
-    # upload to hub
+    duplicated = {}
+    for article in tqdm(dset["train"]):
+        processed_dct = process_page(article, skip_lines_dict)
+        txt = processed_dct["text"].strip().lower()
+        if len(processed_dct["text"]) > min_chars and txt not in duplicated:
+            _ = f.write((json.dumps(processed_dct) + "\n").encode("utf-8"))
+    f.close()
+    return file_name, repo_name
+
+
+def push_jsonl_to_hub(file_name, repo_name, token):
     api = HfApi()
     api.create_repo(
         f"bigscience-catalogue-lm-data/{repo_name}",
@@ -158,7 +156,7 @@ def push_seed_to_hub(
         path_or_fileobj=file_name,
         path_in_repo=file_name,
         repo_id=f"bigscience-catalogue-lm-data/{repo_name}",
-        token=_AUTH_TOKEN,
+        token=token,
         repo_type="dataset",
     )
     return file_loc
@@ -191,32 +189,55 @@ def main():
         type=str,
     )
     parser.add_argument(
+        "-pc_path",
+        "--pseudo_crawl_path",
+        help="path to where the pseudocrawl is located",
+        default="pseudo_crawl",
+        type=str,
+    )
+    parser.add_argument(
+        "-gz",
+        "--gzipped",
+        help="Write file directly in jsonl.gz compresed format",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-hub",
+        "--push_to_hub",
+        help="Whether to create a repository and push the computed jsonl to the hub",
+        action="store_true",
+    )
+    parser.add_argument(
         "-t",
         "--token",
         help="authentication token with write access to the org",
-        required=True,
+        default="",
         type=str,
     )
     args = parser.parse_args()
+    assert not (
+        args.push_to_hub and args.token == ""
+    ), "If you want the script to push to the hub, you need to provide an authentication token"
     # Load dataset (data first needs to be git pulled, see above)
     dset = load_dataset(
         "json",
         data_files=[
-            f"{_PATH_TO_PSEUDO_CRAWL}/seed_id={args.seed_id}/text__html/*.jsonl.gz"
+            f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"
         ],
         features=final_features,
         cache_dir=f"cache_seed_{args.seed_id}",
     )
     skip_lines_dict = get_lines_to_skip(dset)
-    push_seed_to_hub(
+    file_name, repo_name = make_seed_jsonl(
         dset,
         language=args.language_code,
         name=args.name,
-        token=args.token,
         skip_lines_dict=skip_lines_dict,
-        min_chars=32,
-        gzipped=False,  # TODO: switch to using a gzipped version once the hub regex validation is fixed
+        min_chars=128,  # only keep examples with at least 128 characters
+        gzipped=args.gzipped,
     )
+    if args.push_to_hub:
+        push_jsonl_to_hub(file_name, repo_name, args.token)
 
 
 if __name__ == "__main__":
