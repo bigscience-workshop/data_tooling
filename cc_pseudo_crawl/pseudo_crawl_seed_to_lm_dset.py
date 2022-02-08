@@ -78,7 +78,7 @@ final_features
 
 # extract just the metadata we wish to keep
 def get_meta_dict(page):
-    meta = dict([(k, page[k]) for k in ["url", "content_languages", "seed_id"]])
+    meta = {k: page[k] for k in ["url", "content_languages", "seed_id"]}
     return meta
 
 
@@ -118,9 +118,7 @@ def get_lines_to_skip(dset):
             for line in article.split("\n"):
                 line_counts[line.strip()] = line_counts.get(line.strip(), 0) + 1
     thres_skip = max(10, len(seen_pages) // 100)
-    skip_dict = dict(
-        [(line, True) for line, ct in line_counts.items() if ct > thres_skip]
-    )
+    skip_dict = {line: True for line, ct in line_counts.items() if ct > thres_skip}
     return skip_dict
 
 
