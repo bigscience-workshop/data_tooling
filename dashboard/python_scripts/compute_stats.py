@@ -23,7 +23,7 @@ def get_args():
         help="path to the parquet dataset folder",
     )
     parser.add_argument(
-        "--save-path-stats-json", type=str, help="Where to save the stats json."
+        "--save-path-stats-json", type=str, required=True, help="Where to save the stats json."
     )
     parser.add_argument(
         "--save-path-stats-full-json", type=str, help="Where to save the stats json."
