@@ -1,8 +1,10 @@
+import os
 import argparse
 import gzip
 import json
 
 import datasets
+import pandas as pd
 from datasets import Features, load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -123,8 +125,10 @@ def get_lines_to_skip(dset):
 
 
 # create a private repository and push processed seed in jsonl format
-def make_seed_jsonl(dset, language, name, skip_lines_dict, min_chars=32, gzipped=False):
+def make_seed_jsonl(dset, language, name, skip_lines_dict, min_chars=32, gzipped=False, save_dir=None):
     repo_name = f"lm_{language}_pseudocrawl_{name}"
+    if save_dir is not None:
+        repo_name = os.path.join(save_dir, repo_name)
     # process and write to file
     if gzipped:
         file_name = f"{repo_name}.jsonl.gz"
@@ -159,6 +163,16 @@ def push_jsonl_to_hub(file_name, repo_name, token):
     )
     return file_loc
 
+def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
+    df = pd.read_csv(seed_id_info_path)
+    sub_df = df[df["id"]==seed_id]
+    if len(sub_df) != 1:
+        raise ValueError("You should have only one match per seed id")
+    name = sub_df.name[0]
+    lang_id = sub_df.lang_id[0]
+    return name, lang_id
+
+
 
 ###
 # combine everything
@@ -173,19 +187,18 @@ def main():
         type=int,
     )
     parser.add_argument(
-        "-ln",
-        "--language_code",
-        help="language code used on the repo",
+        "--seed-id-info-path",
+        help="The path to a csv containing the seed id and the corresponding lang-id and name",
         required=True,
         type=str,
     )
     parser.add_argument(
-        "-n",
-        "--name",
-        help="name of the website",
+        "--seed-id-info-path",
+        help="The path to a csv containing the seed id and the corresponding lang-id and name",
         required=True,
         type=str,
     )
+    parser.add_argument("--save-dir", type=str, help="Where to save the datasets.")
     parser.add_argument(
         "-pc_path",
         "--pseudo_crawl_path",
@@ -196,7 +209,7 @@ def main():
     parser.add_argument(
         "-gz",
         "--gzipped",
-        help="Write file directly in jsonl.gz compresed format",
+        help="Write file directly in jsonl.gz compressed format",
         action="store_true",
     )
     parser.add_argument(
@@ -225,11 +238,13 @@ def main():
         features=final_features,
         cache_dir=f"cache_seed_{args.seed_id}",
     )
+
+    name, language_code = get_dataset_name_and_lang_id_from_seed_id(args.seed_id, args.seed_id_info_path)
     skip_lines_dict = get_lines_to_skip(dset)
     file_name, repo_name = make_seed_jsonl(
         dset,
-        language=args.language_code,
-        name=args.name,
+        language=language_code,
+        name=name,
         skip_lines_dict=skip_lines_dict,
         min_chars=128,  # only keep examples with at least 128 characters
         gzipped=args.gzipped,
