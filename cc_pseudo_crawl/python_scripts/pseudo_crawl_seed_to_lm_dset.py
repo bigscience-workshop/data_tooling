@@ -172,6 +172,8 @@ def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     lang_id = sub_df.lang_id[0]
     return name, lang_id
 
+def get_dataset_name_and_lang_id_from_seed_id_fake(seed_id, seed_id_info_path):
+    return "change_name", "change_lang_id"
 
 
 ###
@@ -189,16 +191,10 @@ def main():
     parser.add_argument(
         "--seed-id-info-path",
         help="The path to a csv containing the seed id and the corresponding lang-id and name",
-        required=True,
+        # required=True,
         type=str,
     )
-    parser.add_argument(
-        "--seed-id-info-path",
-        help="The path to a csv containing the seed id and the corresponding lang-id and name",
-        required=True,
-        type=str,
-    )
-    parser.add_argument("--save-dir", type=str, help="Where to save the datasets.")
+    parser.add_argument("--save-dir", required=True, type=str, help="Where to save the datasets.")
     parser.add_argument(
         "-pc_path",
         "--pseudo_crawl_path",
