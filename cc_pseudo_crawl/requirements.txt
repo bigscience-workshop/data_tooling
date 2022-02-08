@@ -1,3 +1,0 @@
-pyathena
-surt
-tldextract

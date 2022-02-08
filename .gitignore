@@ -130,6 +130,7 @@ dmypy.json
 
 # Fasttext model
 lid.176.bin
+lid.189.bin
 
 # Kenlm models
 *.arpa.bin
@@ -147,4 +148,4 @@ lid.176.bin
 **/*.lprof
 
 # Visualization json files
-**/*examples_with_stats.json
+**/*examples_with_stats*

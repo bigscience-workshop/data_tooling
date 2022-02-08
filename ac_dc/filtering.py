@@ -687,7 +687,7 @@ class Filtering:
             document=document,
             remove_non_printing_characters=True,
             strip=True,
-            lower_case=True,
+            lower_case=False,
             uniform_whitespace=True,
             replace_digits_with_zeros=True,
             replace_unicode_punctuation=True,
@@ -934,10 +934,10 @@ class DatasetFiltering:
         self.path_dir_save_dataset = path_dir_save_dataset
 
     def modifying_documents(self):
-        dataset_modifying_documents = FunctionDatasetModifyingDocuments(
+        func_dataset_modifying_documents = FunctionDatasetModifyingDocuments(
             self.lang_dataset_id
         )
-        self.ds = self.ds.map(dataset_modifying_documents, num_proc=self.num_proc)
+        self.ds = self.ds.map(func_dataset_modifying_documents, num_proc=self.num_proc)
 
     def filtering(self):
         func_dataset_filtering = FunctionDatasetFiltering(

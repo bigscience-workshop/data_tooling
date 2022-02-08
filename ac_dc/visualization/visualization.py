@@ -128,8 +128,6 @@ class Visualization_for_lang:
         st.dataframe(displayed_examples)
 
     def filtering_of_docs(self):
-        st.sidebar.subheader("Parameters of the filtering on documents")
-
         def set_sliders():
             columns = list(self.docs)
             keys = []
@@ -385,12 +383,6 @@ class Visualization_for_lang:
 
             return keys, conds
 
-        self.keys, conds = set_sliders()
-        self.parameters = self.keys * 1
-
-        all_conds = [subcond for cond in list(conds.values()) for subcond in cond]
-        all_conds = np.all(all_conds, axis=0)
-
         with st.expander(
             f"Filtering on documents, for {self.num_docs} {self.lang} documents"
         ):
@@ -398,101 +390,146 @@ class Visualization_for_lang:
                 f"Filtering on documents, for {self.num_docs} {self.lang} documents"
             )
 
-            Visualization_for_lang.display_dataset(
-                self.docs, np.invert(all_conds), "Discarded documents", "docs"
-            )
+            if "labels" in list(self.docs):
+                chosen_label = st.selectbox(
+                    label="Consider only documents that include the following label",
+                    options=[
+                        "All",
+                        "NA: Narrative",
+                        "IN: Informational Description",
+                        "OP: Opinion",
+                        "ID: Interactive Discussion",
+                        "HI: How-to/Instruction",
+                        "IP: Informational Persuasion",
+                        "LY: Lyrical",
+                        "SP: Spoken",
+                    ],
+                )
+                chosen_label = chosen_label.split(":")[0]
+                if chosen_label != "All":
+                    cond_label = list(
+                        self.docs["labels"].apply(
+                            lambda x: True if chosen_label in x else False
+                        )
+                    )
+                    self.docs = self.docs[cond_label]
 
-            # st.subheader("Display discarded documents by filter")
-            display_discarded_documents_by_filter = st.checkbox(
-                "Display discarded documents by filter"
-            )
+            if self.docs.empty:
+                st.markdown(
+                    "No document to display, please try to select a different label."
+                )
+                self.keys = []
+                self.parameters = []
 
-            if display_discarded_documents_by_filter:
-                columns = list(self.docs)
+            else:
+                st.sidebar.subheader("Parameters of the filtering on documents")
+                self.keys, conds = set_sliders()
+                self.parameters = self.keys * 1
 
-                if "number_words" in columns:
-                    cond_filter = np.invert(np.all(conds["number_words"], axis=0))
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the number of words",
-                        "docs",
-                    )
+                all_conds = [
+                    subcond for cond in list(conds.values()) for subcond in cond
+                ]
+                all_conds = np.all(all_conds, axis=0)
 
-                if "character_repetition_ratio" in columns:
-                    cond_filter = np.invert(
-                        np.all(conds["character_repetition_ratio"], axis=0)
-                    )
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the character repetition ratio",
-                        "docs",
-                    )
+                Visualization_for_lang.display_dataset(
+                    self.docs, np.invert(all_conds), "Discarded documents", "docs"
+                )
 
-                if "word_repetition_ratio" in columns:
-                    cond_filter = np.invert(
-                        np.all(conds["word_repetition_ratio"], axis=0)
-                    )
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the word repetition ratio",
-                        "docs",
-                    )
+                # st.subheader("Display discarded documents by filter")
+                display_discarded_documents_by_filter = st.checkbox(
+                    "Display discarded documents by filter"
+                )
 
-                if "special_characters_ratio" in columns:
-                    cond_filter = np.invert(
-                        np.all(conds["special_characters_ratio"], axis=0)
-                    )
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the special characters ratio",
-                        "docs",
-                    )
+                if display_discarded_documents_by_filter:
+                    columns = list(self.docs)
 
-                if "stopwords_ratio" in columns:
-                    cond_filter = np.invert(np.all(conds["stopwords_ratio"], axis=0))
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the stop words ratio",
-                        "docs",
-                    )
+                    if "number_words" in columns:
+                        cond_filter = np.invert(np.all(conds["number_words"], axis=0))
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the number of words",
+                            "docs",
+                        )
 
-                if "flagged_words_ratio" in columns:
-                    cond_filter = np.invert(
-                        np.all(conds["flagged_words_ratio"], axis=0)
-                    )
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the flagged words ratio",
-                        "docs",
-                    )
+                    if "character_repetition_ratio" in columns:
+                        cond_filter = np.invert(
+                            np.all(conds["character_repetition_ratio"], axis=0)
+                        )
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the character repetition ratio",
+                            "docs",
+                        )
 
-                if "lang_id_score" in columns:
-                    cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the language identification confidence score",
-                        "docs",
-                    )
+                    if "word_repetition_ratio" in columns:
+                        cond_filter = np.invert(
+                            np.all(conds["word_repetition_ratio"], axis=0)
+                        )
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the word repetition ratio",
+                            "docs",
+                        )
 
-                if "perplexity_score" in columns:
-                    cond_filter = np.invert(np.all(conds["perplexity_score"], axis=0))
-                    Visualization_for_lang.display_dataset(
-                        self.docs,
-                        cond_filter,
-                        "Discarded documents for the filter on the perplexity score",
-                        "docs",
-                    )
+                    if "special_characters_ratio" in columns:
+                        cond_filter = np.invert(
+                            np.all(conds["special_characters_ratio"], axis=0)
+                        )
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the special characters ratio",
+                            "docs",
+                        )
 
-            Visualization_for_lang.display_dataset(
-                self.docs, all_conds, "Retained documents", "docs"
-            )
+                    if "stopwords_ratio" in columns:
+                        cond_filter = np.invert(
+                            np.all(conds["stopwords_ratio"], axis=0)
+                        )
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the stop words ratio",
+                            "docs",
+                        )
+
+                    if "flagged_words_ratio" in columns:
+                        cond_filter = np.invert(
+                            np.all(conds["flagged_words_ratio"], axis=0)
+                        )
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the flagged words ratio",
+                            "docs",
+                        )
+
+                    if "lang_id_score" in columns:
+                        cond_filter = np.invert(np.all(conds["lang_id_score"], axis=0))
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the language identification confidence score",
+                            "docs",
+                        )
+
+                    if "perplexity_score" in columns:
+                        cond_filter = np.invert(
+                            np.all(conds["perplexity_score"], axis=0)
+                        )
+                        Visualization_for_lang.display_dataset(
+                            self.docs,
+                            cond_filter,
+                            "Discarded documents for the filter on the perplexity score",
+                            "docs",
+                        )
+
+                Visualization_for_lang.display_dataset(
+                    self.docs, all_conds, "Retained documents", "docs"
+                )
 
             st.header("Download data")
 
