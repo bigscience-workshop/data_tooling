@@ -17,10 +17,15 @@ def get_args():
     args.dataset_path = Path(args.dataset_path)
     return args
 
+
 def load_others(dataset_path: Path):
     others_path = dataset_path / "others"
-    shards = [load_from_disk(str(shard_path.absolute())) for shard_path in sorted(others_path.iterdir())]
+    shards = [
+        load_from_disk(str(shard_path.absolute()))
+        for shard_path in sorted(others_path.iterdir())
+    ]
     return concatenate_datasets(shards)
+
 
 def main():
     # Setup logging
@@ -37,10 +42,16 @@ def main():
     others = load_others(args.dataset_path)
     features = others.features.copy()
     features.pop("compressed_warc")
-    text_htmls = load_dataset(str((args.dataset_path / "text__html").absolute()), data_files="**.jsonl.gz", features=features, split="train")
+    text_htmls = load_dataset(
+        str((args.dataset_path / "text__html").absolute()),
+        data_files="**.jsonl.gz",
+        features=features,
+        split="train",
+    )
 
     logger.info(f"Text/html: {len(text_htmls)}")
     logger.info(f"Others: {len(others)}")
+
 
 if __name__ == "__main__":
     main()
