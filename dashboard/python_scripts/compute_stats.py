@@ -109,7 +109,7 @@ def main():
 
     data_stats = {f"{split_name}_total": len(ds) for split_name, ds in splits.items()}
 
-    ds_html = splits[selected_mime_types[0]]
+    ds_html = splits["text/html"]
 
     logger.info(f"the currents splits are {data_stats}.")
 
