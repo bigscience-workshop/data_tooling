@@ -78,7 +78,7 @@ def main():
 
     ds = load_from_disk(args.dataset_path)
 
-    if args.num_examples:
+    if args.num_examples is not None:
         ds = ds.select([i for i in range(args.num_examples)])
 
     selected_mime_types = ["text/html"]
