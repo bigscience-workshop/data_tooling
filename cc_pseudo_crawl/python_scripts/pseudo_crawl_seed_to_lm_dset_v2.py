@@ -122,7 +122,7 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
     seed = SeedSequence(42)
     rng = default_rng(seed)
     indices = rng.choice(len(dset), size=n_records, replace=False, shuffle=False)
-    dset_sample = dset["train"].select(indices)
+    dset_sample = dset.select(indices)
     for page in tqdm(dset_sample):
         article = page["text"]
 
@@ -211,6 +211,8 @@ def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
 def get_dataset_name_and_lang_id_from_seed_id_fake(seed_id, seed_id_info_path):
     return "change_name", "change_lang_id"
 
+def text_is_not_none(batch):
+    return [text is not None for text in batch["text"]]
 
 ###
 # combine everything
@@ -292,7 +294,18 @@ def main():
         "json",
         data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
         features=final_features,
+        split="train"
     )
+
+    # Filter None text columns
+    number_of_samples_before = len(dset)
+    dset = dset.filter(
+        text_is_not_none,
+        batched=True,
+        num_procs=args.num_proc
+    )
+    number_of_samples_after_filtering_none = len(dset)
+    logger.info(f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}")
 
     args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
     skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold, min_repetition_threshold=args.min_repetition_threshold)
