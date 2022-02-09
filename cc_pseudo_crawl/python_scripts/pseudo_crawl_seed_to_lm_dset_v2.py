@@ -254,7 +254,13 @@ def main():
     )
     parser.add_argument(
         "--batch-size",
-        help="Batch size used for the mapping and saving of the dataset",
+        help="Batch size used for mapping the dataset",
+        required=True,
+        type=int,
+    )
+    parser.add_argument(
+        "--save-batch-size",
+        help="Batch size used for saving the dataset",
         required=True,
         type=int,
     )
@@ -302,7 +308,7 @@ def main():
     dset = dset.filter(
         text_is_not_none,
         batched=True,
-        num_procs=args.num_proc
+        num_proc=args.num_proc
     )
     number_of_samples_after_filtering_none = len(dset)
     logger.info(f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}")
