@@ -111,11 +111,11 @@ def filter_lines_by_batch(texts, skip_set):
 
 # do both together and return an entry
 def process_batch(batch, skip_set):
-    meta = get_meta_dict(batch)
-    text, _ = filter_lines_by_batch(batch["text"], skip_set)
+    metas = get_meta_dict(batch)
+    texts, _ = filter_lines_by_batch(batch["text"], skip_set)
     return {
-        "meta": meta,
-        "text": text,
+        "meta": metas,
+        "text": texts,
     }
 
 
@@ -183,7 +183,8 @@ def make_seed_jsonl(dset, skip_lines_set, args):
         # input_columns=[TEXT_COLUMN] + META_COLUMNS, # Shame this doesn't work
         batched=True,
         num_proc=args.num_proc,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        remove_columns=dset.column_names
     )
 
     # write to file
