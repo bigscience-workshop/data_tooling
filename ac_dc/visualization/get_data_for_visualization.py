@@ -167,7 +167,7 @@ class GetDataForVisualization:
 
 if __name__ == "__main__":
 
-    lang_dataset_id = "pt"
+    lang_dataset_id = "en"
 
     dataset_name = "oscar"  # "TurkuNLP/register_oscar"
     config_name = f"unshuffled_deduplicated_{lang_dataset_id}"  # None
