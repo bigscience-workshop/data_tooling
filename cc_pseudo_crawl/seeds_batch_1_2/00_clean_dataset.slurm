@@ -7,7 +7,7 @@
 #SBATCH --partition=cpu_p1
 #SBATCH --time 4:00:00              # maximum execution time (HH:MM:SS)
 #SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_1_2/logs/clean_dataset/%x-%j.out           # output file name #TODO change path if necessary
-#SBATCH --array=13
+#SBATCH --array=0-613
 #SBATCH --account=six@cpu
 
 set -x -e
@@ -22,13 +22,18 @@ SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1_2/datasets-clea
 echo $DATASET_PATH
 pushd $DATA_TOOLING_REPO
 
+SEED_ID=$(python cc_pseudo_crawl/seeds_batch_1/load_all_seed_ids.py \
+  --seed-paths "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds.csv,"$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds_batch_2.csv \
+  --seed-index $SLURM_ARRAY_TASK_ID \
+)
+
 mkdir -p $SAVE_DATASET_DIR
 
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
 python cc_pseudo_crawl/python_scripts/pseudo_crawl_seed_to_lm_dset.py \
-    --seed-id $SLURM_ARRAY_TASK_ID \
+    --seed-id $SEED_ID \
     --save-dir $SAVE_DATASET_DIR \
     --pseudo_crawl_path $DATASET_PATH \
     --batch-size 1000 \
