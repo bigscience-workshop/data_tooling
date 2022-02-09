@@ -167,7 +167,7 @@ def clean_examples(examples, skip_lines_set, args):
     return results
 
 def get_folder(args):
-    repo_name = f"lm_{args.language}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
+    repo_name = f"lm_{args.language_code}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
     if args.save_dir is not None:
         repo_name = os.path.join(args.save_dir, repo_name)
     if not os.path.isdir(repo_name):
