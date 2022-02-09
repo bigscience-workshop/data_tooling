@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 import os
 import argparse
@@ -154,6 +155,14 @@ def clean_examples(examples, skip_lines_set, args):
 
     return results
 
+def get_folder(args):
+    repo_name = f"lm_{args.language}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
+    if args.save_dir is not None:
+        repo_name = os.path.join(args.save_dir, repo_name)
+    if not os.path.isdir(repo_name):
+        os.makedirs(repo_name)
+    return repo_name
+
 # create a private repository and push processed seed in jsonl format
 TEXT_COLUMN = "text"
 def make_seed_jsonl(dset, skip_lines_set, args):
@@ -167,11 +176,7 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     )
 
     # write to file
-    repo_name = f"lm_{args.language}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
-    if args.save_dir is not None:
-        repo_name = os.path.join(args.save_dir, repo_name)
-    if not os.path.isdir(repo_name):
-        os.makedirs(repo_name)
+    repo_name = get_folder(args)
     if args.gzipped:
         file_name = os.path.join(repo_name, f"data.jsonl.gz")
         logger.info(f"the dataset will be saved at {file_name}")
@@ -296,7 +301,13 @@ def main():
         skip_lines_set=skip_lines_set, 
         args=args
     )
+
     logger.info(f"Ended successfully, saved at {file_name}")
+
+    # Saving skipped lines that are considered repetitive
+    repo_name = get_folder(args)
+    with open(os.path.join(repo_name, "skipped_lines.json"), "w") as fi:
+        json.dump(list(skip_lines_set), fi, indent=2)
 
 
 if __name__ == "__main__":
