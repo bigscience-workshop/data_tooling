@@ -124,10 +124,17 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
     dset_sample = dset["train"].select(indices)
     for page in tqdm(dset_sample):
         article = page["text"]
-        if article not in seen_pages:
-            seen_pages.add(article)
-            for line in article.split("\n"):
-                line_counts[line.strip()] += 1
+
+        # Duplicated documents are only counted once as they'll be removed in future deduplication script.
+        if article in seen_pages:
+            continue
+
+        seen_pages.add(article)
+        # We count the number of times we see identical lines in different documents.
+        all_lines = set(line.strip() for line in article.split("\n"))
+        for line in all_lines:
+            line_counts[line] += 1
+
     # TODO understand this logic, why it's not len(line_counts)
     thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
     skip_set = set(line for line, ct in line_counts.items() if ct > thres_skip)
