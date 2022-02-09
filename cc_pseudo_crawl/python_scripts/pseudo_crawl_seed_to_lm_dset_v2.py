@@ -85,8 +85,9 @@ final_features
 
 # extract just the metadata we wish to keep
 META_COLUMNS = ["url", "content_languages", "seed_id"]
-def get_meta_dict(page):
-    meta = {k: page[k] for k in META_COLUMNS}
+def get_meta_dict(batch):
+    batch_size = len(batch[next(iter(batch))])
+    meta = [{k: batch[k][idx] for k in META_COLUMNS} for idx in range(batch_size)]
     return meta
 
 
@@ -103,11 +104,15 @@ def filter_lines(article, skip_set):
             keep += [line]
     return "\n".join(keep).strip(), "\n".join(skip).strip()
 
+def filter_lines_by_batch(texts, skip_set):
+    filtered_lines = [filter_lines(article, skip_set) for article in texts]
+    return tuple(zip(*filtered_lines))
+
 
 # do both together and return an entry
-def process_page(page, skip_set):
-    meta = get_meta_dict(page)
-    text, _ = filter_lines(page["text"], skip_set)
+def process_batch(batch, skip_set):
+    meta = get_meta_dict(batch)
+    text, _ = filter_lines_by_batch(batch["text"], skip_set)
     return {
         "meta": meta,
         "text": text,
@@ -149,12 +154,15 @@ def clean_examples(examples, skip_lines_set, args):
         "text": [],
         "meta": []
     }
-    for idx, article in enumerate(examples["text"]):
-        examples["text"][idx] = process_page(article, skip_lines_set)
-        if len(examples["text"][idx]) <= args.min_chars:
+    # Collapses meta and cleans text
+    preprocessed_batch = process_batch(examples, skip_lines_set)
+    assert set(results.keys()) == set(preprocessed_batch.keys())
+
+    for idx, cleaned_article in enumerate(preprocessed_batch["text"]):
+        if len(cleaned_article) <= args.min_chars:
             continue
         for key in results.keys():
-            results[key].append(examples[key][idx])
+            results[key].append(preprocessed_batch[key][idx])
 
     return results
 
