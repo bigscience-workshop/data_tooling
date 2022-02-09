@@ -1,5 +1,6 @@
 import os
 import argparse
+import logging
 import gzip
 import json
 
@@ -8,10 +9,14 @@ import pandas as pd
 from datasets import Features, load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
+from datasets.utils.logging import set_verbosity_info
 
 ###
 # features of the pseudocrawl seeds
 ###
+
+set_verbosity_info()
+logger = logging.getLogger(__name__)
 
 _PATH_TO_PSEUDO_CRAWL = "pseudo_crawl"
 
@@ -125,10 +130,11 @@ def get_lines_to_skip(dset):
 
 
 # create a private repository and push processed seed in jsonl format
-def make_seed_jsonl(dset, language, name, skip_lines_dict, min_chars=32, gzipped=False, save_dir=None):
-    repo_name = f"lm_{language}_pseudocrawl_{name}"
+def make_seed_jsonl(dset, language, name, skip_lines_dict, seed_id, min_chars=32, gzipped=False, save_dir=None):
+    repo_name = f"lm_{language}_seed_id_{seed_id}_pseudocrawl_{name}"
     if save_dir is not None:
         repo_name = os.path.join(save_dir, repo_name)
+    logger.info(f"the dataset will be saved at {repo_name}")
     # process and write to file
     if gzipped:
         file_name = f"{repo_name}.jsonl.gz"
@@ -141,7 +147,7 @@ def make_seed_jsonl(dset, language, name, skip_lines_dict, min_chars=32, gzipped
         processed_dct = process_page(article, skip_lines_dict)
         txt = processed_dct["text"].strip().lower()
         if len(processed_dct["text"]) > min_chars and txt not in duplicated:
-            _ = f.write((json.dumps(processed_dct) + "\n").encode("utf-8"))
+            _ = f.write((json.dumps(processed_dct) + "\n").encode("utf-8").decode("utf-8"))
     f.close()
     return file_name, repo_name
 
@@ -163,14 +169,16 @@ def push_jsonl_to_hub(file_name, repo_name, token):
     )
     return file_loc
 
+
 def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     df = pd.read_csv(seed_id_info_path)
-    sub_df = df[df["id"]==seed_id]
+    sub_df = df[df["id"] == seed_id]
     if len(sub_df) != 1:
         raise ValueError("You should have only one match per seed id")
     name = sub_df.name[0]
     lang_id = sub_df.lang_id[0]
     return name, lang_id
+
 
 def get_dataset_name_and_lang_id_from_seed_id_fake(seed_id, seed_id_info_path):
     return "change_name", "change_lang_id"
@@ -180,10 +188,15 @@ def get_dataset_name_and_lang_id_from_seed_id_fake(seed_id, seed_id_info_path):
 # combine everything
 ###
 def main():
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO,
+    )
     parser = argparse.ArgumentParser(description="Load seed and upload to hub")
     parser.add_argument(
         "-sid",
-        "--seed_id",
+        "--seed-id",
         help="seed ID",
         required=True,
         type=int,
@@ -228,22 +241,21 @@ def main():
     # Load dataset (data first needs to be git pulled, see above)
     dset = load_dataset(
         "json",
-        data_files=[
-            f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"
-        ],
+        data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
         features=final_features,
-        cache_dir=f"cache_seed_{args.seed_id}",
     )
 
-    name, language_code = get_dataset_name_and_lang_id_from_seed_id(args.seed_id, args.seed_id_info_path)
+    name, language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
     skip_lines_dict = get_lines_to_skip(dset)
     file_name, repo_name = make_seed_jsonl(
         dset,
         language=language_code,
         name=name,
+        seed_id=args.seed_id,
         skip_lines_dict=skip_lines_dict,
         min_chars=128,  # only keep examples with at least 128 characters
         gzipped=args.gzipped,
+        save_dir=args.save_dir,
     )
     if args.push_to_hub:
         push_jsonl_to_hub(file_name, repo_name, args.token)
