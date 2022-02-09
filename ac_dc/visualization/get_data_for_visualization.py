@@ -167,17 +167,19 @@ class GetDataForVisualization:
 
 if __name__ == "__main__":
 
-    dataset_name = "TurkuNLP/register_oscar"  # "oscar"
-    config_name = None  # "unshuffled_deduplicated_en"
-    data_files = "en/en_00000.jsonl.gz"  # None
+    lang_dataset_id = "pt"
+
+    dataset_name = "oscar"  # "TurkuNLP/register_oscar"
+    config_name = f"unshuffled_deduplicated_{lang_dataset_id}"  # None
+    data_files = None  # f"{lang_dataset_id}/{lang_dataset_id}_00000.jsonl.gz"
     split = "train"
     num_iter = 15000
 
-    lang_dataset_id = "en"
+    lang_dataset_id = lang_dataset_id
     path_fasttext_model = "ac_dc/lid.176.bin"
-    path_sentencepiece_model = f"ac_dc/en.sp.model"
-    path_kenlm_model = f"ac_dc/en.arpa.bin"
-    path_save_stats = f"ac_dc/visualization/en_examples_with_stats.json"
+    path_sentencepiece_model = f"ac_dc/{lang_dataset_id}.sp.model"
+    path_kenlm_model = f"ac_dc/{lang_dataset_id}.arpa.bin"
+    path_save_stats = f"ac_dc/visualization/{lang_dataset_id}_examples_with_stats.json"
 
     dataset = load_dataset(
         dataset_name,
