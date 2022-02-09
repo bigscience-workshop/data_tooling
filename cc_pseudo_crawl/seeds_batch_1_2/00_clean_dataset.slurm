@@ -33,6 +33,7 @@ python cc_pseudo_crawl/python_scripts/pseudo_crawl_seed_to_lm_dset.py \
     --pseudo_crawl_path $DATASET_PATH \
     --batch-size 1000 \
     --num-proc 80\
+    --min-chars 32 \
     --n-records 10000 \
     --pourcentage-threshold 0.01 \
     --min-repetition-threshold 10

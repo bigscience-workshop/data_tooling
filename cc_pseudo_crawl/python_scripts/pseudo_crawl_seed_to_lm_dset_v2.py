@@ -258,6 +258,12 @@ def main():
         type=int,
     )
     parser.add_argument(
+        "--min-chars",
+        help="Minimum number of chars in a line",
+        required=True,
+        type=int,
+    )
+    parser.add_argument(
         "--n-records",
         help="Number of records used to compute the repetitions",
         required=True,
