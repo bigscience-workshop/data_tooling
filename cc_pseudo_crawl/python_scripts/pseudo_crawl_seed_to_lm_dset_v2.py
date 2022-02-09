@@ -280,7 +280,7 @@ def main():
         "--pourcentage-threshold",
         help="Threshold used for filter repetitions",
         required=True,
-        type=int,
+        type=float,
     )
     parser.add_argument(
         "--min-repetition-threshold",
