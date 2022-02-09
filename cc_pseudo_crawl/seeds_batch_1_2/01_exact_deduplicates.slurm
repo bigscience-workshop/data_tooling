@@ -1,0 +1,40 @@
+#!/bin/bash
+#SBATCH --job-name=pseudo_crawl_deduplicate
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1          # crucial - only 1 task per dist per node!
+#SBATCH --cpus-per-task=4           # number of cores per tasks
+#SBATCH --hint=nomultithread         # we get physical cores not logical
+#SBATCH --partition=compil
+#SBATCH --time 4:00:00              # maximum execution time (HH:MM:SS)
+#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_1_2/logs/deduplicate-on-non-clean/%x-%j.out           # output file name #TODO change path if necessary
+#SBATCH --array=0
+#SBATCH --account=six@cpu
+
+set -x -e
+
+source $six_ALL_CCFRWORK/start-prod
+conda activate thomas_data_tooling
+
+DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
+
+DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl
+
+SEED_ID=$(python cc_pseudo_crawl/seeds_batch_1/load_all_seed_ids.py \
+  --seed-paths "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds.csv,"$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds_batch_2.csv \
+  --seed-index $SLURM_ARRAY_TASK_ID \
+)
+SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1_2/datasets-deduplicate-on-no-clean/bigscience-catalogue-data/seed_id=$SEED_ID
+echo $DATASET_PATH
+pushd $DATA_TOOLING_REPO
+
+mkdir -p $SAVE_DATASET_DIR
+
+export HF_DATASETS_OFFLINE=1
+export HF_DATASETS_CACHE=$SCRATCH/to_delete
+
+python cc_pseudo_crawl/python_scripts/exact_deduplicates.py \
+    --seed-id $SEED_ID \
+    --save-dir $SAVE_DATASET_DIR \
+    --pseudo_crawl_path $DATASET_PATH \
+    --batch-size 1000 \
+    --num-proc 8
