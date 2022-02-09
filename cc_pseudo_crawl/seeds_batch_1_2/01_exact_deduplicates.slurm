@@ -19,7 +19,7 @@ DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 
 DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl
 
-SEED_ID=$(python cc_pseudo_crawl/seeds_batch_1/load_all_seed_ids.py \
+SEED_ID=$(python cc_pseudo_crawl/python_scripts/load_all_seed_ids.py \
   --seed-paths "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds.csv,"$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds_batch_2.csv \
   --seed-index $SLURM_ARRAY_TASK_ID \
 )
