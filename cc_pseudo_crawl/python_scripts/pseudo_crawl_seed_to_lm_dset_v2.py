@@ -121,7 +121,8 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
     seen_pages = set()
     seed = SeedSequence(42)
     rng = default_rng(seed)
-    indices = rng.choice(len(dset), size=n_records, replace=False, shuffle=False)
+
+    indices = rng.choice(min(len(dset), n_records), size=n_records, replace=False, shuffle=False)
     dset_sample = dset.select(indices)
     for page in tqdm(dset_sample):
         article = page["text"]
