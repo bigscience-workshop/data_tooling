@@ -2,25 +2,22 @@ from collections import defaultdict
 import os
 import argparse
 import logging
-import gzip
-import json
 
 import datasets
 from functools import partial
 import pandas as pd
 from datasets import Features, load_dataset
-from huggingface_hub import HfApi
 from tqdm import tqdm
 from datasets.utils.logging import set_verbosity_info
 from numpy.random import SeedSequence, default_rng
-###
-# features of the pseudocrawl seeds
-###
+
+"""
+Cleaning text:
+ - run exact deduplication
+"""
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)
-
-_PATH_TO_PSEUDO_CRAWL = "pseudo_crawl"
 
 null = None
 features = {
@@ -86,8 +83,9 @@ final_features
 
 
 # extract just the metadata we wish to keep
+META_COLUMNS = ["url", "content_languages", "seed_id"]
 def get_meta_dict(page):
-    meta = {k: page[k] for k in ["url", "content_languages", "seed_id"]}
+    meta = {k: page[k] for k in META_COLUMNS}
     return meta
 
 
@@ -117,7 +115,7 @@ def process_page(page, skip_set):
 
 # looks at up to the first 10K pages for a seed and
 # records lines that appear in at least 1% of the unique pages
-def get_lines_to_skip(dset, n_records, pourcentage_threshold):
+def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_threshold):
     line_counts = defaultdict(lambda: 0)
     seen_pages = set()
     seed = SeedSequence(42)
@@ -131,7 +129,7 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold):
             for line in article.split("\n"):
                 line_counts[line.strip()] += 1
     # TODO understand this logic, why it's not len(line_counts)
-    thres_skip = max(10, len(seen_pages) * pourcentage_threshold)
+    thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
     skip_set = set(line for line, ct in line_counts.items() if ct > thres_skip)
     return skip_set
 
@@ -150,10 +148,12 @@ def clean_examples(examples, skip_lines_set, args):
     return results
 
 # create a private repository and push processed seed in jsonl format
-def make_seed_jsonl(dset, skip_lines_set, args): # language, name, seed_id, num_proc, min_chars=32, gzipped=False, save_dir=None):
+TEXT_COLUMN = "text"
+def make_seed_jsonl(dset, skip_lines_set, args):
     # process
     dset = dset.map(
         partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
+        input_columns=[TEXT_COLUMN] + META_COLUMNS,
         batched=True,
         num_proc=args.num_proc,
         batch_size=args.batch_size
@@ -262,6 +262,12 @@ def main():
         required=True,
         type=int,
     )
+    parser.add_argument(
+        "--min-repetition-threshold",
+        help="Minimum threshold used for filter repetitions. Used when the number of available records is not enough",
+        required=True,
+        type=int,
+    )
     args = parser.parse_args()
     # Load dataset (data first needs to be git pulled, see above)
     dset = load_dataset(
@@ -271,13 +277,13 @@ def main():
     )
 
     args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
-    skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold)
+    skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold, min_repetition_threshold=args.min_repetition_threshold)
     file_name, _ = make_seed_jsonl(
         dset,
         skip_lines_set=skip_lines_set, 
         args=args
     )
-    logger.info(f"Ended sucessfully, saved at {file_name}")
+    logger.info(f"Ended successfully, saved at {file_name}")
 
 
 if __name__ == "__main__":
