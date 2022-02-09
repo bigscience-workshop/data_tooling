@@ -38,4 +38,5 @@ python cc_pseudo_crawl/python_scripts/exact_deduplicates.py \
     --save-dir $SAVE_DATASET_DIR \
     --pseudo_crawl_path $DATASET_PATH \
     --batch-size 1000 \
+    --save-batch-size 1000 \
     --num-proc 8

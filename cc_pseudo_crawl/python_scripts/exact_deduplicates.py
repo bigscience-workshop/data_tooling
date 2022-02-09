@@ -135,6 +135,12 @@ def main():
         action="store_true",
     )
     parser.add_argument(
+        "--save-batch-size",
+        help="Batch size used for saving the dataset",
+        required=True,
+        type=int,
+    )
+    parser.add_argument(
         "--batch-size",
         help="Batch size used for the mapping and saving of the dataset",
         required=True,
