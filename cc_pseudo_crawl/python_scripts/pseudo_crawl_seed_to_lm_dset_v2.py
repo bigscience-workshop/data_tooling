@@ -172,7 +172,7 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     # process
     dset = dset.map(
         partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
-        input_columns=[TEXT_COLUMN] + META_COLUMNS,
+        # input_columns=[TEXT_COLUMN] + META_COLUMNS, # Shame this doesn't work
         batched=True,
         num_proc=args.num_proc,
         batch_size=args.batch_size
