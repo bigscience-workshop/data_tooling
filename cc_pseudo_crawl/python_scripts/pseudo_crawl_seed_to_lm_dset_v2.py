@@ -313,7 +313,7 @@ def main():
     number_of_samples_after_filtering_none = len(dset)
     logger.info(f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}")
 
-    args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
+    args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, None) # replace None with args.seed_id_info_path
     skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold, min_repetition_threshold=args.min_repetition_threshold)
     file_name, _ = make_seed_jsonl(
         dset,
