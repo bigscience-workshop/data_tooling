@@ -37,6 +37,7 @@ python cc_pseudo_crawl/python_scripts/pseudo_crawl_seed_to_lm_dset_v2.py \
     --save-dir $SAVE_DATASET_DIR \
     --pseudo_crawl_path $DATASET_PATH \
     --batch-size 1000 \
+    --save-batch-size 1000 \
     --num-proc 80\
     --min-chars 32 \
     --n-records 10000 \
