@@ -20,9 +20,10 @@ DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl
 
 SEED_ID=$(python cc_pseudo_crawl/python_scripts/load_all_seed_ids.py \
-  --seed-paths "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds.csv,"$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds_batch_2.csv \
+  --seed-paths "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds.csv,"$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_2/sourcing_sheet_seeds/seeds.csv \
   --seed-index $SLURM_ARRAY_TASK_ID \
 )
+
 SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1_2/datasets-deduplicate-on-no-clean/bigscience-catalogue-data/seed_id=$SEED_ID
 echo $DATASET_PATH
 pushd $DATA_TOOLING_REPO

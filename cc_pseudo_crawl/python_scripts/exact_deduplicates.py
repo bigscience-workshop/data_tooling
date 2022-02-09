@@ -1,18 +1,14 @@
-"""Taken from Teven"""
+"""Taken from Teven and Leandro"""
 import gzip
-import multiprocessing
 import os
 import shutil
 import time
 import logging
 import argparse
+import datasets
 
-import numpy as np
-from datasets import load_dataset
+from datasets import load_dataset, Features
 from datasets.utils.logging import set_verbosity_info
-
-from arguments import PreprocessingArguments
-from transformers import HfArgumentParser
 
 
 set_verbosity_info()
@@ -178,9 +174,7 @@ def main():
     logger.info(f"Time to filter dataset: {time.time()-t_start:.2f}")
     logger.info(f"Size of filtered dataset: {len(ds_filter)}")
 
-    # Save data in batches of samples_per_file
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    # Save data
     t_start = time.time()
     if args.gzipped:
         file_name = os.path.join(args.save_dir, f"data.jsonl.gz")
