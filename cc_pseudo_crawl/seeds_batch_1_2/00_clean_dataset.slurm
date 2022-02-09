@@ -30,4 +30,8 @@ export HF_DATASETS_CACHE=$SCRATCH/to_delete
 python cc_pseudo_crawl/python_scripts/pseudo_crawl_seed_to_lm_dset.py \
     --seed-id $SLURM_ARRAY_TASK_ID \
     --save-dir $SAVE_DATASET_DIR \
-    --pseudo_crawl_path $DATASET_PATH 
+    --pseudo_crawl_path $DATASET_PATH \
+    --batch-size 1000 \
+    --num-proc 80\
+    --n-records 10000 \
+    --pourcentage-threshold 0.01  

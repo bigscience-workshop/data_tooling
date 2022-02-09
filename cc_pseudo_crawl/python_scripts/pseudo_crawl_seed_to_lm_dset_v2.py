@@ -12,7 +12,7 @@ from datasets import Features, load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 from datasets.utils.logging import set_verbosity_info
-
+from numpy.random import SeedSequence, default_rng
 ###
 # features of the pseudocrawl seeds
 ###
@@ -117,10 +117,13 @@ def process_page(page, skip_set):
 
 # looks at up to the first 10K pages for a seed and
 # records lines that appear in at least 1% of the unique pages
-def get_lines_to_skip(dset, n_records=10000, pourcentage_threshold=0.01):
+def get_lines_to_skip(dset, n_records, pourcentage_threshold):
     line_counts = defaultdict(lambda: 0)
     seen_pages = set()
-    dset_sample = dset["train"].select(range(n_records))
+    seed = SeedSequence(42)
+    rng = default_rng(seed)
+    indices = rng.choice(len(dset), size=n_records, replace=False, shuffle=False)
+    dset_sample = dset["train"].select(indices)
     for page in tqdm(dset_sample):
         article = page["text"]
         if article not in seen_pages:
@@ -148,6 +151,7 @@ def clean_examples(examples, skip_lines_set, args):
 
 # create a private repository and push processed seed in jsonl format
 def make_seed_jsonl(dset, skip_lines_set, args): # language, name, seed_id, num_proc, min_chars=32, gzipped=False, save_dir=None):
+    # process
     dset = dset.map(
         partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
         batched=True,
@@ -155,64 +159,33 @@ def make_seed_jsonl(dset, skip_lines_set, args): # language, name, seed_id, num_
         batch_size=args.batch_size
     )
 
+    # write to file
     repo_name = f"lm_{args.language}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
     if args.save_dir is not None:
         repo_name = os.path.join(args.save_dir, repo_name)
-    file_name = os.path.join(repo_name, f"data.jsonl.gz")
-    logger.info(f"the dataset will be saved at {file_name}")
     if not os.path.isdir(repo_name):
-        os.makedirs(path)
+        os.makedirs(repo_name)
     if args.gzipped:
+        file_name = os.path.join(repo_name, f"data.jsonl.gz")
+        logger.info(f"the dataset will be saved at {file_name}")
         dset.to_json(
-            repo_name,
+            file_name,
             num_proc=args.num_proc,
             batch_size=args.save_batch_size,
             compression="gzip",
         )
     else:
+        file_name = os.path.join(repo_name, f"data.jsonl")
+        logger.info(f"the dataset will be saved at {file_name}")
         dset.to_json(
-            repo_name,
+            file_name,
             num_proc=args.num_proc,
             batch_size=args.save_batch_size,
         )
 
-
-
-
-    # process and write to file
-        
-        f = gzip.open(file_name, "w")
-    else:
-        file_name = f"{repo_name}.jsonl"
-        f = open(file_name, "w", encoding="utf-8")
-    duplicated = {}
-    for article in tqdm(dset["train"]):
-        processed_dct = process_page(article, skip_lines_dict)
-        txt = processed_dct["text"].strip().lower()
-        if len(processed_dct["text"]) > min_chars and txt not in duplicated:
-            _ = f.write((json.dumps(processed_dct) + "\n").encode("utf-8").decode("utf-8"))
-    f.close()
     return file_name, repo_name
 
-
-def push_jsonl_to_hub(file_name, repo_name, token):
-    api = HfApi()
-    api.create_repo(
-        f"bigscience-catalogue-lm-data/{repo_name}",
-        private=True,
-        repo_type="dataset",
-        token=token,
-    )
-    file_loc = api.upload_file(
-        path_or_fileobj=file_name,
-        path_in_repo=file_name,
-        repo_id=f"bigscience-catalogue-lm-data/{repo_name}",
-        token=token,
-        repo_type="dataset",
-    )
-    return file_loc
-
-
+# TODO WIP, not used currently
 def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     df = pd.read_csv(seed_id_info_path)
     sub_df = df[df["id"] == seed_id]
@@ -222,7 +195,7 @@ def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     lang_id = sub_df.lang_id[0]
     return name, lang_id
 
-
+# TODO hack to change
 def get_dataset_name_and_lang_id_from_seed_id_fake(seed_id, seed_id_info_path):
     return "change_name", "change_lang_id"
 
@@ -244,18 +217,19 @@ def main():
         required=True,
         type=int,
     )
-    parser.add_argument(
-        "--seed-id-info-path",
-        help="The path to a csv containing the seed id and the corresponding lang-id and name",
-        # required=True,
-        type=str,
-    )
+    # WIP to use with get_dataset_name_and_lang_id_from_seed_id
+    # parser.add_argument(
+    #     "--seed-id-info-path",
+    #     help="The path to a csv containing the seed id and the corresponding lang-id and name",
+    #     # required=True,
+    #     type=str,
+    # )
     parser.add_argument("--save-dir", required=True, type=str, help="Where to save the datasets.")
     parser.add_argument(
         "-pc_path",
         "--pseudo_crawl_path",
         help="path to where the pseudocrawl is located",
-        default="pseudo_crawl",
+        required=True,
         type=str,
     )
     parser.add_argument(
@@ -265,22 +239,30 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "-hub",
-        "--push_to_hub",
-        help="Whether to create a repository and push the computed jsonl to the hub",
-        action="store_true",
+        "--batch-size",
+        help="Batch size used for the mapping and saving of the dataset",
+        required=True,
+        type=int,
     )
     parser.add_argument(
-        "-t",
-        "--token",
-        help="authentication token with write access to the org",
-        default="",
-        type=str,
+        "--num-proc",
+        help="Number of processors used for the mapping and saving of the dataset",
+        required=True,
+        type=int,
+    )
+    parser.add_argument(
+        "--n-records",
+        help="Number of records used to compute the repetitions",
+        required=True,
+        type=int,
+    )
+    parser.add_argument(
+        "--pourcentage-threshold",
+        help="Threshold used for filter repetitions",
+        required=True,
+        type=int,
     )
     args = parser.parse_args()
-    assert not (
-        args.push_to_hub and args.token == ""
-    ), "If you want the script to push to the hub, you need to provide an authentication token"
     # Load dataset (data first needs to be git pulled, see above)
     dset = load_dataset(
         "json",
@@ -288,20 +270,14 @@ def main():
         features=final_features,
     )
 
-    name, language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
-    skip_lines_dict = get_lines_to_skip(dset)
-    file_name, repo_name = make_seed_jsonl(
+    args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
+    skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold)
+    file_name, _ = make_seed_jsonl(
         dset,
-        language=language_code,
-        name=name,
-        seed_id=args.seed_id,
-        skip_lines_dict=skip_lines_dict,
-        min_chars=128,  # only keep examples with at least 128 characters
-        gzipped=args.gzipped,
-        save_dir=args.save_dir,
+        skip_lines_set=skip_lines_set, 
+        args=args
     )
-    if args.push_to_hub:
-        push_jsonl_to_hub(file_name, repo_name, args.token)
+    logger.info(f"Ended sucessfully, saved at {file_name}")
 
 
 if __name__ == "__main__":
