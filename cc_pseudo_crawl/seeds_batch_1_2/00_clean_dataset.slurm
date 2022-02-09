@@ -6,7 +6,7 @@
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=cpu_p1
 #SBATCH --time 4:00:00              # maximum execution time (HH:MM:SS)
-#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_1_2/logs/clean_dataset/%x-%j.out           # output file name #TODO change path if necessary
+#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_1_2/logs/clean_dataset-v2/%x-%j.out           # output file name #TODO change path if necessary
 #SBATCH --array=0-613
 #SBATCH --account=six@cpu
 
@@ -32,7 +32,7 @@ mkdir -p $SAVE_DATASET_DIR
 export HF_DATASETS_OFFLINE=1
 export HF_DATASETS_CACHE=$SCRATCH/to_delete
 
-python cc_pseudo_crawl/python_scripts/pseudo_crawl_seed_to_lm_dset.py \
+python cc_pseudo_crawl/python_scripts/pseudo_crawl_seed_to_lm_dset_v2.py \
     --seed-id $SEED_ID \
     --save-dir $SAVE_DATASET_DIR \
     --pseudo_crawl_path $DATASET_PATH \
