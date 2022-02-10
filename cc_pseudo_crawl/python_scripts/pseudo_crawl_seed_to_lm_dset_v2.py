@@ -186,6 +186,7 @@ def make_seed_jsonl(dset, skip_lines_set, args):
         batch_size=args.batch_size,
         remove_columns=dset.column_names
     )
+    logger.info(f"Finished cleaning")
 
     # write to file
     repo_name = get_folder(args)
