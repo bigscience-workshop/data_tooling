@@ -15,47 +15,55 @@ set_verbosity_info()
 logger = logging.getLogger(__name__)
 
 null = None
+# features = {
+#     "HtmlPreprocessor_error": {"dtype": "int64", "id": null, "_type": "Value"},
+#     "HtmlPreprocessor_error_comment": {"dtype": "string", "id": null, "_type": "Value"},
+#     "content_languages": {"dtype": "string", "id": null, "_type": "Value"},
+#     "content_mime_detected": {"dtype": "string", "id": null, "_type": "Value"},
+#     "depth": {"dtype": "int16", "id": null, "_type": "Value"},
+#     "download_exception": {"dtype": "string", "id": null, "_type": "Value"},
+#     "external_urls": [{"dtype": "string", "id": null, "_type": "Value"}],
+#     "fetch_redirect": {"dtype": "string", "id": null, "_type": "Value"},
+#     "fetch_status": {"dtype": "int32", "id": null, "_type": "Value"},
+#     "fetch_time": {"dtype": "timestamp[ns]", "id": null, "_type": "Value"},
+#     "html_error": {"dtype": "string", "id": null, "_type": "Value"},
+#     "html_footer": [{"dtype": "string", "id": null, "_type": "Value"}],
+#     "html_head": [{"dtype": "string", "id": null, "_type": "Value"}],
+#     "html_str": {"dtype": "string", "id": null, "_type": "Value"},
+#     "html_title": [{"dtype": "string", "id": null, "_type": "Value"}],
+#     "metadata_html": [
+#         {
+#             "char_end_idx": {"dtype": "int64", "id": null, "_type": "Value"},
+#             "char_start_idx": {"dtype": "int64", "id": null, "_type": "Value"},
+#             "html_attrs": {
+#                 "attrs": [{"dtype": "string", "id": null, "_type": "Value"}],
+#                 "values": [{"dtype": "string", "id": null, "_type": "Value"}],
+#             },
+#             "key": {"dtype": "string", "id": null, "_type": "Value"},
+#             "relative_end_pos": {"dtype": "int64", "id": null, "_type": "Value"},
+#             "relative_start_pos": {"dtype": "int64", "id": null, "_type": "Value"},
+#             "type": {"dtype": "string", "id": null, "_type": "Value"},
+#             "value": {"dtype": "string", "id": null, "_type": "Value"},
+#         }
+#     ],
+#     "seed_id": {"dtype": "int32", "id": null, "_type": "Value"},
+#     "text": {"dtype": "string", "id": null, "_type": "Value"},
+#     "url": {"dtype": "string", "id": null, "_type": "Value"},
+#     "url_host_name": {"dtype": "string", "id": null, "_type": "Value"},
+#     "url_host_registered_domain": {"dtype": "string", "id": null, "_type": "Value"},
+#     "url_host_tld": {"dtype": "string", "id": null, "_type": "Value"},
+#     "url_surtkey": {"dtype": "string", "id": null, "_type": "Value"},
+#     "warc_filename": {"dtype": "string", "id": null, "_type": "Value"},
+#     "warc_record_length": {"dtype": "int32", "id": null, "_type": "Value"},
+#     "warc_record_offset": {"dtype": "int32", "id": null, "_type": "Value"},
+# }
 features = {
-    "HtmlPreprocessor_error": {"dtype": "int64", "id": null, "_type": "Value"},
-    "HtmlPreprocessor_error_comment": {"dtype": "string", "id": null, "_type": "Value"},
-    "content_languages": {"dtype": "string", "id": null, "_type": "Value"},
-    "content_mime_detected": {"dtype": "string", "id": null, "_type": "Value"},
-    "depth": {"dtype": "int16", "id": null, "_type": "Value"},
-    "download_exception": {"dtype": "string", "id": null, "_type": "Value"},
-    "external_urls": [{"dtype": "string", "id": null, "_type": "Value"}],
-    "fetch_redirect": {"dtype": "string", "id": null, "_type": "Value"},
-    "fetch_status": {"dtype": "int32", "id": null, "_type": "Value"},
-    "fetch_time": {"dtype": "timestamp[ns]", "id": null, "_type": "Value"},
-    "html_error": {"dtype": "string", "id": null, "_type": "Value"},
-    "html_footer": [{"dtype": "string", "id": null, "_type": "Value"}],
-    "html_head": [{"dtype": "string", "id": null, "_type": "Value"}],
-    "html_str": {"dtype": "string", "id": null, "_type": "Value"},
-    "html_title": [{"dtype": "string", "id": null, "_type": "Value"}],
-    "metadata_html": [
-        {
-            "char_end_idx": {"dtype": "int64", "id": null, "_type": "Value"},
-            "char_start_idx": {"dtype": "int64", "id": null, "_type": "Value"},
-            "html_attrs": {
-                "attrs": [{"dtype": "string", "id": null, "_type": "Value"}],
-                "values": [{"dtype": "string", "id": null, "_type": "Value"}],
-            },
-            "key": {"dtype": "string", "id": null, "_type": "Value"},
-            "relative_end_pos": {"dtype": "int64", "id": null, "_type": "Value"},
-            "relative_start_pos": {"dtype": "int64", "id": null, "_type": "Value"},
-            "type": {"dtype": "string", "id": null, "_type": "Value"},
-            "value": {"dtype": "string", "id": null, "_type": "Value"},
-        }
-    ],
-    "seed_id": {"dtype": "int32", "id": null, "_type": "Value"},
     "text": {"dtype": "string", "id": null, "_type": "Value"},
-    "url": {"dtype": "string", "id": null, "_type": "Value"},
-    "url_host_name": {"dtype": "string", "id": null, "_type": "Value"},
-    "url_host_registered_domain": {"dtype": "string", "id": null, "_type": "Value"},
-    "url_host_tld": {"dtype": "string", "id": null, "_type": "Value"},
-    "url_surtkey": {"dtype": "string", "id": null, "_type": "Value"},
-    "warc_filename": {"dtype": "string", "id": null, "_type": "Value"},
-    "warc_record_length": {"dtype": "int32", "id": null, "_type": "Value"},
-    "warc_record_offset": {"dtype": "int32", "id": null, "_type": "Value"},
+    "meta": {
+        "content_languages": {"dtype": "string", "id": null, "_type": "Value"},
+        "seed_id": {"dtype": "int64", "id": null, "_type": "Value"},
+        "url": {"dtype": "string", "id": null, "_type": "Value"},
+        },
 }
 
 
@@ -158,7 +166,8 @@ def main():
     t_start = time.time()
     ds = load_dataset(
         "json",
-        data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
+        # data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
+        data_files=[f"{args.pseudo_crawl_path}/lm_change_lang_id_seed_id_{args.seed_id}_pseudocrawl_change_name/*.jsonl"],
         features=final_features,
         split="train"
     )

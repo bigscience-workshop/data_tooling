@@ -6,8 +6,8 @@
 #SBATCH --hint=nomultithread         # we get physical cores not logical
 #SBATCH --partition=compil
 #SBATCH --time 4:00:00              # maximum execution time (HH:MM:SS)
-#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_1_2/logs/deduplicate-on-non-clean/%x-%j.out           # output file name #TODO change path if necessary
-#SBATCH --array=0
+#SBATCH --output=/gpfsscratch/rech/six/commun/pseudo_crawl/seeds_batch_1_2/logs/deduplicate-on-clean/%x-%j.out           # output file name #TODO change path if necessary
+#SBATCH --array=0-125,127-613
 #SBATCH --account=six@cpu
 
 set -x -e
@@ -17,14 +17,14 @@ conda activate thomas_data_tooling
 
 DATA_TOOLING_REPO=$WORK/repos/sync_data_tooling/data_tooling
 
-DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/hub/pseudo_crawl
+DATASET_PATH=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1_2/datasets-clean/bigscience-catalogue-data
 
 SEED_ID=$(python cc_pseudo_crawl/python_scripts/load_all_seed_ids.py \
   --seed-paths "$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_1/sourcing_sheet_seeds/seeds.csv,"$DATA_TOOLING_REPO"/cc_pseudo_crawl/seeds_batch_2/sourcing_sheet_seeds/seeds.csv \
   --seed-index $SLURM_ARRAY_TASK_ID \
 )
 
-SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1_2/datasets-deduplicate-on-no-clean/bigscience-catalogue-data/seed_id=$SEED_ID
+SAVE_DATASET_DIR=$six_ALL_CCFRSCRATCH/pseudo_crawl/seeds_batch_1_2/datasets-deduplicate-on-clean/bigscience-catalogue-data/lm_change_lang_id_seed_id_${SEED_ID}_pseudocrawl_change_name
 echo $DATASET_PATH
 pushd $DATA_TOOLING_REPO
 
