@@ -1,48 +1,9 @@
-import re, regex
-
+from ..muliwai.pii_regexs import detect_ner_with_regex_and_context
 
 trannum = str.maketrans("0123456789", "1111111111")
 
-address_regex = {
-    "en": {
-        "en_US": [
-            (
-                re.compile(
-                    r"P\.? ?O\.? Box \d+|\d{1,4} [\w\s]{1,20} (?:street|st|avenue|ave|road|rd|highway|hwy|square|sq|trail|trl|drive|dr|court|ct|park|parkway|pkwy|circle|cir|boulevard|blvd)\W?(?=\s|$)"
-                ),
-                None,
-            )
-        ],
-        # getting an unbalanced paranthesis in en_AU
-        #        "en_AU": [(re.compile(r"\b(?:(?!\s{2,}).)*)\b(VIC|NSW|ACT|QLD|NT|SA|TAS|WA).?\s*(\b\d{4}|\b(?:(?!\s{2,}|\$|\:|\.\d).)*\s(?:Alley|Ally|Arcade|Arc|Avenue|Ave|Boulevard|Bvd|Bypass|Bypa|Circuit|Cct|Close|Cl|Corner|Crn|Court|Ct|Crescent|Cres|Cul-de-sac|Cds|Drive|Dr|Esplanade|Esp|Green|Grn|Grove|Gr|Highway|Hwy|Junction|Jnc|Lane|Lane|Link|Link|Mews|Mews|Parade|Pde|Place|Pl|Ridge|Rdge|Road|Rd|Square|Sq|Street|St|Terrace|Tce|ALLEY|ALLY|ARCADE|ARC|AVENUE|AVE|BOULEVARD|BVD|BYPASS|BYPA|CIRCUIT|CCT|CLOSE|CL|CORNER|CRN|COURT|CT|CRESCENT|CRES|CUL-DE-SAC|CDS|DRIVE|DR|ESPLANADE|ESP|GREEN|GRN|GROVE|GR|HIGHWAY|HWY|JUNCTION|JNC|LANE|LANE|LINK|LINK|MEWS|MEWS|PARADE|PDE|PLACE|PL|RIDGE|RDGE|ROAD|RD|SQUARE|SQ|STREET|ST|TERRACE|TCE))\s.*?(?=\s{2,}"), None,)],
-    },
-    "zh": [
-        (
-            regex.compile(
-                r"((\p{Han}{1,3}(自治区|省))?\p{Han}{1,4}((?<!集)市|县|州)\p{Han}{1,10}[路|街|道|巷](\d{1,3}[弄|街|巷])?\d{1,4}号)"
-            ),
-            None,
-        ),
-        (
-            regex.compile(
-                r"(?<zipcode>(^\d{5}|^\d{3})?)(?<city>\D+[縣市])(?<district>\D+?(市區|鎮區|鎮市|[鄉鎮市區]))(?<others>.+)"
-            ),
-            None,
-        ),
-    ],
-}
-age_regex = {
-    "en": [
-        (
-            re.compile(
-                r"\S+ years old|\S+\-years\-old|\S+ year old|\S+\-year\-old|born [ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+|died [ ][\d][\d]+[\\ /.][\d][\d][\\ /.][\d][\d]+"
-            ),
-            None,
-        )
-    ],
-    "zh": [(regex.compile(r"\d{1,3}歲|岁"), None)],
-}
 
+# Will we cover IBAN??
 # IBAN - see https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/iban_patterns.py which is under MIT
 
 # IBAN parts format
@@ -212,131 +173,6 @@ iban_regex = {
 }
 
 
-# ABA routing from https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/aba_routing_recognizer.py which is licensed under the MIT License
-financial_record_regex = {
-    "en": [
-        (
-            re.compile(r"\b[0123678]\d{3}-\d{4}-\d\b"),
-            (
-                "aba",
-                "routing",
-                "abarouting",
-                "association",
-                "bankrouting",
-            ),
-        )
-    ],
-    # for credit card, getting a "nothing to repeat at position 15"
-    # (re.compile(r"3[47][0-9]{13}|?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}|\b([4]\d{3}[\s]\d{4}[\s]\d{4}[\s]\d{4}|[4]\d{3}[-]\d{4}[-]\d{4}[-]\d{4}|[4]\d{3}[.]\d{4}[.]\d{4}[.]\d{4}|[4]\d{3}\d{4}\d{4}\d{4})\b"), ("credit card", "american express", "visa", "mastercard")),
-}
-
-email_regex = {"default": [(re.compile(r"[\w\.=-]+@[\w\.-]+\.[\w]{2,3}"), None)]}
-
-# see https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/au_abn_recognizer.py which is licensed under MIT
-# see also https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/us_passport_recognizer.py
-# see also https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/medical_license_recognizer.py
-# see also https://github.com/microsoft/presidio/blob/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/es_nif_recognizer.py
-
-govt_id_regex = {
-    "en": {
-        "en_US": [
-            (
-                re.compile(
-                    r"(?!000|666|333)0*(?:[0-6][0-9][0-9]|[0-7][0-6][0-9]|[0-7][0-7][0-2])[- ](?!00)[0-9]{2}[- ](?!0000)[0-9]{4}"
-                ),
-                None,
-            ),
-            (
-                re.compile(r"(\b[0-9]{9}\b)"),
-                (
-                    "us",
-                    "united",
-                    "states",
-                    "passport",
-                    "passport#",
-                    "travel",
-                    "document",
-                ),
-            ),
-            (
-                re.compile(r"[a-zA-Z]{2}\d{7}|[a-zA-Z]{1}9\d{7}"),
-                ("medical", "certificate", "DEA"),
-            ),
-        ],
-        "en_CA": [(re.compile(r"\d{3}\s\d{3}\s\d{3}"), None)],
-        "en_GB": [
-            (
-                re.compile(
-                    r"\w{2}\s?\d{2}\s?\d{2}\s?\w|GB\s?\d{6}\s?\w|GB\d{3}\s\d{3}\s\d{2}\s\d{3}|GBGD\d{3}|GBHA\d{3}}|GB\d{3} \d{4} \d{2}(?: \d{3})?|GB(?:GD|HA)\d{3}"
-                ),
-                None,
-            )
-        ],
-        "en_IE": [(re.compile(r"IE\d[1-9]\d{5}\d[1-9]|IE\d{7}[1-9][1-9]?"), None)],
-        "en_IN": [(re.compile(r"[1-9]\d{10}"), None)],
-        "en_PH": [
-            (
-                re.compile(
-                    r"\d{2}-\d{7}-\d|\d{11}|\d{2}-\d{9}-\d|\d{4}-\d{4}-\d{4}|\d{4}-\d{7}-\d"
-                ),
-                None,
-            )
-        ],
-        "en_AU": [
-            (
-                re.compile(r"\b\d{2}\s\d{3}\s\d{3}\s\d{3}\b|\b\d{11}\b"),
-                ("australian business number", "abn"),
-            )
-        ],
-    },
-    "id": {
-        "id_ID": [
-            (
-                re.compile(
-                    r"\d{6}([04][1-9]|[1256][0-9]|[37][01])(0[1-9]|1[0-2])\d{6}"
-                ),
-                None,
-            )
-        ]
-    },
-    "es": {
-        "es_ES": [
-            (re.compile(r"(?:ES)?\d{6-8}-?[A-Z]"), None),
-            (
-                re.compile(r"\b[0-9]?[0-9]{7}[-]?[A-Z]\b"),
-                ("documento nacional de identidad", "DNI", "NIF", "identificación"),
-            ),
-        ],
-        "es_CO": [
-            (re.compile(r"[1-9]\d?\d{6}|8\d{8}|9\d{8}|10\d{8}|11\d{8}|12\d{8}|"), None)
-        ],
-    },
-    "pt": {
-        "pt_BR": [(re.compile(r"\d{3}\.d{3}\.d{3}-\d{2}|\d{11}"), None)],
-        "pt_PT": [(re.compile(r"PT\d{9}"), None)],
-    },
-    "zh": [
-        (
-            regex.compile(
-                r"(?:[16][1-5]|2[1-3]|3[1-7]|4[1-6]|5[0-4])\d{4}(?:19|20)\d{2}(?:(?:0[469]|11)(?:0[1-9]|[12][0-9]|30)|(?:0[13578]|1[02])(?:0[1-9]|[12][0-9]|3[01])|02(?:0[1-9]|[12][0-9]))\d{3}[\dXx]"
-            ),
-            None,
-        ),
-        (
-            regex.compile(
-                r"(^[EeKkGgDdSsPpHh]\d{8}$)|(^(([Ee][a-fA-F])|([DdSsPp][Ee])|([Kk][Jj])|([Mm][Aa])|(1[45]))\d{7}$)"
-            ),
-            None,
-        ),
-        (
-            regex.compile(
-                r"((\d{4}(| )\d{4}(| )\d{4}$)|([a-zA-Z][1-2]{1}[0-9]{8})|([0-3]{1}\d{8}))"
-            ),
-            None,
-        ),
-    ],
-    "default": [(re.compile(r"\d{8}|\d{9}|\d{10}|\d{11}"), None)],
-}
 
 # should we move license plate to govt_id?
 # ("LICENSE_PLATE", regex.compile('^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$'), None, None, None),
@@ -379,94 +215,20 @@ phone_regex = {
             regex.compile(
                 r"((\d{4}(| )\d{4}(| )\d{4}$)|([a-zA-Z][1-2]{1}[0-9]{8})|([0-3]{1}\d{8}))((02|03|037|04|049|05|06|07|08|089|082|0826|0836|886 2|886 3|886 37|886 4|886 49|886 5|886 6|886 7|886 8|886 89|886 82|886 826|886 836|886 9|886-2|886-3|886-37|886-4|886-49|886-5|886-6|886-7|886-8|886-89|886-82|886-826|886-836)(| |-)\d{4}(| |-)\d{4}$)|((09|886 9|886-9)(| |-)\d{2}(|-)\d{2}(|-)\d{1}(|-)\d{3})"
             ),
-            None,
-        ),
-    ],
-}
-
-# Does this correspond to CA id?
-SIN_regex = {"defualt": re.compile(r"[\d][\d]+[ -.][\d][\d]+[ -.][\d][\d][\d]")}
-
-# will this only match https, what about http?
-domain_name_regex = {
-    "default": [
-        (
-            re.compile(
-                r"[https:\/]*[w]?[w]?[w]?[.]?[\da-zA-Z\-]+[.][a-z]+[\/\.a-zA-Z\-\d\?=&]*"
-            ),
-            None,
-        )
-    ],
-}
-
-
-tag_2_regex = [
-    ("DOMAIN_NAME", (domain_name_regex, False)),
-    ("PHONE", (phone_regex, True)),
-    ("PASSWORD", (password_regex, True)),
-    ("NORP", (NORP_regex, False)),
-    ("AGE", (age_regex, False)),
-    ("ADDRESS", (address_regex, True)),
-    ("EMAIL", (email_regex, True)),
-    ("IP_ADDRESS", (IP_regex, True)),
-    ("GOVT_ID", (govt_id_regex, True)),
-    ("FIN_ID", (financial_record_regex, True)),
-]
-
 
 # Code below needs to be updated/completed.
 
 
 def apply_regex_anonymization(
-    sentence: str, lang_id: str, context_window: int = 20
+    sentence: str, lang_id: str, context_window: int = 20, anonymize_condition=None
 ) -> str:
-    ner = {}
     lang_id = regex_lang_id.split("_")[0]
-    if lang_id in ("zh", "ko", "ja"):
-        sentence_set = set(sentence.lower())
-    else:
-        sentence_set = set(sentence.lower().split(" "))
-    for tag, regex_group_and_anonymize_condition in tag_2_regex:
-        regex_group, anonymize_condition = regex_group_and_anonymize_condition
-        for regex_dict in regex_group.get(lang_id, regex_group.get("default", [])):
-            if isinstance(regex_dict, dict):
-                regex_list = regex_dict.get(regex_lang_id, [])
-            else:
-                regex_list = regex_dict
-            match = False
-            for regex, context in regex_list:
-                found_context = False
-                if context:
-                    for c in context:
-                        if c in sentence_set:
-                            found_context = True
-                            break
-                    if not found_context:
-                        continue
-                for ent in regex.findall(sentence):
-                    if not isinstance(ent, str):
-                        continue
-                    if found_context:
-                        i = sentence.index(ent)
-                        j = i + len(ent)
-                        len_sentence = len(sentence)
-                        left = sentence[max(0, i - context_window) : i].lower()
-                        right = sentence[
-                            j : min(len_sentence, j + context_window)
-                        ].lower()
-                        found_context = False
-                        for c in context:
-                            if c in left or c in right:
-                                found_context = True
-                                break
-                        if not found_context:
-                            continue
-                    if anonymize_condition:
-                        sentence = sentence.replace(ent, f" <{tag}> ")
-                        ner[f"<{tag}>"] = tag
-                    else:
-                        ner[ent.strip()] = tag
-                    match = True
-                if match:
-                    break
+    ner = detect_ner_with_regex_and_context(setence, lang_id)
+    """
+    if anonymize_condition:
+     for (ent, start, end, tag) in ner:
+        # we need to actually walk through and replace by start, end span.
+        sentence = sentence.replace(ent, f" <{tag}> ")
+
+    """   
     return sentence, ner
