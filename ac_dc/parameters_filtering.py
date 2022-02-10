@@ -285,7 +285,7 @@ parameters_filtering_en = {
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.80,
     "cond_check_perplexity": True,
-    "perplexity_max_cutoff": 2500,
+    "perplexity_max_cutoff": 1500,
 }
 
 parameters_filtering_es = {
