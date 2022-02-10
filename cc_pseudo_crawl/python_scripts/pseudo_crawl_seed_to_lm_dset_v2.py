@@ -1,4 +1,5 @@
 import json
+import shutil
 from collections import defaultdict
 import os
 import argparse
@@ -177,6 +178,12 @@ def get_folder(args):
 # create a private repository and push processed seed in jsonl format
 TEXT_COLUMN = "text"
 def make_seed_jsonl(dset, skip_lines_set, args):
+    repo_name = get_folder(args)
+    # TODO build a caching mechanism
+    repo_name_tmp = f"{repo_name}.tmp"
+    if os.path.exists(repo_name):
+        return
+
     # process
     dset = dset.map(
         partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
@@ -189,9 +196,8 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     logger.info(f"Finished cleaning")
 
     # write to file
-    repo_name = get_folder(args)
     if args.gzipped:
-        file_name = os.path.join(repo_name, f"data.jsonl.gz")
+        file_name = os.path.join(repo_name_tmp, f"data.jsonl.gz")
         logger.info(f"the dataset will be saved at {file_name}")
         dset.to_json(
             file_name,
@@ -200,13 +206,22 @@ def make_seed_jsonl(dset, skip_lines_set, args):
             compression="gzip",
         )
     else:
-        file_name = os.path.join(repo_name, f"data.jsonl")
+        file_name = os.path.join(repo_name_tmp, f"data.jsonl")
         logger.info(f"the dataset will be saved at {file_name}")
         dset.to_json(
             file_name,
             num_proc=args.num_proc,
             batch_size=args.save_batch_size,
         )
+
+    logger.info(f"Ended successfully, saved at {file_name}")
+
+    # Saving skipped lines that are considered repetitive
+    with open(os.path.join(repo_name_tmp, "skipped_lines.json"), "w") as fi:
+        json.dump(list(skip_lines_set), fi, indent=2)
+
+    # Move so that the state becomes completed
+    shutil.move(repo_name_tmp, repo_name)
 
     return file_name, repo_name
 
@@ -333,13 +348,6 @@ def main():
         skip_lines_set=skip_lines_set, 
         args=args
     )
-
-    logger.info(f"Ended successfully, saved at {file_name}")
-
-    # Saving skipped lines that are considered repetitive
-    repo_name = get_folder(args)
-    with open(os.path.join(repo_name, "skipped_lines.json"), "w") as fi:
-        json.dump(list(skip_lines_set), fi, indent=2)
 
 
 if __name__ == "__main__":
