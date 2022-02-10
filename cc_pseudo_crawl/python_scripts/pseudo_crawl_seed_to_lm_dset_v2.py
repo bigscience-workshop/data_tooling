@@ -171,8 +171,6 @@ def get_folder(args):
     repo_name = f"lm_{args.language_code}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
     if args.save_dir is not None:
         repo_name = os.path.join(args.save_dir, repo_name)
-    if not os.path.isdir(repo_name):
-        os.makedirs(repo_name)
     return repo_name
 
 # create a private repository and push processed seed in jsonl format
@@ -183,6 +181,8 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     repo_name_tmp = f"{repo_name}.tmp"
     if os.path.exists(repo_name):
         return
+    if not os.path.isdir(repo_name_tmp):
+        os.makedirs(repo_name_tmp)
 
     # process
     dset = dset.map(
