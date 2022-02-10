@@ -1,6 +1,0 @@
-cython>=0.25
-faker 
-pytest
-sentencepiece
-spacy
-transformers 
