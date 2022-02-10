@@ -82,7 +82,7 @@ final_features
 
 def get_hash(example):
     """Get hash of content field."""
-    return {"hash": hash(example["text"])}
+    return {"hash": hash(example["text"].replace(" ", ""))}
 
 
 def check_uniques(example, uniques):
