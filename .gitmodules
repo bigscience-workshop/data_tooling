@@ -1,0 +1,3 @@
+[submodule "muliwai"]
+	path = muliwai
+	url = https://github.com/ontocord/muliwai
