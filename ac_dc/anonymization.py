@@ -178,44 +178,6 @@ iban_regex = {
 # ("LICENSE_PLATE", regex.compile('^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$'), None, None, None),
 # ("LICENSE_PLATE", regex.compile('\b[A-Z]{3}-\d{4}\b'), None, None, None),
 
-
-# too broad - might need a context word
-IP_regex = {
-    "default": [
-        (re.compile(r"\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}"), ("address", "ip"))
-    ],
-}
-NORP_regex = {
-    "en": [(re.compile(r"upper class|middle class|working class|lower class"), None)],
-}
-
-# I think this is too broad. I put a context word around it.
-password_regex = {
-    "en": [(re.compile(r"password: [\d][\d][\d][\d][\d]+"), ("password",))],
-}
-
-# We will want a context word around it to make it more specific. might be too broad.
-phone_regex = {
-    "en": [
-        (
-            re.compile(
-                r"[\d]?[\d]?[ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[ -\\/.]?[\d][\d][\d][ -\\/.]?[\d][\d][\d][\d]"
-            ),
-            ("ph", "phone", "fax"),
-        )
-    ],
-    "zh": [
-        (
-            regex.compile(
-                r"(0?\d{2,4}-[1-9]\d{6,7})|({\+86|086}-| ?1[3-9]\d{9} , ([\+0]?86)?[\-\s]?1[3-9]\d{9})"
-            ),
-            None,
-        ),
-        (
-            regex.compile(
-                r"((\d{4}(| )\d{4}(| )\d{4}$)|([a-zA-Z][1-2]{1}[0-9]{8})|([0-3]{1}\d{8}))((02|03|037|04|049|05|06|07|08|089|082|0826|0836|886 2|886 3|886 37|886 4|886 49|886 5|886 6|886 7|886 8|886 89|886 82|886 826|886 836|886 9|886-2|886-3|886-37|886-4|886-49|886-5|886-6|886-7|886-8|886-89|886-82|886-826|886-836)(| |-)\d{4}(| |-)\d{4}$)|((09|886 9|886-9)(| |-)\d{2}(|-)\d{2}(|-)\d{1}(|-)\d{3})"
-            ),
-
 # Code below needs to be updated/completed.
 
 
