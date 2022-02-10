@@ -223,8 +223,6 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     # Move so that the state becomes completed
     shutil.move(repo_name_tmp, repo_name)
 
-    return file_name, repo_name
-
 # TODO WIP, not used currently
 def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     df = pd.read_csv(seed_id_info_path)
@@ -343,7 +341,7 @@ def main():
 
     args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, None) # replace None with args.seed_id_info_path
     skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold, min_repetition_threshold=args.min_repetition_threshold)
-    file_name, _ = make_seed_jsonl(
+    make_seed_jsonl(
         dset,
         skip_lines_set=skip_lines_set, 
         args=args
