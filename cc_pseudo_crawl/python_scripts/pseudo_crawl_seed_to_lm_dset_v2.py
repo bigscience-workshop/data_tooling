@@ -184,12 +184,6 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     if not os.path.isdir(repo_name_tmp):
         os.makedirs(repo_name_tmp)
 
-    # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
-    columns_to_keep = [TEXT_COLUMN] + META_COLUMNS
-    dset = dset.remove_columns(
-        set(dset.column_names) - set(columns_to_keep)
-    )
-
     # process
     dset = dset.map(
         partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
@@ -332,6 +326,12 @@ def main():
         data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
         features=final_features,
         split="train"
+    )
+
+    # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
+    columns_to_keep = [TEXT_COLUMN] + META_COLUMNS
+    dset = dset.remove_columns(
+        list(set(dset.column_names) - set(columns_to_keep))
     )
 
     # Filter None text columns
