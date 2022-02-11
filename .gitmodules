@@ -1,6 +1,6 @@
 [submodule "muliwai"]
-	path = muliwai
-	url = https://github.com/ontocord/muliwai
+    path = muliwai
+    url = https://github.com/ontocord/muliwai
 [submodule "ac_dc/muliwai"]
-	path = ac_dc/muliwai
-	url = https://github.com/ontocord/muliwai
+    path = ac_dc/muliwai
+    url = https://github.com/ontocord/muliwai
