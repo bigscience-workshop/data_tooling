@@ -184,10 +184,15 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     if not os.path.isdir(repo_name_tmp):
         os.makedirs(repo_name_tmp)
 
+    # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
+    columns_to_keep = [TEXT_COLUMN] + META_COLUMNS
+    dset = dset.remove_columns(
+        set(dset.column_names) - set(columns_to_keep)
+    )
+
     # process
     dset = dset.map(
         partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
-        # input_columns=[TEXT_COLUMN] + META_COLUMNS, # Shame this doesn't work
         batched=True,
         num_proc=args.num_proc,
         batch_size=args.batch_size,
