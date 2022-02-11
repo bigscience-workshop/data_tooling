@@ -186,7 +186,7 @@ def apply_regex_anonymization(
     lang_id = lang_id.split("_")[0]
     ner = detect_ner_with_regex_and_context(sentence, lang_id)
     if anonymize_condition:
-      for (ent, start, end, tag) in ner:
-        # we need to actually walk through and replace by start, end span.
-        sentence = sentence.replace(ent, f" <{tag}> ")
+        for (ent, start, end, tag) in ner:
+            # we need to actually walk through and replace by start, end span.
+            sentence = sentence.replace(ent, f" <{tag}> ")
     return sentence, ner
