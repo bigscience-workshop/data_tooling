@@ -173,7 +173,6 @@ iban_regex = {
 }
 
 
-
 # should we move license plate to govt_id?
 # ("LICENSE_PLATE", regex.compile('^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-HJ-NP-Z]{1}(?:(?:[0-9]{5}[DF])|(?:[DF](?:[A-HJ-NP-Z0-9])[0-9]{4})))|(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领 A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9 挂学警港澳]{1})$'), None, None, None),
 # ("LICENSE_PLATE", regex.compile('\b[A-Z]{3}-\d{4}\b'), None, None, None),
@@ -192,5 +191,5 @@ def apply_regex_anonymization(
         # we need to actually walk through and replace by start, end span.
         sentence = sentence.replace(ent, f" <{tag}> ")
 
-    """   
+    """
     return sentence, ner
