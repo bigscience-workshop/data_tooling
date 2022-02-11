@@ -795,7 +795,7 @@ class Visualization_for_lang:
                         st.markdown(
                             f"Language identification confidence score: {lang_id_score}"
                         )
-                        if is_doc_discarded(key, flagged_words_ratio) or (
+                        if is_doc_discarded(key, lang_id_score) or (
                             self.lang_dataset_id != lang_pred_dataset_id
                         ):
                             is_discarded = True
