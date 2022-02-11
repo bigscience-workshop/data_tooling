@@ -96,8 +96,13 @@ def get_meta_dict(batch):
 def filter_lines(article, skip_set):
     # TODO discuss the strip
     lines = [line.strip() for line in article.split("\n")]
-    keep = [line for line in lines if line not in skip_set]
-    skip = [line for line in lines if line in skip_set]
+    keep = []
+    skip = []
+    for line in lines:
+        if line in skip_set:
+            skip += [line]
+        else:
+            keep += [line]
     return "\n".join(keep).strip(), "\n".join(skip).strip()
 
 def filter_lines_by_batch(texts, skip_set):
