@@ -32,7 +32,7 @@ langs_id = [
     {
         "lang": "Assamese",
         "dataset_id": "as",
-        "stopwords_id": None,
+        "stopwords_id": "as",
         "flagged_words_id": None,
         "fasttext_id": "as",
         "sentencepiece_id": "as",
@@ -95,7 +95,7 @@ langs_id = [
     {
         "lang": "Gujarati",
         "dataset_id": "gu",
-        "stopwords_id": None,
+        "stopwords_id": "gu",
         "flagged_words_id": None,
         "fasttext_id": "gu",
         "sentencepiece_id": "gu",
