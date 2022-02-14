@@ -1,5 +1,6 @@
 from muliwai.pii_regexes import detect_ner_with_regex_and_context
 from muliwai.pii_regexes import regex_rulebase
+
 trannum = str.maketrans("0123456789", "1111111111")
 
 
@@ -184,7 +185,12 @@ def apply_regex_anonymization(
     sentence: str, lang_id: str, context_window: int = 20, anonymize_condition=None
 ) -> str:
     lang_id = lang_id.split("_")[0]
-    ner = detect_ner_with_regex_and_context(sentence=sentence, src_lang=lang_id, context_window=context_window, tag_type=regex_rulebase.keys())
+    ner = detect_ner_with_regex_and_context(
+        sentence=sentence,
+        src_lang=lang_id,
+        context_window=context_window,
+        tag_type=regex_rulebase.keys(),
+    )
     if anonymize_condition:
         for (ent, start, end, tag) in ner:
             # we need to actually walk through and replace by start, end span.
