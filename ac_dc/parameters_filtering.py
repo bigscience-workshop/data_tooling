@@ -281,7 +281,7 @@ parameters_filtering_en = {
     "cond_check_stopwords": True,
     "stopwords_min_cutoff": 0.3,
     "cond_check_flagged_words": True,
-    "flagged_words_max_cutoff": 0.045,
+    "flagged_words_max_cutoff": 0.01,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.80,
     "cond_check_perplexity": True,
