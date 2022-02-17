@@ -46,7 +46,7 @@ parameters_filtering_default = {
     "flagged_words_max_cutoff": 0.1,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.70,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 10000,
 }
 
@@ -148,7 +148,7 @@ parameters_filtering_arz = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -182,7 +182,7 @@ parameters_filtering_as = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -216,7 +216,7 @@ parameters_filtering_bn = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 575000,
 }
 
@@ -352,7 +352,7 @@ parameters_filtering_eu = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -658,7 +658,7 @@ parameters_filtering_sw = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -692,7 +692,7 @@ parameters_filtering_ta = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -726,7 +726,7 @@ parameters_filtering_te = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -760,7 +760,7 @@ parameters_filtering_ur = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -770,32 +770,32 @@ parameters_filtering_vi = {
     "cond_remove_words_with_incorrect_substrings": True,
     "incorrect_word_substrings": ["http", "www", ".com", "href", "//"],
     "cond_remove_long_words": True,
-    "length_word_max_cutoff": 30,
+    "length_word_max_cutoff": 25,
     "cond_check_number_words": True,
     "tokenization": False,
     "strip_characters": special_characters_default,
-    "number_words_min_cutoff": 1,
+    "number_words_min_cutoff": 30,
     "number_words_max_cutoff": 100000,
     "cond_check_character_repetition_removal": True,
     "character_repetition_length": 10,
-    "character_repetition_max_cutoff": 0.106,
+    "character_repetition_max_cutoff": 0.15,
     "cond_check_word_repetition_removal": True,
     "word_repetition_length": 5,
-    "word_repetition_max_cutoff": 0.19,
+    "word_repetition_max_cutoff": 0.20,
     "cond_check_special_characters": True,
     "special_characters": special_characters_default,
-    "special_characters_max_cutoff": 0.35,
+    "special_characters_max_cutoff": 0.34,
     "cond_words_augmentation": True,
     "words_augmentation_group_sizes": [2],
     "words_augmentation_join_char": " ",
     "cond_check_stopwords": True,
-    "stopwords_min_cutoff": 0,
+    "stopwords_min_cutoff": 0.08,
     "cond_check_flagged_words": True,
-    "flagged_words_max_cutoff": 0.2,
+    "flagged_words_max_cutoff": 0.005,
     "cond_check_lang_id": True,
-    "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
-    "perplexity_max_cutoff": 3000000,
+    "lang_id_min_cutoff": 0.90,
+    "cond_check_perplexity": True,
+    "perplexity_max_cutoff": 1600,
 }
 
 parameters_filtering_yo = {
@@ -828,7 +828,7 @@ parameters_filtering_yo = {
     "flagged_words_max_cutoff": 0.2,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.75,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 3000000,
 }
 
@@ -862,12 +862,13 @@ parameters_filtering_zh = {
     "flagged_words_max_cutoff": 0.001,
     "cond_check_lang_id": True,
     "lang_id_min_cutoff": 0.85,
-    "cond_check_perplexity": False,
+    "cond_check_perplexity": True,
     "perplexity_max_cutoff": 2095,
 }
 
 parameters_filtering = {
     "default": parameters_filtering_default,
+    "af": parameters_filtering_af,
     "ar": parameters_filtering_ar,
     "arz": parameters_filtering_arz,
     "as": parameters_filtering_as,
