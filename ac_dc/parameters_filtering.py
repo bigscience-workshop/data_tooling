@@ -857,7 +857,7 @@ parameters_filtering_zh = {
     "words_augmentation_group_sizes": [2],
     "words_augmentation_join_char": "",
     "cond_check_stopwords": True,
-    "stopwords_min_cutoff": 0.0,
+    "stopwords_min_cutoff": 0.1691,
     "cond_check_flagged_words": True,
     "flagged_words_max_cutoff": 0.001,
     "cond_check_lang_id": True,
