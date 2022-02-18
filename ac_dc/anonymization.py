@@ -182,7 +182,11 @@ iban_regex = {
 
 
 def apply_regex_anonymization(
-    sentence: str, lang_id: str, context_window: int = 20, anonymize_condition=None, tag_type=None
+    sentence: str,
+    lang_id: str,
+    context_window: int = 20,
+    anonymize_condition=None,
+    tag_type=None,
 ) -> str:
     """
     Params:
