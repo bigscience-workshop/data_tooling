@@ -27,5 +27,6 @@ def main():
             seed_ids += [row[0] for row_id, row in enumerate(data) if row_id > 0]
     print(seed_ids[args.seed_index])
 
+
 if __name__ == "__main__":
     main()

@@ -130,7 +130,16 @@ def get_lines_to_skip(dset):
 
 
 # create a private repository and push processed seed in jsonl format
-def make_seed_jsonl(dset, language, name, skip_lines_dict, seed_id, min_chars=32, gzipped=False, save_dir=None):
+def make_seed_jsonl(
+    dset,
+    language,
+    name,
+    skip_lines_dict,
+    seed_id,
+    min_chars=32,
+    gzipped=False,
+    save_dir=None,
+):
     repo_name = f"lm_{language}_seed_id_{seed_id}_pseudocrawl_{name}"
     if save_dir is not None:
         repo_name = os.path.join(save_dir, repo_name)
@@ -147,7 +156,9 @@ def make_seed_jsonl(dset, language, name, skip_lines_dict, seed_id, min_chars=32
         processed_dct = process_page(article, skip_lines_dict)
         txt = processed_dct["text"].strip().lower()
         if len(processed_dct["text"]) > min_chars and txt not in duplicated:
-            _ = f.write((json.dumps(processed_dct) + "\n").encode("utf-8").decode("utf-8"))
+            _ = f.write(
+                (json.dumps(processed_dct) + "\n").encode("utf-8").decode("utf-8")
+            )
     f.close()
     return file_name, repo_name
 
@@ -207,7 +218,9 @@ def main():
         # required=True,
         type=str,
     )
-    parser.add_argument("--save-dir", required=True, type=str, help="Where to save the datasets.")
+    parser.add_argument(
+        "--save-dir", required=True, type=str, help="Where to save the datasets."
+    )
     parser.add_argument(
         "-pc_path",
         "--pseudo_crawl_path",
@@ -241,11 +254,15 @@ def main():
     # Load dataset (data first needs to be git pulled, see above)
     dset = load_dataset(
         "json",
-        data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
+        data_files=[
+            f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"
+        ],
         features=final_features,
     )
 
-    name, language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, args.seed_id_info_path)
+    name, language_code = get_dataset_name_and_lang_id_from_seed_id_fake(
+        args.seed_id, args.seed_id_info_path
+    )
     skip_lines_dict = get_lines_to_skip(dset)
     file_name, repo_name = make_seed_jsonl(
         dset,

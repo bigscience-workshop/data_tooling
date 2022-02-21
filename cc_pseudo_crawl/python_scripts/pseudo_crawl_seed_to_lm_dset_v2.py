@@ -86,6 +86,8 @@ final_features
 
 # extract just the metadata we wish to keep
 META_COLUMNS = ["url", "content_languages", "seed_id"]
+
+
 def get_meta_dict(batch):
     batch_size = len(batch[next(iter(batch))])
     meta = [{k: batch[k][idx] for k in META_COLUMNS} for idx in range(batch_size)]
@@ -104,6 +106,7 @@ def filter_lines(article, skip_set):
         else:
             keep += [line]
     return "\n".join(keep).strip(), "\n".join(skip).strip()
+
 
 def filter_lines_by_batch(texts, skip_set):
     filtered_lines = [filter_lines(article, skip_set) for article in texts]
@@ -141,20 +144,18 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
 
         seen_pages.add(article)
         # We count the number of times we see identical lines in different documents.
-        all_lines = set(line.strip() for line in article.split("\n"))
+        all_lines = {line.strip() for line in article.split("\n")}
         for line in all_lines:
             line_counts[line] += 1
 
     # TODO understand this logic, why it's not len(line_counts)
     thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
-    skip_set = set(line for line, ct in line_counts.items() if ct > thres_skip)
+    skip_set = {line for line, ct in line_counts.items() if ct > thres_skip}
     return skip_set
 
+
 def clean_examples(examples, skip_lines_set, args):
-    results = {
-        "text": [],
-        "meta": []
-    }
+    results = {"text": [], "meta": []}
     # Collapses meta and cleans text
     preprocessed_batch = process_batch(examples, skip_lines_set)
     assert set(results.keys()) == set(preprocessed_batch.keys())
@@ -167,14 +168,20 @@ def clean_examples(examples, skip_lines_set, args):
 
     return results
 
+
 def get_folder(args):
-    repo_name = f"lm_{args.language_code}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
+    repo_name = (
+        f"lm_{args.language_code}_seed_id_{args.seed_id}_pseudocrawl_{args.name}"
+    )
     if args.save_dir is not None:
         repo_name = os.path.join(args.save_dir, repo_name)
     return repo_name
 
+
 # create a private repository and push processed seed in jsonl format
 TEXT_COLUMN = "text"
+
+
 def make_seed_jsonl(dset, skip_lines_set, args):
     repo_name = get_folder(args)
     # TODO build a caching mechanism
@@ -190,7 +197,7 @@ def make_seed_jsonl(dset, skip_lines_set, args):
         batched=True,
         num_proc=args.num_proc,
         batch_size=args.batch_size,
-        remove_columns=dset.column_names
+        remove_columns=dset.column_names,
     )
     logger.info(f"Finished cleaning")
 
@@ -222,6 +229,7 @@ def make_seed_jsonl(dset, skip_lines_set, args):
     # Move so that the state becomes completed
     shutil.move(repo_name_tmp, repo_name)
 
+
 # TODO WIP, not used currently
 def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     df = pd.read_csv(seed_id_info_path)
@@ -232,12 +240,15 @@ def get_dataset_name_and_lang_id_from_seed_id(seed_id, seed_id_info_path):
     lang_id = sub_df.lang_id[0]
     return name, lang_id
 
+
 # TODO hack to change
 def get_dataset_name_and_lang_id_from_seed_id_fake(seed_id, seed_id_info_path):
     return "change_name", "change_lang_id"
 
+
 def text_is_not_none(batch):
     return [text is not None for text in batch["text"]]
+
 
 ###
 # combine everything
@@ -263,7 +274,9 @@ def main():
     #     # required=True,
     #     type=str,
     # )
-    parser.add_argument("--save-dir", required=True, type=str, help="Where to save the datasets.")
+    parser.add_argument(
+        "--save-dir", required=True, type=str, help="Where to save the datasets."
+    )
     parser.add_argument(
         "-pc_path",
         "--pseudo_crawl_path",
@@ -323,34 +336,35 @@ def main():
     # Load dataset (data first needs to be git pulled, see above)
     dset = load_dataset(
         "json",
-        data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
+        data_files=[
+            f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"
+        ],
         features=final_features,
-        split="train"
+        split="train",
     )
 
     # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
     columns_to_keep = [TEXT_COLUMN] + META_COLUMNS
-    dset = dset.remove_columns(
-        list(set(dset.column_names) - set(columns_to_keep))
-    )
+    dset = dset.remove_columns(list(set(dset.column_names) - set(columns_to_keep)))
 
     # Filter None text columns
     number_of_samples_before = len(dset)
-    dset = dset.filter(
-        text_is_not_none,
-        batched=True,
-        num_proc=args.num_proc
-    )
+    dset = dset.filter(text_is_not_none, batched=True, num_proc=args.num_proc)
     number_of_samples_after_filtering_none = len(dset)
-    logger.info(f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}")
-
-    args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(args.seed_id, None) # replace None with args.seed_id_info_path
-    skip_lines_set = get_lines_to_skip(dset, n_records=args.n_records, pourcentage_threshold=args.pourcentage_threshold, min_repetition_threshold=args.min_repetition_threshold)
-    make_seed_jsonl(
-        dset,
-        skip_lines_set=skip_lines_set, 
-        args=args
+    logger.info(
+        f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}"
     )
+
+    args.name, args.language_code = get_dataset_name_and_lang_id_from_seed_id_fake(
+        args.seed_id, None
+    )  # replace None with args.seed_id_info_path
+    skip_lines_set = get_lines_to_skip(
+        dset,
+        n_records=args.n_records,
+        pourcentage_threshold=args.pourcentage_threshold,
+        min_repetition_threshold=args.min_repetition_threshold,
+    )
+    make_seed_jsonl(dset, skip_lines_set=skip_lines_set, args=args)
 
 
 if __name__ == "__main__":
