@@ -69,7 +69,7 @@ def process_batch(batch, skip_set):
 # records lines that appear in at least 1% of the unique pages
 def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_threshold):
     line_counts = defaultdict(lambda: 0)
-    seen_pages = set()
+    seen_pages = defaultdict(lambda: 0)
 
     seed = SeedSequence(42)
     rng = default_rng(seed)
@@ -82,9 +82,10 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
 
         # Duplicated documents are only counted once as they'll be removed in future deduplication script.
         if article in seen_pages:
+            seen_pages[article] += 1
             continue
 
-        seen_pages.add(article)
+        seen_pages[article] += 1
         # We count the number of times we see identical lines in different documents.
         all_lines = {line.strip() for line in article.split("\n")}
         for line in all_lines:
@@ -93,6 +94,7 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
     # TODO understand this logic, why it's not len(line_counts)
     thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
     skip_set = {line for line, ct in line_counts.items() if ct > thres_skip}
+    logger.info(f"this is the number of duplicated articles {[num for num in list(seen_pages.values()) if num > 1]}")
     return skip_set
 
 
