@@ -94,8 +94,7 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
     # TODO understand this logic, why it's not len(line_counts)
     thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
     skip_set = {line for line, ct in line_counts.items() if ct > thres_skip}
-    logger.info(f"this is the number of duplicated articles {[num for num in list(seen_pages.values()) if num > 1]}")
-    return skip_set
+    return skip_set, seen_pages
 
 
 def clean_examples(examples, skip_lines_set, args):
@@ -117,12 +116,10 @@ def clean_examples(examples, skip_lines_set, args):
 TEXT_COLUMN = "text"
 
 
-def filter_and_save(dset, skip_lines_set, args):
+def filter_and_save(dset, skip_lines_set, seen_pages, args):
     repo_name = args.save_dir
     # TODO build a caching mechanism
     repo_name_tmp = f"{repo_name}.tmp"
-    if os.path.exists(repo_name):
-        return
     if not os.path.isdir(repo_name_tmp):
         os.makedirs(repo_name_tmp)
 
@@ -144,6 +141,10 @@ def filter_and_save(dset, skip_lines_set, args):
     # Saving skipped lines that are considered repetitive
     with open(os.path.join(repo_name_tmp, "skipped_lines.json"), "w") as fi:
         json.dump(list(skip_lines_set), fi, indent=2)
+
+    # Saving num of duplicated documents
+    with open(os.path.join(repo_name_tmp, "duplicate_documents.json"), "w") as fi:
+        json.dump([num for num in list(seen_pages.values()) if num > 1], fi, indent=2)
 
     # Move so that the state becomes completed
     shutil.move(repo_name_tmp, repo_name)
@@ -226,14 +227,15 @@ def main():
         f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}"
     )
 
-    skip_lines_set = get_lines_to_skip(
+    skip_lines_set, seen_pages = get_lines_to_skip(
         dset,
         n_records=args.n_records,
         pourcentage_threshold=args.pourcentage_threshold,
         min_repetition_threshold=args.min_repetition_threshold,
     )
 
-    filter_and_save(dset, skip_lines_set=skip_lines_set, args=args)
+    filter_and_save(dset, skip_lines_set=skip_lines_set, seen_pages=seen_pages, args=args)
+    logger.info("Finished")
 
 
 if __name__ == "__main__":
