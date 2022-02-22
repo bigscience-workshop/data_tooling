@@ -37,28 +37,31 @@ META_COLUMNS = ["url", "content_languages", "seed_id"]
 
 
 # filter text to remove certain lines (e.g. menu items, copyright notice)
-def filter_lines(article, skip_set):
+def filter_lines(article, skip_set, used_lines):
     # TODO discuss the strip
     lines = [line.strip() for line in article.split("\n")]
     keep = []
     skip = []
     for line in lines:
-        if line in skip_set:
+        if line in skip_set and line in used_lines:
             skip += [line]
+        elif line in skip_set :
+            keep += [line]
+            used_lines.add(line)
         else:
             keep += [line]
     return "\n".join(keep).strip(), "\n".join(skip).strip()
 
 
-def filter_lines_by_batch(texts, skip_set):
-    filtered_lines = [filter_lines(article, skip_set) for article in texts]
+def filter_lines_by_batch(texts, skip_set, used_lines):
+    filtered_lines = [filter_lines(article, skip_set, used_lines) for article in texts]
     return tuple(zip(*filtered_lines))
 
 
 # do both together and return an entry
-def process_batch(batch, skip_set):
+def process_batch(batch, skip_set, used_lines):
     # metas = get_meta_dict(batch)
-    texts, _ = filter_lines_by_batch(batch["text"], skip_set)
+    texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines)
     return {
         # "meta": metas,
         "text": texts,
@@ -80,11 +83,6 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
     for page in tqdm(dset_sample):
         article = page["text"]
 
-        # Duplicated documents are only counted once as they'll be removed in future deduplication script.
-        if article in seen_pages:
-            seen_pages[article] += 1
-            continue
-
         seen_pages[article] += 1
         # We count the number of times we see identical lines in different documents.
         all_lines = {line.strip() for line in article.split("\n")}
@@ -92,16 +90,19 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
             line_counts[line] += 1
 
     # TODO understand this logic, why it's not len(line_counts)
-    thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
+    if pourcentage_threshold is not None:
+        thres_skip = max(min_repetition_threshold, len(seen_pages) * pourcentage_threshold)
+    else:
+        thres_skip = min_repetition_threshold
     skip_set = {line for line, ct in line_counts.items() if ct > thres_skip}
     return skip_set, seen_pages
 
 
-def clean_examples(examples, skip_lines_set, args):
+def clean_examples(examples, skip_lines_set, used_lines, args):
     results = {"text": []}
     # results = {"text": [], "meta": []}
     # Collapses meta and cleans text
-    preprocessed_batch = process_batch(examples, skip_lines_set)
+    preprocessed_batch = process_batch(examples, skip_lines_set, used_lines)
     assert set(results.keys()) == set(preprocessed_batch.keys())
 
     for idx, cleaned_article in enumerate(preprocessed_batch["text"]):
@@ -124,10 +125,11 @@ def filter_and_save(dset, skip_lines_set, seen_pages, args):
         os.makedirs(repo_name_tmp)
 
     # process
+    used_lines = set()
     dset = dset.map(
-        partial(clean_examples, skip_lines_set=skip_lines_set, args=args),
+        partial(clean_examples, skip_lines_set=skip_lines_set, used_lines=used_lines, args=args),
         batched=True,
-        num_proc=args.num_proc,
+        # num_proc=args.num_proc, # single proccess for used_lines
         batch_size=args.batch_size,
         remove_columns=dset.column_names,
     )
@@ -201,7 +203,7 @@ def main():
     parser.add_argument(
         "--pourcentage-threshold",
         help="Threshold used for filter repetitions",
-        required=True,
+        default=None,
         type=float,
     )
     parser.add_argument(

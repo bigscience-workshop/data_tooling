@@ -13,9 +13,8 @@ export HF_DATASETS_CACHE=/home/lucile/to_delete
 python tokenizer/python_script/dedup_lines.py \
     --save-dir $SAVE_DATASET_DIR \
     --dataset_dir $DATASET_PATH \
-    --batch-size 1000 \
-    --num-proc 4 \
+    --batch-size 100 \
+    --num-proc 3 \
     --min-chars 0 \
-    --n-records 12000000 \
-    --pourcentage-threshold 0.0001 \
-    --min-repetition-threshold 10
+    --n-records 1000000 \
+    --min-repetition-threshold 0
