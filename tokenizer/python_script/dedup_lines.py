@@ -45,9 +45,9 @@ def filter_lines(article, skip_set, used_lines):
     return "\n".join(keep).strip(), "\n".join(skip).strip()
 
 
-def filter_lines_by_batch(texts, skip_set, used_lines, metadata=None):
-    if args.preserve_code:
-        filtered_lines = [filter_lines(article, skip_set, used_lines) for article, metadata_item in (texts, metadata) if "lm_code" in article["meta"]["source_dataset"] else (metadata, "")]
+def filter_lines_by_batch(texts, skip_set, used_lines, preserve_code, metadata=None):
+    if preserve_code:
+        filtered_lines = [filter_lines(article, skip_set, used_lines) if "lm_code" in eval(metadata_item)["source_dataset"] else (article, "") for article, metadata_item in zip(texts, metadata) ]
     else:
         filtered_lines = [filter_lines(article, skip_set, used_lines) for article in texts]
     return tuple(zip(*filtered_lines))
@@ -56,14 +56,14 @@ def filter_lines_by_batch(texts, skip_set, used_lines, metadata=None):
 # do both together and return an entry
 def process_batch(batch, skip_set, used_lines, args):
     if not args.with_meta_col:
-        texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines)
+        texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines, preserve_code=False)
         return {
             "text": texts,
         }
     else:
-        texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines, metadata=batch["meta"])
+        texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines, preserve_code = args.preserve_code, metadata=batch["meta"])
         return {
-            "meta", batch["meta"],
+            "meta": batch["meta"],
             "text": texts,
         }
 
