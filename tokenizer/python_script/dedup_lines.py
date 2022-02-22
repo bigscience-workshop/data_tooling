@@ -26,15 +26,7 @@ logger = logging.getLogger(__name__)
 ###
 
 
-# extract just the metadata we wish to keep
-META_COLUMNS = ["url", "content_languages", "seed_id"]
-
-
-# def get_meta_dict(batch):
-#     batch_size = len(batch[next(iter(batch))])
-#     meta = [{k: batch[k][idx] for k in META_COLUMNS} for idx in range(batch_size)]
-#     return meta
-
+META_COLUMNS = ["meta"]
 
 # filter text to remove certain lines (e.g. menu items, copyright notice)
 def filter_lines(article, skip_set, used_lines):
@@ -53,20 +45,27 @@ def filter_lines(article, skip_set, used_lines):
     return "\n".join(keep).strip(), "\n".join(skip).strip()
 
 
-def filter_lines_by_batch(texts, skip_set, used_lines):
-    filtered_lines = [filter_lines(article, skip_set, used_lines) for article in texts]
+def filter_lines_by_batch(texts, skip_set, used_lines, metadata=None):
+    if args.preserve_code:
+        filtered_lines = [filter_lines(article, skip_set, used_lines) for article, metadata_item in (texts, metadata) if "lm_code" in article["meta"]["source_dataset"] else (metadata, "")]
+    else:
+        filtered_lines = [filter_lines(article, skip_set, used_lines) for article in texts]
     return tuple(zip(*filtered_lines))
 
 
 # do both together and return an entry
-def process_batch(batch, skip_set, used_lines):
-    # metas = get_meta_dict(batch)
-    texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines)
-    return {
-        # "meta": metas,
-        "text": texts,
-    }
-
+def process_batch(batch, skip_set, used_lines, args):
+    if not args.with_meta_col:
+        texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines)
+        return {
+            "text": texts,
+        }
+    else:
+        texts, _ = filter_lines_by_batch(batch["text"], skip_set, used_lines, metadata=batch["meta"])
+        return {
+            "meta", batch["meta"],
+            "text": texts,
+        }
 
 # looks at up to the first 10K pages for a seed and
 # records lines that appear in at least 1% of the unique pages
@@ -99,10 +98,12 @@ def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_thr
 
 
 def clean_examples(examples, skip_lines_set, used_lines, args):
-    results = {"text": []}
-    # results = {"text": [], "meta": []}
+    if args.with_meta_col:
+        results = {"text": [], "meta": []}
+    else:
+        results = {"text": []}
     # Collapses meta and cleans text
-    preprocessed_batch = process_batch(examples, skip_lines_set, used_lines)
+    preprocessed_batch = process_batch(examples, skip_lines_set, used_lines, args)
     assert set(results.keys()) == set(preprocessed_batch.keys())
 
     for idx, cleaned_article in enumerate(preprocessed_batch["text"]):
@@ -211,6 +212,16 @@ def main():
         help="Minimum threshold used for filter repetitions. Used when the number of available records is not enough",
         required=True,
         type=int,
+    )
+    parser.add_argument(
+        "--with-meta-col",
+        help="If the initial dataset has a meta column",
+        action='store_true'
+    )
+    parser.add_argument(
+        "--preserve_code",
+        help="Exclude code datasets from the line dedup",
+        action='store_true'
     )
     args = parser.parse_args()
     # Load dataset (data first needs to be git pulled, see above)
