@@ -13,5 +13,6 @@ export HF_DATASETS_CACHE=/home/lucile/to_delete
 python tokenizer/python_script/ram_dedup_lines.py \
     --save-dir $SAVE_DATASET_DIR \
     --dataset_dir $DATASET_PATH \
-    --num-proc 1\
-    --batch-size 6000000
+    --num-proc 1 \
+    --batch-size 6000000 \
+    --load-from-disk

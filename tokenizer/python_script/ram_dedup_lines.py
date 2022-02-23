@@ -5,7 +5,7 @@ import os
 import argparse
 import logging
 
-from datasets import load_from_disk
+from datasets import load_from_disk, load_dataset
 from datasets.utils.logging import set_verbosity_info
 
 """
@@ -42,6 +42,7 @@ def get_args():
         required=True,
         type=int,
     )
+    parser.add_argument("--load-from-disk", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -57,7 +58,7 @@ def main():
     )
     args = get_args()
 
-    dset = load_from_disk(args.dataset_dir)
+    dset = load_from_disk(args.dataset_dir) if args.load_from_disk else load_dataset(args.dataset_dir, data_files="**.jsonl", split="train")
 
     # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
     columns_to_keep = [TEXT_COLUMN] + META_COLUMNS
