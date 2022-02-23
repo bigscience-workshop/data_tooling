@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 META_COLUMNS = ["meta"]
 TEXT_COLUMN = "text"
 
+
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -50,6 +51,7 @@ def get_args():
 def text_is_not_none(batch):
     return [text is not None for text in batch["text"]]
 
+
 def main():
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -58,7 +60,11 @@ def main():
     )
     args = get_args()
 
-    dset = load_from_disk(args.dataset_dir) if args.load_from_disk else load_dataset(args.dataset_dir, data_files="**.jsonl", split="train")
+    dset = (
+        load_from_disk(args.dataset_dir)
+        if args.load_from_disk
+        else load_dataset(args.dataset_dir, data_files="**.jsonl", split="train")
+    )
 
     # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
     columns_to_keep = [TEXT_COLUMN] + META_COLUMNS
@@ -75,17 +81,14 @@ def main():
     seen = defaultdict(lambda: 0)
 
     def remove_duplicate_lines(examples):
-        new_exemples = {
-                "text": [],
-                "meta": []
-        }
+        new_exemples = {"text": [], "meta": []}
         for text, meta in zip(examples["text"], examples["meta"]):
             if "lm_code" in eval(meta)["source_dataset"]:
                 # we preserve the code examples
                 new_exemples["text"].append(text)
                 new_exemples["meta"].append(meta)
                 continue
-            
+
             new_text = []
             for line in text.split("\n"):
                 line = line.strip()
@@ -112,7 +115,7 @@ def main():
     repo_name_tmp = f"{repo_name}.tmp"
     if not os.path.isdir(repo_name_tmp):
         os.makedirs(repo_name_tmp)
-    
+
     # write to folder
     dset.save_to_disk(repo_name_tmp)
 
@@ -120,7 +123,7 @@ def main():
 
     # Saving skipped lines that are considered repetitive
     with open(os.path.join(repo_name_tmp, "skipped_lines.json"), "w") as fi:
-        json.dump(list([line for line, num in seen.items() if num > 1]), fi, indent=2)
+        json.dump(list(line for line, num in seen.items() if num > 1), fi, indent=2)
 
     # Move so that the state becomes completed
     shutil.move(repo_name_tmp, repo_name)
