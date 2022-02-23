@@ -5,13 +5,8 @@ import os
 import argparse
 import logging
 
-import datasets
-from functools import partial
-import pandas as pd
-from datasets import Features, load_dataset, load_from_disk
-from tqdm import tqdm
+from datasets import load_from_disk
 from datasets.utils.logging import set_verbosity_info
-from numpy.random import SeedSequence, default_rng
 
 """
 Cleaning text:
@@ -20,11 +15,6 @@ Cleaning text:
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)
-
-###
-# seed processing and upload functions
-###
-
 
 META_COLUMNS = ["meta"]
 TEXT_COLUMN = "text"
@@ -59,9 +49,6 @@ def get_args():
 def text_is_not_none(batch):
     return [text is not None for text in batch["text"]]
 
-###
-# combine everything
-###
 def main():
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -69,7 +56,6 @@ def main():
         level=logging.INFO,
     )
     args = get_args()
-    # Load dataset (data first needs to be git pulled, see above)
 
     dset = load_from_disk(args.dataset_dir)
 
@@ -114,7 +100,7 @@ def main():
     dset = dset.map(
         remove_duplicate_lines,
         batched=True,
-        # num_proc=args.num_proc, # single proccess for used_lines
+        # num_proc=args.num_proc, # single proccess for seen dict
         batch_size=args.batch_size,
         remove_columns=dset.column_names,
     )
