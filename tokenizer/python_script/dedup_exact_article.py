@@ -13,6 +13,7 @@ from datasets.utils.logging import set_verbosity_info
 set_verbosity_info()
 logger = logging.getLogger(__name__)
 
+
 def get_args():
     parser = argparse.ArgumentParser(description="Load seed and upload to hub")
     parser.add_argument(

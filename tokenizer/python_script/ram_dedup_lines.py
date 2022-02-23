@@ -128,7 +128,9 @@ def main():
     # Saving skipped lines that are considered repetitiveimport csv
 
     with open(os.path.join(repo_name_tmp, "skipped_lines.csv"), "w") as fi:
-        csv_writer = csv.writer(fi, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        csv_writer = csv.writer(
+            fi, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
         for line, (num, source_datasets) in seen.items():
             csv_writer.writerow([line, num, source_datasets])
 
