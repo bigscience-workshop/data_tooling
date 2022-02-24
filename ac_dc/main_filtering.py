@@ -116,6 +116,7 @@ def main():
         args.config_name,
         data_files=args.data_files,
         split=args.split,
+        use_auth_token=True,
     )
 
     dataset_filtering = DatasetFiltering(
