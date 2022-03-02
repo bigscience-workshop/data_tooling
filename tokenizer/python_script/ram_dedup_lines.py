@@ -1,5 +1,4 @@
 import json
-import csv
 import shutil
 from collections import defaultdict
 import os
@@ -64,7 +63,7 @@ def main():
     dset = (
         load_from_disk(args.dataset_dir)
         if args.load_from_disk
-        else load_dataset(args.dataset_dir, data_files="**.jsonl.gz", split="train")
+        else load_dataset(args.dataset_dir, data_files="**.jsonl", split="train")
     )
 
     # pre-remove unecessary columns, hopefully that saves qui a bit of memory usage
@@ -79,13 +78,12 @@ def main():
         f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}"
     )
 
-    seen = defaultdict(lambda: (0, set()))
+    seen = defaultdict(lambda: 0)
 
     def remove_duplicate_lines(examples):
         new_exemples = {"text": [], "meta": []}
         for text, meta in zip(examples["text"], examples["meta"]):
-            source_dataset = eval(meta)["source_dataset"]
-            if "lm_code" in source_dataset:
+            if "lm_code" in eval(meta)["source_dataset"]:
                 # we preserve the code examples
                 new_exemples["text"].append(text)
                 new_exemples["meta"].append(meta)
@@ -95,12 +93,10 @@ def main():
             for line in text.split("\n"):
                 line = line.strip()
                 if len(line) == 0 or line in seen:
-                    seen[line][0] += 1
-                    seen[line][1].add(source_dataset)
+                    seen[line] += 1
                     continue
                 new_text.append(line)
-                seen[line][0] += 1
-                seen[line][1].add(source_dataset)
+                seen[line] += 1
             new_exemples["text"].append("\n".join(new_text))
             new_exemples["meta"].append(meta)
         return new_exemples
@@ -125,14 +121,9 @@ def main():
 
     logger.info(f"Ended successfully, saved at {repo_name_tmp}")
 
-    # Saving skipped lines that are considered repetitiveimport csv
-
-    with open(os.path.join(repo_name_tmp, "skipped_lines.csv"), "w") as fi:
-        csv_writer = csv.writer(
-            fi, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
-        )
-        for line, (num, source_datasets) in seen.items():
-            csv_writer.writerow([line, num, source_datasets])
+    # Saving skipped lines that are considered repetitive
+    with open(os.path.join(repo_name_tmp, "skipped_lines.json"), "w") as fi:
+        json.dump(list(line for line, num in seen.items() if num > 1), fi, indent=2)
 
     # Move so that the state becomes completed
     shutil.move(repo_name_tmp, repo_name)
