@@ -8,7 +8,7 @@ def apply_regex_anonymization(
     lang_id: str,
     context_window: int = 20,
     anonymize_condition=None,
-    tag_type=None,
+    tag_type= {'IP_ADDRESS', 'KEY', 'ID', 'PHONE', 'USER', 'EMAIL', 'LICENSE_PLATE'},
 ) -> str:
     """
     Params:
@@ -17,7 +17,7 @@ def apply_regex_anonymization(
     lang_id: str, the language id of the sentence
     context_window: int, the context window size
     anonymize_condition: function, the anonymization condition
-    tag_type: iterable, the tag types of the anonymization. All keys in regex_rulebase by default
+    tag_type: iterable, the tag types of the anonymization. All keys in regex_rulebase is None
     """
     if tag_type == None:
         tag_type = regex_rulebase.keys()
