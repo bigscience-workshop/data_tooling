@@ -38,7 +38,7 @@ def apply_anonymization(
     )
     ner = ner_ids + ner_persons
     if anonymize_condition:
-        new_sentence, new_ner = augment_anonymize(sentence, lang_id, ner, )
+        new_sentence, new_ner, _ = augment_anonymize(sentence, lang_id, ner, )
         doc = {'text': new_sentence, 'ner': new_ner, 'orig_text': sentence, 'orig_ner': ner}
     else:
         new_sentence = sentence
