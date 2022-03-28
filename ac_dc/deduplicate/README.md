@@ -1,9 +1,11 @@
 # Deduplication
 
-Deduplication python scripts. If you are working with small datasets (datasets that fit in memory), this is a good way to start. Or you can try the [C++ version](https://github.com/ChenghaoMou/simhash) instead.
+Python script for near deduplication. Everything is configurable with a yaml file. All OSCAR 21.09 deduplication configurations can be found under `ac_dc/deduplicate/conf`.
+
+If you are working with small datasets (datasets that fit in memory), this is a good way to start. Or you can try the [C++ version](https://github.com/ChenghaoMou/simhash) instead.
 
 ### Self near-deduplication
-Remove near duplicates in one dataset.
+Cluster near duplicates in one dataset.
 
 e.g
 ```bash
@@ -32,7 +34,7 @@ id0
 id1
 ```
 
-ans an example file.
+and an example file.
 
 #### Configuration
 ```yaml
