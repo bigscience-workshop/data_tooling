@@ -1,4 +1,3 @@
-
 import regex as re
 
 PUNCTUATION_REGEX = re.compile(r"\p{P}")

@@ -5,6 +5,7 @@ import simhash
 
 from . import INTERNAL_HASH, PUNCTUATION_REGEX
 
+
 def hashing(
     record,
     column: str = "text",
@@ -44,7 +45,7 @@ def hashing(
     document = record[column]
     if lowercase:
         document = document.lower()
-    
+
     if ignore_punctuation:
         document = PUNCTUATION_REGEX.sub("", document)
 

@@ -38,25 +38,42 @@ def main(conf: str) -> None:
         ds = load_from_disk(conf["load_from_disk"]["path"], fs=fs)
     else:
         ds = load_dataset(**conf["load_dataset"])
-    
+
     logger.info(f"Done loading {len(ds)} records")
-    
+
     if not os.path.exists(conf["cache"]):
         os.makedirs(conf["cache"], exist_ok=True)
-    
+
     if not os.path.exists(conf["output"]):
         os.makedirs(conf["output"], exist_ok=True)
 
     urls = ds.map(
-        lambda x: {"url": x["meta"]["headers"]["warc-target-uri"], "text": x["text"].replace('\n', ' ')},
+        lambda x: {
+            "url": x["meta"]["headers"]["warc-target-uri"],
+            "text": x["text"].replace("\n", " "),
+        },
         num_proc=conf["num_proc"],
         desc="Extracting URLs",
     )
-    logger.info(f"Extracted URLs: {len(urls['url'])}, Unique URLs: {len(set(urls['url']))}")
+    logger.info(
+        f"Extracted URLs: {len(urls['url'])}, Unique URLs: {len(set(urls['url']))}"
+    )
 
     # Save text data for substring deduplication
-    urls.to_csv(os.path.join(conf["output"], "text.csv"), num_proc=conf["num_proc"], index=False, header=False, columns=["text"])
-    urls.to_csv(os.path.join(conf["output"], "ids.csv"), num_proc=conf["num_proc"], index=False, header=False, columns=["id"])
+    urls.to_csv(
+        os.path.join(conf["output"], "text.csv"),
+        num_proc=conf["num_proc"],
+        index=False,
+        header=False,
+        columns=["text"],
+    )
+    urls.to_csv(
+        os.path.join(conf["output"], "ids.csv"),
+        num_proc=conf["num_proc"],
+        index=False,
+        header=False,
+        columns=["id"],
+    )
 
     del urls
 
@@ -98,7 +115,7 @@ def main(conf: str) -> None:
         dist[simhash.num_differing_bits(x, y)] += 1
         if len(examples[simhash.num_differing_bits(x, y)]) < 3:
             examples[simhash.num_differing_bits(x, y)].add((x, y))
-    
+
     logger.info(f"Hash difference distribution: {dist}")
 
     hash2ids: Dict[int, Set[str]] = defaultdict(set)
@@ -106,21 +123,24 @@ def main(conf: str) -> None:
     hash2cluster: Dict[int, int] = {}
     visited: Set[int] = set()
     cluster_id: int = 0
-    
-    for id, hash in tqdm(zip(ds[conf["index_column"]], ds[INTERNAL_HASH]), total=len(ds)):
+
+    for id, hash in tqdm(
+        zip(ds[conf["index_column"]], ds[INTERNAL_HASH]), total=len(ds)
+    ):
         hash2ids[hash].add(id)
-    
+
     seen = set()
     with open(os.path.join(conf["output"], "matches.tsv"), "w") as o:
         o.write(f"id1\tid2\tdiff\n")
         for x, y in matches:
             for id1, id2 in product(hash2ids[x], hash2ids[y]):
-                if id1 == id2: continue
+                if id1 == id2:
+                    continue
                 if tuple(sorted((id1, id2))) in seen:
                     continue
                 seen.add(tuple(sorted((id1, id2))))
                 o.write(f"{id1}\t{id2}\t{simhash.num_differing_bits(x, y)}\n")
-    
+
     # print some match samples
     datasets.set_progress_bar_enabled(False)
     example_text = []
@@ -135,11 +155,11 @@ def main(conf: str) -> None:
             )["text"]:
                 records.append(text)
             example_text.append((diff, records))
-    
+
     datasets.set_progress_bar_enabled(True)
     with open(os.path.join(conf["output"], "examples.txt"), "w") as o:
         for diff, records in example_text:
-            o.write("*" * 80 + '\n')
+            o.write("*" * 80 + "\n")
             for text in records:
                 o.write(f"\n({diff}) {text}\n")
 
@@ -147,12 +167,12 @@ def main(conf: str) -> None:
         hash = hashes.pop()
         if hash in visited:
             continue
-        
+
         # BFS to find the cluster
         if hash not in graph:
             hash2cluster[hash] = -1
             continue
-        
+
         q = deque([hash])
         visited.add(hash)
         hash2cluster[hash] = cluster_id
@@ -160,22 +180,25 @@ def main(conf: str) -> None:
         while q:
             node = q.popleft()
             for neighbor in graph[node]:
-                if neighbor in visited: continue
+                if neighbor in visited:
+                    continue
                 visited.add(neighbor)
                 q.append(neighbor)
                 hash2cluster[neighbor] = cluster_id
-        
+
         cluster_id += 1
-    
+
     logger.info(f"Found {cluster_id} clusters and {len(graph)} hashes")
 
     with open(os.path.join(conf["output"], "clusters.tsv"), "w") as o:
         o.write(f"id\thash\tcluster\n")
-        for id, hash in tqdm(zip(ds[conf["index_column"]], ds[INTERNAL_HASH]), total=len(ds)):
+        for id, hash in tqdm(
+            zip(ds[conf["index_column"]], ds[INTERNAL_HASH]), total=len(ds)
+        ):
             o.write(f"{id}\t{hash}\t{hash2cluster.get(hash, -1)}\n")
-    
+
     logger.info("Done!")
-    
+
 
 if __name__ == "__main__":
 
