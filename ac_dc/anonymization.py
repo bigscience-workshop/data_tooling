@@ -3,12 +3,13 @@ from muliwai.pii_regexes import regex_rulebase
 
 trannum = str.maketrans("0123456789", "1111111111")
 
+
 def apply_regex_anonymization(
     sentence: str,
     lang_id: str,
     context_window: int = 20,
     anonymize_condition=None,
-    tag_type= {'IP_ADDRESS', 'KEY', 'ID', 'PHONE', 'USER', 'EMAIL', 'LICENSE_PLATE'},
+    tag_type={"IP_ADDRESS", "KEY", "ID", "PHONE", "USER", "EMAIL", "LICENSE_PLATE"},
 ) -> str:
     """
     Params:
