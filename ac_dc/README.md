@@ -34,8 +34,3 @@ Run the filtering with the file [main_filtering.py](https://github.com/bigscienc
 #### 5. Do the deduplication
 
 Do the deduplication, which is detailed in the sub folder `ac_dc/deduplicate`.
-
-
-### Merge metadata from OSCAR 21.09 to OSCAR
-
-Runnable script example at `ac_dc/examples/merge.sh`
