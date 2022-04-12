@@ -3,12 +3,22 @@ from muliwai.pii_regexes_rulebase import regex_rulebase
 from muliwai.ner_manager import detect_ner_with_hf_model
 from muliwai.faker_manager import augment_anonymize
 
+
 def apply_anonymization(
     sentence: str,
     lang_id: str,
     context_window: int = 20,
     anonymize_condition=None,
-    tag_type={'IP_ADDRESS', 'KEY', 'ID', 'PHONE', 'USER', 'EMAIL', 'LICENSE_PLATE', 'PERSON'} ,
+    tag_type={
+        "IP_ADDRESS",
+        "KEY",
+        "ID",
+        "PHONE",
+        "USER",
+        "EMAIL",
+        "LICENSE_PLATE",
+        "PERSON",
+    },
     device: str = "cpu",
 ) -> str:
     """
@@ -18,7 +28,7 @@ def apply_anonymization(
     lang_id: str, the language id of the sentence
     context_window: int, the context window size
     anonymize_condition: function, the anonymization condition
-    tag_type: iterable, the tag types of the anonymization. By default: {'IP_ADDRESS', 'KEY', 'ID', 'PHONE', 'USER', 'EMAIL', 'LICENSE_PLATE', 'PERSON'} 
+    tag_type: iterable, the tag types of the anonymization. By default: {'IP_ADDRESS', 'KEY', 'ID', 'PHONE', 'USER', 'EMAIL', 'LICENSE_PLATE', 'PERSON'}
     device: cpu or cuda:{device_id}
 
     """
@@ -38,9 +48,18 @@ def apply_anonymization(
     )
     ner = ner_ids + ner_persons
     if anonymize_condition:
-        new_sentence, new_ner, _ = augment_anonymize(sentence, lang_id, ner, )
-        doc = {'text': new_sentence, 'ner': new_ner, 'orig_text': sentence, 'orig_ner': ner}
+        new_sentence, new_ner, _ = augment_anonymize(
+            sentence,
+            lang_id,
+            ner,
+        )
+        doc = {
+            "text": new_sentence,
+            "ner": new_ner,
+            "orig_text": sentence,
+            "orig_ner": ner,
+        }
     else:
         new_sentence = sentence
-        doc = {'text': new_sentence, 'ner': ner}
+        doc = {"text": new_sentence, "ner": ner}
     return new_sentence, doc
