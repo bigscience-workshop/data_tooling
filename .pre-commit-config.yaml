@@ -15,7 +15,7 @@
 repos:
 # Standard hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v4.2.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -35,7 +35,7 @@ repos:
     exclude: ^pii_processing/
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.31.0
+  rev: v2.32.0
   hooks:
   - id: pyupgrade
     exclude: ^pii_processing/
@@ -47,7 +47,7 @@ repos:
 
 # Black, the code formatter, natively supports pre-commit
 - repo: https://github.com/psf/black
-  rev: 22.1.0 # Keep in sync with blacken-docs
+  rev: 22.3.0 # Keep in sync with blacken-docs
   hooks:
   - id: black
     exclude: ^pii_processing/
