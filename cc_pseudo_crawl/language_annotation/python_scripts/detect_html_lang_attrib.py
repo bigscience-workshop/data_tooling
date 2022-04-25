@@ -40,6 +40,7 @@ def get_args():
 
     return args
 
+
 def main():
     # Setup logging
     logging.basicConfig(
@@ -54,7 +55,7 @@ def main():
 
     if os.path.isdir(args.save_path):
         logger.info(f"Seed id {args.save_path.split('/')[-1]} already processed")
-        return 
+        return
 
     if not args.use_datasets_caching:
         datasets.set_caching_enabled(False)
@@ -62,7 +63,7 @@ def main():
         logger.info(
             f"the datasets results will be cached at {config.HF_DATASETS_CACHE}."
         )
-    
+
     ds = load_from_disk(args.dataset_path)
     logger.info(f"the dataset is {ds}")
 
@@ -70,7 +71,7 @@ def main():
         ds = ds.select([i for i in range(args.num_examples)])
 
     def detect_lang(example):
-        if example["text"] is None or len(example["text"])==0:
+        if example["text"] is None or len(example["text"]) == 0:
             example["html_lang_attr"] = None
         else:
             root = lxml.html.fromstring(example["html_str"])
