@@ -63,7 +63,7 @@ features = {
         "content_languages": {"dtype": "string", "id": null, "_type": "Value"},
         "seed_id": {"dtype": "int64", "id": null, "_type": "Value"},
         "url": {"dtype": "string", "id": null, "_type": "Value"},
-        },
+    },
 }
 
 
@@ -79,6 +79,7 @@ def convert_types(features):
 final_features = convert_types(features)
 final_features = Features(final_features)
 final_features
+
 
 def get_hash(example):
     """Get hash of content field."""
@@ -130,7 +131,9 @@ def main():
         required=True,
         type=int,
     )
-    parser.add_argument("--save-dir", required=True, type=str, help="Where to save the datasets.")
+    parser.add_argument(
+        "--save-dir", required=True, type=str, help="Where to save the datasets."
+    )
     parser.add_argument(
         "--pseudo_crawl_path",
         help="path to where the pseudocrawl is located",
@@ -167,9 +170,11 @@ def main():
     ds = load_dataset(
         "json",
         # data_files=[f"{args.pseudo_crawl_path}/seed_id={args.seed_id}/text__html/*.jsonl.gz"],
-        data_files=[f"{args.pseudo_crawl_path}/lm_change_lang_id_seed_id_{args.seed_id}_pseudocrawl_change_name/*.jsonl"],
+        data_files=[
+            f"{args.pseudo_crawl_path}/lm_change_lang_id_seed_id_{args.seed_id}_pseudocrawl_change_name/*.jsonl"
+        ],
         features=final_features,
-        split="train"
+        split="train",
     )
     logger.info(f"Time to load dataset: {time.time()-t_start:.2f}")
 
