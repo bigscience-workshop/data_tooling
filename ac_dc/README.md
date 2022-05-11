@@ -1,8 +1,6 @@
-## Big Science - Automated Classification & Dataset Curation - AC/DC
+## Big Science - Automated Classification & Dataset Curation - AC⚡️DC
 
 This is the data filtering code for BigScience.
-
-See [this document](https://docs.google.com/document/d/1bx7lzAIWALH2IX5PLAiRfkHr3025dC-ZYkEmq4zB2gI/edit) for more details.
 
 The supported languages are defined in the file [languages_id.py](https://github.com/bigscience-workshop/data_tooling/blob/master/ac_dc/languages_id.py).
 
