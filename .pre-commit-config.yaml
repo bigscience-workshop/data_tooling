@@ -35,7 +35,7 @@ repos:
     exclude: ^pii_processing/
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.32.0
+  rev: v2.32.1
   hooks:
   - id: pyupgrade
     exclude: ^pii_processing/
@@ -54,7 +54,7 @@ repos:
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.13
+  rev: v1.1.14
   hooks:
   - id: remove-tabs
     exclude: ^(pii_processing|.*Makefile)
