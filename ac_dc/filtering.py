@@ -304,10 +304,6 @@ class ModifyingDocuments:
 
     @staticmethod
     def should_keep_long_word(word, strip_characters, length_word_max_cutoff):
-        """If the word is too long but it contains only one
-        special character, it might be a concatenation of one word,
-        a punctuation, and another word, with no space between them.
-        In this case, we give the word a pass."""
         if len(word) <= length_word_max_cutoff:
             return True
         word = ModifyingDocuments.strip(word, strip_characters)
