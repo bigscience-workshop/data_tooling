@@ -1,3 +1,6 @@
+# WARNING - THIS REPO WILL NO LONGER BE MAINTAINED, CHECK https://github.com/bigscience-workshop/data-preparation/tree/main/preprocessing/filtering INSTEAD
+
+
 ## Big Science - Automated Classification & Dataset Curation - AC⚡️DC
 
 This is the data filtering code for BigScience.
