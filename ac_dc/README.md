@@ -1,4 +1,4 @@
-# WARNING - THIS REPO IS NO LONGER BE MAINTAINED, CHECK https://github.com/bigscience-workshop/data-preparation/tree/main/preprocessing/filtering INSTEAD
+# WARNING - THIS REPO IS NO LONGER MAINTAINED, CHECK https://github.com/bigscience-workshop/data-preparation/tree/main/preprocessing/filtering INSTEAD
 
 
 ## Big Science - Automated Classification & Dataset Curation - AC⚡️DC
