@@ -5,6 +5,7 @@ set -e
 LANGUAGES_WIKIPEDIA=( "es" "af" "ar" "arz" "as" "bn" "fr" "sw" "eu" "ca" "zh" "en" "hi" "ur" "id" "pt" "vi" "gu" "kn" "ml" "mr" "ta" "te" "yo" )
 LANGUAGES_OSCAR=( "es" "af" "ar" "arz" "as" "bn" "fr" "sw" "eu" "ca" "zh" "en" "hi" "ur" "id" "pt" "vi" "gu" "kn" "ml" "mr" "te" )
 
+DEFAULT_WIKI_DATE=20230710
 NDOC_FOR_LM=1_000_000
 VOCAB_SIZE=65536
 SMALL_VOCAB_SIZE=40000
@@ -29,7 +30,7 @@ train_language_and_dataset () {
         else
             echo "Downloading ${lang}"
             mkdir -p "data/${dataset}/cirrus/gz/"
-            python cc_net/get_wiki_cirrus.py dl --lang "${lang}" --output_dir "data/${dataset}/cirrus/gz" --date 20211115
+            python cc_net/get_wiki_cirrus.py dl --lang "${lang}" --output_dir "data/${dataset}/cirrus/gz" --date ${DEFAULT_WIKI_DATE}
             echo "Downloaded Wikipedia cirrus for ${lang}"
         fi
 
