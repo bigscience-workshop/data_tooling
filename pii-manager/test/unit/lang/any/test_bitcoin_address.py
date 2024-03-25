@@ -2,7 +2,6 @@
 Test bitcoin addresses
 """
 
-
 from pii_manager import PiiEnum
 from pii_manager.api import PiiManager
 
