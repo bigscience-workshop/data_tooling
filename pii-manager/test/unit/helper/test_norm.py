@@ -8,5 +8,5 @@ def test10_normalizer():
     """
     Create base object
     """
-    for (text, exp) in TEST:
+    for text, exp in TEST:
         assert mod.normalize(text, "en", whitespace=True, lowercase=True) == exp

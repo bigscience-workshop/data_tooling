@@ -2,6 +2,7 @@
 Detection and validation of Australian business number (ABN).
 
 """
+
 import re
 
 from stdnum.au import abn

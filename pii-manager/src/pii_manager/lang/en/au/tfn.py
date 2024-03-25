@@ -2,6 +2,7 @@
 Detection and validation of Australian Tax File Number (TFN).
 
 """
+
 import re
 
 from stdnum.au import tfn

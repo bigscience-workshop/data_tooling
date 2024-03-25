@@ -880,8 +880,7 @@ def describe(source, columns=None, weights=None, **kwargs):
             continue
         if "." in k or k == ALL_DOCUMENTS:
             continue
-        for line in display_stats(stats, k, weights=weights, **kwargs):
-            yield line
+        yield from display_stats(stats, k, weights=weights, **kwargs)
 
 
 def shard(lines):
@@ -902,17 +901,13 @@ def get_or_set(dictionary, key, default):
 class SimpleIO(Protocol):
     """A subset of methods from TextIO."""
 
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
 
-    def write(self, line: str) -> int:
-        ...
+    def write(self, line: str) -> int: ...
 
-    def __enter__(self) -> "SimpleIO":
-        ...
+    def __enter__(self) -> "SimpleIO": ...
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        ...
+    def __exit__(self, exc_type, exc_value, traceback): ...
 
 
 def open_read(filename: ReadableFileLike) -> Iterable[str]:
@@ -961,7 +956,7 @@ def open_read(filename: ReadableFileLike) -> Iterable[str]:
     if filename.suffix == ".gz":
         file: TextIO = gzip.open(filename, "rt")  # type: ignore
     else:
-        file = open(filename, "rt")
+        file = open(filename)
 
     return _close_when_exhausted(file)
 
@@ -1015,7 +1010,7 @@ def open_write(
     if filename.suffix == ".gz":
         return BlockedGzipWriter(Path(filename), mode, block_size="64M")
 
-    return open(filename, "wt")
+    return open(filename, "w")
 
 
 def parse_size(size):

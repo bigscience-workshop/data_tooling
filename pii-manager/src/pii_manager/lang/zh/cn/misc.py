@@ -2,7 +2,6 @@
 Detection of various Chinese PII elements
 """
 
-
 from pii_manager import PiiEnum
 
 

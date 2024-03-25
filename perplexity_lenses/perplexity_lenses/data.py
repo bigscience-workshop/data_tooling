@@ -34,9 +34,11 @@ def hub_dataset_to_dataframe(
                 {
                     text_column: sentence,
                     "perplexity": model.get_perplexity(sentence),
-                    "label": x.get("labels", [])[0]
-                    if len(x.get("labels", [])) > 0
-                    else "NONE",  # Special case for registry dataset
+                    "label": (
+                        x.get("labels", [])[0]
+                        if len(x.get("labels", [])) > 0
+                        else "NONE"
+                    ),  # Special case for registry dataset
                 }
                 for sentence in x[text_column].split("\n")
             ]
@@ -46,9 +48,9 @@ def hub_dataset_to_dataframe(
             lambda x: {
                 text_column: x[text_column],
                 "perplexity": model.get_perplexity(x[text_column]),
-                "label": x.get("labels", [])[0]
-                if len(x.get("labels", [])) > 0
-                else "NONE",  # Special case for registry dataset
+                "label": (
+                    x.get("labels", [])[0] if len(x.get("labels", [])) > 0 else "NONE"
+                ),  # Special case for registry dataset
             }
         )
     instances = []

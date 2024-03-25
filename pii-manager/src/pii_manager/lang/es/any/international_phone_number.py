@@ -3,7 +3,6 @@ Detection of phone numbers written with international notation (i.e. with
 prefix and country code), for ES
 """
 
-
 from pii_manager import PiiEnum
 
 # The pattern for the regex is the same as for English

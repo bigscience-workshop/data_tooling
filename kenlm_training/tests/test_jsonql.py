@@ -262,7 +262,7 @@ def test_enter_exit(capsys):
     def acc(values):
         print("acc: started")
         res = 0
-        for (x, _) in values:
+        for x, _ in values:
             res += int(x)
         print("acc: done")
         yield f"acc: result={res}"
