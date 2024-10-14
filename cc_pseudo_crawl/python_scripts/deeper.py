@@ -1,6 +1,7 @@
 """
 Generate list of urls to query for next depth. We then need to use Athena to make a fancy query.
 """
+
 import csv
 import re
 import subprocess

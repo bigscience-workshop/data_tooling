@@ -290,16 +290,16 @@ class Visualization_for_lang:
                             "stopwords_ratio"
                         ]
                         for i in range(len(self.docs["stopwords_ratio"])):
-                            self.docs["stopwords_ratio"].iloc[
-                                i
-                            ] = Filtering.compute_stopwords_ratio(
-                                self.docs["text"].iloc[i],
-                                self.sentencepiece_model_tok,
-                                self.param["strip_characters"],
-                                self.param["cond_words_augmentation"],
-                                self.param["words_augmentation_group_sizes"],
-                                self.param["words_augmentation_join_char"],
-                                new_stopwords,
+                            self.docs["stopwords_ratio"].iloc[i] = (
+                                Filtering.compute_stopwords_ratio(
+                                    self.docs["text"].iloc[i],
+                                    self.sentencepiece_model_tok,
+                                    self.param["strip_characters"],
+                                    self.param["cond_words_augmentation"],
+                                    self.param["words_augmentation_group_sizes"],
+                                    self.param["words_augmentation_join_char"],
+                                    new_stopwords,
+                                )
                             )
                     cutoff_def = "If the stop words ratio of a document is lower than this number, the document is removed."
                     cutoff_stopwords_ratio = st.slider(
@@ -326,16 +326,16 @@ class Visualization_for_lang:
                             "flagged_words_ratio"
                         ]
                         for i in range(len(self.docs["flagged_words_ratio"])):
-                            self.docs["flagged_words_ratio"].iloc[
-                                i
-                            ] = Filtering.compute_flagged_words_ratio(
-                                self.docs["text"].iloc[i],
-                                self.sentencepiece_model_tok,
-                                self.param["strip_characters"],
-                                self.param["cond_words_augmentation"],
-                                self.param["words_augmentation_group_sizes"],
-                                self.param["words_augmentation_join_char"],
-                                new_flagged_words,
+                            self.docs["flagged_words_ratio"].iloc[i] = (
+                                Filtering.compute_flagged_words_ratio(
+                                    self.docs["text"].iloc[i],
+                                    self.sentencepiece_model_tok,
+                                    self.param["strip_characters"],
+                                    self.param["cond_words_augmentation"],
+                                    self.param["words_augmentation_group_sizes"],
+                                    self.param["words_augmentation_join_char"],
+                                    new_flagged_words,
+                                )
                             )
                     cutoff_def = "If the flagged words ratio of a document is higher than this number, the document is removed."
                     max_fwr = np.max(self.docs["flagged_words_ratio"])

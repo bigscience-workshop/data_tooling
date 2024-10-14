@@ -4,7 +4,6 @@ fasttext>=0.9.2
 fsspec
 ftfy
 indexed_gzip>=1.6.1
-indexed_gzip>=1.6.1
 langid>=1.1.6
 nltk
 scikit-learn

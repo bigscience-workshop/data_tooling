@@ -15,7 +15,7 @@
 repos:
 # Standard hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.2.0
+  rev: v5.0.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -35,7 +35,7 @@ repos:
     exclude: ^pii_processing/
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.32.1
+  rev: v3.18.0
   hooks:
   - id: pyupgrade
     exclude: ^pii_processing/
@@ -47,20 +47,20 @@ repos:
 
 # Black, the code formatter, natively supports pre-commit
 - repo: https://github.com/psf/black
-  rev: 22.3.0 # Keep in sync with blacken-docs
+  rev: 24.10.0 # Keep in sync with blacken-docs
   hooks:
   - id: black
     exclude: ^pii_processing/
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.14
+  rev: v1.5.5
   hooks:
   - id: remove-tabs
     exclude: ^(pii_processing|.*Makefile)
 
 - repo: https://github.com/shellcheck-py/shellcheck-py
-  rev: v0.8.0.4
+  rev: v0.10.0.1
   hooks:
   - id: shellcheck
     exclude: ^(pii_processing/|cc_pseudo_crawl)

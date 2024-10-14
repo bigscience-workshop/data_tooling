@@ -90,9 +90,9 @@ class GetDataForVisualization:
                     )
                     for n in range(2, 16)
                 }
-                stats_document[
-                    "character_repetition_ratio"
-                ] = character_repetition_ratios
+                stats_document["character_repetition_ratio"] = (
+                    character_repetition_ratios
+                )
 
                 word_repetition_ratios = {
                     n: round(

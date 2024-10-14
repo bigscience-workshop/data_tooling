@@ -143,9 +143,9 @@ def get_warcs(batch):
         existing_compressed_warcs,
     )
 
-    batch["compressed_warc"], batch["download_exception"] = [
+    batch["compressed_warc"], batch["download_exception"] = (
         list(l) for l in zip(*warcs_or_exceptions)
-    ]
+    )
     return batch
 
 

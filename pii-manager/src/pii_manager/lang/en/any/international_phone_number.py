@@ -3,7 +3,6 @@ Detection of phone numbers written with international notation (i.e. with
 prefix and country code)
 """
 
-
 from pii_manager import PiiEnum
 
 PATTERN_INT_PHONE = r"""
