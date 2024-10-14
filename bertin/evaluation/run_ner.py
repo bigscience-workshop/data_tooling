@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 # Copyright 2020 The HuggingFace Team All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -364,9 +363,11 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name
-        if model_args.config_name
-        else model_args.model_name_or_path,
+        (
+            model_args.config_name
+            if model_args.config_name
+            else model_args.model_name_or_path
+        ),
         num_labels=num_labels,
         label2id=label_to_id,
         id2label={i: l for l, i in label_to_id.items()},
@@ -636,9 +637,9 @@ def main():
             kwargs["dataset_tags"] = data_args.dataset_name
             if data_args.dataset_config_name is not None:
                 kwargs["dataset_args"] = data_args.dataset_config_name
-                kwargs[
-                    "dataset"
-                ] = f"{data_args.dataset_name} {data_args.dataset_config_name}"
+                kwargs["dataset"] = (
+                    f"{data_args.dataset_name} {data_args.dataset_config_name}"
+                )
             else:
                 kwargs["dataset"] = data_args.dataset_name
 

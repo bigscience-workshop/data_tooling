@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 META_COLUMNS = ["meta"]
 
+
 # filter text to remove certain lines (e.g. menu items, copyright notice)
 def filter_lines(article, skip_set, used_lines):
     # TODO discuss the strip
@@ -48,9 +49,11 @@ def filter_lines(article, skip_set, used_lines):
 def filter_lines_by_batch(texts, skip_set, used_lines, preserve_code, metadata=None):
     if preserve_code:
         filtered_lines = [
-            filter_lines(article, skip_set, used_lines)
-            if "lm_code" in eval(metadata_item)["source_dataset"]
-            else (article, "")
+            (
+                filter_lines(article, skip_set, used_lines)
+                if "lm_code" in eval(metadata_item)["source_dataset"]
+                else (article, "")
+            )
             for article, metadata_item in zip(texts, metadata)
         ]
     else:
@@ -86,8 +89,8 @@ def process_batch(batch, skip_set, used_lines, args):
 # looks at up to the first 10K pages for a seed and
 # records lines that appear in at least 1% of the unique pages
 def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_threshold):
-    line_counts = defaultdict(lambda: 0)
-    seen_pages = defaultdict(lambda: 0)
+    line_counts = defaultdict(int)
+    seen_pages = defaultdict(int)
 
     seed = SeedSequence(42)
     rng = default_rng(seed)

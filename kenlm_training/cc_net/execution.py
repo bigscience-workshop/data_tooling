@@ -19,8 +19,7 @@ from typing_extensions import Protocol
 
 
 class Executor(Protocol):
-    def __call__(self, function: Callable[..., str], *args: Iterable) -> None:
-        ...
+    def __call__(self, function: Callable[..., str], *args: Iterable) -> None: ...
 
 
 class SubmititRetryOnTimeout(submitit.helpers.Checkpointable):

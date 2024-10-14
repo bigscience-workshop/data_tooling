@@ -21,7 +21,10 @@ def test20_info():
     info = obj.task_info()
 
     exp = {
-        (PiiEnum.CREDIT_CARD, None,): [
+        (
+            PiiEnum.CREDIT_CARD,
+            None,
+        ): [
             (
                 "credit card",
                 "Credit card numbers for most international credit cards (detect & validate)",
