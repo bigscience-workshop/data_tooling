@@ -277,7 +277,7 @@ def mine(
     print("Submited job array:", jobs[0])
 
     for j in submitit.helpers.as_completed(jobs):
-        (i, o) = j.result()
+        i, o = j.result()
         print("Mined sentences from", i, "to", o)
 
     return outputs

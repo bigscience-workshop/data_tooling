@@ -13,7 +13,6 @@ from stdnum.pt import nif, cc
 from pii_manager import PiiEnum, PiiEntity
 from pii_manager.helper import BasePiiTask
 
-
 # regex for NIF & CC
 _NIF_PATTERN = r"(?: PT \x20?)? (?: \d{3} \x20 \d{3} \x20 \d{3} | \d{9} )"
 _CC_PATTERN = r"\d{8} \x20? \d \x20? [A-Z0-9]{2}\d"

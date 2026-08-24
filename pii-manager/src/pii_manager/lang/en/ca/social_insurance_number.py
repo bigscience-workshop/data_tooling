@@ -12,7 +12,6 @@ from typing import Iterable
 
 from pii_manager import PiiEnum
 
-
 _SIN_REGEX = re.compile(r"\d{3}[-\ ]\d{3}[-\ ]\d{3}", flags=re.X)
 
 

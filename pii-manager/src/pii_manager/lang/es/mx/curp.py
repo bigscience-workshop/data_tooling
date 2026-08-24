@@ -12,7 +12,6 @@ from typing import Iterable
 
 from pii_manager import PiiEnum
 
-
 _CURP_PATTERN = r"[A-Z] [AEIOU] [A-Z]{2} \d{6} [HM] [A-Z]{5} [0-9A-Z] \d"
 _CURP_REGEX = re.compile(_CURP_PATTERN, flags=re.X)
 

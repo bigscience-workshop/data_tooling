@@ -17,7 +17,7 @@ def get_perplexity(doc):
 
 
 with open("mc4-es-train-50M-stats.csv", "w") as csv:
-    with open("mc4-es-train-50M-steps.jsonl", "r") as data:
+    with open("mc4-es-train-50M-steps.jsonl") as data:
         for line in tqdm(data):
             text = json.loads(line)["text"]
             csv.write(f"{len(text.split())},{get_perplexity(text)}\n")

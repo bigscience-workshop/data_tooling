@@ -27,7 +27,7 @@ if sys.version_info < PYTHON_VERSION:
 
 def requirements(filename="requirements.txt"):
     """Read the requirements file"""
-    with io.open(filename, "r") as f:
+    with open(filename) as f:
         return [line.strip() for line in f if line and line[0] != "#"]
 
 
@@ -35,7 +35,7 @@ def long_description():
     """
     Take the README and remove markdown hyperlinks
     """
-    with open("README.md", "rt", encoding="utf-8") as f:
+    with open("README.md", encoding="utf-8") as f:
         desc = f.read()
         desc = re.sub(r"^\[ ([^\]]+) \]: \s+ \S.*\n", r"", desc, flags=re.X | re.M)
         return re.sub(r"\[ ([^\]]+) \]", r"\1", desc, flags=re.X)

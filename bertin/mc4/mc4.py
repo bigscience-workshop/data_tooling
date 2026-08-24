@@ -1,6 +1,5 @@
 """Perplexity Sampled mC4 dataset based on Common Crawl."""
 
-
 import gzip
 import json
 
@@ -404,7 +403,7 @@ class Mc4(datasets.GeneratorBasedBuilder):
         for filepath in filepaths:
             logger.info("generating examples from = %s", filepath)
             if filepath.endswith("jsonl"):
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     for line in f:
                         if line:
                             example = json.loads(line)

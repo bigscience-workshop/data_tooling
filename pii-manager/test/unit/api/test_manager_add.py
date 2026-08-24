@@ -9,7 +9,6 @@ from pii_manager.api import PiiManager
 from pii_manager.lang import COUNTRY_ANY
 from pii_manager.helper.base import BasePiiTask
 
-
 # ---------------------------------------------------------------------
 
 DUMMY_REGEX = {
@@ -47,7 +46,7 @@ def test110_call():
     obj = PiiManager("en", None, PiiEnum.EMAIL_ADDRESS)
     obj.add_tasks([DUMMY_REGEX])
 
-    for (doc, exp) in TEST_REGEX:
+    for doc, exp in TEST_REGEX:
         got = obj(doc)
         assert got == exp
 
@@ -86,6 +85,6 @@ def test200_call():
     obj = PiiManager("en")
     obj.add_tasks([DUMMY_CLASS])
 
-    for (doc, exp) in TEST_CLASS:
+    for doc, exp in TEST_CLASS:
         got = obj(doc)
         assert got == exp

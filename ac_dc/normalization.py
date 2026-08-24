@@ -1,7 +1,6 @@
 import re
 from typing import Dict
 
-
 non_printing_characters_re = re.compile(
     f"[{''.join(map(chr, list(range(0,32)) + list(range(127,160))))}]"
 )

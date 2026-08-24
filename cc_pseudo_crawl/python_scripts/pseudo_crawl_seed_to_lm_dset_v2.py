@@ -126,7 +126,7 @@ def process_batch(batch, skip_set):
 # looks at up to the first 10K pages for a seed and
 # records lines that appear in at least 1% of the unique pages
 def get_lines_to_skip(dset, n_records, pourcentage_threshold, min_repetition_threshold):
-    line_counts = defaultdict(lambda: 0)
+    line_counts = defaultdict(int)
     seen_pages = set()
 
     seed = SeedSequence(42)
