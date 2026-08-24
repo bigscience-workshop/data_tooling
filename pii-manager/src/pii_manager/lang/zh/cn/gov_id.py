@@ -11,7 +11,6 @@ from pii_manager import PiiEnum
 
 from stdnum.cn import ric
 
-
 # Detect candidates (separately) for RIC and passport-like numbers
 _GOV_ID_PATTERN = r"(?<!\d) (?: (\d{18}) | ( (?:G|D|S|P|H|M) \d{8} ) ) (?!\d)"
 

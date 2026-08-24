@@ -3,7 +3,6 @@ from io import StringIO
 from pii_manager import PiiEnum
 from pii_manager.api import PiiManager
 
-
 TEST = (
     "El número de la tarjeta de crédito es 4273 9666 4581 5642",
     "El número de la tarjeta de crédito es <CREDIT_CARD>",
@@ -21,7 +20,10 @@ def test20_info():
     info = obj.task_info()
 
     exp = {
-        (PiiEnum.CREDIT_CARD, None,): [
+        (
+            PiiEnum.CREDIT_CARD,
+            None,
+        ): [
             (
                 "credit card",
                 "Credit card numbers for most international credit cards (detect & validate)",

@@ -38,7 +38,7 @@ def test10_context_regex():
     """
     obj = PiiManager("en", mode="extract")
     obj.add_tasks([DUMMY_REGEX])
-    for (text, exp) in TEST:
+    for text, exp in TEST:
         got = obj(text)
         assert list(got) == exp
 
@@ -64,6 +64,6 @@ def test20_context_class():
     """
     obj = PiiManager("en", mode="extract")
     obj.add_tasks([DUMMY_CLASS])
-    for (text, exp) in TEST:
+    for text, exp in TEST:
         got = obj(text)
         assert list(got) == exp

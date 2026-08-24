@@ -1,7 +1,6 @@
 import string
 import emoji
 
-
 main_special_characters = string.punctuation + string.digits + string.whitespace
 other_special_characters = (
     "    　    ￼’“”–ー一▬…✦�­£​•€«»°·═"
