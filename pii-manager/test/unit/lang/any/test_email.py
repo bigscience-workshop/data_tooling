@@ -5,7 +5,6 @@ Test email addersses
 from pii_manager import PiiEnum
 from pii_manager.api import PiiManager
 
-
 TEST = [
     # A valid email address
     (

@@ -11,7 +11,7 @@ from cc_net.flat_hash_set import HASH_TYPE, FlatHashSet, NaiveHashSet
 
 
 def as_dict(flat_hash_set) -> dict:
-    return {k: v for (k, v) in flat_hash_set.items()}
+    return {**flat_hash_set}
 
 
 need_getpy = pytest.mark.skipif(

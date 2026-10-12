@@ -10,7 +10,6 @@ from .normalizer import normalize
 from .context import context_spec, context_check, CONTEXT_NORM_OPTIONS
 from .exception import PiiUnimplemented
 
-
 NORM_OPTIONS = dict(whitespace=True, lowercase=True)
 
 

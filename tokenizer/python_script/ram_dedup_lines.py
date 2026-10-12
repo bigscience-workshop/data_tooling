@@ -78,7 +78,7 @@ def main():
         f"Filtered out {number_of_samples_before - number_of_samples_after_filtering_none} / {number_of_samples_before}"
     )
 
-    seen = defaultdict(lambda: 0)
+    seen = defaultdict(int)
 
     def remove_duplicate_lines(examples):
         new_exemples = {"text": [], "meta": []}

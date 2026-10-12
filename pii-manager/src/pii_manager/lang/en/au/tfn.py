@@ -2,6 +2,7 @@
 Detection and validation of Australian Tax File Number (TFN).
 
 """
+
 import re
 
 from stdnum.au import tfn
@@ -9,7 +10,6 @@ from stdnum.au import tfn
 from typing import Iterable
 
 from pii_manager import PiiEnum
-
 
 _TFN_PATTERN = r"\b (?: \d{3} \s \d{3} \s \d{3} | \d{8,9} ) \b"
 _TFN_REGEX = re.compile(_TFN_PATTERN, flags=re.X)

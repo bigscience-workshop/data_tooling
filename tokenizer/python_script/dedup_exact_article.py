@@ -1,4 +1,5 @@
 """Taken from Teven and Leandro"""
+
 import gzip
 import os
 import shutil
@@ -8,7 +9,6 @@ import argparse
 
 from datasets import load_from_disk
 from datasets.utils.logging import set_verbosity_info
-
 
 set_verbosity_info()
 logger = logging.getLogger(__name__)

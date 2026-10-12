@@ -30,7 +30,7 @@ def apply_regex_anonymization(
         tag_type=tag_type,
     )
     if anonymize_condition:
-        for (ent, start, end, tag) in ner:
+        for ent, start, end, tag in ner:
             # we need to actually walk through and replace by start, end span.
             sentence = sentence.replace(ent, f" <{tag}> ")
     return sentence, ner

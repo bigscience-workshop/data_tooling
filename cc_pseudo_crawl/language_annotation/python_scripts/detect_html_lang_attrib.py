@@ -68,7 +68,7 @@ def main():
     logger.info(f"the dataset is {ds}")
 
     if args.num_examples:
-        ds = ds.select([i for i in range(args.num_examples)])
+        ds = ds.select([*range(args.num_examples)])
 
     def detect_lang(example):
         if example["text"] is None or len(example["text"]) == 0:

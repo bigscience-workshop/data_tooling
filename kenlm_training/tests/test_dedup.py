@@ -27,7 +27,7 @@ def write_docs(file: Path, docs: Iterable[Sequence[str]]):
 
 def as_dict(hash_set):
     if not isinstance(hash_set, dict):
-        hash_set = {k: v for (k, v) in hash_set.items()}
+        hash_set = {**hash_set}
     return hash_set
 
 
