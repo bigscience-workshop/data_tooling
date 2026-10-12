@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 # Copyright 2021 The HuggingFace Team All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +19,7 @@ text file or a dataset.
 Here is the full list of checkpoints on the hub that can be fine-tuned by this script:
 https://huggingface.co/models?filter=masked-lm
 """
+
 import json
 import logging
 import os
@@ -446,7 +446,7 @@ def restore_checkpoint(save_dir, state):
     args = joblib.load(os.path.join(save_dir, "training_args.joblib"))
     data_collator = joblib.load(os.path.join(save_dir, "data_collator.joblib"))
 
-    with open(os.path.join(save_dir, "training_state.json"), "r") as f:
+    with open(os.path.join(save_dir, "training_state.json")) as f:
         training_state = json.load(f)
     step = training_state["step"]
 

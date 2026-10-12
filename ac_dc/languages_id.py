@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 langs_id = [
     {
         "lang": "Arabic",

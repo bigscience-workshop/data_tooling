@@ -2,9 +2,7 @@
 Detection of various Chinese PII elements
 """
 
-
 from pii_manager import PiiEnum
-
 
 _PATTERNS = {
     "STREET_ADDRESS": r"""(\p{Han}{1,4} (自治区|省))?

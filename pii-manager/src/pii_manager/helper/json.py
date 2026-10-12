@@ -3,7 +3,6 @@ Provide a custom JSON encoder that can serialize additional objects,
 in particular PiiEntity objects
 """
 
-
 from collections.abc import Iterator
 import datetime
 import json

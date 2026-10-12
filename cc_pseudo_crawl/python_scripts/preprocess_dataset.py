@@ -200,7 +200,7 @@ def main():
     ds = load_from_disk(args.dataset_path)
 
     if args.num_examples:
-        ds = ds.select([i for i in range(args.num_examples)])
+        ds = ds.select([*range(args.num_examples)])
 
     depth = get_depth(args.flavor)
 

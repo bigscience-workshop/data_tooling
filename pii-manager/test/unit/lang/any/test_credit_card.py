@@ -5,7 +5,6 @@ Test credit card numbers
 from pii_manager import PiiEnum
 from pii_manager.api import PiiManager
 
-
 TEST = [
     # A valid credit card number
     (

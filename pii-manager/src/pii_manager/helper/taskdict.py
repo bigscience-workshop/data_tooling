@@ -172,11 +172,11 @@ def build_subdict(task_list: List[Tuple], lang: str, country: str = None) -> Dic
             task_type = (
                 "PiiTask"
                 if _is_pii_class(src[1])
-                else "callable"
-                if callable(src[1])
-                else "regex"
-                if isinstance(src[1], str)
-                else None
+                else (
+                    "callable"
+                    if callable(src[1])
+                    else "regex" if isinstance(src[1], str) else None
+                )
             )
             # Build the dict
             td = {"pii": src[0], "type": task_type, "task": src[1]}

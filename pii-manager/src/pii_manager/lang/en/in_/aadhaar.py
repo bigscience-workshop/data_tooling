@@ -12,7 +12,6 @@ from typing import Iterable
 
 from pii_manager import PiiEnum
 
-
 _AADHAAR_REGEX = re.compile(r"[2-9]\d{3}\ ?\d{4}\ ?\d{4}", flags=re.X)
 
 

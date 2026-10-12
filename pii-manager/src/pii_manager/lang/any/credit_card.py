@@ -15,7 +15,6 @@ from typing import Iterable
 from pii_manager import PiiEnum, PiiEntity
 from pii_manager.helper import BasePiiTask
 
-
 # ----------------------------------------------------------------------------
 
 # base regex to detect candidates to credit card numbers

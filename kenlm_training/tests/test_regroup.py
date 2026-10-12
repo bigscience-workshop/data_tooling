@@ -36,7 +36,7 @@ def check_regroup(tmp_path, regroup_fn, check_blocks_boundaries=False):
         return
 
     for shard, reader in zip(shards, readers):
-        block = [doc for doc in jsonql.read_jsons(reader)]
+        block = [*jsonql.read_jsons(reader)]
         assert shard == block
 
 

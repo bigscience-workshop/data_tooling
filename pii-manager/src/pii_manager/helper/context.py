@@ -9,7 +9,6 @@ from typing import Tuple, List, Dict, Union
 from .exception import InvArgException
 from .normalizer import normalize
 
-
 # Default width around a Pii where context is searched for
 DEFAULT_CONTEXT_WIDTH = 64
 

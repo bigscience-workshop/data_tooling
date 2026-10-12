@@ -209,7 +209,7 @@ def test_split_file_middle_of_line(tmp_path: Path):
 
 def test_split_file_middle_of_char(tmp_path: Path):
     file = tmp_path / "test.txt"
-    content = "Hello\U0001F40D\nWorld\n"
+    content = "Hello\U0001f40d\nWorld\n"
     # split is here       ^^
 
     with open(file, "w") as o:
@@ -262,7 +262,7 @@ def test_enter_exit(capsys):
     def acc(values):
         print("acc: started")
         res = 0
-        for (x, _) in values:
+        for x, _ in values:
             res += int(x)
         print("acc: done")
         yield f"acc: result={res}"

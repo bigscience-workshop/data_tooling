@@ -21,7 +21,7 @@ def main():
 
     seed_ids = []
     for seed_path in args.seed_paths:
-        with open(seed_path, "r") as fi:
+        with open(seed_path) as fi:
             data = csv.reader(fi)
             # First line is all the headers that we remove.
             seed_ids += [row[0] for row_id, row in enumerate(data) if row_id > 0]
